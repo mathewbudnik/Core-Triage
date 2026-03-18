@@ -72,7 +72,7 @@ function AccordionSection({ title, items, defaultOpen }) {
   )
 }
 
-function buildMarkdown(result, form) {
+function buildMarkdown(result) {
   const lines = ['# CoreTriage Summary (Educational)\n']
   lines.push('## Intake')
   Object.entries(result.intake).forEach(([k, v]) => lines.push(`- **${k}**: ${v}`))
@@ -149,7 +149,7 @@ export default function TriageTab({ k }) {
   }
 
   return (
-    <div className="p-8 max-w-6xl mx-auto space-y-8">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6 md:space-y-8">
       {/* Form */}
       <form onSubmit={handleSubmit}>
         <div className="card space-y-6">
@@ -158,7 +158,7 @@ export default function TriageTab({ k }) {
             <h2 className="font-semibold text-text">Quick Intake</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {/* Column 1 */}
             <div className="space-y-4">
               <Select label="Injury area" value={form.region} onChange={set('region')} options={REGIONS} />
@@ -317,7 +317,7 @@ export default function TriageTab({ k }) {
             {/* Actions */}
             <div className="flex items-center gap-3 pt-2">
               <button
-                onClick={() => downloadMarkdown(buildMarkdown(result, form))}
+                onClick={() => downloadMarkdown(buildMarkdown(result))}
                 className="btn-secondary flex items-center gap-2"
               >
                 <Download size={15} /> Download Report
