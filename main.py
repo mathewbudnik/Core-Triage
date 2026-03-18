@@ -47,6 +47,8 @@ app.add_middleware(
         "http://localhost:3000",
         "https://mathewbudnik-core-triage.vercel.app",
         "https://*.vercel.app",
+        "https://coretriage.com",
+        "https://www.coretriage.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
