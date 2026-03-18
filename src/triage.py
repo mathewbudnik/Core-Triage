@@ -39,6 +39,12 @@ def red_flags(i: Intake) -> List[str]:
         flags.append("High pain with swelling may need evaluation.")
     if "pop" in i.free_text.lower() or "snap" in i.free_text.lower():
         flags.append("Reported pop/snap during injury is a red flag to consider evaluation.")
+    # Wrist-specific: fall on outstretched hand with snuffbox pain is a scaphoid red flag
+    if "wrist" in i.region.lower() and i.onset == "Sudden":
+        flags.append(
+            "Sudden wrist injury — if there is tenderness at the base of the thumb (anatomical snuffbox), "
+            "seek evaluation to rule out scaphoid fracture before returning to climbing."
+        )
 
     return flags
 
@@ -55,6 +61,11 @@ def bucket_possibilities(i: Intake) -> List[Tuple[str, str]]:
             out.append(("Pulley strain/irritation (common)", "Often pain on palm-side of finger, worse with crimping."))
         out.append(("Flexor tendon irritation (common)", "Often tender along tendon, aggravated by repetitive gripping."))
         out.append(("Joint capsule irritation (possible)", "Pain near joint line, may feel stiff."))
+    elif "wrist" in region:
+        if i.mechanism in {"Hard crimp", "High volume pulling", "Dynamic catch"}:
+            out.append(("Wrist flexor tendinopathy (common)", "Overuse from high-volume gripping; tender along wrist crease."))
+        out.append(("TFCC irritation (possible)", "Ulnar-side wrist pain, often from rotation, side-pulls, or gastons."))
+        out.append(("ECU / extensor tendinopathy (possible)", "Dorsal ulnar wrist pain; aggravated by resisted wrist extension."))
     elif "elbow" in region:
         if i.mechanism in {"High volume pulling", "Steep climbing/board", "Campusing"}:
             out.append(("Elbow tendinopathy-type irritation (common)", "Overuse pattern, worse with gripping/pulling."))
@@ -77,13 +88,25 @@ def bucket_possibilities(i: Intake) -> List[Tuple[str, str]]:
 
 # Conservative guidance template grouped into UI sections (load management focus)
 def conservative_plan(i: Intake) -> Dict[str, List[str]]:
+    region = i.region.lower()
     plan: Dict[str, List[str]] = {}
-    # Sections are rendered as expanders in the UI
+
+    # Region-specific avoidance cue inserted into the generic plan
+    if "finger" in region:
+        avoid_specific = "Avoid full crimping, pockets, and dynamic catches on the affected finger(s)."
+    elif "wrist" in region:
+        avoid_specific = "Avoid side-pulls, gastons, and twisting loads that aggravate wrist symptoms."
+    elif "elbow" in region:
+        avoid_specific = "Avoid full lock-offs, campus moves, and high-volume pulling that load the elbow."
+    elif "shoulder" in region:
+        avoid_specific = "Avoid overhead reaching, high lock-offs, and steep/inverted climbing that reproduces pain."
+    else:
+        avoid_specific = "Avoid movements or grip styles that reproduce your symptoms."
 
     plan["Immediate next 7–10 days"] = [
         "Reduce climbing intensity and volume; avoid moves that reproduce sharp pain.",
         "Keep pain during activity low (commonly <= 3/10) and avoid pushing through sharp pain.",
-        "Prefer open-hand grips and controlled movement; avoid dynamic catches if painful.",
+        avoid_specific,
         "If symptoms worsen day-to-day despite reduction, consider evaluation.",
     ]
 
@@ -94,8 +117,9 @@ def conservative_plan(i: Intake) -> Dict[str, List[str]]:
     ]
 
     plan["What to avoid for now"] = [
-        "Max hangs, limit boulders, and repeated high-intensity attempts on the aggravating grip/move.",
-        "High-volume steep pulling if elbow/shoulder symptoms are present.",
+        avoid_specific,
+        "Max efforts, limit boulders, and repeated high-intensity attempts on the aggravating move.",
+        "High-volume steep pulling if elbow or shoulder symptoms are present.",
     ]
 
     plan["When to get checked"] = [

@@ -8,14 +8,14 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 
- # Represents a single knowledge-base document (filename + full text)
+# Represents a single knowledge-base document (filename + full text)
 @dataclass(frozen=True)
 class DocChunk:
     source: str
     text: str
 
 
- # Load all markdown files from the KB directory into DocChunk objects
+# Load all markdown files from the KB directory into DocChunk objects
 def load_kb(kb_dir: str = "kb") -> List[DocChunk]:
     chunks: List[DocChunk] = []
     # Iterate over all .md files in the KB folder (sorted for consistency)
@@ -29,7 +29,7 @@ def load_kb(kb_dir: str = "kb") -> List[DocChunk]:
     return chunks
 
 
- # Simple TF-IDF based retriever used for lightweight RAG
+# Simple TF-IDF based retriever used for lightweight RAG
 class TfidfRetriever:
     def __init__(self, chunks: List[DocChunk]):
         # Store original document chunks for later lookup

@@ -7,7 +7,7 @@ It combines:
 - Lightweight TF-IDF retrieval from a local knowledge base (RAG)
 - Optional GPT-powered assistant (OpenAI API)
 - Local LLM fallback (Ollama)
-- Exportable reports and session history
+- Exportable Markdown reports and Postgres-backed session history
 
 All output is educational only and intentionally non-diagnostic.
 
@@ -32,29 +32,31 @@ CoreTriage focuses on:
 
 The project is intentionally modular:
 
-app.py
+**app.py**
 - Streamlit UI
 - Orchestrates intake, retrieval, chat routing, export, and persistence
 
-src/triage.py
+**src/triage.py**
 - Rule-based safety screen (red flags)
-- Heuristic pattern buckets by region and mechanism
+- Heuristic pattern buckets by region and mechanism (Fingers, Wrist, Elbow, Shoulder)
 - Conservative load-management guidance template
 
-src/retriever.py
+**src/retriever.py**
 - Loads markdown knowledge base files
 - TF-IDF vectorization
 - Cosine similarity search for top-k document retrieval
 
-src/render.py
+**src/render.py**
 - Converts structured intake into a searchable query string
 - Formats citations for UI display
 
-src/storage.py
-- Persists session summaries as timestamped JSON
-- Loads and lists previous sessions
+**src/storage.py**
+- Utility for converting Intake dataclass to dict (used in report export)
 
-kb/
+**database.py**
+- Postgres persistence helpers (init, save, fetch, list, delete sessions)
+
+**kb/**
 - Domain-specific markdown documents used for retrieval grounding
 
 ---
@@ -93,16 +95,38 @@ streamlit run app.py
 
 ---
 
-## Using GPT Mode
+## Configuration
 
-1. Create an OpenAI API key in the OpenAI Platform.
-2. Add it to:
+Copy `.env.example` to `.env` and fill in your values, or export variables directly.
 
+### PostgreSQL (optional)
+
+The app runs without a database — session history will simply be disabled. To enable it:
+
+1. Create a Postgres database and user:
+
+```sql
+CREATE DATABASE coretriage_db;
+CREATE USER coretriage WITH PASSWORD 'yourpassword';
+GRANT ALL PRIVILEGES ON DATABASE coretriage_db TO coretriage;
 ```
-.streamlit/secrets.toml
+
+2. Set environment variables (or add to `.env`):
+
+```bash
+export CORETRIAGE_DB_HOST=localhost
+export CORETRIAGE_DB_PORT=5432
+export CORETRIAGE_DB_NAME=coretriage_db
+export CORETRIAGE_DB_USER=coretriage
+export CORETRIAGE_DB_PASSWORD=yourpassword
 ```
 
-With:
+The table is created automatically on first run via `init_db()`.
+
+### OpenAI GPT Mode (optional)
+
+1. Create an API key at platform.openai.com.
+2. Add it to `.streamlit/secrets.toml`:
 
 ```toml
 OPENAI_API_KEY = "sk-..."
@@ -114,17 +138,27 @@ Or set as an environment variable:
 export OPENAI_API_KEY="sk-..."
 ```
 
-If no key is present, GPT mode is disabled automatically.
+If no key is present, GPT mode returns a clear error rather than crashing.
+
+### Ollama (optional)
+
+Install [Ollama](https://ollama.com) and pull a model:
+
+```bash
+ollama pull llama3.1:8b
+```
+
+The app auto-detects whether Ollama is running and shows the option only when available.
 
 ---
 
 ## Features
 
-- Region-specific injury pattern buckets
+- Region-specific injury pattern buckets (Fingers, Wrist, Elbow, Shoulder)
 - Red flag safety screening
-- Conservative return-to-climb guidance
+- Conservative return-to-climb guidance (region-aware)
 - Markdown exportable reports
-- Session history (JSON-based persistence)
+- Postgres-backed session history with delete support
 - GPT-backed conversational assistant
 - Local LLM fallback via Ollama
 
@@ -136,6 +170,7 @@ If no key is present, GPT mode is disabled automatically.
 - Token usage + cost tracking
 - Inline source citations in GPT responses
 - Deployment configuration for Streamlit Cloud
+- User authentication for multi-user deployments
 
 ---
 

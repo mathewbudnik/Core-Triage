@@ -1,8 +1,19 @@
+# Python
 .venv/
 __pycache__/
 *.pyc
+*.pyo
+
+# Environment
+.env
+.env.local
+
+# macOS
 .DS_Store
 
-.streamlit/secrets.toml
-history/
-exports/
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Database
+*.sqlite3

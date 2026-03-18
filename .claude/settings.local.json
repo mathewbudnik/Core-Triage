@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(python3 -c \"import fastapi, psycopg2, openai, sklearn\")",
+      "Bash(python3 -m venv .venv)",
+      "Bash(.venv/bin/pip install:*)",
+      "Bash(pg_isready)",
+      "Bash(psql --version)",
+      "Bash(psql -U coretriage -d coretriage_db -c \"\\\\dt\")",
+      "Bash(psql -U coretriage -d coretriage_db -c \"\\\\d sessions\")",
+      "Bash(psql -U coretriage -d coretriage_db -c \"SELECT COUNT\\(*\\) FROM sessions;\")",
+      "Bash(psql -U coretriage -d coretriage_db -c \"\\\\d triage_sessions\")",
+      "Bash(psql -U coretriage -d coretriage_db -c \"ALTER TABLE sessions ALTER COLUMN injury_area SET NOT NULL;\")",
+      "Bash(psql -U coretriage -d coretriage_db -c \"DROP TABLE triage_sessions;\")",
+      "Bash(psql -U coretriage -d coretriage_db -c \"SELECT * FROM sessions ORDER BY created_at DESC LIMIT 5;\")"
+    ]
+  }
+}
