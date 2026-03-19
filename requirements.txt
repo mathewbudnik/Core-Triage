@@ -6,4 +6,5 @@ psycopg2-binary
 fastapi
 uvicorn[standard]
 python-jose[cryptography]
-bcrypt# force-rebuild
+bcrypt
+# force-rebuild
