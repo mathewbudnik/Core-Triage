@@ -1,11 +1,13 @@
 """
 Postgres persistence helpers for CoreTriage.
 
-- init_db(): create table if it doesn't exist
+- init_db(): create tables and run migrations
+- create_user(email, password_hash): insert a user and return id
+- get_user_by_email(email): fetch user row (id, email, password_hash)
 - save_session(row): insert a session and return id
 - get_session(id): fetch a single session by id
-- list_sessions(limit): fetch recent sessions
-- delete_session(id): remove a session by id
+- list_sessions(user_id, limit): fetch recent sessions for a user
+- delete_session(id, user_id): remove a session owned by user
 """
 
 import os
@@ -55,8 +57,19 @@ def init_db() -> None:
         with conn.cursor() as cur:
             cur.execute(
                 """
+                CREATE TABLE IF NOT EXISTS users (
+                    id SERIAL PRIMARY KEY,
+                    email TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    created_at TIMESTAMPTZ DEFAULT NOW()
+                );
+                """
+            )
+            cur.execute(
+                """
                 CREATE TABLE IF NOT EXISTS sessions (
                     id SERIAL PRIMARY KEY,
+                    user_id INT REFERENCES users(id) ON DELETE CASCADE,
                     injury_area TEXT NOT NULL,
                     pain_level INT,
                     pain_type TEXT,
@@ -65,7 +78,59 @@ def init_db() -> None:
                 );
                 """
             )
+            # Migration: add user_id to existing sessions table if missing
+            cur.execute(
+                """
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name='sessions' AND column_name='user_id'
+                    ) THEN
+                        ALTER TABLE sessions
+                        ADD COLUMN user_id INT REFERENCES users(id) ON DELETE CASCADE;
+                    END IF;
+                END $$;
+                """
+            )
         conn.commit()
+
+
+# ---------------------------------------------------------------------------
+# User helpers
+# ---------------------------------------------------------------------------
+
+
+def create_user(email: str, password_hash: str) -> int:
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO users (email, password_hash)
+                VALUES (%s, %s)
+                RETURNING id;
+                """,
+                (email, password_hash),
+            )
+            new_id = cur.fetchone()[0]
+        conn.commit()
+    return int(new_id)
+
+
+def get_user_by_email(email: str) -> Optional[Tuple[Any, ...]]:
+    """Returns (id, email, password_hash) or None."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id, email, password_hash FROM users WHERE email = %s;",
+                (email,),
+            )
+            return cur.fetchone()
+
+
+# ---------------------------------------------------------------------------
+# Session helpers
+# ---------------------------------------------------------------------------
 
 
 def save_session(row: Dict[str, Any]) -> int:
@@ -73,6 +138,7 @@ def save_session(row: Dict[str, Any]) -> int:
     pain_level = row.get("pain_level")
     pain_type = row.get("pain_type")
     onset = row.get("onset")
+    user_id = row.get("user_id")
 
     if not injury_area:
         raise ValueError("row['injury_area'] is required")
@@ -81,11 +147,11 @@ def save_session(row: Dict[str, Any]) -> int:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                INSERT INTO sessions (injury_area, pain_level, pain_type, onset)
-                VALUES (%s, %s, %s, %s)
+                INSERT INTO sessions (user_id, injury_area, pain_level, pain_type, onset)
+                VALUES (%s, %s, %s, %s, %s)
                 RETURNING id;
                 """,
-                (injury_area, pain_level, pain_type, onset),
+                (user_id, injury_area, pain_level, pain_type, onset),
             )
             new_id = cur.fetchone()[0]
         conn.commit()
@@ -94,11 +160,12 @@ def save_session(row: Dict[str, Any]) -> int:
 
 
 def get_session(session_id: int) -> Optional[Tuple[Any, ...]]:
+    """Returns (id, injury_area, pain_level, pain_type, onset, created_at, user_id) or None."""
     with _connect() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT id, injury_area, pain_level, pain_type, onset, created_at
+                SELECT id, injury_area, pain_level, pain_type, onset, created_at, user_id
                 FROM sessions
                 WHERE id = %s;
                 """,
@@ -107,23 +174,28 @@ def get_session(session_id: int) -> Optional[Tuple[Any, ...]]:
             return cur.fetchone()
 
 
-def list_sessions(limit: int = 50) -> List[Tuple[Any, ...]]:
+def list_sessions(user_id: int, limit: int = 50) -> List[Tuple[Any, ...]]:
     with _connect() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
                 SELECT id, injury_area, pain_level, pain_type, onset, created_at
                 FROM sessions
+                WHERE user_id = %s
                 ORDER BY created_at DESC
                 LIMIT %s;
                 """,
-                (int(limit),),
+                (int(user_id), int(limit)),
             )
             return cur.fetchall()
 
 
-def delete_session(session_id: int) -> None:
+def delete_session(session_id: int, user_id: int) -> None:
+    """Delete a session only if it belongs to the given user."""
     with _connect() as conn:
         with conn.cursor() as cur:
-            cur.execute("DELETE FROM sessions WHERE id = %s;", (int(session_id),))
+            cur.execute(
+                "DELETE FROM sessions WHERE id = %s AND user_id = %s;",
+                (int(session_id), int(user_id)),
+            )
         conn.commit()

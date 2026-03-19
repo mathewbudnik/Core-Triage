@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Clock, Trash2, AlertTriangle, Database, RefreshCw, Loader2 } from 'lucide-react'
+import { Clock, Trash2, AlertTriangle, Database, RefreshCw, Loader2, LogIn } from 'lucide-react'
 import { getSessions, fetchSession, deleteSession } from '../api'
 
 const PAIN_COLOR = (level) => {
@@ -9,7 +9,7 @@ const PAIN_COLOR = (level) => {
   return 'text-accent2 bg-accent2/10 border-accent2/25'
 }
 
-export default function HistoryTab({ dbReady }) {
+export default function HistoryTab({ dbReady, user, onLoginClick }) {
   const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -18,7 +18,7 @@ export default function HistoryTab({ dbReady }) {
   const [deleting, setDeleting] = useState(false)
 
   async function load() {
-    if (!dbReady) return
+    if (!dbReady || !user) return
     setLoading(true)
     setError(null)
     try {
@@ -31,7 +31,7 @@ export default function HistoryTab({ dbReady }) {
     }
   }
 
-  useEffect(() => { load() }, [dbReady])
+  useEffect(() => { load() }, [dbReady, user])
 
   async function handleSelect(id) {
     setSelectedId(id)
@@ -68,6 +68,27 @@ export default function HistoryTab({ dbReady }) {
           <p className="font-semibold text-text">Database offline</p>
           <p className="text-sm text-muted mt-1">Session history requires a Postgres connection. Check your .env configuration.</p>
         </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center h-full space-y-5 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-accent/10 border border-accent/25 flex items-center justify-center">
+          <Clock size={24} className="text-accent" />
+        </div>
+        <div>
+          <p className="font-semibold text-text">Sign in to view your history</p>
+          <p className="text-sm text-muted mt-1 max-w-xs">
+            Create a free account to save triage sessions and track your injuries over time.
+            Your history is private and only visible to you.
+          </p>
+        </div>
+        <button onClick={onLoginClick} className="btn-primary flex items-center gap-2">
+          <LogIn size={15} />
+          Log in or create account
+        </button>
       </div>
     )
   }

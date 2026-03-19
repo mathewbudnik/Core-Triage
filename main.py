@@ -5,19 +5,64 @@ Run with: uvicorn main:app --reload
 
 import os
 from contextlib import asynccontextmanager
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 import requests as http_requests
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import JWTError, jwt
 from openai import OpenAI
+from passlib.context import CryptContext
 from pydantic import BaseModel
 
-from database import delete_session, get_session, init_db, list_sessions, save_session
+from database import (
+    create_user,
+    delete_session,
+    get_session,
+    get_user_by_email,
+    init_db,
+    list_sessions,
+    save_session,
+)
 from src.render import build_query, format_citations
 from src.retriever import TfidfRetriever, load_kb
 from src.storage import intake_to_dict
 from src.triage import Intake, bucket_possibilities, conservative_plan, red_flags
+
+# ---------------------------------------------------------------------------
+# Auth config
+# ---------------------------------------------------------------------------
+
+SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-in-prod")
+ALGORITHM = "HS256"
+TOKEN_EXPIRE_DAYS = 30
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+bearer = HTTPBearer(auto_error=False)
+
+
+def create_token(user_id: int, email: str) -> str:
+    payload = {
+        "sub": str(user_id),
+        "email": email,
+        "exp": datetime.utcnow() + timedelta(days=TOKEN_EXPIRE_DAYS),
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def get_current_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer),
+) -> Dict[str, Any]:
+    if not credentials:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        return {"id": int(payload["sub"]), "email": payload["email"]}
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
 
 # ---------------------------------------------------------------------------
 # Startup
@@ -95,8 +140,49 @@ class SaveSessionRequest(BaseModel):
     onset: str
 
 
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
 # ---------------------------------------------------------------------------
-# Endpoints
+# Auth endpoints
+# ---------------------------------------------------------------------------
+
+
+@app.post("/api/auth/register")
+def register(req: RegisterRequest):
+    if get_user_by_email(req.email):
+        raise HTTPException(status_code=400, detail="Email already registered")
+    if len(req.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    password_hash = pwd_context.hash(req.password)
+    user_id = create_user(req.email, password_hash)
+    token = create_token(user_id, req.email)
+    return {"token": token, "user": {"id": user_id, "email": req.email}}
+
+
+@app.post("/api/auth/login")
+def login(req: LoginRequest):
+    user = get_user_by_email(req.email)
+    if not user or not pwd_context.verify(req.password, user[2]):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    token = create_token(user[0], user[1])
+    return {"token": token, "user": {"id": user[0], "email": user[1]}}
+
+
+@app.get("/api/auth/me")
+def me(user: Dict = Depends(get_current_user)):
+    return {"id": user["id"], "email": user["email"]}
+
+
+# ---------------------------------------------------------------------------
+# Public endpoints
 # ---------------------------------------------------------------------------
 
 
@@ -221,11 +307,16 @@ def ollama_status():
         return {"available": False}
 
 
+# ---------------------------------------------------------------------------
+# Session endpoints (require auth)
+# ---------------------------------------------------------------------------
+
+
 @app.get("/api/sessions")
-def get_sessions(limit: int = 50):
+def get_sessions(limit: int = 50, user: Dict = Depends(get_current_user)):
     if not db_ready:
         raise HTTPException(status_code=503, detail=db_error or "Database not ready")
-    rows = list_sessions(limit)
+    rows = list_sessions(user["id"], limit)
     return [
         {
             "id": r[0],
@@ -240,11 +331,12 @@ def get_sessions(limit: int = 50):
 
 
 @app.post("/api/sessions")
-def create_session(req: SaveSessionRequest):
+def create_session(req: SaveSessionRequest, user: Dict = Depends(get_current_user)):
     if not db_ready:
         raise HTTPException(status_code=503, detail=db_error or "Database not ready")
     sid = save_session(
         {
+            "user_id": user["id"],
             "injury_area": req.injury_area,
             "pain_level": req.pain_level,
             "pain_type": req.pain_type,
@@ -255,12 +347,14 @@ def create_session(req: SaveSessionRequest):
 
 
 @app.get("/api/sessions/{session_id}")
-def fetch_session(session_id: int):
+def fetch_session(session_id: int, user: Dict = Depends(get_current_user)):
     if not db_ready:
         raise HTTPException(status_code=503, detail="Database not ready")
     r = get_session(session_id)
     if not r:
         raise HTTPException(status_code=404, detail="Session not found")
+    if r[6] != user["id"]:
+        raise HTTPException(status_code=403, detail="Access denied")
     return {
         "id": r[0],
         "injury_area": r[1],
@@ -272,10 +366,10 @@ def fetch_session(session_id: int):
 
 
 @app.delete("/api/sessions/{session_id}")
-def remove_session(session_id: int):
+def remove_session(session_id: int, user: Dict = Depends(get_current_user)):
     if not db_ready:
         raise HTTPException(status_code=503, detail="Database not ready")
-    delete_session(session_id)
+    delete_session(session_id, user["id"])
     return {"ok": True}
 
 

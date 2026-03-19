@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Activity, MessageSquare, Clock, Info, AlertTriangle, SlidersHorizontal, Menu, X } from 'lucide-react'
-import { getHealth } from './api'
+import { Activity, MessageSquare, Clock, Info, AlertTriangle, SlidersHorizontal, Menu, X, LogIn, LogOut, User } from 'lucide-react'
+import { getHealth, getMe } from './api'
 import Landing from './components/Landing'
 import TriageTab from './components/TriageTab'
 import ChatTab from './components/ChatTab'
 import HistoryTab from './components/HistoryTab'
 import AboutTab from './components/AboutTab'
+import AuthModal from './components/AuthModal'
 
 const TABS = [
   { id: 'triage', label: 'Triage', icon: Activity },
@@ -21,16 +22,38 @@ export default function App() {
   const [k, setK] = useState(4)
   const [dbReady, setDbReady] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [user, setUser] = useState(null)
+  const [showAuth, setShowAuth] = useState(false)
 
   useEffect(() => {
     getHealth()
       .then((data) => setDbReady(data.db_ready))
       .catch(() => setDbReady(false))
+
+    // Restore session from stored token
+    const token = localStorage.getItem('ct_token')
+    if (token) {
+      getMe()
+        .then((u) => setUser(u))
+        .catch(() => {
+          localStorage.removeItem('ct_token')
+        })
+    }
   }, [])
 
   function handleTabChange(id) {
     setActiveTab(id)
     setSidebarOpen(false)
+  }
+
+  function handleAuth(_token, userData) {
+    setUser(userData)
+    setShowAuth(false)
+  }
+
+  function handleLogout() {
+    localStorage.removeItem('ct_token')
+    setUser(null)
   }
 
   if (showLanding) {
@@ -51,6 +74,16 @@ export default function App() {
         <div className="absolute top-0 right-1/4 w-80 h-80 bg-accent2/8 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-1/2 w-72 h-72 bg-accent3/6 rounded-full blur-3xl" />
       </div>
+
+      {/* Auth modal */}
+      <AnimatePresence>
+        {showAuth && (
+          <AuthModal
+            onClose={() => setShowAuth(false)}
+            onAuth={handleAuth}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Mobile sidebar overlay */}
       <AnimatePresence>
@@ -177,10 +210,32 @@ export default function App() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-xs text-muted bg-panel border border-outline px-3 py-1.5 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse-slow" />
-            <span className="hidden sm:inline">Educational only</span>
-            <span className="sm:hidden">Edu only</span>
+
+          {/* Auth area */}
+          <div className="flex items-center gap-2">
+            {user ? (
+              <>
+                <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted bg-panel border border-outline px-3 py-1.5 rounded-full">
+                  <User size={12} className="text-accent" />
+                  <span className="max-w-[120px] truncate">{user.email}</span>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-1.5 text-xs text-muted hover:text-text bg-panel border border-outline px-3 py-1.5 rounded-full transition-colors"
+                >
+                  <LogOut size={12} />
+                  <span className="hidden sm:inline">Log out</span>
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setShowAuth(true)}
+                className="flex items-center gap-1.5 text-xs btn-secondary"
+              >
+                <LogIn size={13} />
+                Log in
+              </button>
+            )}
           </div>
         </header>
 
@@ -197,7 +252,13 @@ export default function App() {
             >
               {activeTab === 'triage' && <TriageTab k={k} />}
               {activeTab === 'chat' && <ChatTab k={k} />}
-              {activeTab === 'history' && <HistoryTab dbReady={dbReady} />}
+              {activeTab === 'history' && (
+                <HistoryTab
+                  dbReady={dbReady}
+                  user={user}
+                  onLoginClick={() => setShowAuth(true)}
+                />
+              )}
               {activeTab === 'about' && <AboutTab />}
             </motion.div>
           </AnimatePresence>
