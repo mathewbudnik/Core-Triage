@@ -8,13 +8,13 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
+import bcrypt
 import requests as http_requests
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from openai import OpenAI
-from passlib.context import CryptContext
 from pydantic import BaseModel
 
 from database import (
@@ -39,8 +39,15 @@ SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-in-prod")
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_DAYS = 30
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 bearer = HTTPBearer(auto_error=False)
+
+
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+
+def verify_password(password: str, hashed: str) -> bool:
+    return bcrypt.checkpw(password.encode(), hashed.encode())
 
 
 def create_token(user_id: int, email: str) -> str:
@@ -165,7 +172,7 @@ def register(req: RegisterRequest):
         raise HTTPException(status_code=400, detail="Email already registered")
     if len(req.password) < 6:
         raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
-    password_hash = pwd_context.hash(req.password)
+    password_hash = hash_password(req.password)
     user_id = create_user(req.email, password_hash)
     token = create_token(user_id, req.email)
     return {"token": token, "user": {"id": user_id, "email": req.email}}
@@ -174,7 +181,7 @@ def register(req: RegisterRequest):
 @app.post("/api/auth/login")
 def login(req: LoginRequest):
     user = get_user_by_email(req.email)
-    if not user or not pwd_context.verify(req.password, user[2]):
+    if not user or not verify_password(req.password, user[2]):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     token = create_token(user[0], user[1])
     return {"token": token, "user": {"id": user[0], "email": user[1]}}
