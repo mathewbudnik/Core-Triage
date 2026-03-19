@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Activity, MessageSquare, Clock, Info, AlertTriangle, SlidersHorizontal, Menu, X } from 'lucide-react'
 import { getHealth } from './api'
+import Landing from './components/Landing'
 import TriageTab from './components/TriageTab'
 import ChatTab from './components/ChatTab'
 import HistoryTab from './components/HistoryTab'
@@ -15,6 +16,7 @@ const TABS = [
 ]
 
 export default function App() {
+  const [showLanding, setShowLanding] = useState(true)
   const [activeTab, setActiveTab] = useState('triage')
   const [k, setK] = useState(4)
   const [dbReady, setDbReady] = useState(false)
@@ -29,6 +31,16 @@ export default function App() {
   function handleTabChange(id) {
     setActiveTab(id)
     setSidebarOpen(false)
+  }
+
+  if (showLanding) {
+    return (
+      <AnimatePresence>
+        <motion.div key="landing" initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <Landing onEnter={() => setShowLanding(false)} />
+        </motion.div>
+      </AnimatePresence>
+    )
   }
 
   return (
