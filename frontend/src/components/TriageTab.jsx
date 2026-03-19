@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, AlertTriangle, CheckCircle, Download, Save, Loader2, Zap, BookOpen } from 'lucide-react'
 import { triageIntake, saveSession } from '../api'
 
-const REGIONS = ['Fingers', 'Wrist', 'Elbow', 'Shoulder']
+const REGIONS = ['Fingers', 'Wrist', 'Elbow', 'Shoulder', 'Knee', 'Hip', 'Lower Back']
 const ONSETS = ['Gradual', 'Sudden']
 const MECHANISMS = [
   'Hard crimp', 'Dynamic catch', 'Pocket',

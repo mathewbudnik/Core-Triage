@@ -75,6 +75,23 @@ def bucket_possibilities(i: Intake) -> List[Tuple[str, str]]:
         out.append(("Impingement-like irritation (possible)", "Painful arc, overhead discomfort."))
         if i.instability == "Yes":
             out.append(("Instability-related issue (possible)", "History of dislocation or slipping sensations."))
+    elif "knee" in region:
+        if i.mechanism in {"Dynamic catch", "Hard crimp"}:
+            out.append(("LCL sprain / heel hook injury (common)", "Outer knee pain from rotational load during heel hooks."))
+        out.append(("Patellar tendinopathy (possible)", "Below the kneecap, worse with high steps and squatting."))
+        out.append(("Meniscus irritation (possible)", "Joint line pain with twisting loads — drop knees or heel hooks."))
+        if i.pain_type == "Sharp":
+            out.append(("Acute ligament sprain (possible)", "Sharp sudden knee pain warrants evaluation to rule out structural injury."))
+    elif "hip" in region:
+        out.append(("Hip flexor strain (common)", "Deep groin ache from repeated high stepping and rockover moves."))
+        out.append(("Piriformis / deep gluteal irritation (possible)", "Deep buttock pain from repeated external hip rotation."))
+        if i.mechanism in {"Hard crimp", "Dynamic catch"}:
+            out.append(("Hip impingement-type irritation (possible)", "Deep groin pain at end-range hip flexion — common with FAI anatomy."))
+    elif "lower back" in region or "back" in region:
+        out.append(("Non-specific lower back pain (common)", "Often load-related — driven by volume on steep terrain or sudden training spikes."))
+        out.append(("Lumbar muscle / facet strain (possible)", "Localised back pain with muscle spasm, often from awkward positions under load."))
+        if i.numbness == "Yes":
+            out.append(("Nerve root irritation / radiculopathy (possible)", "Numbness or tingling travelling down the leg — warrants evaluation."))
     else:
         out.append(("Overuse / load spike pattern (common)", "Often driven by sudden increases in intensity/volume."))
 
@@ -100,6 +117,12 @@ def conservative_plan(i: Intake) -> Dict[str, List[str]]:
         avoid_specific = "Avoid full lock-offs, campus moves, and high-volume pulling that load the elbow."
     elif "shoulder" in region:
         avoid_specific = "Avoid overhead reaching, high lock-offs, and steep/inverted climbing that reproduces pain."
+    elif "knee" in region:
+        avoid_specific = "Avoid heel hooks, drop knees, and aggressive high steps that load the knee."
+    elif "hip" in region:
+        avoid_specific = "Avoid high steps, wide stems, and aggressive rockovers that reproduce hip pain."
+    elif "lower back" in region or "back" in region:
+        avoid_specific = "Avoid steep overhanging climbing and campus moves that load the lumbar spine."
     else:
         avoid_specific = "Avoid movements or grip styles that reproduce your symptoms."
 

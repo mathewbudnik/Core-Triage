@@ -139,7 +139,7 @@ export default function Landing({ onEnter }) {
 
         {/* Injury areas */}
         <motion.div variants={item} className="mt-10 flex flex-wrap gap-2 justify-center">
-          {['Fingers', 'Wrist', 'Elbow', 'Shoulder'].map((area) => (
+          {['Fingers', 'Wrist', 'Elbow', 'Shoulder', 'Knee', 'Hip', 'Lower Back'].map((area) => (
             <span
               key={area}
               className="text-xs bg-panel border border-outline rounded-full px-3 py-1.5 text-muted"
