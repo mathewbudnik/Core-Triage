@@ -70,16 +70,20 @@ def get_current_user(
 
 db_ready = False
 db_error = ""
+_kb = None
+_retriever = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global db_ready, db_error
+    global db_ready, db_error, _kb, _retriever
     try:
         init_db()
         db_ready = True
     except Exception as e:
         db_error = str(e)
+    _kb = load_kb("kb")
+    _retriever = TfidfRetriever(_kb)
     yield
 
 
@@ -211,10 +215,8 @@ def triage(req: IntakeRequest):
     buckets = bucket_possibilities(intake)
     plan = conservative_plan(intake)
 
-    kb = load_kb("kb")
-    retriever = TfidfRetriever(kb)
     q = build_query(intake)
-    retrieved = retriever.query(q, k=req.k)
+    retrieved = _retriever.query(q, k=req.k)
     citations = format_citations(retrieved)
 
     return {
@@ -228,9 +230,7 @@ def triage(req: IntakeRequest):
 
 @app.post("/api/chat")
 def chat(req: ChatRequest):
-    kb = load_kb("kb")
-    retriever = TfidfRetriever(kb)
-    hits = retriever.query(req.message, k=req.k)
+    hits = _retriever.query(req.message, k=req.k)
     citations = format_citations(hits)
     ctx_parts = [f"SOURCE: {chunk.source}\n{chunk.text}" for chunk, _ in hits]
     ctx = "\n\n---\n\n".join(ctx_parts)
@@ -375,5 +375,4 @@ def remove_session(session_id: int, user: Dict = Depends(get_current_user)):
 
 @app.get("/api/kb")
 def kb_files():
-    kb = load_kb("kb")
-    return {"files": [c.source for c in kb]}
+    return {"files": [c.source for c in _kb]}
