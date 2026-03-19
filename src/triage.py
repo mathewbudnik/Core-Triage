@@ -76,20 +76,25 @@ def bucket_possibilities(i: Intake) -> List[Tuple[str, str]]:
         if i.instability == "Yes":
             out.append(("Instability-related issue (possible)", "History of dislocation or slipping sensations."))
     elif "knee" in region:
-        if i.mechanism in {"Dynamic catch", "Hard crimp"}:
-            out.append(("LCL sprain / heel hook injury (common)", "Outer knee pain from rotational load during heel hooks."))
-        out.append(("Patellar tendinopathy (possible)", "Below the kneecap, worse with high steps and squatting."))
+        if i.mechanism in {"Heel hook", "Drop knee"}:
+            out.append(("LCL sprain / heel hook injury (common)", "Outer knee pain from rotational load during heel hooks or drop knees."))
+        if i.mechanism in {"High step / rockover", "High volume climbing"}:
+            out.append(("Patellar tendinopathy (possible)", "Below the kneecap, worse with high steps and repeated knee loading."))
         out.append(("Meniscus irritation (possible)", "Joint line pain with twisting loads — drop knees or heel hooks."))
-        if i.pain_type == "Sharp":
-            out.append(("Acute ligament sprain (possible)", "Sharp sudden knee pain warrants evaluation to rule out structural injury."))
+        if i.pain_type == "Sharp" or i.onset == "Sudden":
+            out.append(("Acute ligament sprain (possible)", "Sharp or sudden knee pain warrants evaluation to rule out structural injury."))
     elif "hip" in region:
-        out.append(("Hip flexor strain (common)", "Deep groin ache from repeated high stepping and rockover moves."))
-        out.append(("Piriformis / deep gluteal irritation (possible)", "Deep buttock pain from repeated external hip rotation."))
-        if i.mechanism in {"Hard crimp", "Dynamic catch"}:
-            out.append(("Hip impingement-type irritation (possible)", "Deep groin pain at end-range hip flexion — common with FAI anatomy."))
+        if i.mechanism in {"High step / rockover", "High volume climbing"}:
+            out.append(("Hip flexor strain (common)", "Deep groin ache from repeated high stepping and rockover moves."))
+        if i.mechanism in {"Heel hook", "Stemming / bridging"}:
+            out.append(("Piriformis / deep gluteal irritation (possible)", "Deep buttock pain from repeated external hip rotation."))
+        out.append(("Hip impingement-type irritation (possible)", "Deep groin pain at end-range hip flexion — common with FAI anatomy."))
     elif "lower back" in region or "back" in region:
         out.append(("Non-specific lower back pain (common)", "Often load-related — driven by volume on steep terrain or sudden training spikes."))
-        out.append(("Lumbar muscle / facet strain (possible)", "Localised back pain with muscle spasm, often from awkward positions under load."))
+        if i.mechanism in {"Heel hook", "High step / rockover", "Stemming / bridging"}:
+            out.append(("Lumbar muscle / facet strain (possible)", "Awkward loaded positions can strain paraspinal muscles and facet joints."))
+        if i.onset == "Sudden":
+            out.append(("Lumbar disc irritation (possible)", "Sudden back pain from a loaded movement may involve disc irritation."))
         if i.numbness == "Yes":
             out.append(("Nerve root irritation / radiculopathy (possible)", "Numbness or tingling travelling down the leg — warrants evaluation."))
     else:

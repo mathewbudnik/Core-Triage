@@ -5,10 +5,21 @@ import { triageIntake, saveSession } from '../api'
 
 const REGIONS = ['Fingers', 'Wrist', 'Elbow', 'Shoulder', 'Knee', 'Hip', 'Lower Back']
 const ONSETS = ['Gradual', 'Sudden']
-const MECHANISMS = [
+const UPPER_BODY_MECHANISMS = [
   'Hard crimp', 'Dynamic catch', 'Pocket',
   'High volume pulling', 'Steep climbing/board', 'Campusing', 'Unknown/other',
 ]
+
+const LOWER_BODY_MECHANISMS = [
+  'Heel hook', 'Drop knee', 'High step / rockover',
+  'Stemming / bridging', 'High volume climbing', 'Fall', 'Unknown/other',
+]
+
+const LOWER_BODY_REGIONS = ['Knee', 'Hip', 'Lower Back']
+
+function getMechanisms(region) {
+  return LOWER_BODY_REGIONS.includes(region) ? LOWER_BODY_MECHANISMS : UPPER_BODY_MECHANISMS
+}
 const PAIN_TYPES = ['Dull/ache', 'Sharp', 'Burning', 'Tingling']
 const YES_NO = ['No', 'Yes']
 const WEAKNESS_OPTS = ['None', 'Mild', 'Significant']
@@ -114,7 +125,13 @@ export default function TriageTab({ k }) {
   const [error, setError] = useState(null)
   const [saveStatus, setSaveStatus] = useState(null)
 
-  const set = (key) => (val) => setForm((f) => ({ ...f, [key]: val }))
+  const set = (key) => (val) => setForm((f) => {
+    const update = { ...f, [key]: val }
+    if (key === 'region') {
+      update.mechanism = getMechanisms(val)[0]
+    }
+    return update
+  })
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -163,7 +180,7 @@ export default function TriageTab({ k }) {
             <div className="space-y-4">
               <Select label="Injury area" value={form.region} onChange={set('region')} options={REGIONS} />
               <Select label="Onset" value={form.onset} onChange={set('onset')} options={ONSETS} />
-              <Select label="What triggered it?" value={form.mechanism} onChange={set('mechanism')} options={MECHANISMS} />
+              <Select label="What triggered it?" value={form.mechanism} onChange={set('mechanism')} options={getMechanisms(form.region)} />
             </div>
 
             {/* Column 2 */}
