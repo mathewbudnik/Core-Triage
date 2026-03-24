@@ -101,10 +101,10 @@ export default function AuthModal({ onClose, onAuth }) {
               className="input-base"
               placeholder="••••••••"
               required
-              minLength={6}
+              minLength={8}
             />
             {mode === 'register' && (
-              <p className="text-xs text-muted mt-1">Minimum 6 characters</p>
+              <p className="text-xs text-muted mt-1">Minimum 8 characters, include at least one symbol</p>
             )}
           </div>
 

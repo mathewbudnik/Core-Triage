@@ -170,8 +170,10 @@ class LoginRequest(BaseModel):
 def register(req: RegisterRequest):
     if get_user_by_email(req.email):
         raise HTTPException(status_code=400, detail="Email already registered")
-    if len(req.password) < 6:
-        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    if len(req.password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+    if not any(c in '!@#$%^&*()_+-=[]{}|;:,.<>?' for c in req.password):
+        raise HTTPException(status_code=400, detail="Password must include at least one symbol")
     password_hash = hash_password(req.password)
     user_id = create_user(req.email, password_hash)
     token = create_token(user_id, req.email)
