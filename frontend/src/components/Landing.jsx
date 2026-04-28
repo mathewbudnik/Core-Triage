@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
-import { Activity, Shield, Search, MessageSquare, ChevronRight, Mountain } from 'lucide-react'
+import { Shield, Search, MessageSquare, ChevronRight, Mountain } from 'lucide-react'
+import Logo from './Logo'
 
 const FEATURES = [
   {
@@ -51,9 +52,7 @@ export default function Landing({ onEnter }) {
       {/* Nav bar */}
       <nav className="relative z-10 flex items-center justify-between px-6 md:px-12 py-5 border-b border-outline bg-panel2/40 backdrop-blur-sm">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-accent to-accent2 flex items-center justify-center shadow-glow">
-            <Activity size={14} className="text-bg" />
-          </div>
+          <Logo size={32} dark />
           <span className="font-bold text-text">CoreTriage</span>
         </div>
         <button

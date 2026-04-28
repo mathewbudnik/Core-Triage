@@ -1,16 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Activity, MessageSquare, Clock, Info, AlertTriangle, SlidersHorizontal, Menu, X, LogIn, LogOut, User } from 'lucide-react'
+import { MessageSquare, Clock, Info, AlertTriangle, Menu, X, LogIn, LogOut, User, Activity, Dumbbell } from 'lucide-react'
 import { getHealth, getMe } from './api'
 import Landing from './components/Landing'
+import Logo from './components/Logo'
 import TriageTab from './components/TriageTab'
 import ChatTab from './components/ChatTab'
 import HistoryTab from './components/HistoryTab'
 import AboutTab from './components/AboutTab'
 import AuthModal from './components/AuthModal'
+import TipCard from './components/TipCard'
+import TrainTab from './components/TrainTab'
 
 const TABS = [
   { id: 'triage', label: 'Triage', icon: Activity },
+  { id: 'train', label: 'Train', icon: Dumbbell },
   { id: 'chat', label: 'Chat', icon: MessageSquare },
   { id: 'history', label: 'History', icon: Clock },
   { id: 'about', label: 'About', icon: Info },
@@ -19,7 +23,7 @@ const TABS = [
 export default function App() {
   const [showLanding, setShowLanding] = useState(true)
   const [activeTab, setActiveTab] = useState('triage')
-  const [k, setK] = useState(4)
+  const k = 4
   const [dbReady, setDbReady] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [user, setUser] = useState(null)
@@ -41,20 +45,22 @@ export default function App() {
     }
   }, [])
 
-  function handleTabChange(id) {
+  const handleTabChange = useCallback((id) => {
     setActiveTab(id)
     setSidebarOpen(false)
-  }
+  }, [])
 
-  function handleAuth(_token, userData) {
+  const handleAuth = useCallback((_token, userData) => {
     setUser(userData)
     setShowAuth(false)
-  }
+  }, [])
 
-  function handleLogout() {
+  const handleLogout = useCallback(() => {
     localStorage.removeItem('ct_token')
     setUser(null)
-  }
+  }, [])
+
+  const activeTabLabel = useMemo(() => TABS.find((t) => t.id === activeTab)?.label, [activeTab])
 
   if (showLanding) {
     return (
@@ -109,9 +115,7 @@ export default function App() {
         <div className="px-6 pt-8 pb-6 border-b border-outline">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-accent to-accent2 flex items-center justify-center shadow-glow">
-                <Activity size={14} className="text-bg" />
-              </div>
+              <Logo size={32} dark />
               <span className="text-lg font-bold bg-gradient-to-r from-accent via-text to-accent2 bg-clip-text text-transparent">
                 CoreTriage
               </span>
@@ -155,36 +159,16 @@ export default function App() {
           })}
         </nav>
 
-        {/* Sidebar controls */}
-        <div className="px-4 pb-6 space-y-4 border-t border-outline pt-4">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <SlidersHorizontal size={13} className="text-muted" />
-              <span className="text-xs text-muted uppercase tracking-wide font-medium">KB Sources</span>
-              <span className="ml-auto text-xs font-bold text-accent">{k}</span>
-            </div>
-            <input
-              type="range"
-              min={2}
-              max={6}
-              value={k}
-              onChange={(e) => setK(Number(e.target.value))}
-              className="w-full accent-accent cursor-pointer"
-            />
-          </div>
+        {/* Tip card */}
+        <TipCard />
 
-          <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-lg border ${
-            dbReady
-              ? 'border-accent/25 bg-accent/10 text-accent'
-              : 'border-accent2/25 bg-accent2/10 text-accent2'
-          }`}>
-            <div className={`w-1.5 h-1.5 rounded-full ${dbReady ? 'bg-accent animate-pulse-slow' : 'bg-accent2'}`} />
-            {dbReady ? 'Database connected' : 'Database offline'}
-          </div>
-
-          <div className="flex items-start gap-2 text-xs text-muted px-1">
-            <AlertTriangle size={12} className="text-accent3 shrink-0 mt-0.5" />
-            <span>Severe symptoms or major trauma: seek professional evaluation.</span>
+        {/* Sidebar footer */}
+        <div className="px-4 py-4 border-t border-outline">
+          <div className="flex items-start gap-2">
+            <AlertTriangle size={11} className="text-accent3 shrink-0 mt-0.5" />
+            <p className="text-[10px] text-muted/70 leading-relaxed">
+              Severe symptoms or major trauma: seek professional evaluation.
+            </p>
           </div>
         </div>
       </aside>
@@ -203,7 +187,7 @@ export default function App() {
             </button>
             <div>
               <h1 className="text-base md:text-xl font-bold text-text">
-                {TABS.find((t) => t.id === activeTab)?.label}
+                {activeTabLabel}
               </h1>
               <p className="text-xs text-muted hidden sm:block mt-0.5">
                 Educational climbing injury guidance · Not a medical diagnosis
@@ -251,11 +235,18 @@ export default function App() {
               className="h-full"
             >
               {activeTab === 'triage' && <TriageTab k={k} />}
-              {activeTab === 'chat' && <ChatTab k={k} />}
+              {activeTab === 'chat' && <ChatTab k={k} user={user} onLoginClick={() => setShowAuth(true)} />}
               {activeTab === 'history' && (
                 <HistoryTab
                   dbReady={dbReady}
                   user={user}
+                  onLoginClick={() => setShowAuth(true)}
+                />
+              )}
+              {activeTab === 'train' && (
+                <TrainTab
+                  user={user}
+                  dbReady={dbReady}
                   onLoginClick={() => setShowAuth(true)}
                 />
               )}

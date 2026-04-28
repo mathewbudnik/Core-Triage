@@ -1,22 +1,28 @@
-import { useState } from 'react'
+import { useState, useCallback, useRef, memo } from 'react'
 import { motion } from 'framer-motion'
-import { X, Loader2, AlertTriangle, Activity } from 'lucide-react'
+import { X, Loader2, AlertTriangle } from 'lucide-react'
 import { authLogin, authRegister } from '../api'
+import Logo from './Logo'
 
-export default function AuthModal({ onClose, onAuth }) {
+function AuthModal({ onClose, onAuth }) {
   const [mode, setMode] = useState('login')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  async function handleSubmit(e) {
+  // Uncontrolled inputs — no state updates on each keystroke
+  const emailRef    = useRef(null)
+  const passwordRef = useRef(null)
+
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
     try {
       const fn = mode === 'login' ? authLogin : authRegister
-      const data = await fn({ email, password })
+      const data = await fn({
+        email:    emailRef.current.value,
+        password: passwordRef.current.value,
+      })
       localStorage.setItem('ct_token', data.token)
       onAuth(data.token, data.user)
     } catch (err) {
@@ -24,23 +30,30 @@ export default function AuthModal({ onClose, onAuth }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [mode, onAuth])
 
-  function switchMode(m) {
+  const switchMode = useCallback((m) => {
     setMode(m)
     setError(null)
-  }
+    // Clear fields when switching tabs
+    if (emailRef.current)    emailRef.current.value    = ''
+    if (passwordRef.current) passwordRef.current.value = ''
+  }, [])
+
+  const handleOverlayClick = useCallback((e) => {
+    if (e.target === e.currentTarget) onClose()
+  }, [onClose])
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 backdrop-blur-sm"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+      onClick={handleOverlayClick}
     >
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 8 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ duration: 0.2 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.08 }}
         className="relative w-full max-w-sm mx-4 bg-panel2 border border-outline rounded-2xl shadow-xl p-6 space-y-5"
       >
         {/* Close */}
@@ -53,9 +66,7 @@ export default function AuthModal({ onClose, onAuth }) {
 
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-accent to-accent2 flex items-center justify-center shadow-glow">
-            <Activity size={14} className="text-bg" />
-          </div>
+          <Logo size={28} dark />
           <span className="font-bold text-text">CoreTriage</span>
         </div>
 
@@ -83,9 +94,9 @@ export default function AuthModal({ onClose, onAuth }) {
           <div>
             <label className="label">Email</label>
             <input
+              ref={emailRef}
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              defaultValue=""
               className="input-base"
               placeholder="you@example.com"
               required
@@ -95,9 +106,9 @@ export default function AuthModal({ onClose, onAuth }) {
           <div>
             <label className="label">Password</label>
             <input
+              ref={passwordRef}
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              defaultValue=""
               className="input-base"
               placeholder="••••••••"
               required
@@ -142,3 +153,5 @@ export default function AuthModal({ onClose, onAuth }) {
     </div>
   )
 }
+
+export default memo(AuthModal)

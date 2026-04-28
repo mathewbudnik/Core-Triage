@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { BookOpen, Layers, Search, MessageSquare, Database, FileText, ExternalLink } from 'lucide-react'
+import { BookOpen, Layers, Search, MessageSquare, Database, FileText } from 'lucide-react'
 import { getKbFiles } from '../api'
 
 const FEATURES = [

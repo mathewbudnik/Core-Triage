@@ -2,55 +2,141 @@
 
 ## Overview
 
-Shoulder injuries in climbers are common and often complex. The shoulder's wide range of motion makes it inherently less stable, and climbing places repeated high-load demands on the rotator cuff, labrum, and surrounding structures. Most climbing shoulder pain is related to overuse and poor load management, though acute injuries do occur.
+Shoulder injuries in climbers are common and often complex. Climbing overdevelops internal rotators and retractors (lats, rhomboids) while underdeveloping external rotators and protractors (serratus anterior, lower trapezius) — this imbalance is the root cause of most climbing shoulder pathology.
+
+**Disclaimer:** This information is for triage guidance only and does not constitute medical advice or diagnosis. Seek professional medical evaluation for any injury. In case of emergency call 911.
 
 ---
 
-## Common Injury Patterns
+## Rotator Cuff Impingement / Tendinopathy
 
-### Rotator Cuff Tendinopathy / Impingement
-- **Location:** Front or side of the shoulder, sometimes deep within the joint
-- **Common in:** High-volume lock-offs, steep climbing, overhead reaching, board training
-- **Presentation:** Painful arc (pain when raising the arm between roughly 60–120 degrees), pain with overhead moves, aching after sessions, weakness with external rotation
-- **Structures involved:** Supraspinatus, infraspinatus, subscapularis tendons
+**Clinical name:** Subacromial impingement syndrome, rotator cuff tendinopathy
+**Mechanism:** Repetitive overhead reaching, sustained pulling on overhanging terrain, poor scapular control, muscle imbalance
+**Location:** Front or lateral shoulder, sometimes deep within the joint
 
-### Rotator Cuff Strain / Partial Tear
-- **Location:** Deep shoulder pain, often poorly localized
-- **Common in:** Sudden dynamic loads, falls, locking off at maximum reach
-- **Presentation:** Sharp pain with certain movements, weakness with specific rotations, night pain when lying on the affected shoulder
+**Symptoms:**
+- Painful arc: pain when raising the arm between 60–120 degrees of shoulder abduction
+- Anterior or lateral shoulder pain
+- Pain reaching overhead or behind back
+- Weakness with overhead lifting
+- Night pain when lying on the affected shoulder
 
-### SLAP Tear (Superior Labrum Anterior to Posterior)
-- **Location:** Deep inside the shoulder joint, at the top of the labrum
-- **Common in:** Dynamic catches, hard lock-offs, repeated overhead loading
-- **Presentation:** Deep clicking or catching sensation, pain at extremes of range, pain with overhead pulling, possible instability feeling
-- **Note:** SLAP tears are often misdiagnosed — symptoms overlap with other shoulder conditions
+**Why climbers are at elevated risk:** Climbing overdevelops internal rotators and retractors without balancing external rotators and protractors, narrowing the subacromial space.
 
-### Shoulder Instability
-- **Location:** Shoulder joint capsule and labrum
-- **Common in:** Climbers with hypermobility, history of dislocation or subluxation
-- **Presentation:** Feeling of the shoulder "going out," apprehension with certain positions (arm raised and externally rotated), aching after training
-- **Grades:** Ranges from mild subluxation (partial displacement) to full dislocation
+**Red flags:** Complete inability to raise the arm, significant weakness suggesting cuff tear, trauma history
+**Recovery:** 6–16 weeks depending on severity
 
-### AC Joint Irritation (Acromioclavicular)
-- **Location:** Top of the shoulder, where the collarbone meets the acromion
-- **Common in:** Falls onto the shoulder, compression loading (mantling), horizontal adduction moves
-- **Presentation:** Localised tenderness directly on the AC joint, pain with reaching across the body, possible step deformity if ligaments are torn
+**Rehab priorities:**
+- Scapular stabilization first: serratus anterior, lower trapezius
+- External rotation strengthening: face pulls, band pull-aparts, YTW exercises
+- Posterior capsule stretching
+- Avoid overhead climbing until pain-free arc restored
+- Gradually reintroduce pulling movements
 
-### Long Head of Biceps Tendinopathy
-- **Location:** Front of the shoulder, bicipital groove
-- **Common in:** Repeated pulling and supination loading
-- **Presentation:** Anterior shoulder ache, tender in the groove, pain with resisted elbow flexion and supination
+**Prevention:** Every climber should include face pulls, band pull-aparts, serratus wall slides, and YTW exercises in their training program.
+
+**Severity:** Mild: modify and monitor. Moderate: physio within 1 week. Severe (significant weakness or inability to raise arm): evaluation within 48 hours.
+**Can continue climbing:** Modified — slab and vertical before steep; no overhead moves that reproduce pain
+**Hangboard clearance:** 3–4 weeks minimum; avoid overhead positions
+**Campus board clearance:** 12+ weeks; only after pain-free arc and strength restored
 
 ---
 
-## Red Flags — Seek Evaluation
+## SLAP Tear (Superior Labrum Anterior to Posterior)
 
-- Acute dislocation or subluxation episode
+**Clinical name:** Superior labrum anterior to posterior tear
+**Mechanism:** Dynamic moves (dynos), catching a fall on outstretched arm, repetitive overhead pulling, traction force on the bicep anchor
+**Location:** Deep inside the shoulder joint, at the superior labrum
+
+**Grading:** Type I–IV; Type II (bicep anchor detachment) most common in climbers
+
+**Symptoms:**
+- Deep shoulder pain
+- Clicking or popping with overhead motion
+- Pain at end range of shoulder flexion
+- Pain with resisted bicep curl at 90 degrees (Speed's test)
+- Positive O'Brien's test
+- Possible instability feeling with overhead moves
+
+**Red flags:** Significant instability, locking, inability to reach overhead
+**Recovery:** Conservative (Type I): 12–20 weeks. Surgical repair (Type II+): 6–9 months with climbing-specific rehab.
+
+**Return to climbing criteria:**
+- Full pain-free ROM
+- Strength symmetry within 10% of contralateral shoulder
+- Negative provocative tests
+- Passed sport-specific loading protocol
+
+**Severity:** Moderate to severe — imaging (MRI arthrogram) recommended to confirm grade
+**Can continue climbing:** Modified only for mild cases; surgical cases: no climbing until cleared
+**Hangboard clearance:** Conservative: 8–12 weeks. Post-surgical: per surgeon timeline (typically 4–6 months)
+**Campus board clearance:** 6–9 months post-surgery; only after full strength symmetry
+
+---
+
+## AC Joint Sprain (Acromioclavicular)
+
+**Clinical name:** Acromioclavicular joint sprain or separation
+**Mechanism:** Fall onto outstretched arm or directly onto the tip of the shoulder, compression loading during mantling
+**Location:** Top of the shoulder where the collarbone meets the acromion
+
+| Grade | Description | Recovery |
+|---|---|---|
+| I | Sprain only — no ligament tear, no step deformity | 1–3 weeks |
+| II | Partial tear — mild step deformity, significant pain | 3–6 weeks |
+| III | Complete AC ligament rupture — visible step deformity | 6–12 weeks conservative or surgical |
+| IV–VI | Posterior/superior/inferior displacement — surgical | Surgical + 3–6 months |
+
+**Symptoms:** Pain at the top of the shoulder at the AC joint, visible step deformity in Grade III+, pain with cross-body adduction (reaching across the chest), painful with direct compression
+
+**Red flags:** Grade III+ with significant deformity requires orthopedic evaluation for surgical vs conservative decision
+**Severity:** Grade I–II: moderate. Grade III+: severe — orthopedic evaluation required.
+**Can continue climbing:** Grade I only with pain <3/10. Grade II+: rest required.
+**Hangboard clearance:** Grade I: 2–3 weeks. Grade II: 4–6 weeks. Grade III: per clinician guidance.
+
+---
+
+## Shoulder Instability / Anterior Labral Tear (Bankart Lesion)
+
+**Clinical name:** Glenohumeral instability, Bankart lesion
+**Mechanism:** Fall with arm in abducted and externally rotated position (common in trad falls), dislocation event, repeated subluxation
+**Location:** Anterior shoulder capsule and labrum
+
+**Symptoms:**
+- Feeling of shoulder "slipping" or about to dislocate
+- Apprehension with arm in abducted/externally rotated position (cocking position)
+- Anterior shoulder pain
+- Positive apprehension test
+
+**Red flags:** Actual dislocation event, neurovascular compromise after dislocation, Hill-Sachs or bony Bankart lesion on imaging
+**Recovery:** Conservative: 12–16 weeks. Surgical stabilization: 6–9 months.
+**Climbing note:** Trad climbers at elevated risk due to fall mechanics. Any dislocation event should be evaluated before return to climbing.
+
+**Severity:** Severe — requires physio assessment; dislocation = urgent evaluation
+**Can continue climbing:** Not until fully evaluated; supervised progressive loading only
+**Campus board clearance:** 6–9 months post-surgery; high risk activity for recurrence
+
+---
+
+## Long Head of Biceps Tendinopathy
+
+**Location:** Front of the shoulder, bicipital groove
+**Mechanism:** Repeated pulling and supination loading
+**Symptoms:** Anterior shoulder ache, tender in the bicipital groove, pain with resisted elbow flexion and supination
+**Recovery:** 4–10 weeks with load modification
+**Severity:** Mild to moderate
+
+---
+
+## Red Flags — Seek Evaluation (All Shoulder Injuries)
+
+- Acute dislocation or subluxation event
 - Significant weakness — inability to raise the arm
-- Night pain that prevents sleep consistently
+- Night pain that consistently prevents sleep
 - Pain following a fall or acute trauma
 - Feeling of the shoulder slipping or giving way
 - Rapid worsening of symptoms despite load reduction
+- Neurovascular symptoms down the arm (tingling, numbness, weakness)
 
 ---
 
@@ -60,33 +146,24 @@ Shoulder injuries in climbers are common and often complex. The shoulder's wide 
 - Reduce all overhead and high-tension moves
 - Avoid hard lock-offs, big gastons, and steep compression climbing
 - Keep pain at or below 3/10 during any activity
-- Gentle pendulum exercises and active range of motion within comfort
 
 **Subacute phase (2–8 weeks):**
-- Reintroduce pulling volume on moderate terrain — vertical and slab before steep
-- Rotator cuff strengthening: external rotation, internal rotation, scaption (arm raise in the plane of the scapula)
-- Scapular stabilisation exercises (rows, face pulls, wall slides)
-- Avoid aggressive stretching into impingement positions early on
+- Reintroduce pulling volume on vertical terrain before steep
+- Rotator cuff strengthening: external rotation, scaption
+- Scapular stabilization: rows, face pulls, serratus wall slides
+- Avoid aggressive end-range stretching early
 
 **Return to full training:**
 - Steep climbing and hard lock-offs return last
-- Dynamic catches (dyno training) should be reintroduced gradually
-- Address any muscle imbalances — climbers often have strong internal rotators and weak external rotators
-
-**Training modifications:**
-- Slab and vertical climbing are generally better tolerated during recovery
-- Open-grip styles reduce shoulder load compared to full crimp
-- Volume and frequency reduction before intensity reduction
-
----
-
-## Typical Recovery Timelines (Educational Estimates)
+- Dynamic catches (dyno training) reintroduced gradually
+- Address muscle imbalances — external rotation and serratus strength essential
 
 | Condition | Estimated Recovery |
 |---|---|
 | Mild rotator cuff tendinopathy | 4–8 weeks |
 | Moderate rotator cuff strain | 2–4 months |
-| SLAP tear (conservative) | 3–6 months |
-| SLAP tear (surgical) | 6–12 months |
-| Instability (conservative) | 3–6 months |
-| AC joint sprain Grade 1–2 | 2–6 weeks |
+| SLAP tear (conservative) | 3–5 months |
+| SLAP tear (surgical) | 6–9 months |
+| Instability (conservative) | 3–4 months |
+| AC joint sprain Grade I–II | 1–6 weeks |
+| AC joint separation Grade III | 6–12 weeks |

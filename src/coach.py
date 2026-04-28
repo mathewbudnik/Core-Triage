@@ -1,0 +1,575 @@
+"""
+CoreTriage coaching engine.
+
+generate_plan(profile, injury_flags, openai_client=None) -> plan dict
+
+Plan structure follows the SESSION_SCHEMA defined in the architecture plan:
+- Sessions indexed by session_index + week + day_in_week (not day names)
+- Every exercise has: exercise, detail, sets, reps, rest_seconds, effort_note, benchmark
+- Injury flags gate certain exercise types (hangboard, heel-hooks, etc.)
+- GPT-4o used for coach_note if client available, otherwise falls back to static text
+"""
+
+from __future__ import annotations
+
+import json
+from datetime import date
+from typing import Any, Dict, List, Optional
+
+
+# ---------------------------------------------------------------------------
+# Exercise library blocks
+# ---------------------------------------------------------------------------
+
+def _hangboard_block(experience: str) -> List[Dict]:
+    if experience in ("beginner",):
+        return [
+            {
+                "exercise": "Half-crimp hangs",
+                "detail": "Shoulder-width on 20mm edge, half-crimp grip",
+                "sets": 4,
+                "reps": "7s on / 3s off",
+                "rest_seconds": 120,
+                "effort_note": "~80% of max — you should be able to complete all reps but feel challenged",
+                "benchmark": "Beginner target: hang 7s at 80–90% body weight on a 20mm edge",
+            },
+            {
+                "exercise": "Open-hand hangs",
+                "detail": "Same edge, open-hand position — gentler on pulleys",
+                "sets": 3,
+                "reps": "7s on / 3s off",
+                "rest_seconds": 120,
+                "effort_note": "Should feel distinct from half-crimp — don't white-knuckle",
+                "benchmark": "This position recruits the A2 pulley less — use it as a recovery set",
+            },
+        ]
+    if experience in ("intermediate",):
+        return [
+            {
+                "exercise": "Max-weight half-crimp hangs",
+                "detail": "20mm edge, add weight via belt/vest",
+                "sets": 5,
+                "reps": "10s on / 50s off",
+                "rest_seconds": 180,
+                "effort_note": "True max — you should barely complete 10s. Log the added weight.",
+                "benchmark": "Intermediate: typically +5–15 kg on 20mm at 10s",
+            },
+            {
+                "exercise": "Open-hand density hangs",
+                "detail": "18mm edge, open hand, bodyweight",
+                "sets": 4,
+                "reps": "6 × (7s on / 3s off)",
+                "rest_seconds": 180,
+                "effort_note": "Accumulate time under tension — pace yourself evenly across all 6 reps",
+                "benchmark": "If you can't complete 6 reps, drop to 5 and build over weeks",
+            },
+        ]
+    # advanced / elite
+    return [
+        {
+            "exercise": "Max-weight pinch hangs",
+            "detail": "Pinch block or wide pinch on board, add weight",
+            "sets": 5,
+            "reps": "10s on / 50s off",
+            "rest_seconds": 180,
+            "effort_note": "Target ≥ 120% body weight across all grip positions over the mesocycle",
+            "benchmark": "Elite: pinch at bodyweight is the baseline — train beyond",
+        },
+        {
+            "exercise": "One-arm lock-off hangs",
+            "detail": "Assisted one-arm on 20mm, assistance via pulley or foot loop",
+            "sets": 4,
+            "reps": "5s per arm",
+            "rest_seconds": 120,
+            "effort_note": "Reduce assistance each session — track assistance weight",
+            "benchmark": "Goal: unassisted 5s one-arm hang within 6–8 weeks",
+        },
+    ]
+
+
+def _power_block(experience: str) -> List[Dict]:
+    if experience == "beginner":
+        return [
+            {
+                "exercise": "Feet-on campusing",
+                "detail": "Use campus rungs with feet on. Match each rung before moving up.",
+                "sets": 4,
+                "reps": "5 moves",
+                "rest_seconds": 120,
+                "effort_note": "Explosive pull — don't muscle through slowly",
+                "benchmark": "Beginner: focus on keeping hips in and generating power from lats",
+            },
+        ]
+    if experience == "intermediate":
+        return [
+            {
+                "exercise": "Campus board 1-3-5",
+                "detail": "Start on rung 1, skip to 3, skip to 5. No feet.",
+                "sets": 5,
+                "reps": "3 ladders each arm leading",
+                "rest_seconds": 180,
+                "effort_note": "Each move should feel explosive — if it's slow, rest more",
+                "benchmark": "Intermediate: 1-3-5 is the baseline. Progress to 1-4-7 over the cycle.",
+            },
+            {
+                "exercise": "Double dynos",
+                "detail": "Jump both hands simultaneously to a higher pair of rungs",
+                "sets": 4,
+                "reps": "4 attempts",
+                "rest_seconds": 180,
+                "effort_note": "Commit fully — half-committed dynos cause injuries",
+                "benchmark": "Most intermediate climbers hit 2-rung dynos; target 3-rung by end of phase",
+            },
+        ]
+    return [
+        {
+            "exercise": "Campus board 1-5-8",
+            "detail": "Max-distance campus ladders, both arms",
+            "sets": 6,
+            "reps": "3 ladders each arm",
+            "rest_seconds": 240,
+            "effort_note": "Full rest between sets — this is CNS-intensive, don't rush",
+            "benchmark": "Advanced/elite: 1-5-8 is baseline. 1-5-9 is the benchmark for elite fingerboarders.",
+        },
+    ]
+
+
+def _endurance_block(experience: str) -> List[Dict]:
+    base = [
+        {
+            "exercise": "4×4s",
+            "detail": "Pick 4 boulder problems 2–3 grades below max. Climb all 4 back to back, rest 3 min, repeat 4 rounds.",
+            "sets": 4,
+            "reps": "4 problems continuous",
+            "rest_seconds": 180,
+            "effort_note": "The last round should feel very hard — if it's easy, the problems are too easy",
+            "benchmark": "Your forearms should be noticeably pumped after round 2. Full pump by round 4.",
+        },
+        {
+            "exercise": "Linked route laps",
+            "detail": "Climb a moderate route, immediately downclimb or lower and repeat",
+            "sets": 3,
+            "reps": "5 laps per route",
+            "rest_seconds": 300,
+            "effort_note": "Pace yourself — the goal is maintaining technique under fatigue, not sprinting",
+            "benchmark": "Intermediate: maintain footwork quality on laps 4–5. Beginners: 3 laps is the target.",
+        },
+    ]
+    if experience in ("advanced", "elite"):
+        base.append({
+            "exercise": "ARCing (aerobic restoration and capillarity)",
+            "detail": "20–40 min of continuous easy climbing (50–60% effort). No stopping.",
+            "sets": 1,
+            "reps": "20–40 min",
+            "rest_seconds": 0,
+            "effort_note": "You should be able to hold a full conversation throughout — this is recovery training",
+            "benchmark": "If you're breathing hard, you're going too hard. The adaptation is in the sustained duration.",
+        })
+    return base
+
+
+def _strength_block(experience: str) -> List[Dict]:
+    return [
+        {
+            "exercise": "Pull-up variations",
+            "detail": "Weighted pull-ups or archer pull-ups depending on level",
+            "sets": 4 if experience != "beginner" else 3,
+            "reps": "5" if experience in ("advanced", "elite") else "8",
+            "rest_seconds": 180,
+            "effort_note": "Last rep should be hard but form must stay clean — no kipping",
+            "benchmark": {
+                "beginner": "Bodyweight pull-ups with full ROM. Use assistance band if needed.",
+                "intermediate": "Add 5–10 kg. Archer pull-ups count as assisted one-arm.",
+                "advanced": "Add 20+ kg. Progress toward one-arm pull-ups.",
+                "elite": "One-arm pull-up training is the standard.",
+            }.get(experience, "Full ROM, controlled descent"),
+        },
+        {
+            "exercise": "Front lever progressions",
+            "detail": "Tuck → advanced tuck → straddle → full. Hold each for 3×5s.",
+            "sets": 4,
+            "reps": "3 × 5s holds",
+            "rest_seconds": 120,
+            "effort_note": "Hold the position where you're working — don't sacrifice form for a harder position",
+            "benchmark": "Intermediate: advanced tuck. Advanced: straddle. Elite: full front lever.",
+        },
+        {
+            "exercise": "Core tension: hollow body holds",
+            "detail": "Supine, arms overhead, press low back flat to floor, lift legs to ~30°",
+            "sets": 3,
+            "reps": "30s",
+            "rest_seconds": 60,
+            "effort_note": "If low back lifts off the floor, raise legs higher — quality over quantity",
+            "benchmark": "Beginners: 15s is a solid starting point. Build to 45s over the phase.",
+        },
+    ]
+
+
+def _footwork_block() -> List[Dict]:
+    return [
+        {
+            "exercise": "Silent feet drills",
+            "detail": "Climb a moderate route/problem — no sound when placing feet. Reset if you hear a foot.",
+            "sets": 3,
+            "reps": "5 problems",
+            "rest_seconds": 90,
+            "effort_note": "Slow down — this is technique, not training to failure",
+            "benchmark": "Even V8+ climbers benefit from this drill. Precision > speed at all levels.",
+        },
+        {
+            "exercise": "Slab technique — smearing",
+            "detail": "Find or set 3–4 slab sequences that require smearing. Focus on hip position.",
+            "sets": 2,
+            "reps": "10 min",
+            "rest_seconds": 120,
+            "effort_note": "Weight over feet, trust the rubber — lean into the discomfort of slab",
+            "benchmark": "Most climbers undertrain slab. 10 min of focused slab work pays dividends on overhang too.",
+        },
+    ]
+
+
+def _mental_block() -> List[Dict]:
+    return [
+        {
+            "exercise": "Headpoint practice",
+            "detail": "Take a route/problem at your limit. Rehearse the crux moves on TR or with padding first, then commit.",
+            "sets": 1,
+            "reps": "2–3 attempts from the ground",
+            "rest_seconds": 300,
+            "effort_note": "The goal is committing to the move — falling is part of the process",
+            "benchmark": "Most climbers avoid this drill. Scheduling it makes it happen.",
+        },
+        {
+            "exercise": "Breath reset drill",
+            "detail": "Before each attempt, take 3 slow diaphragmatic breaths. On the wall, breathe at every rest hold.",
+            "sets": 1,
+            "reps": "Every attempt in the session",
+            "rest_seconds": 0,
+            "effort_note": "This is a habit drill — the reps are every single attempt, not a separate exercise block",
+            "benchmark": "Most climbers forget to breathe on hard moves. This drill rewires that pattern.",
+        },
+    ]
+
+
+# ---------------------------------------------------------------------------
+# Warm-up / cool-down templates
+# ---------------------------------------------------------------------------
+
+WARM_UP_BASE = [
+    "5 min light cardio (jumping jacks, easy cycling, or brisk walk)",
+    "Joint rotations: wrists × 20, elbows × 10, shoulders × 10 each direction",
+    "Finger tendon glides: 10 reps each finger individually",
+    "2–3 easy problems/routes well below max (warm-up, not training)",
+]
+
+COOL_DOWN_BASE = [
+    "Forearm flexor stretch: wrist extension, 30s per arm × 2",
+    "Forearm extensor stretch: wrist flexion, 30s per arm × 2",
+    "Doorway chest opener: 30s",
+    "Lat stretch (overhead on a bar or strap), 30s per side",
+    "Optional: 5 min easy walking or light cycling",
+]
+
+
+# ---------------------------------------------------------------------------
+# Static coach notes (fallback when no OpenAI)
+# ---------------------------------------------------------------------------
+
+STATIC_COACH_NOTES = {
+    "hangboard": (
+        "Finger strength is the highest-leverage adaptation for most climbers. "
+        "The key is consistency over months, not intensity in one session. "
+        "Log your weights and hang times every session — small increments compound."
+    ),
+    "power": (
+        "Power work recruits fast-twitch fibers that endurance climbing ignores. "
+        "Full rest between sets is non-negotiable — undertested power is just endurance. "
+        "If you're tired from yesterday, skip this session and come back fresh."
+    ),
+    "endurance": (
+        "Pump tolerance is built in the discomfort zone. The last round should be genuinely hard. "
+        "If it isn't, the problems are too easy or you're resting too long between sets. "
+        "Keep a training journal — progress is easier to see over 4–6 weeks than session to session."
+    ),
+    "strength": (
+        "Pulling strength underpins everything from dynos to long lock-offs. "
+        "Train it fresh, at the start of a session, with full rest. "
+        "Strength doesn't need volume — it needs quality and progressive overload."
+    ),
+    "technique": (
+        "Technique sessions pay the biggest long-term dividends but feel the least productive in the moment. "
+        "Slow down intentionally — the goal is rewiring movement patterns, not getting pumped. "
+        "Video yourself occasionally: what you feel and what you do are often very different."
+    ),
+    "rest": (
+        "Rest days are when adaptation happens — the session just creates the stimulus. "
+        "Light walking, mobility work, or easy stretching is fine. "
+        "Protect your sleep: finger tendons rebuild primarily during deep sleep."
+    ),
+    "project": (
+        "Project sessions should feel like play with a purpose. "
+        "Try moves in isolation, find new beta, and commit to attempts you'd normally back off. "
+        "The breakthroughs usually come after a rest day — trust the process."
+    ),
+}
+
+
+# ---------------------------------------------------------------------------
+# Injury gating
+# ---------------------------------------------------------------------------
+
+FINGER_REGIONS = {"finger", "a2 pulley", "pulley", "hand", "wrist"}
+SHOULDER_REGIONS = {"shoulder", "rotator cuff", "bicep", "elbow"}
+KNEE_REGIONS = {"knee", "ankle", "hip", "leg"}
+
+
+def _is_injured(region: str, injury_flags: List[str]) -> bool:
+    region_lower = region.lower()
+    return any(region_lower in flag.lower() for flag in injury_flags)
+
+
+def _finger_injured(injury_flags: List[str]) -> bool:
+    return any(
+        any(r in flag.lower() for r in FINGER_REGIONS)
+        for flag in injury_flags
+    )
+
+
+def _shoulder_injured(injury_flags: List[str]) -> bool:
+    return any(
+        any(r in flag.lower() for r in SHOULDER_REGIONS)
+        for flag in injury_flags
+    )
+
+
+def _knee_injured(injury_flags: List[str]) -> bool:
+    return any(
+        any(r in flag.lower() for r in KNEE_REGIONS)
+        for flag in injury_flags
+    )
+
+
+# ---------------------------------------------------------------------------
+# Plan templates
+# ---------------------------------------------------------------------------
+
+# Template: (session_type, primary_blocks_fn) pairs per week
+# Each entry is a list of day descriptors for that week structure
+
+def _goal_template(goal: str, days: int, experience: str, injury_flags: List[str]) -> List[Dict]:
+    """
+    Build a 4-week plan as a flat list of session dicts.
+    Returns sessions ordered by session_index.
+    """
+    sessions = []
+    idx = 0
+
+    finger_ok = not _finger_injured(injury_flags)
+    shoulder_ok = not _shoulder_injured(injury_flags)
+
+    for week in range(1, 5):
+        is_deload = (week == 4)
+
+        for day_in_week in range(1, days + 1):
+            session_type, main_blocks = _pick_session(
+                goal, day_in_week, days, week, is_deload,
+                experience, finger_ok, shoulder_ok, injury_flags
+            )
+
+            coach_note = STATIC_COACH_NOTES.get(session_type, STATIC_COACH_NOTES["project"])
+
+            sessions.append({
+                "session_index": idx,
+                "week": week,
+                "day_in_week": day_in_week,
+                "type": session_type,
+                "duration_min": _duration(session_type, experience, is_deload),
+                "warm_up": WARM_UP_BASE,
+                "main": main_blocks,
+                "cool_down": COOL_DOWN_BASE,
+                "coach_note": coach_note,
+            })
+            idx += 1
+
+    return sessions
+
+
+def _pick_session(
+    goal: str, day: int, total_days: int,
+    week: int, is_deload: bool,
+    experience: str, finger_ok: bool, shoulder_ok: bool,
+    injury_flags: List[str],
+) -> tuple[str, List[Dict]]:
+    """Return (session_type, main_blocks) for a given day slot."""
+
+    volume_scale = 0.6 if is_deload else 1.0
+
+    if goal == "grade_progression":
+        schedule = {
+            1: ("hangboard", lambda: _hangboard_block(experience) if finger_ok else _strength_block(experience)),
+            2: ("power", lambda: _power_block(experience) if finger_ok else _endurance_block(experience)),
+            3: ("project", lambda: [_footwork_block()[0], _mental_block()[0]]),
+            4: ("strength", lambda: _strength_block(experience)),
+            5: ("endurance", lambda: _endurance_block(experience)),
+        }
+    elif goal == "route_endurance":
+        schedule = {
+            1: ("endurance", lambda: _endurance_block(experience)),
+            2: ("strength", lambda: _strength_block(experience)),
+            3: ("endurance", lambda: _endurance_block(experience)),
+            4: ("technique", lambda: _footwork_block()),
+            5: ("endurance", lambda: _endurance_block(experience)),
+        }
+    elif goal == "competition":
+        schedule = {
+            1: ("power", lambda: _power_block(experience) if finger_ok else _strength_block(experience)),
+            2: ("hangboard", lambda: _hangboard_block(experience) if finger_ok else _endurance_block(experience)),
+            3: ("project", lambda: _mental_block()),
+            4: ("strength", lambda: _strength_block(experience)),
+            5: ("power", lambda: _power_block(experience) if finger_ok else _footwork_block()),
+        }
+    elif goal == "injury_prevention":
+        schedule = {
+            1: ("technique", lambda: _footwork_block()),
+            2: ("strength", lambda: _strength_block(experience)),
+            3: ("endurance", lambda: _endurance_block(experience)),
+            4: ("technique", lambda: _footwork_block() + _mental_block()),
+            5: ("strength", lambda: _strength_block(experience)),
+        }
+    else:  # general
+        schedule = {
+            1: ("hangboard", lambda: _hangboard_block(experience) if finger_ok else _strength_block(experience)),
+            2: ("endurance", lambda: _endurance_block(experience)),
+            3: ("technique", lambda: _footwork_block()),
+            4: ("strength", lambda: _strength_block(experience)),
+            5: ("project", lambda: _mental_block()),
+        }
+
+    slot = ((day - 1) % len(schedule)) + 1
+    session_type, blocks_fn = schedule.get(slot, schedule[1])
+    blocks = blocks_fn()
+
+    if is_deload:
+        blocks = blocks[:max(1, len(blocks) // 2)]
+
+    return session_type, blocks
+
+
+def _duration(session_type: str, experience: str, is_deload: bool) -> int:
+    base = {
+        "hangboard": 60,
+        "power": 75,
+        "project": 90,
+        "strength": 60,
+        "endurance": 75,
+        "technique": 60,
+        "rest": 0,
+    }.get(session_type, 60)
+    if experience == "beginner":
+        base = min(base, 60)
+    if is_deload:
+        base = int(base * 0.7)
+    return base
+
+
+# ---------------------------------------------------------------------------
+# Plan metadata
+# ---------------------------------------------------------------------------
+
+GOAL_NAMES = {
+    "grade_progression": "Grade Progression",
+    "route_endurance": "Route Endurance",
+    "competition": "Competition Peak",
+    "injury_prevention": "Injury Prevention",
+    "general": "General Fitness",
+}
+
+GOAL_PHASES = {
+    "grade_progression": "power",
+    "route_endurance": "base",
+    "competition": "performance",
+    "injury_prevention": "base",
+    "general": "base",
+}
+
+
+# ---------------------------------------------------------------------------
+# GPT-4o coach note enrichment
+# ---------------------------------------------------------------------------
+
+def _enrich_coach_notes(sessions: List[Dict], profile: Dict, openai_client: Any) -> None:
+    """Replace static coach notes with GPT-4o generated ones (in-place)."""
+    if not openai_client:
+        return
+
+    try:
+        for session in sessions[:3]:  # enrich first 3 sessions to limit tokens
+            prompt = (
+                f"You are an expert climbing coach. Write a 2-sentence motivational coach note "
+                f"for this training session. Be specific, practical, and encouraging.\n\n"
+                f"Athlete: {profile.get('experience_level')} climber, "
+                f"{profile.get('years_climbing')} years, "
+                f"goal: {profile.get('primary_goal')}.\n"
+                f"Session type: {session['type']}, week {session['week']} of 4.\n"
+                f"Main exercises: {', '.join(e['exercise'] for e in session['main'][:3])}."
+            )
+            response = openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.7,
+                max_tokens=120,
+            )
+            session["coach_note"] = response.choices[0].message.content.strip()
+    except Exception:
+        pass  # fall through to static notes already in place
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
+def generate_plan(
+    profile: Dict[str, Any],
+    injury_flags: List[str],
+    openai_client: Any = None,
+) -> Dict[str, Any]:
+    """
+    Generate a 4-week personalized training plan.
+
+    Args:
+        profile: athlete profile dict from get_profile()
+        injury_flags: list of injury area strings from recent triage sessions
+        openai_client: optional OpenAI client for GPT-4o coach notes
+
+    Returns:
+        plan dict ready to be passed to save_plan()
+    """
+    goal = profile.get("primary_goal", "general")
+    experience = profile.get("experience_level", "beginner")
+    days = max(1, min(6, profile.get("days_per_week", 3)))
+
+    sessions = _goal_template(goal, days, experience, injury_flags)
+
+    if openai_client:
+        _enrich_coach_notes(sessions, profile, openai_client)
+
+    injury_note = ""
+    if injury_flags:
+        injury_note = (
+            f" Some exercises have been adjusted based on recent injury history "
+            f"({', '.join(injury_flags[:3])})."
+        )
+
+    return {
+        "name": f"{GOAL_NAMES.get(goal, 'Custom')} — {experience.title()} Plan",
+        "phase": GOAL_PHASES.get(goal, "base"),
+        "duration_weeks": 4,
+        "start_date": str(date.today()),
+        "plan_data": {
+            "sessions": sessions,
+            "injury_note": injury_note,
+            "goal": goal,
+            "experience": experience,
+            "days_per_week": days,
+        },
+    }

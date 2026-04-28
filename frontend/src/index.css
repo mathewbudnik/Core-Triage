@@ -3,6 +3,12 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --color-accent: #14b8a6;
+    --color-accent2: #fb7185;
+    --color-accent3: #fbbf24;
+  }
+
   * {
     box-sizing: border-box;
   }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Clock, Trash2, AlertTriangle, Database, RefreshCw, Loader2, LogIn } from 'lucide-react'
 import { getSessions, fetchSession, deleteSession } from '../api'
@@ -23,7 +23,7 @@ export default function HistoryTab({ dbReady, user, onLoginClick }) {
     setError(null)
     try {
       const data = await getSessions(50)
-      setSessions(data)
+      setSessions(data.map((s) => ({ ...s, formattedDate: new Date(s.created_at).toLocaleString() })))
     } catch (err) {
       setError(err.message)
     } finally {
@@ -57,6 +57,11 @@ export default function HistoryTab({ dbReady, user, onLoginClick }) {
       setDeleting(false)
     }
   }
+
+  const selectedDate = useMemo(
+    () => selected ? new Date(selected.created_at).toLocaleString() : null,
+    [selected]
+  )
 
   if (!dbReady) {
     return (
@@ -158,7 +163,7 @@ export default function HistoryTab({ dbReady, user, onLoginClick }) {
                   <div className="flex items-center gap-3 mt-1.5">
                     <span className="text-xs text-muted">{s.pain_type}</span>
                     <span className="text-xs text-muted/50">·</span>
-                    <span className="text-xs text-muted">{new Date(s.created_at).toLocaleString()}</span>
+                    <span className="text-xs text-muted">{s.formattedDate}</span>
                   </div>
                 </motion.button>
               ))}
@@ -188,7 +193,7 @@ export default function HistoryTab({ dbReady, user, onLoginClick }) {
                       ['Injury area', selected.injury_area],
                       ['Pain type', selected.pain_type],
                       ['Onset', selected.onset],
-                      ['Saved', new Date(selected.created_at).toLocaleString()],
+                      ['Saved', selectedDate],
                     ].map(([label, value]) => (
                       <div key={label} className="flex justify-between text-sm">
                         <span className="text-muted">{label}</span>

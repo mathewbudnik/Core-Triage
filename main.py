@@ -9,7 +9,6 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 import bcrypt
-import requests as http_requests
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -20,16 +19,36 @@ from pydantic import BaseModel
 from database import (
     create_user,
     delete_session,
+    get_active_plan,
+    get_or_create_thread,
+    get_profile,
     get_session,
+    get_thread_by_user,
+    get_thread_messages,
+    get_training_logs,
     get_user_by_email,
     init_db,
+    list_coach_threads,
     list_sessions,
+    log_training,
+    save_plan,
+    save_profile,
     save_session,
+    send_coach_message,
 )
+from dataclasses import asdict
+
 from src.render import build_query, format_citations
 from src.retriever import TfidfRetriever, load_kb
-from src.storage import intake_to_dict
-from src.triage import Intake, bucket_possibilities, conservative_plan, red_flags
+from src.triage import (
+    Intake,
+    bucket_possibilities,
+    classify_severity,
+    conservative_plan,
+    get_return_to_climbing_protocol,
+    get_training_modifications,
+    red_flags,
+)
 
 # ---------------------------------------------------------------------------
 # Auth config
@@ -38,6 +57,7 @@ from src.triage import Intake, bucket_possibilities, conservative_plan, red_flag
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-in-prod")
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_DAYS = 30
+COACH_EMAIL = os.getenv("COACH_EMAIL", "mathewbudnik@gmail.com")
 
 bearer = HTTPBearer(auto_error=False)
 
@@ -79,11 +99,13 @@ db_ready = False
 db_error = ""
 _kb = None
 _retriever = None
+_openai_client = None
+_chat_system_prompt = ""
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global db_ready, db_error, _kb, _retriever
+    global db_ready, db_error, _kb, _retriever, _openai_client, _chat_system_prompt
     try:
         init_db()
         db_ready = True
@@ -91,6 +113,12 @@ async def lifespan(app: FastAPI):
         db_error = str(e)
     _kb = load_kb("kb")
     _retriever = TfidfRetriever(_kb)
+    _chat_system_prompt = (
+        open("src/prompts/chat_system.txt").read().strip()
+    )
+    api_key = os.getenv("OPENAI_API_KEY")
+    if api_key:
+        _openai_client = OpenAI(api_key=api_key)
     yield
 
 
@@ -140,7 +168,6 @@ class ChatRequest(BaseModel):
     message: str
     history: List[ChatMessage] = []
     mode: str = "kb"
-    model: str = "llama3.1:8b"
     k: int = 4
 
 
@@ -159,6 +186,42 @@ class RegisterRequest(BaseModel):
 class LoginRequest(BaseModel):
     email: str
     password: str
+
+
+class ProfileRequest(BaseModel):
+    experience_level: str
+    years_climbing: int
+    primary_discipline: str
+    max_grade_boulder: str = ""
+    max_grade_route: str = ""
+    days_per_week: int
+    session_length_min: int
+    equipment: List[str] = []
+    weaknesses: List[str] = []
+    primary_goal: str
+    goal_grade: str = ""
+
+
+class GeneratePlanRequest(BaseModel):
+    use_injury_data: bool = True
+
+
+class TrainingLogRequest(BaseModel):
+    date: Optional[str] = None
+    session_type: str
+    duration_min: int
+    intensity: int
+    grades_sent: str = ""
+    notes: str = ""
+
+
+class CoachMessageRequest(BaseModel):
+    content: str
+
+
+class CoachReplyRequest(BaseModel):
+    thread_id: int
+    content: str
 
 
 # ---------------------------------------------------------------------------
@@ -220,19 +283,31 @@ def triage(req: IntakeRequest):
         free_text=req.free_text,
     )
 
-    flags = red_flags(intake)
-    buckets = bucket_possibilities(intake)
-    plan = conservative_plan(intake)
+    try:
+        flags = red_flags(intake)
+        buckets = bucket_possibilities(intake)
+        plan = conservative_plan(intake)
+        severity = classify_severity(intake)
+        training_mods = get_training_modifications(intake)
+        return_protocol = get_return_to_climbing_protocol(intake)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Triage processing error: {exc}") from exc
 
-    q = build_query(intake)
-    retrieved = _retriever.query(q, k=req.k)
-    citations = format_citations(retrieved)
+    try:
+        q = build_query(intake)
+        retrieved = _retriever.query(q, k=req.k)
+        citations = format_citations(retrieved)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Retrieval error: {exc}") from exc
 
     return {
-        "intake": intake_to_dict(intake),
+        "intake": asdict(intake),
         "red_flags": flags,
+        "severity": severity,
         "buckets": [{"title": t, "why": w} for t, w in buckets],
         "plan": plan,
+        "training_modifications": training_mods,
+        "return_protocol": return_protocol,
         "citations": citations,
     }
 
@@ -244,27 +319,17 @@ def chat(req: ChatRequest):
     ctx_parts = [f"SOURCE: {chunk.source}\n{chunk.text}" for chunk, _ in hits]
     ctx = "\n\n---\n\n".join(ctx_parts)
 
-    system_prompt = (
-        "You are CoreTriage Assistant, an educational climbing injury triage and rehab guidance helper. "
-        "Do NOT diagnose. Use conservative language (possible, common patterns). "
-        "Always include a short safety note: if worsening, severe pain at rest, numbness/tingling, "
-        "significant weakness, instability, major swelling/bruising, or trauma—seek evaluation. "
-        "Prefer actionable, low-risk guidance: load reduction, symptom monitoring, progression rules. "
-        "When you use the provided knowledge base context, cite the source filenames at the end.\n\n"
-        f"KNOWLEDGE BASE CONTEXT:\n{ctx}"
-    )
+    system_prompt = _chat_system_prompt + f"\n\nKNOWLEDGE BASE CONTEXT:\n{ctx}"
 
     messages = [{"role": m.role, "content": m.content} for m in req.history]
     messages.append({"role": "user", "content": req.message})
 
     text = ""
     if req.mode == "gpt":
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
+        if not _openai_client:
             return {"response": "OPENAI_API_KEY not set.", "citations": citations}
         try:
-            client = OpenAI(api_key=api_key)
-            response = client.chat.completions.create(
+            response = _openai_client.chat.completions.create(
                 model="gpt-4o",
                 messages=[{"role": "system", "content": system_prompt}] + messages,
                 temperature=0.2,
@@ -279,41 +344,33 @@ def chat(req: ChatRequest):
                 text = "OpenAI auth error: the API key is invalid."
             else:
                 text = f"OpenAI error: {msg}"
-    elif req.mode == "ollama":
-        try:
-            payload = {
-                "model": req.model,
-                "messages": [{"role": "system", "content": system_prompt}] + messages,
-                "stream": False,
-            }
-            r = http_requests.post("http://localhost:11434/api/chat", json=payload, timeout=60)
-            r.raise_for_status()
-            text = r.json().get("message", {}).get("content", "")
-        except Exception as e:
-            text = f"Could not reach Ollama at http://localhost:11434. Error: {e}"
     else:
-        bullets = ["Here are the most relevant knowledge-base notes I found (educational only):"]
-        for c in citations[:5]:
-            bullets.append(f"- {c}")
-        bullets.append(
-            "\nSafety: If worsening, severe pain at rest, numbness/tingling, significant weakness, "
-            "instability, major swelling/bruising, or trauma—seek evaluation."
-        )
-        text = "\n".join(bullets)
+        # KB-only mode: present the retrieved chunk content directly.
+        # The previous code only listed filenames; this now shows the actual text.
+        parts = []
+        for chunk, score in hits:
+            if score < 0.05:
+                continue
+            content = chunk.text.strip()
+            if len(content) > 2000:
+                content = content[:2000] + "\n\n*(content truncated — see full file for details)*"
+            parts.append(f"**{chunk.source}** *(relevance {score:.2f})*\n\n{content}")
 
-    if citations and req.mode in {"gpt", "ollama"}:
+        if parts:
+            text = "\n\n---\n\n".join(parts)
+            text += (
+                "\n\n---\n\n*Educational only — not a medical diagnosis. "
+                "Safety: if worsening, severe pain at rest, numbness/tingling, "
+                "significant weakness, instability, major swelling/bruising, "
+                "or trauma — seek professional evaluation.*"
+            )
+        else:
+            text = "No relevant content found in the knowledge base for your query."
+
+    if citations and req.mode == "gpt":
         text = text.strip() + "\n\nSources used: " + ", ".join([c.split(" (")[0] for c in citations[:5]])
 
     return {"response": text, "citations": citations}
-
-
-@app.get("/api/ollama/status")
-def ollama_status():
-    try:
-        r = http_requests.get("http://localhost:11434/api/tags", timeout=1.5)
-        return {"available": r.status_code == 200}
-    except Exception:
-        return {"available": False}
 
 
 # ---------------------------------------------------------------------------
@@ -385,3 +442,145 @@ def remove_session(session_id: int, user: Dict = Depends(get_current_user)):
 @app.get("/api/kb")
 def kb_files():
     return {"files": [c.source for c in _kb]}
+
+
+# ---------------------------------------------------------------------------
+# Profile endpoints (require auth)
+# ---------------------------------------------------------------------------
+
+
+@app.post("/api/profile")
+def upsert_profile(req: ProfileRequest, user: Dict = Depends(get_current_user)):
+    save_profile(
+        user["id"],
+        {
+            "experience_level": req.experience_level,
+            "years_climbing": req.years_climbing,
+            "primary_discipline": req.primary_discipline,
+            "max_grade_boulder": req.max_grade_boulder,
+            "max_grade_route": req.max_grade_route,
+            "days_per_week": req.days_per_week,
+            "session_length_min": req.session_length_min,
+            "equipment": req.equipment,
+            "weaknesses": req.weaknesses,
+            "primary_goal": req.primary_goal,
+            "goal_grade": req.goal_grade,
+        },
+    )
+    return {"ok": True}
+
+
+@app.get("/api/profile")
+def fetch_profile(user: Dict = Depends(get_current_user)):
+    profile = get_profile(user["id"])
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not set up yet")
+    return profile
+
+
+# ---------------------------------------------------------------------------
+# Plan endpoints (require auth)
+# ---------------------------------------------------------------------------
+
+
+@app.post("/api/plans/generate")
+def generate_plan_endpoint(req: GeneratePlanRequest, user: Dict = Depends(get_current_user)):
+    from src.coach import generate_plan
+
+    profile = get_profile(user["id"])
+    if not profile:
+        raise HTTPException(status_code=400, detail="Complete your profile before generating a plan")
+
+    injury_flags: List[str] = []
+    if req.use_injury_data:
+        rows = list_sessions(user["id"], limit=5)
+        injury_flags = [r[1] for r in rows]  # injury_area column
+
+    try:
+        plan = generate_plan(profile, injury_flags, openai_client=_openai_client)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Plan generation error: {exc}") from exc
+
+    plan_id = save_plan(user["id"], plan)
+    return {"id": plan_id, "plan": plan}
+
+
+@app.get("/api/plans/active")
+def get_plan(user: Dict = Depends(get_current_user)):
+    plan = get_active_plan(user["id"])
+    if not plan:
+        raise HTTPException(status_code=404, detail="No active plan")
+    return plan
+
+
+# ---------------------------------------------------------------------------
+# Training log endpoints (require auth)
+# ---------------------------------------------------------------------------
+
+
+@app.post("/api/training")
+def log_session(req: TrainingLogRequest, user: Dict = Depends(get_current_user)):
+    log_id = log_training(
+        user["id"],
+        {
+            "date": req.date,
+            "session_type": req.session_type,
+            "duration_min": req.duration_min,
+            "intensity": req.intensity,
+            "grades_sent": req.grades_sent,
+            "notes": req.notes,
+        },
+    )
+    return {"id": log_id}
+
+
+@app.get("/api/training")
+def fetch_training_logs(limit: int = 30, user: Dict = Depends(get_current_user)):
+    return get_training_logs(user["id"], limit)
+
+
+# ---------------------------------------------------------------------------
+# Coach messaging endpoints (require auth)
+# ---------------------------------------------------------------------------
+
+
+def require_coach(user: Dict = Depends(get_current_user)) -> Dict:
+    if user["email"] != COACH_EMAIL:
+        raise HTTPException(status_code=403, detail="Coach access only")
+    return user
+
+
+@app.post("/api/coach/message")
+def user_send_message(req: CoachMessageRequest, user: Dict = Depends(get_current_user)):
+    if not req.content.strip():
+        raise HTTPException(status_code=400, detail="Message cannot be empty")
+    thread_id = get_or_create_thread(user["id"])
+    msg_id = send_coach_message(thread_id, "user", req.content.strip())
+    return {"id": msg_id, "thread_id": thread_id}
+
+
+@app.get("/api/coach/thread")
+def user_get_thread(user: Dict = Depends(get_current_user)):
+    thread = get_thread_by_user(user["id"])
+    if not thread:
+        return {"messages": [], "thread": None}
+    messages = get_thread_messages(thread["id"])
+    return {"messages": messages, "thread": thread}
+
+
+@app.get("/api/admin/coach/threads")
+def admin_list_threads(_coach: Dict = Depends(require_coach)):
+    return list_coach_threads()
+
+
+@app.get("/api/admin/coach/threads/{thread_id}/messages")
+def admin_get_messages(thread_id: int, _coach: Dict = Depends(require_coach)):
+    return get_thread_messages(thread_id)
+
+
+@app.post("/api/admin/coach/reply")
+def admin_reply(req: CoachReplyRequest, _coach: Dict = Depends(require_coach)):
+    if not req.content.strip():
+        raise HTTPException(status_code=400, detail="Reply cannot be empty")
+    msg_id = send_coach_message(req.thread_id, "coach", req.content.strip())
+    return {"id": msg_id}

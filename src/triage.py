@@ -22,138 +22,628 @@ class Intake:
     free_text: str
 
 
-# Simple safety screen: returns reasons to seek evaluation based on common red flags
-def red_flags(i: Intake) -> List[str]:
-    flags: List[str] = []
-    # Each check is intentionally conservative (educational only, not diagnostic)
+# ── Emergency flag detection ────────────────────────────────────────────────
+# Returns emergency-level red flags only — these should always surface at top
 
-    if i.numbness == "Yes":
-        flags.append("Numbness/tingling can indicate nerve involvement.")
-    if i.weakness == "Significant":
-        flags.append("Significant weakness warrants evaluation, especially if sudden.")
-    if i.instability == "Yes":
-        flags.append("Instability (feels like slipping/dislocating) warrants evaluation.")
-    if i.bruising == "Yes" and i.onset == "Sudden":
-        flags.append("Sudden onset with bruising can indicate a more significant tissue injury.")
-    if i.swelling == "Yes" and i.severity >= 7:
-        flags.append("High pain with swelling may need evaluation.")
-    if "pop" in i.free_text.lower() or "snap" in i.free_text.lower():
-        flags.append("Reported pop/snap during injury is a red flag to consider evaluation.")
-    # Wrist-specific: fall on outstretched hand with snuffbox pain is a scaphoid red flag
-    if "wrist" in i.region.lower() and i.onset == "Sudden":
+def get_emergency_flags(i: Intake) -> List[str]:
+    """Return only emergency-level red flags requiring immediate medical care."""
+    flags: List[str] = []
+    region = i.region.lower()
+    text   = i.free_text.lower()
+
+    # Cauda equina — lower back + bladder/bowel change is an emergency
+    if ("lower back" in region or "back" in region):
+        if any(w in text for w in ("bladder", "bowel", "incontinence", "saddle", "groin numb")):
+            flags.append(
+                "EMERGENCY: Bladder or bowel symptoms with back pain may indicate cauda equina syndrome. "
+                "Call 911 or go to the ER immediately — do not wait."
+            )
+
+    # Bilateral leg symptoms with back pain
+    if ("lower back" in region or "back" in region) and i.numbness == "Yes" and i.weakness == "Significant":
         flags.append(
-            "Sudden wrist injury — if there is tenderness at the base of the thumb (anatomical snuffbox), "
-            "seek evaluation to rule out scaphoid fracture before returning to climbing."
+            "EMERGENCY: Significant leg weakness and numbness with back pain requires urgent evaluation — "
+            "possible spinal cord involvement. Call 911."
         )
+
+    # Visible bowstringing — finger
+    if "finger" in region and any(w in text for w in ("bowstring", "bow string", "cord visible", "tendon visible")):
+        flags.append(
+            "EMERGENCY: Visible bowstringing (tendon cord across palm side of finger) requires imaging and "
+            "surgical consultation before any return to climbing."
+        )
+
+    # Septic tenosynovitis — finger with fever
+    if "finger" in region and any(w in text for w in ("fever", "hot", "spreading", "red streak")):
+        flags.append(
+            "EMERGENCY: Fever with rapidly spreading warmth and redness in a finger may indicate septic "
+            "tenosynovitis — a hand surgery emergency. Go to the ER immediately."
+        )
+
+    # Complete bicep rupture
+    if "elbow" in region and any(w in text for w in ("popeye", "deformity", "muscle moved", "bunched")):
+        flags.append(
+            "EMERGENCY: A Popeye deformity (muscle belly bunched in the upper arm) after an elbow pop "
+            "indicates complete distal biceps rupture — surgical referral required within 2–3 weeks."
+        )
+
+    # Achilles rupture
+    if ("ankle" in region or "foot" in region) and i.weakness == "Significant":
+        if any(w in text for w in ("snap", "pop", "tiptoe", "plantarflex")):
+            flags.append(
+                "EMERGENCY: Inability to push up on tiptoe after a snap at the ankle may indicate Achilles "
+                "rupture — requires urgent surgical evaluation."
+            )
 
     return flags
 
 
-# Heuristic buckets: likely patterns given the region + mechanism (not a diagnosis)
+# ── Standard safety screen ──────────────────────────────────────────────────
+
+def red_flags(i: Intake) -> List[str]:
+    """Returns reasons to seek evaluation based on common red flags.
+    Includes emergency flags first, then urgent and standard flags."""
+    flags: List[str] = get_emergency_flags(i)
+    region = i.region.lower()
+    text   = i.free_text.lower()
+
+    if i.numbness == "Yes":
+        flags.append("Numbness or tingling can indicate nerve involvement — worth evaluation.")
+    if i.weakness == "Significant":
+        flags.append("Significant weakness warrants evaluation, especially if sudden onset.")
+    if i.instability == "Yes":
+        flags.append("Instability (feels like slipping or dislocating) warrants evaluation.")
+    if i.bruising == "Yes" and i.onset == "Sudden":
+        flags.append("Sudden onset with bruising can indicate a more significant tissue injury.")
+    if i.swelling == "Yes" and i.severity >= 7:
+        flags.append("High pain with swelling may need evaluation.")
+    if any(w in text for w in ("pop", "snap", "crack", "tore")):
+        flags.append(
+            "A reported pop, snap, or crack at time of injury is a red flag — "
+            "consider evaluation before returning to climbing."
+        )
+
+    # Wrist / fall on outstretched hand — scaphoid red flag
+    if "wrist" in region and i.onset == "Sudden":
+        flags.append(
+            "Sudden wrist injury — if there is tenderness at the base of the thumb (anatomical snuffbox), "
+            "seek evaluation to rule out scaphoid fracture. Initial X-ray can be negative; CT or MRI may be needed."
+        )
+
+    # Finger — PIP extension block
+    if "finger" in region and any(w in text for w in ("can't straighten", "won't extend", "stuck bent", "pip")):
+        flags.append(
+            "A PIP joint that cannot be passively extended to neutral may indicate a central slip rupture "
+            "(Boutonnière deformity) — requires splinting within 72 hours to prevent permanent deformity."
+        )
+
+    # Ankle — Ottawa criteria prompt
+    if ("ankle" in region or "foot" in region) and i.onset == "Sudden":
+        flags.append(
+            "For ankle injuries after a fall or roll: if there is bone tenderness at the tip of the fibula or "
+            "medial malleolus, or you couldn't take 4 steps immediately after injury, an X-ray is recommended "
+            "(Ottawa Ankle Rules) to rule out fracture."
+        )
+
+    # Lower back radiculopathy
+    if ("lower back" in region or "back" in region) and i.numbness == "Yes":
+        flags.append(
+            "Numbness or tingling travelling down the leg from a back problem may indicate nerve root "
+            "compression (radiculopathy) — warrants evaluation, especially if worsening."
+        )
+
+    # Shoulder instability / dislocation
+    if "shoulder" in region and i.instability == "Yes":
+        flags.append(
+            "Shoulder instability or a history of dislocation/subluxation requires evaluation before "
+            "continuing dynamic overhead climbing."
+        )
+
+    # Catch-all: ensure that high-severity pain always surfaces at least one flag.
+    # classify_severity() can score "severe" on pain alone (score ≥ 8, or sudden ≥ 7) even when
+    # none of the specific pattern checks above triggered.  Without this, the results page would
+    # show a "Severe" banner alongside a "No major red flags" banner — a direct contradiction.
+    if not flags:
+        if i.severity >= 8:
+            flags.append(
+                f"Pain at {i.severity}/10 warrants professional evaluation — "
+                "high-intensity pain can indicate significant tissue injury even when other symptoms are absent."
+            )
+        elif i.onset == "Sudden" and i.severity >= 7:
+            flags.append(
+                f"Sudden-onset pain at {i.severity}/10 warrants evaluation to rule out significant structural injury "
+                "before returning to climbing."
+            )
+
+    return flags
+
+
+# ── Severity classification ─────────────────────────────────────────────────
+
+def classify_severity(i: Intake) -> Dict[str, str]:
+    """Classify injury severity and return recommended action."""
+    # Check for emergency flags first
+    emergency = get_emergency_flags(i)
+    if emergency:
+        return {
+            "level": "emergency",
+            "label": "Emergency",
+            "action": "Go to ER or call 911 immediately.",
+            "can_climb": "No",
+        }
+
+    score = i.severity
+    has_neuro    = i.numbness == "Yes" or i.weakness == "Significant"
+    has_instab   = i.instability == "Yes"
+    sudden_high  = i.onset == "Sudden" and score >= 7
+
+    if score >= 8 or has_neuro or sudden_high or has_instab:
+        return {
+            "level": "severe",
+            "label": "Severe",
+            "action": "See a healthcare provider within 24–48 hours.",
+            "can_climb": "No — rest until evaluated.",
+        }
+    elif score >= 5 or (i.swelling == "Yes" and score >= 4):
+        return {
+            "level": "moderate",
+            "label": "Moderate",
+            "action": "See a sports physio or doctor within 1 week.",
+            "can_climb": "Modified only — keep pain below 3/10.",
+        }
+    else:
+        return {
+            "level": "mild",
+            "label": "Mild",
+            "action": "Self-manage with load reduction and monitor. Seek evaluation if not improving in 2–3 weeks.",
+            "can_climb": "Yes — with modifications; avoid aggravating movements.",
+        }
+
+
+# ── Training modifications ──────────────────────────────────────────────────
+
+def get_training_modifications(i: Intake) -> Dict[str, List[str]]:
+    """Return what training is permitted during recovery based on region and severity."""
+    region   = i.region.lower()
+    severity = classify_severity(i)["level"]
+
+    modifications: Dict[str, List[str]] = {}
+
+    # Universal — always apply
+    modifications["Universal rules"] = [
+        "Keep pain during any activity at or below 3/10.",
+        "Use the 24-hour rule: no significant pain increase in the 24 hours after a session.",
+        "Increase only one variable at a time: volume OR intensity OR frequency.",
+    ]
+
+    if "finger" in region:
+        modifications["Permitted during recovery"] = [
+            "Easy slab and vertical climbing on open-hand jugs and slopers.",
+            "Footwork-focused traversing at low intensity.",
+            "Antagonist training: wrist extension, push-ups, shoulder work.",
+        ]
+        modifications["Avoid"] = [
+            "Full crimp grip position.",
+            "Pocket holds and mono pulls.",
+            "Dynamic catches on the affected finger.",
+            "Hangboard loading until pain-free passive extension is restored.",
+            "Campus board — last to return (typically 2–4× longer than hangboard clearance).",
+        ]
+        modifications["Hangboard clearance"] = [
+            "Grade 1: Open-hand only from 2 weeks, pain-free.",
+            "Grade 2: Open-hand only from 4–6 weeks, pain-free.",
+            "Grade 3: Open-hand only from 8+ weeks; no full crimp for 4–6 months.",
+        ]
+
+    elif "wrist" in region:
+        modifications["Permitted during recovery"] = [
+            "Easy climbing avoiding twisting loads and end-range wrist positions.",
+            "Straight-arm climbing styles — slab and sloper-heavy terrain.",
+            "Lower body training: legs, hip strengthening.",
+        ]
+        modifications["Avoid"] = [
+            "Side-pulls, gastons, and underclings.",
+            "Loaded wrist flexion or extension at end range.",
+            "Rotational grip styles if TFCC suspected.",
+            "Pinch holds and thumb-intensive grips if De Quervain's suspected.",
+        ]
+        modifications["Hangboard clearance"] = [
+            "TFCC: 6–8 weeks minimum; wrist-neutral grip only.",
+            "Scaphoid: only after confirmed healing on imaging.",
+            "Flexor tendinopathy: when pain-free with loaded wrist flexion.",
+        ]
+
+    elif "elbow" in region:
+        modifications["Permitted during recovery"] = [
+            "Easy slab and vertical climbing at low intensity.",
+            "Antagonist training: wrist extension, push-ups, face pulls.",
+            "Lower body and core training.",
+        ]
+        modifications["Avoid"] = [
+            "Steep overhanging terrain and board climbing.",
+            "Campus board — minimum 12 weeks from symptom onset.",
+            "Max-intensity hangboard until pain-free for 2+ weeks on normal climbing.",
+            "Full lock-off positions and high-tension pulling.",
+        ]
+        modifications["Hangboard clearance"] = [
+            "Medial epicondylitis: 4+ weeks; open-hand at reduced load; monitor after each session.",
+            "Distal biceps: 6–8 weeks for tendinopathy; 12+ weeks for partial tear.",
+            "Cubital tunnel: avoid until tingling has fully resolved.",
+        ]
+
+    elif "shoulder" in region:
+        modifications["Permitted during recovery"] = [
+            "Slab and vertical climbing — below painful arc.",
+            "Gentle pulling on low-angle terrain.",
+            "Rotator cuff strengthening: face pulls, band external rotation, YTW.",
+            "Scapular stabilization: serratus wall slides, rows.",
+        ]
+        modifications["Avoid"] = [
+            "Overhead climbing that reproduces the painful arc.",
+            "Hard lock-offs and high-tension pulling.",
+            "Dynamic catches (dynos) until pain-free overhead.",
+            "Campus board — return only when full pain-free ROM restored.",
+            "Steep compression climbing.",
+        ]
+        modifications["Hangboard clearance"] = [
+            "Impingement/tendinopathy: 3–4 weeks; avoid overhead positions.",
+            "SLAP tear conservative: 8–12 weeks minimum.",
+            "Post-surgical: per surgeon timeline.",
+        ]
+
+    elif "knee" in region:
+        modifications["Permitted during recovery"] = [
+            "Slab and vertical climbing with careful, controlled footwork.",
+            "Upper body training: hangboard, pulling movements.",
+            "Hip strengthening: glute medius, hip abductors.",
+        ]
+        modifications["Avoid"] = [
+            "Heel hooks — last movement to reintroduce.",
+            "Deep drop knee positions.",
+            "Aggressive high steps that load the knee at end range.",
+            "Any footwork that reproduces sharp knee pain.",
+        ]
+        modifications["Campus board clearance"] = [
+            "Not directly affected — avoid aggressive bouldering requiring deep knee flexion.",
+        ]
+
+    elif "hip" in region:
+        modifications["Permitted during recovery"] = [
+            "Moderate vertical climbing avoiding high steps and wide stems.",
+            "Upper body training.",
+            "Hip mobility work within pain-free range.",
+        ]
+        modifications["Avoid"] = [
+            "High steps above hip height.",
+            "Wide stemming positions.",
+            "Aggressive rockovers that reproduce deep hip pain.",
+        ]
+
+    elif "lower back" in region or "back" in region:
+        modifications["Permitted during recovery"] = [
+            "Vertical and slab climbing — avoid overhanging terrain.",
+            "McGill Big 3 core stability exercises.",
+            "Gentle walking — movement helps more than rest.",
+            "Lower intensity climbing maintaining good posture.",
+        ]
+        modifications["Avoid"] = [
+            "Overhanging terrain and board climbing.",
+            "Campus board and explosive pulling.",
+            "Sustained lumbar flexion positions.",
+            "Roof climbing until fully pain-free.",
+        ]
+
+    elif "ankle" in region or "foot" in region:
+        modifications["Permitted during recovery"] = [
+            "Upper body training: hangboard, pulling, shoulder work.",
+            "Single-leg balance and proprioception exercises.",
+            "Protected weight-bearing as tolerated.",
+        ]
+        modifications["Avoid"] = [
+            "Smearing technique until ankle is fully stable.",
+            "Heel hooks until ankle stability restored.",
+            "Approach hiking on technical terrain until recovered.",
+            "Any footwork that reproduces ankle pain.",
+        ]
+        modifications["Return to climbing progression"] = [
+            "Start on vertical terrain with solid footholds before slab.",
+            "Restore proprioception and single-leg stability before aggressive footwork.",
+            "Avoid heel hooks and drop knees last.",
+        ]
+
+    else:
+        modifications["General guidance"] = [
+            "Avoid movements or grip styles that reproduce your symptoms.",
+            "Maintain fitness through movements that are pain-free.",
+            "Reduce volume and intensity; add back one variable at a time.",
+        ]
+
+    if severity == "severe":
+        modifications["Current severity note"] = [
+            "Given symptom severity: rest from climbing until evaluated by a healthcare provider.",
+        ]
+    elif severity == "emergency":
+        modifications["Current severity note"] = [
+            "Seek emergency medical care before any training decisions.",
+        ]
+
+    return modifications
+
+
+# ── Return to climbing protocol ─────────────────────────────────────────────
+
+def get_return_to_climbing_protocol(i: Intake) -> Dict[str, List[str]]:
+    """Return full return-to-sport criteria and progression for the given region."""
+    region = i.region.lower()
+
+    protocol: Dict[str, List[str]] = {}
+
+    if "finger" in region:
+        protocol["Criteria before returning to full climbing"] = [
+            "Pain-free passive extension of the injured finger.",
+            "Pain-free palpation directly over the injured pulley.",
+            "Negative bowstring test on ultrasound (Grade 2+).",
+            "Pain-free open-hand hangboard loading at 50% bodyweight.",
+        ]
+        protocol["Progressive loading sequence"] = [
+            "1. Easy open-hand climbing on jugs — vertical terrain.",
+            "2. Moderate open-hand climbing — introduce sloper and crimp-style holds gradually.",
+            "3. Half-crimp introduction — pain-free for 2+ weeks before advancing.",
+            "4. Full crimp — last to return; test on easy holds before hard moves.",
+            "5. Campus board and limit bouldering — last activities to reintroduce.",
+        ]
+        protocol["Taping during return"] = [
+            "H-tape (ring taping) over A2 region for proprioceptive support.",
+            "Tape does not replace healing — do not use tape to push through pain.",
+        ]
+
+    elif "wrist" in region:
+        protocol["Criteria before returning to full climbing"] = [
+            "Full pain-free wrist range of motion in flexion, extension, and rotation.",
+            "Confirmed scaphoid healing on CT scan if fracture was diagnosed.",
+            "No DRUJ instability on clinical exam for TFCC injuries.",
+            "Pain-free with functional grip loading.",
+        ]
+        protocol["Progressive loading sequence"] = [
+            "1. Straight-arm climbing on moderate terrain — slab and vertical.",
+            "2. Introduce moderate loading: jugs, slopers.",
+            "3. Reintroduce side-pulls and gastons gradually.",
+            "4. Full grip loading including underclings and compression.",
+            "5. Hangboard and campus board last.",
+        ]
+
+    elif "elbow" in region:
+        protocol["Criteria before returning to full climbing"] = [
+            "Pain-free gripping and wrist flexion/extension under load.",
+            "No pain on palpation of the affected epicondyle.",
+            "Full pain-free elbow range of motion.",
+            "Pain-free supination under load (distal biceps).",
+        ]
+        protocol["Progressive loading sequence"] = [
+            "1. Easy slab and vertical climbing at low volume.",
+            "2. Introduce moderate vertical and mild overhanging terrain.",
+            "3. Reintroduce board sessions at reduced intensity.",
+            "4. Hangboard open-hand at reduced load — monitor after each session.",
+            "5. Max-intensity bouldering and campus board — last to return.",
+        ]
+
+    elif "shoulder" in region:
+        protocol["Criteria before returning to full climbing"] = [
+            "Full pain-free shoulder ROM including overhead and behind-back reach.",
+            "Strength symmetry within 10% of the uninjured shoulder.",
+            "Pain-free during and after a full easy climbing session.",
+            "Negative provocative tests (Hawkins, Neer for impingement; O'Brien's for SLAP).",
+        ]
+        protocol["Progressive loading sequence"] = [
+            "1. Vertical climbing with no overhead moves — slab focus.",
+            "2. Gradual overhead — introduce lower-angle overhanging terrain.",
+            "3. Reintroduce pulling volume on moderate overhanging routes.",
+            "4. Hard lock-offs and steep board climbing.",
+            "5. Dynamic catching (dynos) — last to return.",
+        ]
+
+    elif "knee" in region:
+        protocol["Criteria before returning to full climbing"] = [
+            "Pain-free single-leg squat.",
+            "Pain-free walking up and down stairs.",
+            "Pain-free during easy climbing with controlled footwork.",
+            "Restored hip abductor strength (equal bilateral single-leg bridge hold).",
+        ]
+        protocol["Progressive loading sequence"] = [
+            "1. Vertical climbing with careful, controlled footwork — no heel hooks.",
+            "2. Introduce moderate footwork: low-angle slab, careful high steps.",
+            "3. Easy heel hooks on large, comfortable holds.",
+            "4. Progressive heel hook loading — increase demand gradually.",
+            "5. Drop knee — introduce last; avoid when fatigued.",
+        ]
+
+    elif "lower back" in region or "back" in region:
+        protocol["Criteria before returning to full climbing"] = [
+            "Pain-free with McGill Big 3 exercises.",
+            "Pain-free with a full easy vertical climbing session.",
+            "No leg pain, tingling, or weakness.",
+            "Able to maintain neutral spine position on overhang without pain.",
+        ]
+        protocol["Progressive loading sequence"] = [
+            "1. Vertical and slab climbing — avoid overhanging terrain.",
+            "2. Mild overhang — short sessions, monitor response.",
+            "3. Board and steep climbing — gradual volume and intensity increase.",
+            "4. Campus board and limit moves — last to return.",
+        ]
+
+    elif "ankle" in region or "foot" in region:
+        protocol["Criteria before returning to full climbing"] = [
+            "Full pain-free weight-bearing.",
+            "Single-leg balance stable for 30+ seconds on the injured side.",
+            "Pain-free with ankle inversion/eversion under load.",
+            "Normal gait pattern without limp.",
+        ]
+        protocol["Progressive loading sequence"] = [
+            "1. Vertical climbing with solid, large footholds.",
+            "2. Introduce smearing on less technical terrain.",
+            "3. Increase footwork precision: edging, small holds.",
+            "4. Aggressive footwork: heel hooks, toe hooks, drop knee.",
+            "5. Full return to bouldering falls — ensure landing technique is practised.",
+        ]
+
+    else:
+        protocol["General return-to-climbing guidance"] = [
+            "Return when pain is consistently below 3/10 during and 24 hours after activity.",
+            "Progress volume before intensity before frequency.",
+            "Stop if pain spikes above 4/10 during a session — step back one level.",
+            "Seek professional evaluation if not improving within 3–4 weeks of load reduction.",
+        ]
+
+    protocol["Universal progression rules"] = [
+        "Progress only when pain is consistently <3/10 during AND 24 hours after each step.",
+        "Spend minimum 1–2 weeks at each level before advancing.",
+        "A pain flare means stepping back one level — not stopping entirely.",
+        "Return to sport is a process, not a date.",
+    ]
+
+    return protocol
+
+
+# ── Heuristic buckets ───────────────────────────────────────────────────────
+
 def bucket_possibilities(i: Intake) -> List[Tuple[str, str]]:
-    # Normalize for simple substring checks
+    """Heuristic likely patterns given region + mechanism. Not a diagnosis."""
     region = i.region.lower()
     out: List[Tuple[str, str]] = []
 
-    # Region-specific common climbing overuse/acute irritation patterns
     if "finger" in region:
         if i.mechanism in {"Hard crimp", "Dynamic catch", "Pocket"}:
-            out.append(("Pulley strain/irritation (common)", "Often pain on palm-side of finger, worse with crimping."))
-        out.append(("Flexor tendon irritation (common)", "Often tender along tendon, aggravated by repetitive gripping."))
-        out.append(("Joint capsule irritation (possible)", "Pain near joint line, may feel stiff."))
+            out.append(("Pulley strain/rupture (A2 most likely)", "Pain on palm-side at base of finger, worse with crimping. May have felt a pop."))
+        if i.mechanism in {"Pocket", "Asymmetric hold"}:
+            out.append(("Lumbrical tear (possible)", "Deep palm pain that worsens when other fingers are extended — distinctive pattern."))
+        out.append(("Flexor tendon tenosynovitis (possible)", "Diffuse swelling along entire finger, worse after rest then with prolonged activity."))
+        out.append(("Collateral ligament or joint capsule irritation (possible)", "Side-of-joint pain or persistent swelling at a finger joint."))
+        if "can't straighten" in i.free_text.lower() or "pip" in i.free_text.lower():
+            out.append(("Boutonnière deformity / central slip rupture (urgent)", "PIP that cannot be extended to neutral — requires splinting within 72 hours."))
+
     elif "wrist" in region:
         if i.mechanism in {"Hard crimp", "High volume pulling", "Dynamic catch"}:
             out.append(("Wrist flexor tendinopathy (common)", "Overuse from high-volume gripping; tender along wrist crease."))
-        out.append(("TFCC irritation (possible)", "Ulnar-side wrist pain, often from rotation, side-pulls, or gastons."))
-        out.append(("ECU / extensor tendinopathy (possible)", "Dorsal ulnar wrist pain; aggravated by resisted wrist extension."))
+        if i.onset == "Sudden" or i.mechanism in {"Fall", "Dynamic catch"}:
+            out.append(("Scaphoid fracture (must exclude)", "Fall on outstretched hand + radial wrist pain = scaphoid screening required before climbing."))
+        out.append(("TFCC irritation / tear (possible)", "Ulnar-side wrist pain from rotation, sidepulls, or gastons."))
+        out.append(("De Quervain's tenosynovitis (possible)", "Base-of-thumb pain with pinch holds or sidepulls; positive Finkelstein test."))
+
     elif "elbow" in region:
         if i.mechanism in {"High volume pulling", "Steep climbing/board", "Campusing"}:
-            out.append(("Elbow tendinopathy-type irritation (common)", "Overuse pattern, worse with gripping/pulling."))
-        out.append(("Nerve irritation (possible)", "Consider if tingling/numbness present."))
+            out.append(("Medial epicondylitis — Climber's Elbow (most likely)", "Overuse tendinopathy; inside elbow pain worse with gripping and wrist flexion."))
+        out.append(("Lateral epicondylitis (possible)", "Outside elbow pain; less common in climbers but occurs with extensor overuse."))
+        if i.numbness == "Yes":
+            out.append(("Cubital tunnel syndrome / ulnar nerve irritation (possible)", "Tingling in ring and pinky fingers with medial elbow pain."))
+        if i.mechanism in {"Hard lock-off", "Campusing", "Dynamic catch"} and i.onset == "Sudden":
+            out.append(("Distal biceps injury (possible)", "Anterior elbow pain with supination weakness — rule out complete rupture if pop occurred."))
+
     elif "shoulder" in region:
-        out.append(("Rotator cuff / tendon overload (common)", "Often related to high tension lock-offs and volume."))
-        out.append(("Impingement-like irritation (possible)", "Painful arc, overhead discomfort."))
+        out.append(("Rotator cuff tendinopathy / impingement (most common)", "Painful arc, overhead discomfort — often related to muscle imbalance in climbers."))
+        if i.mechanism in {"Dynamic catch", "Dyno", "Fall"}:
+            out.append(("SLAP tear (possible)", "Deep shoulder clicking with overhead pain after a dynamic load."))
         if i.instability == "Yes":
-            out.append(("Instability-related issue (possible)", "History of dislocation or slipping sensations."))
+            out.append(("Shoulder instability / Bankart lesion (possible)", "Slipping sensation, especially with arm abducted and externally rotated."))
+        if i.onset == "Sudden" and i.mechanism in {"Fall", "Compression"}:
+            out.append(("AC joint sprain / separation (possible)", "Top-of-shoulder pain after a fall onto the shoulder or outstretched arm."))
+
     elif "knee" in region:
-        if i.mechanism in {"Heel hook", "Drop knee"}:
-            out.append(("LCL sprain / heel hook injury (common)", "Outer knee pain from rotational load during heel hooks or drop knees."))
+        if i.mechanism in {"Heel hook"}:
+            out.append(("LCL sprain — Heel hook injury (most likely)", "Outer knee pain from rotational load during heel hook. The most common acute knee injury in boulderers."))
+        if i.mechanism in {"Drop knee"}:
+            out.append(("IT band syndrome (possible)", "Lateral knee pain at 30 degrees flexion; worsens with repeated drop knee."))
+            out.append(("Meniscus tear (possible)", "Joint line pain with twisting under load — requires evaluation if significant swelling."))
         if i.mechanism in {"High step / rockover", "High volume climbing"}:
-            out.append(("Patellar tendinopathy (possible)", "Below the kneecap, worse with high steps and repeated knee loading."))
-        out.append(("Meniscus irritation (possible)", "Joint line pain with twisting loads — drop knees or heel hooks."))
-        if i.pain_type == "Sharp" or i.onset == "Sudden":
-            out.append(("Acute ligament sprain (possible)", "Sharp or sudden knee pain warrants evaluation to rule out structural injury."))
+            out.append(("Patellar tendinopathy (possible)", "Below-kneecap pain; worse the day after climbing than during. Heel hooks are primary mechanism."))
+        if i.onset == "Sudden" and i.severity >= 6:
+            out.append(("Acute ligament or meniscus injury (consider evaluation)", "Sudden high-pain knee injury warrants evaluation to rule out structural damage."))
+
     elif "hip" in region:
         if i.mechanism in {"High step / rockover", "High volume climbing"}:
             out.append(("Hip flexor strain (common)", "Deep groin ache from repeated high stepping and rockover moves."))
         if i.mechanism in {"Heel hook", "Stemming / bridging"}:
             out.append(("Piriformis / deep gluteal irritation (possible)", "Deep buttock pain from repeated external hip rotation."))
         out.append(("Hip impingement-type irritation (possible)", "Deep groin pain at end-range hip flexion — common with FAI anatomy."))
+
     elif "lower back" in region or "back" in region:
-        out.append(("Non-specific lower back pain (common)", "Often load-related — driven by volume on steep terrain or sudden training spikes."))
+        out.append(("Non-specific lower back pain (most common)", "Load-related — driven by volume on steep terrain or sudden training spikes."))
         if i.mechanism in {"Heel hook", "High step / rockover", "Stemming / bridging"}:
-            out.append(("Lumbar muscle / facet strain (possible)", "Awkward loaded positions can strain paraspinal muscles and facet joints."))
+            out.append(("Lumbar muscle / facet strain (possible)", "Awkward loaded positions strain paraspinal muscles and facet joints."))
         if i.onset == "Sudden":
             out.append(("Lumbar disc irritation (possible)", "Sudden back pain from a loaded movement may involve disc irritation."))
         if i.numbness == "Yes":
-            out.append(("Nerve root irritation / radiculopathy (possible)", "Numbness or tingling travelling down the leg — warrants evaluation."))
+            out.append(("Nerve root irritation / radiculopathy (possible)", "Numbness or tingling travelling down the leg warrants evaluation — especially if following a dermatomal pattern."))
+
+    elif "ankle" in region or "foot" in region:
+        if i.onset == "Sudden":
+            out.append(("Lateral ankle sprain — ATFL (most common)", "Outer ankle pain after rolling the ankle. Ottawa Rules should be applied to rule out fracture."))
+        out.append(("Peroneal tendon strain (possible)", "Pain behind the lateral ankle — worsens with foot eversion and smearing."))
+        if i.mechanism in {"Small holds", "Tight shoes", "Approach"}:
+            out.append(("Plantar fasciitis (possible)", "Heel pain worst with first steps in the morning — common from aggressive shoe downsizing."))
+        if i.mechanism in {"Approach", "High volume hiking"}:
+            out.append(("Achilles tendinopathy (possible)", "Posterior heel/calf pain — associated with high-mileage hiking on climbing trips."))
+
     else:
-        out.append(("Overuse / load spike pattern (common)", "Often driven by sudden increases in intensity/volume."))
+        out.append(("Overuse / load spike pattern (common)", "Often driven by sudden increases in intensity, volume, or frequency."))
 
     # If symptoms are severe and sudden, surface a higher-concern bucket first
     if i.onset == "Sudden" and i.severity >= 7:
-        out.insert(0, ("Acute tissue injury (consider evaluation)", "High pain sudden onset can indicate more significant injury."))
+        out.insert(0, ("Acute tissue injury (consider evaluation)", "High pain with sudden onset can indicate significant tissue damage."))
 
-    # Keep output short and readable in the UI
     return out[:4]
 
 
-# Conservative guidance template grouped into UI sections (load management focus)
+# ── Conservative guidance plan ──────────────────────────────────────────────
+
 def conservative_plan(i: Intake) -> Dict[str, List[str]]:
+    """Conservative guidance template grouped into UI sections (load management focus)."""
     region = i.region.lower()
     plan: Dict[str, List[str]] = {}
 
-    # Region-specific avoidance cue inserted into the generic plan
     if "finger" in region:
         avoid_specific = "Avoid full crimping, pockets, and dynamic catches on the affected finger(s)."
     elif "wrist" in region:
-        avoid_specific = "Avoid side-pulls, gastons, and twisting loads that aggravate wrist symptoms."
+        avoid_specific = "Avoid side-pulls, gastons, underclings, and twisting loads that aggravate wrist symptoms."
     elif "elbow" in region:
-        avoid_specific = "Avoid full lock-offs, campus moves, and high-volume pulling that load the elbow."
+        avoid_specific = "Avoid full lock-offs, campus moves, and high-volume pulling that loads the elbow."
     elif "shoulder" in region:
-        avoid_specific = "Avoid overhead reaching, high lock-offs, and steep/inverted climbing that reproduces pain."
+        avoid_specific = "Avoid overhead reaching, high lock-offs, and steep or inverted climbing that reproduces pain."
     elif "knee" in region:
         avoid_specific = "Avoid heel hooks, drop knees, and aggressive high steps that load the knee."
     elif "hip" in region:
         avoid_specific = "Avoid high steps, wide stems, and aggressive rockovers that reproduce hip pain."
     elif "lower back" in region or "back" in region:
         avoid_specific = "Avoid steep overhanging climbing and campus moves that load the lumbar spine."
+    elif "ankle" in region or "foot" in region:
+        avoid_specific = "Avoid smearing, heel hooks, and aggressive footwork until the ankle is stable and pain-free."
     else:
         avoid_specific = "Avoid movements or grip styles that reproduce your symptoms."
 
     plan["Immediate next 7–10 days"] = [
         "Reduce climbing intensity and volume; avoid moves that reproduce sharp pain.",
-        "Keep pain during activity low (commonly <= 3/10) and avoid pushing through sharp pain.",
+        "Keep pain during any activity at or below 3/10 — do not push through sharp pain.",
         avoid_specific,
-        "If symptoms worsen day-to-day despite reduction, consider evaluation.",
+        "If symptoms worsen day-to-day despite load reduction, seek professional evaluation.",
     ]
 
     plan["Return to climbing (progression)"] = [
         "Start with easy sessions that keep symptoms mild during and after.",
-        "Increase only one variable at a time (volume OR intensity OR frequency).",
-        "If pain spikes or persists >24–48 hours after a session, step back.",
+        "Increase only one variable at a time: volume OR intensity OR frequency.",
+        "If pain spikes or persists >24–48 hours after a session, step back one level.",
+        "Use the 24-hour rule as your primary guide — not how it feels during the session.",
     ]
 
     plan["What to avoid for now"] = [
         avoid_specific,
-        "Max efforts, limit boulders, and repeated high-intensity attempts on the aggravating move.",
+        "Max efforts, limit boulders, and repeated high-intensity attempts.",
         "High-volume steep pulling if elbow or shoulder symptoms are present.",
     ]
 
     plan["When to get checked"] = [
-        "Any red flags (numbness, significant weakness, instability, major bruising/swelling).",
-        "Symptoms not improving after ~2–3 weeks of load reduction.",
-        "Pain that is severe at rest or progressively worsening.",
+        "Any red flags: numbness, significant weakness, instability, major bruising or swelling.",
+        "A pop or snap at the time of injury — especially in the finger, elbow, or ankle.",
+        "Symptoms not improving after 2–3 weeks of load reduction.",
+        "Pain severe at rest, or progressively worsening despite rest.",
     ]
 
     return plan
