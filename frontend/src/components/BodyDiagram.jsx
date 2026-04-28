@@ -32,20 +32,40 @@ const D = {
 // ── Component ───────────────────────────────────────────────────────────────
 function BodyDiagram({ selected, onSelect }) {
   const [hovered, setHovered] = useState(null)
-  const preview = ZONES.find(z => z.id === (hovered ?? selected))
+  // touchPreview: zone highlighted by first tap on mobile (awaiting confirmation)
+  const [touchPreview, setTouchPreview] = useState(null)
+
+  const activeZone = touchPreview ?? hovered ?? selected
+  const preview = ZONES.find(z => z.id === activeZone)
 
   // Returns fill color for a given zone ID
   const fill = (zoneId) =>
-    zoneId && selected === zoneId ? '#FF4444'
-    : zoneId && hovered  === zoneId ? '#CC3333'
+    zoneId && selected === zoneId   ? '#FF4444'
+    : zoneId && touchPreview === zoneId ? '#CC3333'
+    : zoneId && hovered === zoneId  ? '#CC3333'
     : '#C8A84B'
 
   // Returns event handlers for a zone (null = non-interactive)
   const on = (zoneId) => zoneId ? {
-    onClick:      () => onSelect(zoneId === selected ? null : zoneId),
+    // Mouse: hover to preview, click to select
     onMouseEnter: () => setHovered(zoneId),
     onMouseLeave: () => setHovered(null),
-    onTouchStart: (e) => { e.preventDefault(); onSelect(zoneId === selected ? null : zoneId) },
+    onClick: () => {
+      // Mouse click — touchPreview will be null, so always select
+      if (!touchPreview) onSelect(zoneId === selected ? null : zoneId)
+    },
+    // Touch: first tap previews, second tap on same zone confirms
+    onTouchStart: (e) => {
+      e.preventDefault()
+      if (touchPreview === zoneId) {
+        // Second tap on same zone — confirm
+        onSelect(zoneId === selected ? null : zoneId)
+        setTouchPreview(null)
+      } else {
+        // First tap — show preview, don't select yet
+        setTouchPreview(zoneId)
+      }
+    },
   } : {}
 
   // Full props for an SVG element.
@@ -192,6 +212,11 @@ function BodyDiagram({ selected, onSelect }) {
                 {preview.label}
               </span>
               <span style={{ color: 'rgba(255,255,255,0.4)' }}> · {preview.desc}</span>
+              {touchPreview && (
+                <span style={{ display: 'block', fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 4, letterSpacing: '0.04em' }}>
+                  Tap again to confirm
+                </span>
+              )}
             </>
           ) : (
             <span style={{ color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em' }}>
