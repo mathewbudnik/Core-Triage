@@ -6,10 +6,12 @@ const ZONES = [
   { id: 'Elbow',      label: 'ELBOW',      desc: 'Elbow or upper arm' },
   { id: 'Wrist',      label: 'WRIST',      desc: 'Forearm or wrist' },
   { id: 'Fingers',    label: 'FINGERS',    desc: 'Hand or fingers' },
+  { id: 'Chest',      label: 'CHEST',      desc: 'Chest, ribs, or pec' },
   { id: 'Abs',        label: 'ABS',        desc: 'Abdomen or core' },
   { id: 'Lower Back', label: 'LOWER BACK', desc: 'Lumbar spine or SI joint' },
   { id: 'Hip',        label: 'HIP',        desc: 'Hip or upper thigh' },
   { id: 'Knee',       label: 'KNEE',       desc: 'Kneecap or knee joint' },
+  { id: 'Ankle',      label: 'ANKLE',      desc: 'Ankle or foot' },
 ]
 
 // ── SVG path data (avoids duplicating long strings for clipped instances) ──
@@ -124,12 +126,6 @@ function BodyDiagram({ selected, onSelect }) {
           <path d={D.head} />
         </svg>
 
-        {/* Chest — decorative */}
-        <svg xmlns="http://www.w3.org/2000/svg" width="86.594" height="45.063" viewBox="0 0 86.594 45.063"
-          {...sp(null, { ml: -43.5, top: 88 })}>
-          <path d={D.chest} />
-        </svg>
-
         {/* Shoulders */}
         <svg xmlns="http://www.w3.org/2000/svg" width="109.532" height="46.594" viewBox="0 0 109.532 46.594"
           {...sp('Shoulder', { ml: -53.5, top: 69 })}>
@@ -138,6 +134,14 @@ function BodyDiagram({ selected, onSelect }) {
         <svg xmlns="http://www.w3.org/2000/svg" width="109.532" height="46.594" viewBox="0 0 109.532 46.594"
           {...sp('Shoulder', { ml: 13.5, top: 69 })}>
           <path d={D.rSho} />
+        </svg>
+
+        {/* Chest — interactive, rendered after shoulders so it's on top */}
+        <svg xmlns="http://www.w3.org/2000/svg" width="86.594" height="45.063" viewBox="0 0 86.594 45.063"
+          {...sp('Chest', { ml: -43.5, top: 88, z: 5 })}>
+          {/* Transparent rect gives a full hit area over the whole chest region */}
+          <rect width="86.594" height="45.063" fill="transparent" />
+          <path d={D.chest} />
         </svg>
 
         {/* Left Arm — Elbow zone (top 55%) */}
@@ -191,13 +195,13 @@ function BodyDiagram({ selected, onSelect }) {
           <path d={D.rHand} />
         </svg>
 
-        {/* Feet — decorative (no ankle zone in TriageTab) */}
+        {/* Feet — Ankle zone */}
         <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30"
-          {...sp(null, { ml: -35.5, top: 455 })}>
+          {...sp('Ankle', { ml: -35.5, top: 455 })}>
           <path d={D.lFoot} />
         </svg>
         <svg xmlns="http://www.w3.org/2000/svg" width="90" height="38.938" viewBox="0 0 90 38.938"
-          {...sp(null, { ml: 5.5, top: 455 })}>
+          {...sp('Ankle', { ml: 5.5, top: 455 })}>
           <path d={D.rFoot} />
         </svg>
 

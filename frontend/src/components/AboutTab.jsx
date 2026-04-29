@@ -1,76 +1,66 @@
-import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { BookOpen, Layers, Search, MessageSquare, Database, FileText } from 'lucide-react'
-import { getKbFiles } from '../api'
+import { Shield, Dumbbell, MessageSquare, UserCircle2, AlertTriangle, Mountain, Heart } from 'lucide-react'
+import Logo from './Logo'
 
 const FEATURES = [
   {
-    icon: Layers,
-    color: 'text-accent',
-    bg: 'bg-accent/10 border-accent/20',
-    title: 'Rule-based triage',
-    desc: 'Structured intake with red flag screening and injury pattern buckets by region and mechanism.',
+    icon: Shield,
+    color: 'text-accent2',
+    bg: 'bg-accent2/10 border-accent2/20',
+    title: 'Injury Triage',
+    desc: 'Step through a guided intake to screen for red flags, identify likely injury patterns, and get a conservative return-to-climbing plan — all tailored to climbing-specific mechanics.',
   },
   {
-    icon: Search,
+    icon: Dumbbell,
+    color: 'text-accent',
+    bg: 'bg-accent/10 border-accent/20',
+    title: 'Personalised Training Plans',
+    desc: 'Build a 4-week training plan around your goals, current grade, available days, and injury history. Plans adapt to your level — from beginner to advanced — with full exercise detail and rest periods.',
+  },
+  {
+    icon: UserCircle2,
     color: 'text-accent3',
     bg: 'bg-accent3/10 border-accent3/20',
-    title: 'TF-IDF retrieval (RAG)',
-    desc: 'Cosine similarity search over a curated climbing KB. Top matching chunks ground every response.',
+    title: 'Coach Chat',
+    desc: 'Message directly with an experienced climber and routesetter. Get personalised advice on training, technique, and recovery — not an AI, a real person who has been climbing for nearly a decade.',
   },
   {
     icon: MessageSquare,
-    color: 'text-accent2',
-    bg: 'bg-accent2/10 border-accent2/20',
-    title: 'Multi-mode chat',
-    desc: 'KB-only (offline), GPT-4o (OpenAI), or Ollama (local LLM). All grounded in climbing-specific content.',
-  },
-  {
-    icon: Database,
     color: 'text-accent',
     bg: 'bg-accent/10 border-accent/20',
-    title: 'Session history',
-    desc: 'Postgres-backed session storage with connection pooling. Sessions are saved, browsable, and deletable.',
+    title: 'AI Knowledge Base',
+    desc: 'Ask anything about climbing injuries, load management, and rehab. Responses are grounded in a curated climbing-specific knowledge base and kept intentionally conservative.',
   },
 ]
 
-const ARCH = [
-  { name: 'main.py', desc: 'FastAPI backend — REST API, triage, chat routing, session persistence' },
-  { name: 'src/triage.py', desc: 'Red flag screening, region-specific pattern buckets, conservative plan' },
-  { name: 'src/retriever.py', desc: 'TF-IDF vectorization and cosine similarity search over KB docs' },
-  { name: 'src/render.py', desc: 'Intake → search query, citation formatting' },
-  { name: 'database.py', desc: 'Postgres helpers with ThreadedConnectionPool' },
-  { name: 'frontend/', desc: 'React + Tailwind + Framer Motion — this interface' },
+const INJURY_AREAS = [
+  'Fingers', 'Wrist', 'Elbow', 'Shoulder', 'Chest',
+  'Hip', 'Knee', 'Ankle', 'Lower Back',
 ]
 
 export default function AboutTab() {
-  const [kbFiles, setKbFiles] = useState([])
-
-  useEffect(() => {
-    getKbFiles()
-      .then((d) => setKbFiles(d.files))
-      .catch(() => {})
-  }, [])
-
   return (
-    <div className="p-8 max-w-4xl mx-auto space-y-10">
+    <div className="p-6 md:p-8 max-w-4xl mx-auto space-y-10">
       {/* Hero */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-accent via-text to-accent2 bg-clip-text text-transparent">
-          CoreTriage
-        </h2>
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Logo size={40} dark />
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-accent via-text to-accent2 bg-clip-text text-transparent">
+            CoreTriage
+          </h2>
+        </div>
         <p className="text-muted leading-relaxed max-w-2xl">
-          An educational climbing injury triage and rehab guidance tool. CoreTriage combines structured intake,
-          rule-based safety screening, and retrieval-augmented generation to produce conservative, climbing-specific guidance.
+          CoreTriage helps climbers navigate injury — from the moment something goes wrong to getting back on the wall stronger. Built by climbers, for climbers.
         </p>
-        <p className="text-xs text-muted/70 italic">
-          All output is educational only and intentionally non-diagnostic.
-        </p>
+        <div className="flex items-center gap-2 text-xs text-muted/60">
+          <Mountain size={12} />
+          <span>Educational only · Not a medical diagnosis · Always seek professional evaluation if unsure</span>
+        </div>
       </motion.div>
 
-      {/* Features */}
+      {/* What we cover */}
       <div>
-        <h3 className="text-xs font-semibold text-muted uppercase tracking-widest mb-4">Features</h3>
+        <h3 className="text-xs font-semibold text-muted uppercase tracking-widest mb-4">What CoreTriage covers</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {FEATURES.map((f, i) => (
             <motion.div
@@ -92,48 +82,42 @@ export default function AboutTab() {
         </div>
       </div>
 
-      {/* Architecture */}
+      {/* Injury areas */}
       <div>
-        <h3 className="text-xs font-semibold text-muted uppercase tracking-widest mb-4">Architecture</h3>
-        <div className="space-y-1.5">
-          {ARCH.map((a, i) => (
-            <motion.div
-              key={a.name}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className="flex items-center gap-4 px-4 py-3 bg-panel border border-outline rounded-lg"
+        <h3 className="text-xs font-semibold text-muted uppercase tracking-widest mb-4">Injury areas covered</h3>
+        <div className="flex flex-wrap gap-2">
+          {INJURY_AREAS.map((area) => (
+            <span
+              key={area}
+              className="text-xs bg-panel border border-outline rounded-full px-3 py-1.5 text-muted"
             >
-              <code className="text-xs font-mono text-accent w-40 shrink-0">{a.name}</code>
-              <span className="text-xs text-muted">{a.desc}</span>
-            </motion.div>
+              {area}
+            </span>
           ))}
         </div>
       </div>
 
-      {/* KB files */}
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <BookOpen size={14} className="text-muted" />
-          <h3 className="text-xs font-semibold text-muted uppercase tracking-widest">
-            Knowledge Base ({kbFiles.length} files)
-          </h3>
+      {/* Coach bio */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="bg-panel border border-outline rounded-xl p-6 flex gap-5"
+      >
+        <div className="w-10 h-10 rounded-xl bg-accent3/20 border border-accent3/30 flex items-center justify-center shrink-0">
+          <UserCircle2 size={20} className="text-accent3" />
         </div>
-        <div className="flex flex-wrap gap-2">
-          {kbFiles.length === 0 && (
-            <span className="text-xs text-muted">Loading KB files…</span>
-          )}
-          {kbFiles.map((f) => (
-            <div
-              key={f}
-              className="flex items-center gap-1.5 text-xs bg-panel border border-outline rounded-full px-3 py-1.5 text-muted"
-            >
-              <FileText size={11} className="text-accent" />
-              {f}
-            </div>
-          ))}
+        <div>
+          <p className="text-sm font-semibold text-text mb-1">About the Coach</p>
+          <p className="text-xs text-muted leading-relaxed">
+            Mathew has been climbing for nearly a decade across bouldering, sport, and competition formats. As a routesetter and coach he has worked with climbers at all levels — from first-timers to regional competitors. The Coach Chat feature connects you directly with him for advice on training, technique, injury management, and getting back on the wall safely.
+          </p>
+          <div className="mt-3 flex items-center gap-1.5 text-xs text-accent3">
+            <Heart size={11} />
+            <span>Real person · Not an AI · Typically responds within 24 hours</span>
+          </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Disclaimer */}
       <motion.div
@@ -142,11 +126,12 @@ export default function AboutTab() {
         transition={{ delay: 0.4 }}
         className="bg-accent3/5 border border-accent3/20 rounded-xl p-5"
       >
-        <p className="text-xs font-semibold text-accent3 uppercase tracking-wide mb-2">Disclaimer</p>
+        <div className="flex items-center gap-2 mb-2">
+          <AlertTriangle size={13} className="text-accent3" />
+          <p className="text-xs font-semibold text-accent3 uppercase tracking-wide">Important Disclaimer</p>
+        </div>
         <p className="text-sm text-muted leading-relaxed">
-          CoreTriage does not provide medical diagnosis or treatment. It is an educational tool intended to promote
-          conservative load management and appropriate medical referral when indicated. If symptoms worsen, involve
-          neurological signs, or follow significant trauma, seek professional evaluation immediately.
+          CoreTriage is an educational tool and does not provide medical diagnosis or treatment. Guidance is intentionally conservative and designed to support appropriate medical referral when needed. If your symptoms are severe, worsening, involve neurological signs, or follow significant trauma — seek professional evaluation immediately. Do not delay medical care based on anything in this app.
         </p>
       </motion.div>
     </div>

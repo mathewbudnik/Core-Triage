@@ -4,11 +4,19 @@ Postgres persistence helpers for CoreTriage.
 Core:
 - init_db(): create tables and run migrations
 - create_user(email, password_hash): insert a user and return id
-- get_user_by_email(email): fetch user row (id, email, password_hash)
+- get_user_by_email(email): fetch user row (id, email, password_hash, failed_login_attempts, locked_until, disclaimer_accepted)
+- get_user_by_id(user_id): fetch (id, email, disclaimer_accepted) for current-user enrichment
 - save_session(row): insert a session and return id
 - get_session(id): fetch a single session by id
 - list_sessions(user_id, limit): fetch recent sessions for a user
 - delete_session(id, user_id): remove a session owned by user
+
+Auth security:
+- increment_failed_login(email): bump counter; lock for 15 min after 5 attempts
+- reset_failed_login(user_id): clear counter and lockout on successful login
+- update_last_login(user_id): stamp last_login timestamp
+- accept_disclaimer(user_id): mark disclaimer accepted with timestamp
+- log_security_event(event_type, ip_address, email_attempted): insert into security_log
 
 Training/Coaching:
 - save_profile(user_id, data): upsert athlete profile
@@ -24,7 +32,6 @@ import os
 from contextlib import contextmanager
 from typing import Any, Dict, Generator, List, Optional, Tuple
 
-import psycopg2
 from psycopg2 import pool
 
 
@@ -62,9 +69,22 @@ def _connect() -> Generator:
         p.putconn(conn)
 
 
+def _add_column_if_missing(cur, table: str, column: str, definition: str) -> None:
+    cur.execute(
+        """
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = %s AND column_name = %s;
+        """,
+        (table, column),
+    )
+    if not cur.fetchone():
+        cur.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition};")
+
+
 def init_db() -> None:
     with _connect() as conn:
         with conn.cursor() as cur:
+            # ── Core tables ────────────────────────────────────────────────
             cur.execute(
                 """
                 CREATE TABLE IF NOT EXISTS users (
@@ -88,22 +108,35 @@ def init_db() -> None:
                 );
                 """
             )
-            # Migration: add user_id to existing sessions table if missing
+
+            # ── Users migrations ───────────────────────────────────────────
+            _add_column_if_missing(cur, "sessions", "user_id",
+                "INT REFERENCES users(id) ON DELETE CASCADE")
+            _add_column_if_missing(cur, "users", "failed_login_attempts",
+                "INTEGER DEFAULT 0")
+            _add_column_if_missing(cur, "users", "locked_until",
+                "TIMESTAMPTZ NULL")
+            _add_column_if_missing(cur, "users", "disclaimer_accepted",
+                "BOOLEAN DEFAULT FALSE")
+            _add_column_if_missing(cur, "users", "disclaimer_accepted_at",
+                "TIMESTAMPTZ NULL")
+            _add_column_if_missing(cur, "users", "last_login",
+                "TIMESTAMPTZ NULL")
+
+            # ── Security log ───────────────────────────────────────────────
             cur.execute(
                 """
-                DO $$
-                BEGIN
-                    IF NOT EXISTS (
-                        SELECT 1 FROM information_schema.columns
-                        WHERE table_name='sessions' AND column_name='user_id'
-                    ) THEN
-                        ALTER TABLE sessions
-                        ADD COLUMN user_id INT REFERENCES users(id) ON DELETE CASCADE;
-                    END IF;
-                END $$;
+                CREATE TABLE IF NOT EXISTS security_log (
+                    id SERIAL PRIMARY KEY,
+                    event_type TEXT NOT NULL,
+                    ip_address TEXT,
+                    email_attempted TEXT,
+                    created_at TIMESTAMPTZ DEFAULT NOW()
+                );
                 """
             )
-            # Athlete profile (one per user, upserted in place)
+
+            # ── Athlete profile ────────────────────────────────────────────
             cur.execute(
                 """
                 CREATE TABLE IF NOT EXISTS athlete_profiles (
@@ -124,7 +157,8 @@ def init_db() -> None:
                 );
                 """
             )
-            # Training plans — full plan stored as JSONB
+
+            # ── Training plans ─────────────────────────────────────────────
             cur.execute(
                 """
                 CREATE TABLE IF NOT EXISTS training_plans (
@@ -140,7 +174,8 @@ def init_db() -> None:
                 );
                 """
             )
-            # Daily training log (what was actually done)
+
+            # ── Training log ───────────────────────────────────────────────
             cur.execute(
                 """
                 CREATE TABLE IF NOT EXISTS training_logs (
@@ -156,7 +191,8 @@ def init_db() -> None:
                 );
                 """
             )
-            # Coach messaging
+
+            # ── Coach messaging ────────────────────────────────────────────
             cur.execute(
                 """
                 CREATE TABLE IF NOT EXISTS coach_threads (
@@ -204,14 +240,111 @@ def create_user(email: str, password_hash: str) -> int:
 
 
 def get_user_by_email(email: str) -> Optional[Tuple[Any, ...]]:
-    """Returns (id, email, password_hash) or None."""
+    """Returns (id, email, password_hash, failed_login_attempts, locked_until, disclaimer_accepted) or None."""
     with _connect() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT id, email, password_hash FROM users WHERE email = %s;",
+                """
+                SELECT id, email, password_hash,
+                       COALESCE(failed_login_attempts, 0),
+                       locked_until,
+                       COALESCE(disclaimer_accepted, FALSE)
+                FROM users WHERE email = %s;
+                """,
                 (email,),
             )
             return cur.fetchone()
+
+
+def get_user_by_id(user_id: int) -> Optional[Tuple[Any, ...]]:
+    """Returns (id, email, disclaimer_accepted) or None — used to enrich /api/auth/me."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, email, COALESCE(disclaimer_accepted, FALSE)
+                FROM users WHERE id = %s;
+                """,
+                (int(user_id),),
+            )
+            return cur.fetchone()
+
+
+def increment_failed_login(email: str) -> None:
+    """Bump failed_login_attempts. Lock account for 15 min after 5 consecutive failures."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE users
+                SET failed_login_attempts = COALESCE(failed_login_attempts, 0) + 1,
+                    locked_until = CASE
+                        WHEN COALESCE(failed_login_attempts, 0) + 1 >= 5
+                        THEN NOW() + INTERVAL '15 minutes'
+                        ELSE locked_until
+                    END
+                WHERE email = %s;
+                """,
+                (email,),
+            )
+        conn.commit()
+
+
+def reset_failed_login(user_id: int) -> None:
+    """Clear lockout state after a successful login."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE users
+                SET failed_login_attempts = 0,
+                    locked_until = NULL
+                WHERE id = %s;
+                """,
+                (int(user_id),),
+            )
+        conn.commit()
+
+
+def update_last_login(user_id: int) -> None:
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE users SET last_login = NOW() WHERE id = %s;",
+                (int(user_id),),
+            )
+        conn.commit()
+
+
+def accept_disclaimer(user_id: int) -> None:
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE users
+                SET disclaimer_accepted = TRUE,
+                    disclaimer_accepted_at = NOW()
+                WHERE id = %s;
+                """,
+                (int(user_id),),
+            )
+        conn.commit()
+
+
+def log_security_event(event_type: str, ip_address: str, email_attempted: str) -> None:
+    try:
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO security_log (event_type, ip_address, email_attempted)
+                    VALUES (%s, %s, %s);
+                    """,
+                    (event_type, ip_address, email_attempted),
+                )
+            conn.commit()
+    except Exception:
+        pass  # security logging must never crash the request
 
 
 # ---------------------------------------------------------------------------
@@ -589,13 +722,13 @@ def list_coach_threads() -> List[Dict[str, Any]]:
             rows = cur.fetchall()
     return [
         {
-            "id":          r[0],
-            "user_id":     r[1],
-            "email":       r[2],
-            "status":      r[3],
-            "updated_at":  str(r[4]),
-            "last_msg":    r[5],
-            "last_sender": r[6],
+            "id":           r[0],
+            "user_id":      r[1],
+            "email":        r[2],
+            "status":       r[3],
+            "updated_at":   str(r[4]),
+            "last_msg":     r[5],
+            "last_sender":  r[6],
             "unread_count": int(r[7]),
         }
         for r in rows

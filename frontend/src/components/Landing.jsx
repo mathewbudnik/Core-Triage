@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Shield, Search, MessageSquare, ChevronRight, Mountain } from 'lucide-react'
+import { Shield, MessageSquare, ChevronRight, Mountain, Dumbbell, UserCircle2, ArrowRight } from 'lucide-react'
 import Logo from './Logo'
 
 const FEATURES = [
@@ -7,22 +7,41 @@ const FEATURES = [
     icon: Shield,
     color: 'text-accent2',
     bg: 'bg-accent2/10 border-accent2/20',
-    title: 'Red Flag Screening',
-    desc: 'Instantly flags symptoms that need professional evaluation.',
+    glow: 'hover:border-accent2/50 hover:bg-accent2/15',
+    title: 'Injury Triage',
+    desc: 'Answer a few questions and get red flag screening, likely injury patterns, and a return-to-climb plan.',
+    tab: 'triage',
+    cta: 'Start triage',
   },
   {
-    icon: Search,
+    icon: Dumbbell,
     color: 'text-accent',
     bg: 'bg-accent/10 border-accent/20',
-    title: 'Injury Pattern Matching',
-    desc: 'Identifies common climbing injury patterns by region and mechanism.',
+    glow: 'hover:border-accent/50 hover:bg-accent/15',
+    title: 'Training Plans',
+    desc: 'Get a personalised 4-week climbing plan built around your goals, grades, and injury history.',
+    tab: 'train',
+    cta: 'Build my plan',
+  },
+  {
+    icon: UserCircle2,
+    color: 'text-accent3',
+    bg: 'bg-accent3/10 border-accent3/20',
+    glow: 'hover:border-accent3/50 hover:bg-accent3/15',
+    title: 'Coach Chat',
+    desc: 'Get advice from a climber and routesetter with nearly a decade of experience. Message directly for a plan built around you.',
+    tab: 'chat',
+    cta: 'Message the coach',
   },
   {
     icon: MessageSquare,
-    color: 'text-accent3',
-    bg: 'bg-accent3/10 border-accent3/20',
-    title: 'AI Chat Assistant',
-    desc: 'Ask questions about symptoms, load management, and return to climbing.',
+    color: 'text-accent',
+    bg: 'bg-accent/10 border-accent/20',
+    glow: 'hover:border-accent/40 hover:bg-accent/12',
+    title: 'AI Knowledge Base',
+    desc: 'Ask anything about climbing injuries, load management, and rehab — backed by a curated knowledge base.',
+    tab: 'chat',
+    cta: 'Ask a question',
   },
 ]
 
@@ -30,7 +49,7 @@ const container = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: { staggerChildren: 0.12 },
+    transition: { staggerChildren: 0.1 },
   },
 }
 
@@ -56,7 +75,7 @@ export default function Landing({ onEnter }) {
           <span className="font-bold text-text">CoreTriage</span>
         </div>
         <button
-          onClick={onEnter}
+          onClick={() => onEnter()}
           className="btn-primary flex items-center gap-1.5 text-sm"
         >
           Open App <ChevronRight size={15} />
@@ -95,22 +114,18 @@ export default function Landing({ onEnter }) {
           variants={item}
           className="text-muted text-base md:text-lg max-w-xl leading-relaxed mb-3"
         >
-          Answer a few questions about your injury and get conservative, climbing-specific guidance
-          — red flag screening, likely injury patterns, and a return-to-climb plan.
+          From injury triage to personalised training plans — everything a climber needs to get back on the wall and keep progressing.
         </motion.p>
 
         {/* Disclaimer pill */}
-        <motion.p
-          variants={item}
-          className="text-xs text-muted/60 mb-10"
-        >
+        <motion.p variants={item} className="text-xs text-muted/60 mb-10">
           Educational only · Not a medical diagnosis · Always seek professional evaluation if unsure
         </motion.p>
 
         {/* CTA */}
-        <motion.div variants={item} className="flex flex-col sm:flex-row gap-3 items-center">
+        <motion.div variants={item} className="flex flex-col sm:flex-row gap-3 items-center mb-16">
           <button
-            onClick={onEnter}
+            onClick={() => onEnter('triage')}
             className="btn-primary flex items-center gap-2 text-base px-8 py-3"
           >
             Start Triage <ChevronRight size={16} />
@@ -118,33 +133,44 @@ export default function Landing({ onEnter }) {
           <p className="text-xs text-muted">Free to use · No account needed</p>
         </motion.div>
 
-        {/* Feature cards */}
+        {/* Feature cards — clickable */}
         <motion.div
           variants={item}
-          className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-16 max-w-3xl w-full text-left"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl w-full text-left"
         >
           {FEATURES.map((f) => (
-            <div key={f.title} className="card flex flex-col gap-3">
-              <div className={`w-9 h-9 rounded-lg border flex items-center justify-center ${f.bg}`}>
-                <f.icon size={16} className={f.color} />
+            <button
+              key={f.title}
+              onClick={() => onEnter(f.tab)}
+              className={`card flex flex-col gap-3 text-left transition-all duration-200 cursor-pointer group border border-outline ${f.glow}`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 ${f.bg}`}>
+                  <f.icon size={16} className={f.color} />
+                </div>
+                <ArrowRight size={14} className="text-muted/40 group-hover:text-muted group-hover:translate-x-0.5 transition-all mt-1 shrink-0" />
               </div>
               <div>
                 <p className="text-sm font-semibold text-text">{f.title}</p>
                 <p className="text-xs text-muted mt-1 leading-relaxed">{f.desc}</p>
               </div>
-            </div>
+              <p className={`text-xs font-medium ${f.color} flex items-center gap-1`}>
+                {f.cta} <ChevronRight size={11} />
+              </p>
+            </button>
           ))}
         </motion.div>
 
         {/* Injury areas */}
         <motion.div variants={item} className="mt-10 flex flex-wrap gap-2 justify-center">
           {['Fingers', 'Wrist', 'Elbow', 'Shoulder', 'Knee', 'Hip', 'Lower Back'].map((area) => (
-            <span
+            <button
               key={area}
-              className="text-xs bg-panel border border-outline rounded-full px-3 py-1.5 text-muted"
+              onClick={() => onEnter('triage')}
+              className="text-xs bg-panel border border-outline rounded-full px-3 py-1.5 text-muted hover:text-accent hover:border-accent/40 transition-colors"
             >
               {area}
-            </span>
+            </button>
           ))}
           <span className="text-xs text-muted/50 self-center">injury areas covered</span>
         </motion.div>

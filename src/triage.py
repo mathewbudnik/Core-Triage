@@ -75,6 +75,22 @@ def get_emergency_flags(i: Intake) -> List[str]:
                 "rupture — requires urgent surgical evaluation."
             )
 
+    # Pec major rupture
+    if "chest" in region and i.onset == "Sudden":
+        if any(w in text for w in ("pop", "snap", "tear", "rip", "deformity", "retracted")):
+            flags.append(
+                "EMERGENCY: A sudden pop in the chest or armpit during heavy loading (e.g. dynamic catch, "
+                "cross-body pull) may indicate pectoralis major rupture — requires urgent surgical evaluation."
+            )
+
+    # Rib fracture / pneumothorax
+    if "chest" in region and i.severity >= 7:
+        if any(w in text for w in ("breath", "breathe", "breathing", "inhale", "rib", "ribs")):
+            flags.append(
+                "Pain that worsens sharply with breathing after chest trauma may indicate a rib fracture "
+                "or, rarely, pneumothorax — seek same-day evaluation."
+            )
+
     return flags
 
 
@@ -351,6 +367,24 @@ def get_training_modifications(i: Intake) -> Dict[str, List[str]]:
             "Avoid heel hooks and drop knees last.",
         ]
 
+    elif "chest" in region:
+        modifications["Permitted during recovery"] = [
+            "Leg-dominant training: footwork drills, balance, lower body strength.",
+            "Gentle core work (no chest loading) once pain settles.",
+            "Easy slab and vertical climbing with minimal upper body tension if pain-free.",
+        ]
+        modifications["Avoid"] = [
+            "Dynamic moves and catches — high pec/chest loading.",
+            "Wide pinches, gastons, and cross-body pulling movements.",
+            "Campus board and heavy hangboard work during acute phase.",
+            "Any movement that reproduces sharp chest or armpit pain.",
+        ]
+        modifications["Return to climbing progression"] = [
+            "Reintroduce pulling loads gradually — start with vertical, progress to overhang.",
+            "Avoid dynamic moves until at least 4–6 weeks pain-free pulling.",
+            "Test wide pinches and cross-body pulls last before returning to full training.",
+        ]
+
     else:
         modifications["General guidance"] = [
             "Avoid movements or grip styles that reproduce your symptoms.",
@@ -486,6 +520,20 @@ def get_return_to_climbing_protocol(i: Intake) -> Dict[str, List[str]]:
             "5. Full return to bouldering falls — ensure landing technique is practised.",
         ]
 
+    elif "chest" in region:
+        protocol["Criteria before returning to full climbing"] = [
+            "Pain-free with horizontal pushing and pulling movements.",
+            "Full pain-free shoulder range of motion.",
+            "No pain with cross-body movements or wide pinches.",
+            "Able to complete a full easy climbing session without chest pain.",
+        ]
+        protocol["Progressive loading sequence"] = [
+            "1. Slab and vertical climbing — minimal chest loading.",
+            "2. Introduce moderate overhang — short sessions, monitor response.",
+            "3. Cross-body pulls and gastons — progress gradually.",
+            "4. Dynamic moves — reintroduce last; avoid wide catches until fully pain-free.",
+        ]
+
     else:
         protocol["General return-to-climbing guidance"] = [
             "Return when pain is consistently below 3/10 during and 24 hours after activity.",
@@ -583,6 +631,15 @@ def bucket_possibilities(i: Intake) -> List[Tuple[str, str]]:
         if i.mechanism in {"Approach", "High volume hiking"}:
             out.append(("Achilles tendinopathy (possible)", "Posterior heel/calf pain — associated with high-mileage hiking on climbing trips."))
 
+    elif "chest" in region:
+        out.append(("Pectoralis minor / costochondral strain (common)", "Overuse from high volume pulling, steep climbing, or a sudden dynamic catch."))
+        if i.onset == "Sudden" and i.mechanism in {"Dynamic / jumping move", "Powerful move / slap"}:
+            out.append(("Pectoralis major strain or tear (consider evaluation)", "Sudden pop or sharp pain during a powerful cross-body or dynamic move warrants evaluation."))
+        if any(w in i.free_text.lower() for w in ("rib", "ribs", "breath", "breathe")):
+            out.append(("Rib stress / costochondritis (possible)", "Localised rib pain that worsens with breathing, coughing, or twisting. Can result from repeated rib cage loading on overhangs."))
+        if i.onset == "Gradual":
+            out.append(("Serratus anterior / intercostal overuse (possible)", "Dull ache along the ribcage from sustained isometric loading on steep terrain."))
+
     else:
         out.append(("Overuse / load spike pattern (common)", "Often driven by sudden increases in intensity, volume, or frequency."))
 
@@ -616,6 +673,8 @@ def conservative_plan(i: Intake) -> Dict[str, List[str]]:
         avoid_specific = "Avoid steep overhanging climbing and campus moves that load the lumbar spine."
     elif "ankle" in region or "foot" in region:
         avoid_specific = "Avoid smearing, heel hooks, and aggressive footwork until the ankle is stable and pain-free."
+    elif "chest" in region:
+        avoid_specific = "Avoid dynamic moves, wide pinches, gastons, and cross-body pulls that reproduce chest pain."
     else:
         avoid_specific = "Avoid movements or grip styles that reproduce your symptoms."
 

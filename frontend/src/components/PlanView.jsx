@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Dumbbell, Clock, Flame, RefreshCw } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronDown, Clock, Flame, RefreshCw, Target, Tag } from 'lucide-react'
 import TrainingLogEntry from './TrainingLogEntry'
 
 const TYPE_COLOR = {
@@ -194,9 +194,65 @@ function SessionCard({ session, plan, isSelected, onClick }) {
   )
 }
 
+const WEEK_ACCENT = ['text-accent border-accent/30 bg-accent/8', 'text-accent2 border-accent2/30 bg-accent2/8', 'text-accent3 border-accent3/30 bg-accent3/8', 'text-accent border-accent/20 bg-accent/5']
+
+function WeekSummary({ meta, week, weekSessions }) {
+  if (!meta) return null
+  const totalMin = weekSessions.reduce((sum, s) => sum + (s.duration_min || 0), 0)
+  const accent = WEEK_ACCENT[(week - 1) % WEEK_ACCENT.length]
+  const accentColor = accent.split(' ')[0]
+  const isDeload = week === 4
+
+  return (
+    <motion.div
+      key={week}
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+      className={`rounded-xl border p-4 space-y-3 ${accent}`}
+    >
+      {/* Week goal line */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Target size={14} className={accentColor} />
+          <p className={`text-sm font-bold ${accentColor}`}>{meta.goal}</p>
+        </div>
+        <div className="flex items-center gap-3 text-xs text-muted shrink-0">
+          <span className="flex items-center gap-1"><Clock size={11} />{totalMin} min total</span>
+          <span>{weekSessions.length} session{weekSessions.length !== 1 ? 's' : ''}</span>
+        </div>
+      </div>
+
+      {/* Description */}
+      <p className="text-xs text-muted leading-relaxed">{meta.desc}</p>
+
+      {/* Focus tags */}
+      {meta.focus_tags?.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 pt-0.5">
+          {meta.focus_tags.map((tag) => (
+            <span
+              key={tag}
+              className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border border-outline bg-panel text-muted"
+            >
+              <Tag size={8} />
+              {tag}
+            </span>
+          ))}
+          {isDeload && (
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border border-accent3/30 bg-accent3/10 text-accent3">
+              Deload week
+            </span>
+          )}
+        </div>
+      )}
+    </motion.div>
+  )
+}
+
 export default function PlanView({ plan, onRefresh }) {
   const sessions = plan?.plan_data?.sessions || []
   const totalWeeks = plan?.duration_weeks || 4
+  const weekMeta = plan?.plan_data?.week_meta || []
 
   const [currentWeek, setCurrentWeek] = useState(() => {
     // Default to the week that contains today
@@ -258,6 +314,16 @@ export default function PlanView({ plan, onRefresh }) {
           <ChevronRight size={16} />
         </button>
       </div>
+
+      {/* Week summary */}
+      <AnimatePresence mode="wait">
+        <WeekSummary
+          key={currentWeek}
+          meta={weekMeta[currentWeek - 1]}
+          week={currentWeek}
+          weekSessions={weekSessions}
+        />
+      </AnimatePresence>
 
       {/* Sessions list */}
       <div className="space-y-2">

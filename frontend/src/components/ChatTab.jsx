@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Send, Loader2, Bot, User, Cpu, Sparkles, UserCircle2, Inbox } from 'lucide-react'
+import { Send, Loader2, Bot, User, Cpu, Sparkles, UserCircle2, Inbox, AlertTriangle } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { sendChat } from '../api'
 import CoachChat from './CoachChat'
@@ -94,8 +94,12 @@ export default function ChatTab({ k, user, onLoginClick }) {
 
   const availableModes = ['kb', 'gpt']
 
+  const MAX_CHARS = 1000
+  const charCount = input.length
+  const overLimit = charCount > MAX_CHARS
+
   // Derived boolean so trim() isn't called in the render path on every keystroke
-  const hasInput = useMemo(() => input.trim().length > 0, [input])
+  const hasInput = useMemo(() => input.trim().length > 0 && !overLimit, [input, overLimit])
 
   const ActiveModeIcon = MODE_META[mode].icon
 
@@ -244,8 +248,18 @@ export default function ChatTab({ k, user, onLoginClick }) {
         <div ref={bottomRef} />
       </div>
 
+      {/* Warning banner */}
+      <div className="px-6 pt-3 pb-0">
+        <div className="flex items-center gap-2 bg-accent3/8 border border-accent3/20 rounded-lg px-3 py-2">
+          <AlertTriangle size={12} className="text-accent3 shrink-0" />
+          <p className="text-[11px] text-accent3/80">
+            General guidance only — not medical advice. Emergencies: call <strong>911</strong>.
+          </p>
+        </div>
+      </div>
+
       {/* Input */}
-      <div className="border-t border-outline p-4 bg-panel2/40">
+      <div className="border-t border-outline p-4 bg-panel2/40 mt-3">
         <form onSubmit={handleSend} className="flex gap-3">
           <input
             type="text"
@@ -254,6 +268,7 @@ export default function ChatTab({ k, user, onLoginClick }) {
             placeholder="Ask about symptoms, training load, return-to-climb, or rehab basics…"
             className="input-base flex-1"
             disabled={loading}
+            maxLength={MAX_CHARS + 50}
           />
           <button
             type="submit"
@@ -264,9 +279,17 @@ export default function ChatTab({ k, user, onLoginClick }) {
             Send
           </button>
         </form>
-        <p className="text-xs text-muted mt-2 text-center">
-          Educational only · No diagnosis · If severe or worsening, seek professional evaluation
-        </p>
+        <div className="flex items-center justify-between mt-1.5">
+          <p className="text-xs text-muted">
+            Educational only · No diagnosis · If severe or worsening, seek professional evaluation
+          </p>
+          <span className={`text-[11px] shrink-0 ml-3 tabular-nums ${overLimit ? 'text-accent2 font-semibold' : 'text-muted/50'}`}>
+            {charCount}/{MAX_CHARS}
+          </span>
+        </div>
+        {overLimit && (
+          <p className="text-xs text-accent2 mt-1">Message too long — please shorten it before sending.</p>
+        )}
       </div>
     </div>
   )

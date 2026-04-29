@@ -23,7 +23,9 @@ function AuthModal({ onClose, onAuth }) {
         email:    emailRef.current.value,
         password: passwordRef.current.value,
       })
-      localStorage.setItem('ct_token', data.token)
+      // Store in sessionStorage only — clears when tab closes
+      sessionStorage.setItem('ct_token', data.token)
+      localStorage.removeItem('ct_token')
       onAuth(data.token, data.user)
     } catch (err) {
       setError(err.message)

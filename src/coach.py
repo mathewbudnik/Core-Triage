@@ -492,6 +492,120 @@ GOAL_PHASES = {
     "general": "base",
 }
 
+# Per-week focus for each goal type (weeks 1–4, week 4 is always deload)
+WEEK_META: Dict[str, List[Dict]] = {
+    "grade_progression": [
+        {
+            "goal": "Establish baseline",
+            "desc": "Calibrate your max hang intensity and dial in movement quality. The numbers you record this week will set your targets for weeks 2 and 3. Don't go to failure — accurate data matters more than heroics.",
+            "focus_tags": ["Finger strength", "Max intensity", "Movement quality"],
+        },
+        {
+            "goal": "Load accumulation",
+            "desc": "Volume and intensity both increase this week. You'll feel tired — that's the point. Log every session so you can track adaptation. Sleep and nutrition are training inputs, not extras.",
+            "focus_tags": ["Higher volume", "Progressive overload", "Consistency"],
+        },
+        {
+            "goal": "Peak load week",
+            "desc": "Your hardest week of the cycle. Push to your limit on the key sessions, but don't chase failure — aim for quality reps at near-max intensity. A good week 3 sets up a meaningful deload.",
+            "focus_tags": ["Maximum effort", "Quality over quantity", "Recovery between sessions"],
+        },
+        {
+            "goal": "Deload — absorb and adapt",
+            "desc": "Volume drops 40%. This is not optional — adaptation happens during rest, not during effort. Light sessions only. If you feel fresh and strong by the end of the week, the deload worked.",
+            "focus_tags": ["Reduced volume", "Active recovery", "Preparation for next cycle"],
+        },
+    ],
+    "route_endurance": [
+        {
+            "goal": "Build aerobic base",
+            "desc": "Long moderate-intensity climbing — stay below the pump threshold. The goal is time on wall, not grade. If you're getting pumped quickly you're going too hard. Dial it back and keep moving.",
+            "focus_tags": ["Sustained effort", "Below pump threshold", "Time on wall"],
+        },
+        {
+            "goal": "Push your lactate threshold",
+            "desc": "This week you'll work harder for longer. The discomfort you feel during endurance sets is the zone you need to develop. Controlled breathing and pacing matter more than raw strength here.",
+            "focus_tags": ["Higher intensity endurance", "Pacing", "Breath control"],
+        },
+        {
+            "goal": "Performance — link it all together",
+            "desc": "Attempt routes at your current limit and focus on sequencing efficiently when pumped. This is the payoff week. You won't always feel your best — learn to climb anyway.",
+            "focus_tags": ["Route attempts", "Performance under fatigue", "Sequencing"],
+        },
+        {
+            "goal": "Deload — absorb and adapt",
+            "desc": "Short easy sessions. Your forearms have taken a lot over the past three weeks. Let the capillary and aerobic adaptations consolidate. Active movement is fine — intensity is not.",
+            "focus_tags": ["Reduced volume", "Easy movement", "Rest priority"],
+        },
+    ],
+    "competition": [
+        {
+            "goal": "Power foundation",
+            "desc": "Explosive, high-quality movement on difficult boulders and routes. Every move should be intentional. Competition climbing rewards power-to-weight and precision — build both from the ground up.",
+            "focus_tags": ["Explosive movement", "Movement precision", "High intensity"],
+        },
+        {
+            "goal": "Simulate competition conditions",
+            "desc": "Work on reading moves quickly, committing to sequences, and performing under self-imposed pressure. Timed reads, onsight attempts, and mental rehearsal are as important as the climbing itself.",
+            "focus_tags": ["Onsight reading", "Mental performance", "Pressure simulation"],
+        },
+        {
+            "goal": "Peak sharpness",
+            "desc": "Maintain intensity but reduce volume — you're trying to arrive sharp, not tired. A few high-quality attempts per session. Stop before you're worked. Confidence comes from doing less, better.",
+            "focus_tags": ["Sharp quality", "Low volume", "Confidence building"],
+        },
+        {
+            "goal": "Taper — arrive rested and ready",
+            "desc": "Very short sessions, no new hard attempts. Your fitness is locked in. The goal now is to let your nervous system recover so you can access everything you've built. Trust the training.",
+            "focus_tags": ["Minimal volume", "Mental prep", "Rest priority"],
+        },
+    ],
+    "injury_prevention": [
+        {
+            "goal": "Rehabilitation base",
+            "desc": "Gentle loading and technique focus. Monitor your body closely — any sharp or novel pain means stop. The goal is to move well, not to push hard. Consistency over weeks matters more than effort today.",
+            "focus_tags": ["Gentle loading", "Technique focus", "Monitor response"],
+        },
+        {
+            "goal": "Progressive loading",
+            "desc": "Carefully increase the demands on the affected area. You're looking for a 3/10 discomfort maximum — anything above that and you back off. Two steps forward, one step back is still progress.",
+            "focus_tags": ["Controlled progression", "Load management", "Pain monitoring"],
+        },
+        {
+            "goal": "Return to performance",
+            "desc": "Reintroduce climbing-specific demands at a managed intensity. You may feel strong — resist the urge to go full effort. The structures that were injured need more time than you feel they do.",
+            "focus_tags": ["Climbing-specific load", "Controlled intensity", "Patience"],
+        },
+        {
+            "goal": "Consolidation — assess and plan",
+            "desc": "Light sessions and honest reflection. How did the past three weeks feel? What aggravated things, what helped? Use this week to set a realistic plan for the next cycle.",
+            "focus_tags": ["Easy sessions", "Self-assessment", "Plan next cycle"],
+        },
+    ],
+    "general": [
+        {
+            "goal": "Establish habits and baseline",
+            "desc": "The hardest part of any training cycle is showing up consistently. This week is about building the habit, not the fitness. Keep intensity manageable and focus on quality movement across all session types.",
+            "focus_tags": ["Consistency", "Habit building", "All-round development"],
+        },
+        {
+            "goal": "Find your limits",
+            "desc": "Increase the challenge across all sessions. You should start to feel where your weaknesses are — that's valuable information. Hard training should feel hard. If everything feels easy, go up a grade.",
+            "focus_tags": ["Increased challenge", "Identify weaknesses", "Progressive overload"],
+        },
+        {
+            "goal": "Apply it in real climbing",
+            "desc": "Put the fitness you've built to work on actual routes and problems. Onsight, redpoint, work moves you've been avoiding. This is what the training is for — not the gym, the rock.",
+            "focus_tags": ["Real climbing", "Project work", "Application"],
+        },
+        {
+            "goal": "Deload — reflect and recover",
+            "desc": "Easy sessions. Think about what worked and what you'd change next cycle. The adaptation from weeks 1–3 is still happening — let it finish. You'll come back stronger if you rest now.",
+            "focus_tags": ["Reduced volume", "Reflection", "Preparation"],
+        },
+    ],
+}
+
 
 # ---------------------------------------------------------------------------
 # GPT-4o coach note enrichment
@@ -560,6 +674,8 @@ def generate_plan(
             f"({', '.join(injury_flags[:3])})."
         )
 
+    week_meta = WEEK_META.get(goal, WEEK_META["general"])
+
     return {
         "name": f"{GOAL_NAMES.get(goal, 'Custom')} — {experience.title()} Plan",
         "phase": GOAL_PHASES.get(goal, "base"),
@@ -567,6 +683,7 @@ def generate_plan(
         "start_date": str(date.today()),
         "plan_data": {
             "sessions": sessions,
+            "week_meta": week_meta,
             "injury_note": injury_note,
             "goal": goal,
             "experience": experience,

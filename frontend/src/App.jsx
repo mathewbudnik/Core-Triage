@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageSquare, Clock, Info, AlertTriangle, Menu, X, LogIn, LogOut, User, Activity, Dumbbell } from 'lucide-react'
-import { getHealth, getMe } from './api'
+import { MessageSquare, Clock, Info, AlertTriangle, Menu, X, LogIn, LogOut, User, Activity, Dumbbell, FileText } from 'lucide-react'
+import { getHealth, getMe, acceptDisclaimer } from './api'
 import Landing from './components/Landing'
 import Logo from './components/Logo'
 import TriageTab from './components/TriageTab'
@@ -11,6 +11,7 @@ import AboutTab from './components/AboutTab'
 import AuthModal from './components/AuthModal'
 import TipCard from './components/TipCard'
 import TrainTab from './components/TrainTab'
+import DisclaimerModal from './components/DisclaimerModal'
 
 const TABS = [
   { id: 'triage', label: 'Triage', icon: Activity },
@@ -19,6 +20,8 @@ const TABS = [
   { id: 'history', label: 'History', icon: Clock },
   { id: 'about', label: 'About', icon: Info },
 ]
+
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
 
 export default function App() {
   const [showLanding, setShowLanding] = useState(true)
@@ -29,46 +32,132 @@ export default function App() {
   const [user, setUser] = useState(null)
   const [showAuth, setShowAuth] = useState(false)
 
+  // Disclaimer state
+  const [disclaimerState, setDisclaimerState] = useState('checking') // 'checking' | 'required' | 'accepted'
+  const [showTerms, setShowTerms] = useState(false) // read-only re-open
+
+  // Session timeout
+  const timeoutRef = useRef(null)
+
+  const clearSession = useCallback(() => {
+    sessionStorage.removeItem('ct_token')
+    localStorage.removeItem('ct_token')
+    setUser(null)
+  }, [])
+
+  const resetTimeout = useCallback(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    timeoutRef.current = setTimeout(clearSession, SESSION_TIMEOUT_MS)
+  }, [clearSession])
+
+  // Track activity to reset the inactivity timeout
+  useEffect(() => {
+    const events = ['mousemove', 'keydown', 'click', 'touchstart']
+    events.forEach((e) => window.addEventListener(e, resetTimeout, { passive: true }))
+    resetTimeout()
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, resetTimeout))
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    }
+  }, [resetTimeout])
+
   useEffect(() => {
     getHealth()
       .then((data) => setDbReady(data.db_ready))
       .catch(() => setDbReady(false))
 
-    // Restore session from stored token
-    const token = localStorage.getItem('ct_token')
+    // Restore session — sessionStorage first (current tab), fall back to legacy localStorage
+    const token = sessionStorage.getItem('ct_token') ?? localStorage.getItem('ct_token')
     if (token) {
       getMe()
-        .then((u) => setUser(u))
-        .catch(() => {
-          localStorage.removeItem('ct_token')
+        .then((u) => {
+          setUser(u)
+          // Migrate localStorage token to sessionStorage
+          if (localStorage.getItem('ct_token')) {
+            sessionStorage.setItem('ct_token', localStorage.getItem('ct_token'))
+            localStorage.removeItem('ct_token')
+          }
+          // If DB says disclaimer not accepted, force modal even if localStorage flag set
+          if (!u.disclaimer_accepted) {
+            setDisclaimerState('required')
+          } else {
+            setDisclaimerState('accepted')
+          }
         })
+        .catch(() => {
+          sessionStorage.removeItem('ct_token')
+          localStorage.removeItem('ct_token')
+          checkDisclaimerLocally()
+        })
+    } else {
+      checkDisclaimerLocally()
     }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function checkDisclaimerLocally() {
+    const accepted = localStorage.getItem('ct_disclaimer_accepted')
+    setDisclaimerState(accepted ? 'accepted' : 'required')
+  }
+
+  const handleDisclaimerAccept = useCallback(() => {
+    localStorage.setItem('ct_disclaimer_accepted', JSON.stringify({ accepted: true, ts: Date.now() }))
+    setDisclaimerState('accepted')
+    if (user) {
+      acceptDisclaimer().catch(() => {}) // best-effort; don't block UI
+    }
+  }, [user])
+
+  const handleDisclaimerExit = useCallback(() => {
+    // Close the tab / navigate away — best we can do in a browser
+    window.close()
+    // Fallback: clear everything and show a blank state
+    window.location.href = 'about:blank'
   }, [])
+
+  const [triageKey, setTriageKey] = useState(0)
 
   const handleTabChange = useCallback((id) => {
     setActiveTab(id)
     setSidebarOpen(false)
+    if (id === 'triage') setTriageKey((k) => k + 1)
   }, [])
 
   const handleAuth = useCallback((_token, userData) => {
     setUser(userData)
     setShowAuth(false)
+    // After login, check if user has accepted disclaimer in DB
+    if (!userData.disclaimer_accepted) {
+      setDisclaimerState('required')
+    }
   }, [])
 
   const handleLogout = useCallback(() => {
+    sessionStorage.removeItem('ct_token')
     localStorage.removeItem('ct_token')
     setUser(null)
   }, [])
 
   const activeTabLabel = useMemo(() => TABS.find((t) => t.id === activeTab)?.label, [activeTab])
 
+  // Show disclaimer before anything else
+  if (disclaimerState === 'checking') return null
+
+  if (disclaimerState === 'required') {
+    return <DisclaimerModal onAccept={handleDisclaimerAccept} onExit={handleDisclaimerExit} />
+  }
+
   if (showLanding) {
     return (
-      <AnimatePresence>
-        <motion.div key="landing" initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
-          <Landing onEnter={() => setShowLanding(false)} />
-        </motion.div>
-      </AnimatePresence>
+      <>
+        <AnimatePresence>
+          <motion.div key="landing" initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <Landing onEnter={(tab) => { setShowLanding(false); if (tab) setActiveTab(tab) }} />
+          </motion.div>
+        </AnimatePresence>
+        {showTerms && (
+          <DisclaimerModal readOnly onExit={() => setShowTerms(false)} />
+        )}
+      </>
     )
   }
 
@@ -80,6 +169,11 @@ export default function App() {
         <div className="absolute top-0 right-1/4 w-80 h-80 bg-accent2/8 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-1/2 w-72 h-72 bg-accent3/6 rounded-full blur-3xl" />
       </div>
+
+      {/* Disclaimer (read-only terms view) */}
+      {showTerms && (
+        <DisclaimerModal readOnly onExit={() => setShowTerms(false)} />
+      )}
 
       {/* Auth modal */}
       <AnimatePresence>
@@ -104,7 +198,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Sidebar — fixed on mobile, static on desktop */}
+      {/* Sidebar */}
       <aside className={`
         fixed md:static inset-y-0 left-0 z-40
         w-64 shrink-0 flex flex-col border-r border-outline bg-panel2/95 backdrop-blur-sm
@@ -163,13 +257,20 @@ export default function App() {
         <TipCard />
 
         {/* Sidebar footer */}
-        <div className="px-4 py-4 border-t border-outline">
+        <div className="px-4 py-4 border-t border-outline space-y-2">
           <div className="flex items-start gap-2">
             <AlertTriangle size={11} className="text-accent3 shrink-0 mt-0.5" />
             <p className="text-[10px] text-muted/70 leading-relaxed">
               Severe symptoms or major trauma: seek professional evaluation.
             </p>
           </div>
+          <button
+            onClick={() => setShowTerms(true)}
+            className="flex items-center gap-1 text-[10px] text-muted/50 hover:text-muted transition-colors"
+          >
+            <FileText size={9} />
+            View Terms &amp; Disclaimer
+          </button>
         </div>
       </aside>
 
@@ -178,7 +279,6 @@ export default function App() {
         {/* Top bar */}
         <header className="border-b border-outline px-4 md:px-8 py-4 flex items-center justify-between bg-panel2/40 backdrop-blur-sm sticky top-0 z-20">
           <div className="flex items-center gap-3">
-            {/* Hamburger — mobile only */}
             <button
               onClick={() => setSidebarOpen(true)}
               className="md:hidden text-muted hover:text-text p-1"
@@ -225,16 +325,16 @@ export default function App() {
 
         {/* Tab content */}
         <div className="flex-1 overflow-auto">
-          <AnimatePresence mode="sync">
+          <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              transition={{ duration: 0.1 }}
               className="h-full"
             >
-              {activeTab === 'triage' && <TriageTab k={k} />}
+              {activeTab === 'triage' && <TriageTab key={triageKey} k={k} />}
               {activeTab === 'chat' && <ChatTab k={k} user={user} onLoginClick={() => setShowAuth(true)} />}
               {activeTab === 'history' && (
                 <HistoryTab

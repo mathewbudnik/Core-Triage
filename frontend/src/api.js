@@ -1,7 +1,7 @@
 const BASE = import.meta.env.VITE_API_URL ?? ''
 
 function getToken() {
-  return localStorage.getItem('ct_token')
+  return sessionStorage.getItem('ct_token') ?? localStorage.getItem('ct_token')
 }
 
 async function request(method, path, body) {
@@ -44,6 +44,7 @@ export const getKbFiles = () => request('GET', '/api/kb')
 export const authRegister = (payload) => request('POST', '/api/auth/register', payload)
 export const authLogin = (payload) => request('POST', '/api/auth/login', payload)
 export const getMe = () => request('GET', '/api/auth/me')
+export const acceptDisclaimer = () => request('POST', '/api/auth/disclaimer', {})
 
 // Profile
 export const saveProfile = (payload) => request('POST', '/api/profile', payload)
