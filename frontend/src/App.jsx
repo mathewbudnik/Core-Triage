@@ -261,7 +261,7 @@ export default function App() {
             <UserCircle2 size={12} className="text-accent3" />
             <span className="text-[10px] font-bold text-accent3 uppercase tracking-wide">Pro Coaching</span>
           </div>
-          <p className="text-[11px] text-muted leading-snug mb-2">
+          <p className="text-[11px] text-muted leading-snug mb-2 h-8 overflow-hidden">
             Work 1:1 with a coach — personal injury review &amp; custom return-to-climb plan.
           </p>
           <button

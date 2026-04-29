@@ -169,7 +169,7 @@ export default function TipCard() {
           </div>
         </div>
 
-        {/* Tip text */}
+        {/* Tip text — fixed height so the card never reflows as tips rotate */}
         <p style={{
           fontSize: 11.5,
           lineHeight: 1.55,
@@ -179,7 +179,8 @@ export default function TipCard() {
           opacity: fading ? 0 : 1,
           transform: fading ? 'translateY(4px)' : 'translateY(0)',
           transition: 'opacity 0.22s ease, transform 0.22s ease',
-          minHeight: 52,
+          height: 72,
+          overflow: 'hidden',
         }}>
           {tip.text}
         </p>
