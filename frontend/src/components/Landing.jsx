@@ -1,6 +1,8 @@
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Shield, MessageSquare, ChevronRight, Mountain, Dumbbell, UserCircle2, ArrowRight, CheckCircle, Stethoscope } from 'lucide-react'
 import Logo from './Logo'
+import UpgradeModal from './UpgradeModal'
 
 const FEATURES = [
   {
@@ -65,6 +67,8 @@ const item = {
 }
 
 export default function Landing({ onEnter }) {
+  const [showCoaching, setShowCoaching] = useState(false)
+
   return (
     <div className="min-h-screen bg-bg flex flex-col relative overflow-hidden">
       {/* Ambient orbs */}
@@ -195,7 +199,7 @@ export default function Landing({ onEnter }) {
                 ))}
               </div>
               <button
-                onClick={() => onEnter('chat')}
+                onClick={() => setShowCoaching(true)}
                 className="flex items-center gap-2 text-sm font-semibold text-accent3 hover:text-accent3/80 transition-colors group"
               >
                 Apply for coaching
@@ -224,6 +228,12 @@ export default function Landing({ onEnter }) {
       <footer className="relative z-10 border-t border-outline px-6 py-4 text-center text-xs text-muted/50">
         CoreTriage is an educational tool and does not provide medical diagnosis or treatment.
       </footer>
+
+      <AnimatePresence>
+        {showCoaching && (
+          <UpgradeModal onClose={() => setShowCoaching(false)} trigger="coaching" />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

@@ -13,6 +13,7 @@ import TipCard from './components/TipCard'
 import TrainTab from './components/TrainTab'
 import RehabTab from './components/RehabTab'
 import DisclaimerModal from './components/DisclaimerModal'
+import UpgradeModal from './components/UpgradeModal'
 
 const TABS = [
   { id: 'triage',  label: 'Triage',  icon: Activity    },
@@ -37,6 +38,8 @@ export default function App() {
   // Disclaimer state
   const [disclaimerState, setDisclaimerState] = useState('checking') // 'checking' | 'required' | 'accepted'
   const [showTerms, setShowTerms] = useState(false) // read-only re-open
+  const [showUpgrade, setShowUpgrade] = useState(false)
+  const [upgradeTrigger, setUpgradeTrigger] = useState('coaching')
 
   // Session timeout
   const timeoutRef = useRef(null)
@@ -177,6 +180,13 @@ export default function App() {
         <DisclaimerModal readOnly onExit={() => setShowTerms(false)} />
       )}
 
+      {/* Plans / upgrade modal */}
+      <AnimatePresence>
+        {showUpgrade && (
+          <UpgradeModal onClose={() => setShowUpgrade(false)} trigger={upgradeTrigger} />
+        )}
+      </AnimatePresence>
+
       {/* Auth modal */}
       <AnimatePresence>
         {showAuth && (
@@ -265,7 +275,14 @@ export default function App() {
             Work 1:1 with a coach — personal injury review &amp; custom return-to-climb plan.
           </p>
           <button
-            onClick={() => handleTabChange('chat')}
+            onClick={() => {
+              if (user?.tier === 'pro') {
+                handleTabChange('chat')
+              } else {
+                setUpgradeTrigger('coaching')
+                setShowUpgrade(true)
+              }
+            }}
             className="flex items-center gap-1 text-[11px] font-semibold text-accent3 hover:text-accent3/80 transition-colors"
           >
             Apply for coaching <ChevronRight size={10} />
@@ -283,6 +300,13 @@ export default function App() {
               Severe symptoms or major trauma: seek professional evaluation.
             </p>
           </div>
+          <button
+            onClick={() => { setUpgradeTrigger('feature'); setShowUpgrade(true) }}
+            className="flex items-center gap-1 text-[10px] text-muted/50 hover:text-accent transition-colors"
+          >
+            <ChevronRight size={9} />
+            View plans &amp; pricing
+          </button>
           <button
             onClick={() => setShowTerms(true)}
             className="flex items-center gap-1 text-[10px] text-muted/50 hover:text-muted transition-colors"
