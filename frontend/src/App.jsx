@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageSquare, Clock, Info, AlertTriangle, Menu, X, LogIn, LogOut, User, Activity, Dumbbell, FileText } from 'lucide-react'
+import { MessageSquare, Clock, Info, AlertTriangle, Menu, X, LogIn, LogOut, User, Activity, Dumbbell, FileText, Stethoscope, UserCircle2, ChevronRight } from 'lucide-react'
 import { getHealth, getMe, acceptDisclaimer } from './api'
 import Landing from './components/Landing'
 import Logo from './components/Logo'
@@ -11,14 +11,16 @@ import AboutTab from './components/AboutTab'
 import AuthModal from './components/AuthModal'
 import TipCard from './components/TipCard'
 import TrainTab from './components/TrainTab'
+import RehabTab from './components/RehabTab'
 import DisclaimerModal from './components/DisclaimerModal'
 
 const TABS = [
-  { id: 'triage', label: 'Triage', icon: Activity },
-  { id: 'train', label: 'Train', icon: Dumbbell },
-  { id: 'chat', label: 'Chat', icon: MessageSquare },
-  { id: 'history', label: 'History', icon: Clock },
-  { id: 'about', label: 'About', icon: Info },
+  { id: 'triage',  label: 'Triage',  icon: Activity    },
+  { id: 'rehab',   label: 'Rehab',   icon: Stethoscope },
+  { id: 'train',   label: 'Train',   icon: Dumbbell    },
+  { id: 'chat',    label: 'Chat',    icon: MessageSquare },
+  { id: 'history', label: 'History', icon: Clock       },
+  { id: 'about',   label: 'About',   icon: Info        },
 ]
 
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
@@ -253,6 +255,23 @@ export default function App() {
           })}
         </nav>
 
+        {/* Coaching CTA */}
+        <div className="mx-3 mb-3 rounded-xl border border-accent3/25 bg-accent3/8 p-3">
+          <div className="flex items-center gap-1.5 mb-1">
+            <UserCircle2 size={12} className="text-accent3" />
+            <span className="text-[10px] font-bold text-accent3 uppercase tracking-wide">Pro Coaching</span>
+          </div>
+          <p className="text-[11px] text-muted leading-snug mb-2">
+            Work 1:1 with a coach — personal injury review &amp; custom return-to-climb plan.
+          </p>
+          <button
+            onClick={() => handleTabChange('chat')}
+            className="flex items-center gap-1 text-[11px] font-semibold text-accent3 hover:text-accent3/80 transition-colors"
+          >
+            Apply for coaching <ChevronRight size={10} />
+          </button>
+        </div>
+
         {/* Tip card */}
         <TipCard />
 
@@ -334,7 +353,13 @@ export default function App() {
               transition={{ duration: 0.1 }}
               className="h-full"
             >
-              {activeTab === 'triage' && <TriageTab key={triageKey} k={k} />}
+              {activeTab === 'triage' && <TriageTab key={triageKey} k={k} user={user} />}
+              {activeTab === 'rehab' && (
+                <RehabTab
+                  user={user}
+                  onLoginClick={() => setShowAuth(true)}
+                />
+              )}
               {activeTab === 'chat' && <ChatTab k={k} user={user} onLoginClick={() => setShowAuth(true)} />}
               {activeTab === 'history' && (
                 <HistoryTab

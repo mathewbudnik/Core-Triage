@@ -4,10 +4,13 @@ import {
   ChevronDown, ChevronLeft, AlertTriangle, CheckCircle,
   Download, Save, Loader2, BookOpen, ArrowRight,
   Clock, Zap, Grip, Target, TrendingUp, Mountain, ChevronsUp, HelpCircle,
-  RotateCcw, RotateCw, ArrowUp, Maximize2, AlertCircle,
+  RotateCcw, RotateCw, ArrowUp, Maximize2, AlertCircle, FileText, Lock,
 } from 'lucide-react'
 import { triageIntake, saveSession } from '../api'
 import BodyDiagram from './BodyDiagram'
+import RehabProtocol from './RehabProtocol'
+import UpgradeModal from './UpgradeModal'
+import { downloadTriagePDF } from './TriageReport'
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
@@ -263,7 +266,23 @@ function SeverityCard({ severity }) {
   )
 }
 
-function Results({ result, form, onRestart, onSave, saveStatus }) {
+function Results({ result, form, onRestart, onSave, saveStatus, user }) {
+  const [showUpgrade, setShowUpgrade] = useState(false)
+  const [pdfLoading, setPdfLoading]   = useState(false)
+
+  async function handlePdfDownload() {
+    if (user?.tier === 'core' || user?.tier === 'pro') {
+      setPdfLoading(true)
+      try {
+        await downloadTriagePDF(result)
+      } finally {
+        setPdfLoading(false)
+      }
+    } else {
+      setShowUpgrade(true)
+    }
+  }
+
   return (
     <div className="p-4 md:p-8 max-w-3xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -359,9 +378,33 @@ function Results({ result, form, onRestart, onSave, saveStatus }) {
         </div>
       )}
 
-      <div className="flex items-center gap-3 pt-2">
+      {/* Rehab protocol — inline after results */}
+      {result.intake?.region && (
+        <div className="bg-panel2 border border-outline rounded-2xl p-5">
+          <RehabProtocol
+            region={result.intake.region}
+            severity={result.severity?.level}
+            user={user}
+          />
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center gap-3 pt-2">
+        {/* PDF download — Core tier gated */}
+        <button
+          onClick={handlePdfDownload}
+          disabled={pdfLoading}
+          className="btn-primary flex items-center gap-2"
+        >
+          {pdfLoading
+            ? <><Loader2 size={15} className="animate-spin" /> Generating…</>
+            : user?.tier === 'core' || user?.tier === 'pro'
+            ? <><FileText size={15} /> Download PDF</>
+            : <><Lock size={13} /> PDF Report · Core</>
+          }
+        </button>
         <button onClick={() => downloadMarkdown(buildMarkdown(result))} className="btn-secondary flex items-center gap-2">
-          <Download size={15} /> Download Report
+          <Download size={15} /> Download .md
         </button>
         <button onClick={onSave} className="btn-secondary flex items-center gap-2">
           <Save size={15} />
@@ -375,6 +418,12 @@ function Results({ result, form, onRestart, onSave, saveStatus }) {
       <p className="text-xs text-muted border-t border-outline pt-4">
         Educational only — not a diagnosis or medical advice.
       </p>
+
+      <AnimatePresence>
+        {showUpgrade && (
+          <UpgradeModal onClose={() => setShowUpgrade(false)} trigger="pdf" />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -393,7 +442,7 @@ const INITIAL_FORM = {
   numbness: 'No', weakness: 'None', instability: 'No', free_text: '',
 }
 
-export default function TriageTab({ k }) {
+export default function TriageTab({ k, user }) {
   const [step, setStep]           = useState(0)
   const [direction, setDirection] = useState(1)
   const [form, setForm]           = useState(INITIAL_FORM)
@@ -474,6 +523,7 @@ export default function TriageTab({ k }) {
       <Results
         result={result} form={form}
         onRestart={restart} onSave={handleSave} saveStatus={saveStatus}
+        user={user}
       />
     )
   }

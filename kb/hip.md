@@ -1,3 +1,5 @@
+> **Educational only — not a medical diagnosis.** This content is for informational purposes. Always seek professional evaluation for significant injury, neurological symptoms, or uncertainty about your condition.
+
 # Hip Injuries in Climbing
 
 ## Overview

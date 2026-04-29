@@ -22,6 +22,27 @@ class Intake:
     free_text: str
 
 
+# ── Negation-aware keyword matching ────────────────────────────────────────
+# Simple substring matching ("bladder" in text) fires on "no bladder symptoms".
+# This helper checks that the matched keyword is not preceded by a negation word.
+
+_NEG_WORDS = frozenset({"no", "not", "without", "denies", "none", "negative", "absent", "deny"})
+
+
+def _keyword_affirmed(text: str, keywords: list) -> bool:
+    """True only when a keyword appears without a negation in the four preceding words.
+    A four-word window handles 'no X or Y' patterns (e.g. 'no bladder or bowel issues').
+    False positives (over-flagging) are preferred over false negatives for safety flags."""
+    words = text.split()
+    for i, word in enumerate(words):
+        for kw in keywords:
+            if kw in word:
+                context = words[max(0, i - 4):i]
+                if not any(n in context for n in _NEG_WORDS):
+                    return True
+    return False
+
+
 # ── Emergency flag detection ────────────────────────────────────────────────
 # Returns emergency-level red flags only — these should always surface at top
 
@@ -32,52 +53,81 @@ def get_emergency_flags(i: Intake) -> List[str]:
     text   = i.free_text.lower()
 
     # Cauda equina — lower back + bladder/bowel change is an emergency
-    if ("lower back" in region or "back" in region):
-        if any(w in text for w in ("bladder", "bowel", "incontinence", "saddle", "groin numb")):
+    if "lower back" in region or "back" in region:
+        if _keyword_affirmed(text, ["bladder", "bowel", "incontinence", "saddle", "groin numb"]):
             flags.append(
                 "EMERGENCY: Bladder or bowel symptoms with back pain may indicate cauda equina syndrome. "
                 "Call 911 or go to the ER immediately — do not wait."
             )
 
-    # Bilateral leg symptoms with back pain
+    # Bilateral leg symptoms with back pain — structural spinal cord risk
     if ("lower back" in region or "back" in region) and i.numbness == "Yes" and i.weakness == "Significant":
         flags.append(
             "EMERGENCY: Significant leg weakness and numbness with back pain requires urgent evaluation — "
             "possible spinal cord involvement. Call 911."
         )
 
-    # Visible bowstringing — finger
-    if "finger" in region and any(w in text for w in ("bowstring", "bow string", "cord visible", "tendon visible")):
+    # Visible bowstringing — finger (tendon displacing out of its sheath)
+    if "finger" in region and _keyword_affirmed(text, [
+        "bowstring", "bow string", "cord visible", "tendon visible",
+        "tendon lifting", "tendon jumping", "cord jumping", "cord lifting",
+        "tendon moves", "tendon popping", "cord across", "tendon pops",
+    ]):
         flags.append(
             "EMERGENCY: Visible bowstringing (tendon cord across palm side of finger) requires imaging and "
             "surgical consultation before any return to climbing."
         )
 
-    # Septic tenosynovitis — finger with fever
-    if "finger" in region and any(w in text for w in ("fever", "hot", "spreading", "red streak")):
+    # Septic tenosynovitis — finger with fever / spreading redness
+    if "finger" in region and _keyword_affirmed(text, ["fever", "hot", "spreading", "red streak"]):
         flags.append(
             "EMERGENCY: Fever with rapidly spreading warmth and redness in a finger may indicate septic "
             "tenosynovitis — a hand surgery emergency. Go to the ER immediately."
         )
 
-    # Complete bicep rupture
-    if "elbow" in region and any(w in text for w in ("popeye", "deformity", "muscle moved", "bunched")):
+    # Complete bicep rupture — Popeye deformity
+    if "elbow" in region and _keyword_affirmed(text, [
+        "popeye", "deformity", "muscle moved", "bunched", "bunching", "bunches",
+        "muscle lump", "muscle moved up", "bulge in arm", "muscle shifted",
+        "retracted", "lump near shoulder",
+    ]):
         flags.append(
             "EMERGENCY: A Popeye deformity (muscle belly bunched in the upper arm) after an elbow pop "
             "indicates complete distal biceps rupture — surgical referral required within 2–3 weeks."
         )
 
+    # Locked knee — mechanically cannot extend (not just pain-limited)
+    if "knee" in region and _keyword_affirmed(text, [
+        "locked", "cannot straighten", "can't straighten", "won't extend",
+        "stuck at", "cannot extend", "won't straighten", "unable to straighten",
+    ]):
+        flags.append(
+            "URGENT: A knee that is mechanically locked and cannot be straightened may indicate a displaced "
+            "meniscal tear or loose body — seek same-day orthopaedic evaluation. "
+            "Do not force the knee into extension."
+        )
+
     # Achilles rupture
     if ("ankle" in region or "foot" in region) and i.weakness == "Significant":
-        if any(w in text for w in ("snap", "pop", "tiptoe", "plantarflex")):
+        if _keyword_affirmed(text, ["snap", "pop", "tiptoe", "plantarflex"]):
             flags.append(
                 "EMERGENCY: Inability to push up on tiptoe after a snap at the ankle may indicate Achilles "
                 "rupture — requires urgent surgical evaluation."
             )
 
+    # Shoulder neurovascular compromise
+    if "shoulder" in region and _keyword_affirmed(text, [
+        "cold arm", "numb arm", "pulseless", "no pulse", "dislocat",
+        "arm went dead", "arm is cold", "no feeling in arm",
+    ]):
+        flags.append(
+            "EMERGENCY: A cold, pulseless, or completely numb arm following shoulder trauma may indicate "
+            "neurovascular compromise — call 911 immediately."
+        )
+
     # Pec major rupture
     if "chest" in region and i.onset == "Sudden":
-        if any(w in text for w in ("pop", "snap", "tear", "rip", "deformity", "retracted")):
+        if _keyword_affirmed(text, ["pop", "snap", "tear", "rip", "deformity", "retracted"]):
             flags.append(
                 "EMERGENCY: A sudden pop in the chest or armpit during heavy loading (e.g. dynamic catch, "
                 "cross-body pull) may indicate pectoralis major rupture — requires urgent surgical evaluation."
@@ -85,10 +135,23 @@ def get_emergency_flags(i: Intake) -> List[str]:
 
     # Rib fracture / pneumothorax
     if "chest" in region and i.severity >= 7:
-        if any(w in text for w in ("breath", "breathe", "breathing", "inhale", "rib", "ribs")):
+        if _keyword_affirmed(text, ["breath", "breathe", "breathing", "inhale", "rib", "ribs"]):
             flags.append(
                 "Pain that worsens sharply with breathing after chest trauma may indicate a rib fracture "
                 "or, rarely, pneumothorax — seek same-day evaluation."
+            )
+
+    # Cervical myelopathy / spinal cord compression — neck
+    if "neck" in region or "cervical" in region:
+        if _keyword_affirmed(text, [
+            "numb hands", "numb fingers", "weak hands", "dropping things",
+            "electric", "shock down", "jolt", "hands numb", "clumsy hands",
+            "balance", "stumbling", "bladder", "bowel",
+        ]) or (i.numbness == "Yes" and i.weakness == "Significant"):
+            flags.append(
+                "EMERGENCY: Neck pain with upper limb numbness, weakness, or electric sensations may indicate "
+                "cervical myelopathy or cord compression — requires urgent neurological evaluation. "
+                "Do not return to climbing until cleared by a specialist."
             )
 
     return flags
@@ -113,7 +176,7 @@ def red_flags(i: Intake) -> List[str]:
         flags.append("Sudden onset with bruising can indicate a more significant tissue injury.")
     if i.swelling == "Yes" and i.severity >= 7:
         flags.append("High pain with swelling may need evaluation.")
-    if any(w in text for w in ("pop", "snap", "crack", "tore")):
+    if _keyword_affirmed(text, ["pop", "snap", "crack", "tore"]):
         flags.append(
             "A reported pop, snap, or crack at time of injury is a red flag — "
             "consider evaluation before returning to climbing."
@@ -126,8 +189,11 @@ def red_flags(i: Intake) -> List[str]:
             "seek evaluation to rule out scaphoid fracture. Initial X-ray can be negative; CT or MRI may be needed."
         )
 
-    # Finger — PIP extension block
-    if "finger" in region and any(w in text for w in ("can't straighten", "won't extend", "stuck bent", "pip")):
+    # Finger — PIP extension block (Boutonnière / central slip)
+    if "finger" in region and _keyword_affirmed(text, [
+        "can't straighten", "cannot straighten", "won't extend", "stuck bent",
+        "pip", "won't straighten", "unable to straighten",
+    ]):
         flags.append(
             "A PIP joint that cannot be passively extended to neutral may indicate a central slip rupture "
             "(Boutonnière deformity) — requires splinting within 72 hours to prevent permanent deformity."
@@ -385,6 +451,24 @@ def get_training_modifications(i: Intake) -> Dict[str, List[str]]:
             "Test wide pinches and cross-body pulls last before returning to full training.",
         ]
 
+    elif "neck" in region or "cervical" in region:
+        modifications["Permitted during recovery"] = [
+            "Easy slab and vertical climbing with good head and neck positioning.",
+            "Gentle shoulder and scapular strengthening (face pulls, rows, band work).",
+            "Core stability work that does not load the cervical spine.",
+        ]
+        modifications["Avoid"] = [
+            "Overhanging terrain requiring prolonged neck extension.",
+            "Roof climbing and inverted positions.",
+            "Campus board and explosive movements that stress the cervical spine.",
+            "Any position that reproduces arm symptoms (tingling, numbness, weakness).",
+        ]
+        modifications["Return to climbing progression"] = [
+            "Return only when full pain-free cervical range of motion is restored.",
+            "Seek clearance from a healthcare provider if any arm neurological symptoms were present.",
+            "Reintroduce overhanging terrain gradually — avoid sustained neck extension initially.",
+        ]
+
     else:
         modifications["General guidance"] = [
             "Avoid movements or grip styles that reproduce your symptoms.",
@@ -534,6 +618,20 @@ def get_return_to_climbing_protocol(i: Intake) -> Dict[str, List[str]]:
             "4. Dynamic moves — reintroduce last; avoid wide catches until fully pain-free.",
         ]
 
+    elif "neck" in region or "cervical" in region:
+        protocol["Criteria before returning to full climbing"] = [
+            "Full pain-free cervical range of motion in all planes.",
+            "No arm symptoms (numbness, tingling, or weakness) at rest or with movement.",
+            "Pain-free during and after a full easy climbing session.",
+            "Cleared by a healthcare provider if any neurological symptoms were present.",
+        ]
+        protocol["Progressive loading sequence"] = [
+            "1. Slab and vertical climbing — avoid sustained neck extension.",
+            "2. Introduce moderate terrain with controlled head positioning.",
+            "3. Gradual reintroduction of overhanging terrain at low volume.",
+            "4. Roof climbing and inverted positions — last to return.",
+        ]
+
     else:
         protocol["General return-to-climbing guidance"] = [
             "Return when pain is consistently below 3/10 during and 24 hours after activity.",
@@ -635,10 +733,19 @@ def bucket_possibilities(i: Intake) -> List[Tuple[str, str]]:
         out.append(("Pectoralis minor / costochondral strain (common)", "Overuse from high volume pulling, steep climbing, or a sudden dynamic catch."))
         if i.onset == "Sudden" and i.mechanism in {"Dynamic / jumping move", "Powerful move / slap"}:
             out.append(("Pectoralis major strain or tear (consider evaluation)", "Sudden pop or sharp pain during a powerful cross-body or dynamic move warrants evaluation."))
-        if any(w in i.free_text.lower() for w in ("rib", "ribs", "breath", "breathe")):
+        if _keyword_affirmed(i.free_text.lower(), ["rib", "ribs", "breath", "breathe"]):
             out.append(("Rib stress / costochondritis (possible)", "Localised rib pain that worsens with breathing, coughing, or twisting. Can result from repeated rib cage loading on overhangs."))
         if i.onset == "Gradual":
             out.append(("Serratus anterior / intercostal overuse (possible)", "Dull ache along the ribcage from sustained isometric loading on steep terrain."))
+
+    elif "neck" in region or "cervical" in region:
+        out.append(("Cervical muscle strain (common)", "Neck stiffness and pain from sustained overhead positions or awkward body positions on the wall."))
+        if i.numbness == "Yes":
+            out.append(("Cervical radiculopathy (possible)", "Numbness or tingling radiating into the arm from a compressed nerve root in the neck — warrants evaluation."))
+        if i.severity >= 6 and i.onset == "Sudden":
+            out.append(("Acute cervical disc injury (consider evaluation)", "Sudden high-intensity neck pain may involve disc irritation — imaging recommended."))
+        if i.onset == "Gradual":
+            out.append(("Cervical facet irritation (possible)", "Gradually worsening neck stiffness from repeated sustained positions — common in roof climbers."))
 
     else:
         out.append(("Overuse / load spike pattern (common)", "Often driven by sudden increases in intensity, volume, or frequency."))
@@ -675,6 +782,8 @@ def conservative_plan(i: Intake) -> Dict[str, List[str]]:
         avoid_specific = "Avoid smearing, heel hooks, and aggressive footwork until the ankle is stable and pain-free."
     elif "chest" in region:
         avoid_specific = "Avoid dynamic moves, wide pinches, gastons, and cross-body pulls that reproduce chest pain."
+    elif "neck" in region or "cervical" in region:
+        avoid_specific = "Avoid roof climbing, inverted positions, and overhead positions that reproduce neck or arm symptoms."
     else:
         avoid_specific = "Avoid movements or grip styles that reproduce your symptoms."
 

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Shield, MessageSquare, ChevronRight, Mountain, Dumbbell, UserCircle2, ArrowRight } from 'lucide-react'
+import { Shield, MessageSquare, ChevronRight, Mountain, Dumbbell, UserCircle2, ArrowRight, CheckCircle, Stethoscope } from 'lucide-react'
 import Logo from './Logo'
 
 const FEATURES = [
@@ -14,35 +14,41 @@ const FEATURES = [
     cta: 'Start triage',
   },
   {
-    icon: Dumbbell,
+    icon: Stethoscope,
     color: 'text-accent',
     bg: 'bg-accent/10 border-accent/20',
     glow: 'hover:border-accent/50 hover:bg-accent/15',
+    title: 'Rehab Library',
+    desc: 'Week-by-week exercise protocols for every injury area — gentle Phase 1 exercises free for everyone.',
+    tab: 'rehab',
+    cta: 'Browse exercises',
+  },
+  {
+    icon: Dumbbell,
+    color: 'text-accent',
+    bg: 'bg-accent/10 border-accent/20',
+    glow: 'hover:border-accent/40 hover:bg-accent/12',
     title: 'Training Plans',
     desc: 'Get a personalised 4-week climbing plan built around your goals, grades, and injury history.',
     tab: 'train',
     cta: 'Build my plan',
   },
   {
-    icon: UserCircle2,
+    icon: MessageSquare,
     color: 'text-accent3',
     bg: 'bg-accent3/10 border-accent3/20',
-    glow: 'hover:border-accent3/50 hover:bg-accent3/15',
-    title: 'Coach Chat',
-    desc: 'Get advice from a climber and routesetter with nearly a decade of experience. Message directly for a plan built around you.',
-    tab: 'chat',
-    cta: 'Message the coach',
-  },
-  {
-    icon: MessageSquare,
-    color: 'text-accent',
-    bg: 'bg-accent/10 border-accent/20',
-    glow: 'hover:border-accent/40 hover:bg-accent/12',
-    title: 'AI Knowledge Base',
+    glow: 'hover:border-accent3/40 hover:bg-accent3/12',
+    title: 'AI Assistant',
     desc: 'Ask anything about climbing injuries, load management, and rehab — backed by a curated knowledge base.',
     tab: 'chat',
     cta: 'Ask a question',
   },
+]
+
+const COACHING_INCLUDES = [
+  'Personal review of your triage results',
+  'Custom return-to-climb timeline',
+  'Direct async messaging — real answers',
 ]
 
 const container = {
@@ -161,9 +167,47 @@ export default function Landing({ onEnter }) {
           ))}
         </motion.div>
 
+        {/* Coaching section */}
+        <motion.div variants={item} className="mt-10 max-w-3xl w-full">
+          <div className="relative rounded-2xl border border-accent3/30 bg-gradient-to-br from-accent3/8 to-accent/5 p-6 md:p-8 text-left overflow-hidden">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-accent3/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-accent3/15 text-accent3 border border-accent3/25">
+                  <UserCircle2 size={11} />
+                  Pro — Human Coaching
+                </span>
+              </div>
+              <h2 className="text-lg md:text-xl font-bold text-text mb-2">
+                Work 1:1 with a climbing coach
+              </h2>
+              <p className="text-sm text-muted leading-relaxed mb-5 max-w-lg">
+                Not an algorithm. Mathew is a climber and routesetter with nearly a decade of experience.
+                Get your triage results reviewed, a plan built around your actual schedule, and direct
+                access for questions an AI can't answer.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 mb-6">
+                {COACHING_INCLUDES.map((point) => (
+                  <div key={point} className="flex items-center gap-2 text-xs text-muted">
+                    <CheckCircle size={12} className="text-accent3 shrink-0" />
+                    {point}
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => onEnter('chat')}
+                className="flex items-center gap-2 text-sm font-semibold text-accent3 hover:text-accent3/80 transition-colors group"
+              >
+                Apply for coaching
+                <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Injury areas */}
         <motion.div variants={item} className="mt-10 flex flex-wrap gap-2 justify-center">
-          {['Fingers', 'Wrist', 'Elbow', 'Shoulder', 'Knee', 'Hip', 'Lower Back'].map((area) => (
+          {['Fingers', 'Wrist', 'Elbow', 'Shoulder', 'Neck', 'Knee', 'Hip', 'Lower Back'].map((area) => (
             <button
               key={area}
               onClick={() => onEnter('triage')}

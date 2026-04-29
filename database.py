@@ -17,6 +17,8 @@ Auth security:
 - update_last_login(user_id): stamp last_login timestamp
 - accept_disclaimer(user_id): mark disclaimer accepted with timestamp
 - log_security_event(event_type, ip_address, email_attempted): insert into security_log
+- get_user_tier(user_id): return 'free' | 'core' | 'pro'
+- set_user_tier(user_id, tier): admin helper to promote a user
 
 Training/Coaching:
 - save_profile(user_id, data): upsert athlete profile
@@ -122,6 +124,10 @@ def init_db() -> None:
                 "TIMESTAMPTZ NULL")
             _add_column_if_missing(cur, "users", "last_login",
                 "TIMESTAMPTZ NULL")
+            _add_column_if_missing(cur, "users", "tier",
+                "TEXT DEFAULT 'free'")
+            _add_column_if_missing(cur, "users", "free_chat_used",
+                "INT DEFAULT 0")
 
             # ── Security log ───────────────────────────────────────────────
             cur.execute(
@@ -257,12 +263,13 @@ def get_user_by_email(email: str) -> Optional[Tuple[Any, ...]]:
 
 
 def get_user_by_id(user_id: int) -> Optional[Tuple[Any, ...]]:
-    """Returns (id, email, disclaimer_accepted) or None — used to enrich /api/auth/me."""
+    """Returns (id, email, disclaimer_accepted, tier) or None — used to enrich /api/auth/me."""
     with _connect() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT id, email, COALESCE(disclaimer_accepted, FALSE)
+                SELECT id, email, COALESCE(disclaimer_accepted, FALSE),
+                       COALESCE(tier, 'free')
                 FROM users WHERE id = %s;
                 """,
                 (int(user_id),),
@@ -345,6 +352,66 @@ def log_security_event(event_type: str, ip_address: str, email_attempted: str) -
             conn.commit()
     except Exception:
         pass  # security logging must never crash the request
+
+
+def get_user_tier(user_id: int) -> str:
+    """Return 'free' | 'core' | 'pro' for the given user."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT COALESCE(tier, 'free') FROM users WHERE id = %s;",
+                (int(user_id),),
+            )
+            row = cur.fetchone()
+    return str(row[0]) if row else "free"
+
+
+def set_user_tier(user_id: int, tier: str) -> None:
+    """Admin helper — promote a user to core or pro."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE users SET tier = %s WHERE id = %s;",
+                (tier, int(user_id)),
+            )
+        conn.commit()
+
+
+def get_chat_used(user_id: int) -> int:
+    """Return how many free AI chat messages this user has sent."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT COALESCE(free_chat_used, 0) FROM users WHERE id = %s;",
+                (int(user_id),),
+            )
+            row = cur.fetchone()
+    return int(row[0]) if row else 0
+
+
+def increment_chat_used(user_id: int) -> int:
+    """Increment free_chat_used and return the new count."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE users SET free_chat_used = COALESCE(free_chat_used, 0) + 1 WHERE id = %s RETURNING free_chat_used;",
+                (int(user_id),),
+            )
+            row = cur.fetchone()
+        conn.commit()
+    return int(row[0]) if row else 1
+
+
+def get_session_count(user_id: int) -> int:
+    """Return the number of saved sessions for a user."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT COUNT(*) FROM sessions WHERE user_id = %s;",
+                (int(user_id),),
+            )
+            row = cur.fetchone()
+    return int(row[0]) if row else 0
 
 
 # ---------------------------------------------------------------------------

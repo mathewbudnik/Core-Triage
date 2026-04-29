@@ -27,14 +27,18 @@ from database import (
     create_user,
     delete_session,
     get_active_plan,
+    get_chat_used,
     get_or_create_thread,
     get_profile,
     get_session,
+    get_session_count,
     get_thread_by_user,
     get_thread_messages,
     get_training_logs,
     get_user_by_email,
     get_user_by_id,
+    get_user_tier,
+    increment_chat_used,
     increment_failed_login,
     init_db,
     list_coach_threads,
@@ -156,6 +160,22 @@ def get_current_user(
         return {"id": int(payload["sub"]), "email": payload["email"]}
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+
+def _optional_user(request: Request) -> Optional[Dict[str, Any]]:
+    """Extract user from Bearer token if present — never raises."""
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return None
+    try:
+        payload = jwt.decode(auth[7:], SECRET_KEY, algorithms=[ALGORITHM])
+        return {"id": int(payload["sub"]), "email": payload["email"]}
+    except JWTError:
+        return None
+
+
+FREE_CHAT_LIMIT = 5
+FREE_SESSION_LIMIT = 1
 
 
 def _get_client_ip(request: Request) -> str:
@@ -361,7 +381,7 @@ def register(request: Request, req: RegisterRequest):
     password_hash = hash_password(req.password)
     user_id = create_user(req.email, password_hash)
     token = create_token(user_id, req.email)
-    return {"token": token, "user": {"id": user_id, "email": req.email, "disclaimer_accepted": False}}
+    return {"token": token, "user": {"id": user_id, "email": req.email, "disclaimer_accepted": False, "tier": "free"}}
 
 
 @app.post("/api/auth/login")
@@ -393,12 +413,14 @@ def login(request: Request, req: LoginRequest):
     update_last_login(user[0])
     log_security_event("login_success", ip, req.email)
     token = create_token(user[0], user[1])
+    tier = get_user_tier(user[0])
     return {
         "token": token,
         "user": {
             "id": user[0],
             "email": user[1],
             "disclaimer_accepted": bool(user[5]),
+            "tier": tier,
         },
     }
 
@@ -411,6 +433,7 @@ def me(request: Request, user: Dict = Depends(get_current_user)):
         "id": user["id"],
         "email": user["email"],
         "disclaimer_accepted": bool(db_user[2]) if db_user else False,
+        "tier": db_user[3] if db_user else "free",
     }
 
 
@@ -481,6 +504,19 @@ def triage(request: Request, req: IntakeRequest):
 @app.post("/api/chat")
 @limiter.limit("20/minute;100/hour")
 def chat(request: Request, req: ChatRequest):
+    # Optional auth — enforce per-user chat limits for free accounts
+    opt_user = _optional_user(request)
+    if opt_user:
+        tier = get_user_tier(opt_user["id"])
+        if tier == "free":
+            used = get_chat_used(opt_user["id"])
+            if used >= FREE_CHAT_LIMIT:
+                raise HTTPException(
+                    status_code=402,
+                    detail=f"chat_limit_reached:{used}",
+                )
+            increment_chat_used(opt_user["id"])
+
     # Input validation
     clean = sanitize_input(req.message)
     if len(clean) > MAX_MESSAGE_CHARS:
@@ -576,6 +612,14 @@ def get_sessions(request: Request, limit: int = 50, user: Dict = Depends(get_cur
 def create_session(request: Request, req: SaveSessionRequest, user: Dict = Depends(get_current_user)):
     if not db_ready:
         raise HTTPException(status_code=503, detail=db_error or "Database not ready")
+    tier = get_user_tier(user["id"])
+    if tier == "free":
+        count = get_session_count(user["id"])
+        if count >= FREE_SESSION_LIMIT:
+            raise HTTPException(
+                status_code=402,
+                detail=f"session_limit_reached:{count}",
+            )
     sid = save_session(
         {
             "user_id": user["id"],
@@ -668,6 +712,15 @@ def fetch_profile(request: Request, user: Dict = Depends(get_current_user)):
 @limiter.limit("10/minute")
 def generate_plan_endpoint(request: Request, req: GeneratePlanRequest, user: Dict = Depends(get_current_user)):
     from src.coach import generate_plan
+
+    tier = get_user_tier(user["id"])
+    if tier == "free":
+        raise HTTPException(status_code=402, detail="plan_tier_required")
+    # Core users get 1 active plan at a time; Pro gets unlimited
+    if tier == "core":
+        existing = get_active_plan(user["id"])
+        if existing:
+            raise HTTPException(status_code=402, detail="plan_limit_reached")
 
     profile = get_profile(user["id"])
     if not profile:

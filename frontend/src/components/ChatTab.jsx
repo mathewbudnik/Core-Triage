@@ -1,10 +1,22 @@
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Send, Loader2, Bot, User, Cpu, Sparkles, UserCircle2, Inbox, AlertTriangle } from 'lucide-react'
+import { Send, Loader2, Bot, User, Cpu, Sparkles, UserCircle2, Inbox, AlertTriangle, Lock } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { sendChat } from '../api'
 import CoachChat from './CoachChat'
 import CoachInbox from './CoachInbox'
+import UpgradeModal from './UpgradeModal'
+
+const FREE_CHAT_LIMIT = 5
+
+function getLocalChatUsed() {
+  return parseInt(localStorage.getItem('ct_chat_used') || '0', 10)
+}
+function incrementLocalChatUsed() {
+  const n = getLocalChatUsed() + 1
+  localStorage.setItem('ct_chat_used', String(n))
+  return n
+}
 
 const COACH_EMAIL = 'mathewbudnik@gmail.com'
 
@@ -58,7 +70,12 @@ export default function ChatTab({ k, user, onLoginClick }) {
   const [input, setInput]       = useState('')
   const [mode, setMode]         = useState('kb')
   const [loading, setLoading]   = useState(false)
+  const [chatUsed, setChatUsed] = useState(() => getLocalChatUsed())
+  const [showUpgrade, setShowUpgrade] = useState(false)
   const bottomRef = useRef(null)
+
+  const isFreeTier = !user || user?.tier === 'free'
+  const chatLimitReached = isFreeTier && chatUsed >= FREE_CHAT_LIMIT
 
   const inputRef = useRef('')
   useEffect(() => { inputRef.current = input }, [input])
@@ -74,6 +91,12 @@ export default function ChatTab({ k, user, onLoginClick }) {
     const text = inputRef.current.trim()
     if (!text || loading) return
 
+    // Client-side gate for unauth users (server enforces for logged-in free users)
+    if (chatLimitReached) {
+      setShowUpgrade(true)
+      return
+    }
+
     const userMsg = { role: 'user', content: text }
     const updated = [...messages, userMsg]
     setMessages(updated)
@@ -83,12 +106,24 @@ export default function ChatTab({ k, user, onLoginClick }) {
     try {
       const data = await sendChat({ message: text, history: messages, mode, k })
       setMessages([...updated, { role: 'assistant', content: data.response }])
+      // Track usage locally for display
+      if (isFreeTier) {
+        const n = incrementLocalChatUsed()
+        setChatUsed(n)
+      }
     } catch (err) {
-      setMessages([...updated, { role: 'assistant', content: `Error: ${err.message}` }])
+      if (err.message?.includes('chat_limit_reached')) {
+        setChatUsed(FREE_CHAT_LIMIT)
+        localStorage.setItem('ct_chat_used', String(FREE_CHAT_LIMIT))
+        setMessages(updated) // rollback optimistic user message
+        setShowUpgrade(true)
+      } else {
+        setMessages([...updated, { role: 'assistant', content: `Error: ${err.message}` }])
+      }
     } finally {
       setLoading(false)
     }
-  }, [messages, loading, mode, k]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [messages, loading, mode, k, chatLimitReached, isFreeTier]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleInputChange = useCallback((e) => setInput(e.target.value), [])
 
@@ -260,19 +295,39 @@ export default function ChatTab({ k, user, onLoginClick }) {
 
       {/* Input */}
       <div className="border-t border-outline p-4 bg-panel2/40 mt-3">
+        {/* Free tier limit banner */}
+        {isFreeTier && chatUsed >= FREE_CHAT_LIMIT - 1 && (
+          <div className="mb-3 flex items-center justify-between bg-panel border border-outline rounded-xl px-3 py-2.5 gap-3">
+            <div className="flex items-center gap-2">
+              <Lock size={12} className="text-accent shrink-0" />
+              {chatLimitReached ? (
+                <p className="text-xs text-muted">You've used all {FREE_CHAT_LIMIT} free messages.</p>
+              ) : (
+                <p className="text-xs text-muted">{FREE_CHAT_LIMIT - chatUsed} free message{FREE_CHAT_LIMIT - chatUsed !== 1 ? 's' : ''} remaining.</p>
+              )}
+            </div>
+            <button
+              onClick={() => setShowUpgrade(true)}
+              className="text-xs btn-secondary shrink-0"
+            >
+              Upgrade
+            </button>
+          </div>
+        )}
+
         <form onSubmit={handleSend} className="flex gap-3">
           <input
             type="text"
             value={input}
             onChange={handleInputChange}
-            placeholder="Ask about symptoms, training load, return-to-climb, or rehab basics…"
+            placeholder={chatLimitReached ? 'Upgrade to continue chatting…' : 'Ask about symptoms, training load, return-to-climb, or rehab basics…'}
             className="input-base flex-1"
-            disabled={loading}
+            disabled={loading || chatLimitReached}
             maxLength={MAX_CHARS + 50}
           />
           <button
             type="submit"
-            disabled={loading || !hasInput}
+            disabled={loading || !hasInput || chatLimitReached}
             className="btn-primary flex items-center gap-2 shrink-0"
           >
             {loading ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
@@ -291,6 +346,12 @@ export default function ChatTab({ k, user, onLoginClick }) {
           <p className="text-xs text-accent2 mt-1">Message too long — please shorten it before sending.</p>
         )}
       </div>
+
+      <AnimatePresence>
+        {showUpgrade && (
+          <UpgradeModal onClose={() => setShowUpgrade(false)} trigger="chat" />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

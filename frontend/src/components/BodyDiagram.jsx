@@ -2,6 +2,7 @@ import { memo, useState } from 'react'
 
 // ── Zones ──────────────────────────────────────────────────────────────────
 const ZONES = [
+  { id: 'Neck',       label: 'NECK',       desc: 'Neck or cervical spine' },
   { id: 'Shoulder',   label: 'SHOULDER',   desc: 'Shoulder joint or rotator cuff' },
   { id: 'Elbow',      label: 'ELBOW',      desc: 'Elbow or upper arm' },
   { id: 'Wrist',      label: 'WRIST',      desc: 'Forearm or wrist' },
@@ -120,9 +121,15 @@ function BodyDiagram({ selected, onSelect }) {
       {/* ── Body container ───────────────────────────────────────────────── */}
       <div style={{ width: 207, position: 'relative', paddingTop: 240, height: 260, margin: '0 auto' }}>
 
-        {/* Head — decorative */}
+        {/* Head — decorative (top 72% of the head SVG, above the neck trapezoids) */}
         <svg xmlns="http://www.w3.org/2000/svg" width="56.594" height="95.031" viewBox="0 0 56.594 95.031"
-          {...sp(null, { ml: -28.5, top: -6 })}>
+          {...sp(null, { ml: -28.5, top: -6 }, 'inset(0 0 28% 0)')}>
+          <path d={D.head} />
+        </svg>
+
+        {/* Neck — interactive (bottom 28% of head SVG: the two trapezoid pieces at y≥68.5) */}
+        <svg xmlns="http://www.w3.org/2000/svg" width="56.594" height="95.031" viewBox="0 0 56.594 95.031"
+          {...sp('Neck', { ml: -28.5, top: -6, z: 6 }, 'inset(72% 0 0 0)')}>
           <path d={D.head} />
         </svg>
 
