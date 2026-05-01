@@ -5,6 +5,17 @@ import { getProfile, getActivePlan, generatePlan } from '../api'
 import ProfileSetup from './ProfileSetup'
 import PlanView from './PlanView'
 
+function friendlyPlanError(msg) {
+  if (!msg) return 'Could not generate your plan.'
+  if (msg.includes('plan_tier_required')) {
+    return 'AI training plans are a Pro feature ($10/mo). Tap "View plans & pricing" in the sidebar to upgrade.'
+  }
+  if (msg.includes('plan_limit_reached')) {
+    return 'You already have an active plan. Generate a new one only when you\'re ready to start fresh.'
+  }
+  return msg
+}
+
 function EmptyState({ icon: Icon, title, body, action }) {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-8 py-16 space-y-5">
@@ -65,7 +76,7 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
       setPlan(activePlan)
       setState('ready')
     } catch (err) {
-      setError(err.message)
+      setError(friendlyPlanError(err.message))
       setState('ready') // fall through to plan-less ready state
     } finally {
       setGenerating(false)
@@ -81,7 +92,7 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
       setPlan(activePlan)
       setState('ready')
     } catch (err) {
-      setError(err.message)
+      setError(friendlyPlanError(err.message))
     } finally {
       setGenerating(false)
     }

@@ -176,11 +176,12 @@ export default function Landing({ onEnter }) {
           <div className="relative rounded-2xl border border-accent3/30 bg-gradient-to-br from-accent3/8 to-accent/5 p-6 md:p-8 text-left overflow-hidden">
             <div className="absolute top-0 right-0 w-48 h-48 bg-accent3/10 rounded-full blur-3xl pointer-events-none" />
             <div className="relative">
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
                 <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-accent3/15 text-accent3 border border-accent3/25">
                   <UserCircle2 size={11} />
-                  Pro — Human Coaching
+                  1:1 Coaching · $89/mo
                 </span>
+                <span className="text-[11px] text-muted/70">application only</span>
               </div>
               <h2 className="text-lg md:text-xl font-bold text-text mb-2">
                 Work 1:1 with a climbing coach

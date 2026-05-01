@@ -632,6 +632,7 @@ def _enrich_coach_notes(sessions: List[Dict], profile: Dict, openai_client: Any)
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.7,
                 max_tokens=120,
+                timeout=15,
             )
             session["coach_note"] = response.choices[0].message.content.strip()
     except Exception:

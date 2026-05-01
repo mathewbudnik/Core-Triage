@@ -4,10 +4,10 @@ import { ChevronRight, ChevronLeft, Check } from 'lucide-react'
 import { saveProfile } from '../api'
 
 const EXPERIENCE_LEVELS = [
-  { value: 'beginner', label: 'Beginner', sub: '< 2 years', desc: 'Learning movement fundamentals, building base fitness' },
-  { value: 'intermediate', label: 'Intermediate', sub: '2–5 years', desc: 'Consistent training, projecting moderates' },
-  { value: 'advanced', label: 'Advanced', sub: '5–10 years', desc: 'Structured training, chasing hard grades' },
-  { value: 'elite', label: 'Elite', sub: '10+ years', desc: 'High-performance training, competition or V10+ / 8b+' },
+  { value: 'beginner', label: 'Beginner', sub: '< 2 years', desc: 'Learning movement fundamentals, building base fitness', years: 1 },
+  { value: 'intermediate', label: 'Intermediate', sub: '2–5 years', desc: 'Consistent training, projecting moderates', years: 3 },
+  { value: 'advanced', label: 'Advanced', sub: '5–10 years', desc: 'Structured training, chasing hard grades', years: 7 },
+  { value: 'elite', label: 'Elite', sub: '10+ years', desc: 'High-performance training, competition or V10+ / 8b+', years: 12 },
 ]
 
 const DISCIPLINES = [
@@ -116,7 +116,6 @@ export default function ProfileSetup({ onComplete }) {
 
   const [form, setForm] = useState({
     experience_level: '',
-    years_climbing: 3,
     primary_discipline: '',
     max_grade_boulder: 'V4',
     max_grade_route: '5.11a',
@@ -149,8 +148,10 @@ export default function ProfileSetup({ onComplete }) {
     setSaving(true)
     setError(null)
     try {
-      await saveProfile(form)
-      onComplete(form)
+      const years_climbing = EXPERIENCE_LEVELS.find((l) => l.value === form.experience_level)?.years ?? 3
+      const payload = { ...form, years_climbing }
+      await saveProfile(payload)
+      onComplete(payload)
     } catch (err) {
       setError(err.message)
       setSaving(false)
@@ -225,23 +226,6 @@ export default function ProfileSetup({ onComplete }) {
         />
         <div className="flex justify-between text-xs text-muted mt-1">
           <span>5.9</span><span>5.12a</span><span>5.15a</span>
-        </div>
-      </div>
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold text-muted uppercase tracking-wide">Years climbing</p>
-          <span className="text-sm font-bold text-accent">{form.years_climbing} yr{form.years_climbing !== 1 ? 's' : ''}</span>
-        </div>
-        <input
-          type="range"
-          min={0}
-          max={20}
-          value={form.years_climbing}
-          onChange={(e) => set('years_climbing', +e.target.value)}
-          className="w-full accent-teal-400"
-        />
-        <div className="flex justify-between text-xs text-muted mt-1">
-          <span>0</span><span>10</span><span>20+</span>
         </div>
       </div>
     </div>,

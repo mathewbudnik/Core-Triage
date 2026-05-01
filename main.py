@@ -381,7 +381,8 @@ def register(request: Request, req: RegisterRequest):
     password_hash = hash_password(req.password)
     user_id = create_user(req.email, password_hash)
     token = create_token(user_id, req.email)
-    return {"token": token, "user": {"id": user_id, "email": req.email, "disclaimer_accepted": False, "tier": "free"}}
+    is_coach = req.email == COACH_EMAIL
+    return {"token": token, "user": {"id": user_id, "email": req.email, "disclaimer_accepted": False, "tier": "free", "is_coach": is_coach}}
 
 
 @app.post("/api/auth/login")
@@ -421,6 +422,7 @@ def login(request: Request, req: LoginRequest):
             "email": user[1],
             "disclaimer_accepted": bool(user[5]),
             "tier": tier,
+            "is_coach": user[1] == COACH_EMAIL,
         },
     }
 
@@ -434,6 +436,7 @@ def me(request: Request, user: Dict = Depends(get_current_user)):
         "email": user["email"],
         "disclaimer_accepted": bool(db_user[2]) if db_user else False,
         "tier": db_user[3] if db_user else "free",
+        "is_coach": user["email"] == COACH_EMAIL,
     }
 
 
@@ -507,8 +510,9 @@ def chat(request: Request, req: ChatRequest):
     # Optional auth — enforce per-user chat limits for free accounts
     opt_user = _optional_user(request)
     if opt_user:
+        is_coach = opt_user["email"] == COACH_EMAIL
         tier = get_user_tier(opt_user["id"])
-        if tier == "free":
+        if not is_coach and tier == "free":
             used = get_chat_used(opt_user["id"])
             if used >= FREE_CHAT_LIMIT:
                 raise HTTPException(
@@ -546,6 +550,7 @@ def chat(request: Request, req: ChatRequest):
                 messages=[{"role": "system", "content": system_prompt}] + messages,
                 temperature=0.2,
                 max_tokens=600,
+                timeout=15,
             )
             text = response.choices[0].message.content
         except Exception as e:
@@ -612,8 +617,9 @@ def get_sessions(request: Request, limit: int = 50, user: Dict = Depends(get_cur
 def create_session(request: Request, req: SaveSessionRequest, user: Dict = Depends(get_current_user)):
     if not db_ready:
         raise HTTPException(status_code=503, detail=db_error or "Database not ready")
+    is_coach = user["email"] == COACH_EMAIL
     tier = get_user_tier(user["id"])
-    if tier == "free":
+    if not is_coach and tier == "free":
         count = get_session_count(user["id"])
         if count >= FREE_SESSION_LIMIT:
             raise HTTPException(
@@ -713,14 +719,17 @@ def fetch_profile(request: Request, user: Dict = Depends(get_current_user)):
 def generate_plan_endpoint(request: Request, req: GeneratePlanRequest, user: Dict = Depends(get_current_user)):
     from src.coach import generate_plan
 
+    is_coach = user["email"] == COACH_EMAIL
     tier = get_user_tier(user["id"])
-    if tier == "free":
-        raise HTTPException(status_code=402, detail="plan_tier_required")
-    # Core users get 1 active plan at a time; Pro gets unlimited
-    if tier == "core":
-        existing = get_active_plan(user["id"])
-        if existing:
-            raise HTTPException(status_code=402, detail="plan_limit_reached")
+    # Coach account bypasses tier gates entirely.
+    if not is_coach:
+        if tier == "free":
+            raise HTTPException(status_code=402, detail="plan_tier_required")
+        # Core users get 1 active plan at a time; Pro gets unlimited
+        if tier == "core":
+            existing = get_active_plan(user["id"])
+            if existing:
+                raise HTTPException(status_code=402, detail="plan_limit_reached")
 
     profile = get_profile(user["id"])
     if not profile:

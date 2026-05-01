@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageSquare, Clock, Info, AlertTriangle, Menu, X, LogIn, LogOut, User, Activity, Dumbbell, FileText, Stethoscope, UserCircle2, ChevronRight } from 'lucide-react'
+import { MessageSquare, Clock, Info, AlertTriangle, Menu, X, LogIn, LogOut, User, Activity, Dumbbell, FileText, Stethoscope, UserCircle2, ChevronRight, Shield } from 'lucide-react'
 import { getHealth, getMe, acceptDisclaimer } from './api'
 import Landing from './components/Landing'
 import Logo from './components/Logo'
@@ -204,6 +204,7 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.1 }}
             className="fixed inset-0 bg-bg/80 backdrop-blur-sm z-30 md:hidden"
             onClick={() => setSidebarOpen(false)}
           />
@@ -214,7 +215,7 @@ export default function App() {
       <aside className={`
         fixed md:static inset-y-0 left-0 z-40
         w-64 shrink-0 flex flex-col border-r border-outline bg-panel2/95 backdrop-blur-sm
-        transition-transform duration-300 ease-in-out
+        transition-transform duration-150 ease-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
         {/* Logo */}
@@ -246,7 +247,7 @@ export default function App() {
               <button
                 key={id}
                 onClick={() => handleTabChange(id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-100
                   ${active
                     ? 'bg-accent/15 text-accent border border-accent/25 shadow-glow'
                     : 'text-muted hover:text-text hover:bg-panel'
@@ -257,6 +258,7 @@ export default function App() {
                 {active && (
                   <motion.div
                     layoutId="nav-indicator"
+                    transition={{ duration: 0.12, ease: 'easeOut' }}
                     className="ml-auto w-1.5 h-1.5 rounded-full bg-accent"
                   />
                 )}
@@ -269,19 +271,15 @@ export default function App() {
         <div className="mx-3 mb-3 rounded-xl border border-accent3/25 bg-accent3/8 p-3">
           <div className="flex items-center gap-1.5 mb-1">
             <UserCircle2 size={12} className="text-accent3" />
-            <span className="text-[10px] font-bold text-accent3 uppercase tracking-wide">Pro Coaching</span>
+            <span className="text-[10px] font-bold text-accent3 uppercase tracking-wide">1:1 Coaching</span>
           </div>
           <p className="text-[11px] text-muted leading-snug mb-2 h-8 overflow-hidden">
-            Work 1:1 with a coach — personal injury review &amp; custom return-to-climb plan.
+            $89/mo · application only. Personal injury review &amp; custom return-to-climb plan.
           </p>
           <button
             onClick={() => {
-              if (user?.tier === 'pro') {
-                handleTabChange('chat')
-              } else {
-                setUpgradeTrigger('coaching')
-                setShowUpgrade(true)
-              }
+              setUpgradeTrigger('coaching')
+              setShowUpgrade(true)
             }}
             className="flex items-center gap-1 text-[11px] font-semibold text-accent3 hover:text-accent3/80 transition-colors"
           >
@@ -342,8 +340,14 @@ export default function App() {
           <div className="flex items-center gap-2">
             {user ? (
               <>
-                <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted bg-panel border border-outline px-3 py-1.5 rounded-full">
-                  <User size={12} className="text-accent" />
+                {user.is_coach && (
+                  <div className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-accent3 bg-accent3/10 border border-accent3/30 px-3 py-1.5 rounded-full">
+                    <Shield size={12} />
+                    <span>Coach</span>
+                  </div>
+                )}
+                <div className={`hidden sm:flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border ${user.is_coach ? 'text-accent3 bg-accent3/5 border-accent3/20' : 'text-muted bg-panel border-outline'}`}>
+                  <User size={12} className={user.is_coach ? 'text-accent3' : 'text-accent'} />
                   <span className="max-w-[120px] truncate">{user.email}</span>
                 </div>
                 <button
@@ -366,42 +370,33 @@ export default function App() {
           </div>
         </header>
 
-        {/* Tab content */}
+        {/* Tab content — no wrapper animation; each tab handles its own entrance */}
         <div className="flex-1 overflow-auto">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.1 }}
-              className="h-full"
-            >
-              {activeTab === 'triage' && <TriageTab key={triageKey} k={k} user={user} />}
-              {activeTab === 'rehab' && (
-                <RehabTab
-                  user={user}
-                  onLoginClick={() => setShowAuth(true)}
-                />
-              )}
-              {activeTab === 'chat' && <ChatTab k={k} user={user} onLoginClick={() => setShowAuth(true)} />}
-              {activeTab === 'history' && (
-                <HistoryTab
-                  dbReady={dbReady}
-                  user={user}
-                  onLoginClick={() => setShowAuth(true)}
-                />
-              )}
-              {activeTab === 'train' && (
-                <TrainTab
-                  user={user}
-                  dbReady={dbReady}
-                  onLoginClick={() => setShowAuth(true)}
-                />
-              )}
-              {activeTab === 'about' && <AboutTab />}
-            </motion.div>
-          </AnimatePresence>
+          <div key={activeTab} className="h-full">
+            {activeTab === 'triage' && <TriageTab key={triageKey} k={k} user={user} />}
+            {activeTab === 'rehab' && (
+              <RehabTab
+                user={user}
+                onLoginClick={() => setShowAuth(true)}
+              />
+            )}
+            {activeTab === 'chat' && <ChatTab k={k} user={user} onLoginClick={() => setShowAuth(true)} />}
+            {activeTab === 'history' && (
+              <HistoryTab
+                dbReady={dbReady}
+                user={user}
+                onLoginClick={() => setShowAuth(true)}
+              />
+            )}
+            {activeTab === 'train' && (
+              <TrainTab
+                user={user}
+                dbReady={dbReady}
+                onLoginClick={() => setShowAuth(true)}
+              />
+            )}
+            {activeTab === 'about' && <AboutTab />}
+          </div>
         </div>
       </main>
 
@@ -414,7 +409,7 @@ export default function App() {
               <button
                 key={id}
                 onClick={() => handleTabChange(id)}
-                className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors duration-200 ${
+                className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors duration-100 ${
                   active ? 'text-accent' : 'text-muted'
                 }`}
               >
@@ -423,6 +418,7 @@ export default function App() {
                 {active && (
                   <motion.div
                     layoutId="bottom-nav-indicator"
+                    transition={{ duration: 0.12, ease: 'easeOut' }}
                     className="absolute bottom-0 w-8 h-0.5 bg-accent rounded-full"
                   />
                 )}

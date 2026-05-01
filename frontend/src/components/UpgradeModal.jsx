@@ -1,61 +1,68 @@
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { X, Lock, FileText, Dumbbell, Clock, Activity, MessageSquare, UserCircle2, ChevronRight } from 'lucide-react'
 
-const CORE_BENEFITS = [
-  { icon: Dumbbell,     text: 'Full rehab protocols — all three phases' },
-  { icon: FileText,     text: 'PDF triage reports — bring to your physio or doctor' },
-  { icon: Clock,        text: 'Unlimited saved sessions & history' },
-  { icon: Activity,     text: 'Unlimited AI chat' },
-  { icon: MessageSquare, text: 'One training plan' },
-]
-
 const PRO_BENEFITS = [
-  { icon: UserCircle2,  text: 'Direct 1:1 coaching from Mathew — async messaging' },
-  { icon: Activity,     text: 'Personal injury review of your triage results' },
-  { icon: Dumbbell,     text: 'Custom return-to-climb plan built around you' },
-  { icon: MessageSquare, text: 'Unlimited training plans' },
-  { icon: Clock,        text: 'Everything in Core' },
+  { icon: Dumbbell,      text: 'Full rehab protocols — all three phases' },
+  { icon: FileText,      text: 'PDF triage reports — bring to your physio or doctor' },
+  { icon: Clock,         text: 'Unlimited saved sessions & history' },
+  { icon: Activity,      text: 'Unlimited AI chat' },
+  { icon: MessageSquare, text: 'AI-generated training plans' },
 ]
 
-const TIER_META = {
-  core: {
-    label: 'Core',
-    price: '$6',
-    headline: 'Unlock the full rehab library',
-    sub: 'Everything you need to rehab and train smarter.',
-    benefits: CORE_BENEFITS,
-    mailSubject: 'CoreTriage Core Tier — Waitlist',
-    mailBody: "Hi, I'd like to join the Core tier waitlist.",
-    cta: 'Join Core Waitlist',
+const COACHING_BENEFITS = [
+  { icon: UserCircle2,   text: 'Direct 1:1 async messaging with Mathew' },
+  { icon: Activity,      text: 'Personal review of your triage results' },
+  { icon: Dumbbell,      text: 'Custom return-to-climb plan built around you' },
+  { icon: MessageSquare, text: 'Optional in-person session add-ons' },
+  { icon: Clock,         text: 'Includes everything in Pro for the month' },
+]
+
+const PLAN_META = {
+  pro: {
+    label: 'Pro',
+    price: '$10',
+    cadence: '/ month',
+    headline: 'Unlock the full app',
+    sub: 'Full rehab library, AI training plans, and PDF reports — everything you need to recover and train smarter.',
+    benefits: PRO_BENEFITS,
+    mailSubject: 'CoreTriage Pro — Waitlist',
+    mailBody: "Hi, I'd like to join the Pro waitlist.",
+    cta: 'Join Pro Waitlist',
     color: 'text-accent',
     bg: 'bg-accent/10',
     border: 'border-accent/25',
+    icon: Lock,
+    note: 'No payment required yet — we\'ll reach out when ready.',
   },
-  pro: {
-    label: 'Pro',
-    price: '$14',
-    headline: 'Work 1:1 with a climbing coach',
-    sub: 'Get direct access to Mathew — real answers that an algorithm can\'t give you.',
-    benefits: PRO_BENEFITS,
-    mailSubject: 'CoreTriage Pro Coaching — Application',
-    mailBody: "Hi Mathew, I'd like to apply for Pro coaching. Here's a bit about my situation:\n\n",
+  coaching: {
+    label: 'Coaching',
+    price: '$89',
+    cadence: '/ month · application only',
+    headline: 'Work 1:1 with Mathew',
+    sub: 'Real human coaching — personal injury review and a return-to-climb plan built around your situation. Apply and we\'ll talk.',
+    benefits: COACHING_BENEFITS,
+    mailSubject: 'CoreTriage Coaching — Application',
+    mailBody: "Hi Mathew, I'd like to apply for 1:1 coaching. Here's a bit about my situation:\n\n- Injury / goal:\n- Climbing background:\n- What you'd want help with:\n\n",
     cta: 'Apply for Coaching',
     color: 'text-accent3',
     bg: 'bg-accent3/10',
     border: 'border-accent3/25',
+    icon: UserCircle2,
+    note: 'Application reviewed personally — limited spots available.',
   },
 }
 
-function triggerToTier(trigger) {
-  return trigger === 'coaching' ? 'pro' : 'core'
+function triggerToView(trigger) {
+  return trigger === 'coaching' ? 'coaching' : 'pro'
 }
 
 export default function UpgradeModal({ onClose, trigger = 'feature' }) {
-  const [activeTier, setActiveTier] = useState(triggerToTier(trigger))
-  const meta = TIER_META[activeTier]
-  const otherTier = activeTier === 'core' ? 'pro' : 'core'
-  const otherMeta = TIER_META[otherTier]
+  const [activeView, setActiveView] = useState(triggerToView(trigger))
+  const meta = PLAN_META[activeView]
+  const otherView = activeView === 'pro' ? 'coaching' : 'pro'
+  const otherMeta = PLAN_META[otherView]
+  const Icon = meta.icon
 
   return (
     <div
@@ -63,10 +70,10 @@ export default function UpgradeModal({ onClose, trigger = 'feature' }) {
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <motion.div
-        initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.96 }}
-        transition={{ duration: 0.12 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.08 }}
         className="relative w-full max-w-sm mx-4 bg-panel2 border border-outline rounded-2xl shadow-xl p-6 space-y-5"
       >
         <button
@@ -79,29 +86,26 @@ export default function UpgradeModal({ onClose, trigger = 'feature' }) {
         {/* Icon + headline */}
         <div className="flex flex-col items-center text-center space-y-3 pt-2">
           <div className={`w-14 h-14 rounded-2xl ${meta.bg} border ${meta.border} flex items-center justify-center`}>
-            {activeTier === 'pro'
-              ? <UserCircle2 size={22} className={meta.color} />
-              : <Lock size={22} className={meta.color} />
-            }
+            <Icon size={22} className={meta.color} />
           </div>
           <div>
             <h2 className="text-base font-bold text-text">{meta.headline}</h2>
-            <p className="text-xs text-muted mt-1 max-w-[240px] mx-auto">{meta.sub}</p>
+            <p className="text-xs text-muted mt-1 max-w-[260px] mx-auto">{meta.sub}</p>
           </div>
         </div>
 
         {/* Price */}
         <div className="text-center">
           <span className={`text-2xl font-bold ${meta.color}`}>{meta.price}</span>
-          <span className="text-sm text-muted"> / month · {meta.label}</span>
+          <span className="text-sm text-muted"> {meta.cadence}</span>
         </div>
 
         {/* Benefits */}
         <ul className="space-y-2.5">
-          {meta.benefits.map(({ icon: Icon, text }) => (
+          {meta.benefits.map(({ icon: BenefitIcon, text }) => (
             <li key={text} className="flex items-start gap-2.5">
               <div className={`w-5 h-5 rounded-md ${meta.bg} border ${meta.border} flex items-center justify-center shrink-0 mt-0.5`}>
-                <Icon size={11} className={meta.color} />
+                <BenefitIcon size={11} className={meta.color} />
               </div>
               <span className="text-xs text-muted leading-relaxed">{text}</span>
             </li>
@@ -124,19 +128,17 @@ export default function UpgradeModal({ onClose, trigger = 'feature' }) {
           </button>
         </div>
 
-        {/* Cross-sell to other tier */}
+        {/* Cross-sell to the other product */}
         <button
-          onClick={() => setActiveTier(otherTier)}
+          onClick={() => setActiveView(otherView)}
           className="w-full flex items-center justify-center gap-1 text-[11px] text-muted/60 hover:text-muted transition-colors"
         >
-          {otherTier === 'pro' ? 'Want personal coaching?' : 'Just need the basics?'}
-          <span className="font-medium text-muted">{otherMeta.label} ({otherMeta.price}/mo)</span>
+          {otherView === 'coaching' ? 'Want personal 1:1 coaching?' : 'Just want the app?'}
+          <span className="font-medium text-muted">{otherMeta.label} ({otherMeta.price}{otherView === 'coaching' ? '/mo' : '/mo'})</span>
           <ChevronRight size={10} />
         </button>
 
-        <p className="text-[10px] text-center text-muted/50 -mt-2">
-          No payment required — we'll reach out when ready.
-        </p>
+        <p className="text-[10px] text-center text-muted/50 -mt-2">{meta.note}</p>
       </motion.div>
     </div>
   )

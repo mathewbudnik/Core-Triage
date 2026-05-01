@@ -20,6 +20,19 @@ class Intake:
     # Context about what triggered it (helps narrow common patterns)
     mechanism: str
     free_text: str
+    # Optional contextual fields supplied by the upgraded wizard (Phase 5).
+    # All default-empty so existing callers keep working unchanged.
+    pain_trajectory: str = ""        # "better" | "same" | "worse" | ""
+    functional_check: str = ""       # "yes" | "no" | "painful" | ""
+    prior_injury: str = ""           # "yes" | "no" | ""
+    duration_weeks: int = 0           # 0 = unknown
+    years_climbing: str = ""         # "<1" | "1-3" | "3-5" | "5+" | ""
+    hangboard_user: str = ""         # "yes" | "no" | ""
+    climbing_situation: str = ""     # free-form key (e.g. "heel_hook")
+    pop_reported: bool = False
+    visible_deformity: bool = False
+    bilateral_symptoms: bool = False
+    bladder_bowel_change: bool = False
 
 
 # ── Negation-aware keyword matching ────────────────────────────────────────
@@ -31,69 +44,77 @@ _NEG_WORDS = frozenset({"no", "not", "without", "denies", "none", "negative", "a
 
 def _keyword_affirmed(text: str, keywords: list) -> bool:
     """True only when a keyword appears without a negation in the four preceding words.
+
+    Supports both single-token and multi-word keywords. For multi-word keywords
+    (e.g. "tendon lifting"), the keyword's first token is searched against each
+    word in the text, then the remaining tokens must appear contiguously after
+    it. The four-word negation window precedes the matched first token.
+
     A four-word window handles 'no X or Y' patterns (e.g. 'no bladder or bowel issues').
     False positives (over-flagging) are preferred over false negatives for safety flags."""
     words = text.split()
     for i, word in enumerate(words):
         for kw in keywords:
-            if kw in word:
-                context = words[max(0, i - 4):i]
-                if not any(n in context for n in _NEG_WORDS):
-                    return True
+            kw_tokens = kw.split()
+            if len(kw_tokens) == 1:
+                if kw_tokens[0] in word:
+                    context = words[max(0, i - 4):i]
+                    if not any(n in context for n in _NEG_WORDS):
+                        return True
+            else:
+                if i + len(kw_tokens) > len(words):
+                    continue
+                if kw_tokens[0] not in word:
+                    continue
+                # Allow trailing punctuation in subsequent tokens (e.g. "shortened,").
+                tail = words[i + 1: i + len(kw_tokens)]
+                if all(t in w for t, w in zip(kw_tokens[1:], tail)):
+                    context = words[max(0, i - 4):i]
+                    if not any(n in context for n in _NEG_WORDS):
+                        return True
     return False
 
 
-# ── Emergency flag detection ────────────────────────────────────────────────
-# Returns emergency-level red flags only — these should always surface at top
+# ── Urgent referral flags ───────────────────────────────────────────────────
+# This app is for self-diagnosable climbing injuries. True medical emergencies
+# (open fractures, cauda equina, neurovascular compromise, sepsis, cord
+# compression) belong in an ER, not here — the disclaimer covers that case.
+#
+# What stays here are climbing-recognizable injuries that benefit from prompt
+# specialist evaluation but are NOT 911 territory: pulley rupture (bowstringing),
+# distal bicep tendon rupture, locked knee, Achilles rupture, pec major tear.
 
-def get_emergency_flags(i: Intake) -> List[str]:
-    """Return only emergency-level red flags requiring immediate medical care."""
+def get_urgent_flags(i: Intake) -> List[str]:
+    """Return urgent-referral flags for climbing-recognizable injuries that warrant
+    prompt specialist evaluation. Not 911-tier — this app is not the right tool
+    for someone with a true medical emergency."""
     flags: List[str] = []
     region = i.region.lower()
     text   = i.free_text.lower()
 
-    # Cauda equina — lower back + bladder/bowel change is an emergency
-    if "lower back" in region or "back" in region:
-        if _keyword_affirmed(text, ["bladder", "bowel", "incontinence", "saddle", "groin numb"]):
-            flags.append(
-                "EMERGENCY: Bladder or bowel symptoms with back pain may indicate cauda equina syndrome. "
-                "Call 911 or go to the ER immediately — do not wait."
-            )
-
-    # Bilateral leg symptoms with back pain — structural spinal cord risk
-    if ("lower back" in region or "back" in region) and i.numbness == "Yes" and i.weakness == "Significant":
-        flags.append(
-            "EMERGENCY: Significant leg weakness and numbness with back pain requires urgent evaluation — "
-            "possible spinal cord involvement. Call 911."
-        )
-
-    # Visible bowstringing — finger (tendon displacing out of its sheath)
+    # Visible bowstringing — multi-pulley rupture (climbing-classic)
     if "finger" in region and _keyword_affirmed(text, [
         "bowstring", "bow string", "cord visible", "tendon visible",
         "tendon lifting", "tendon jumping", "cord jumping", "cord lifting",
         "tendon moves", "tendon popping", "cord across", "tendon pops",
+        "visibly lifting", "lifting off", "tendon away", "lifting away",
     ]):
         flags.append(
-            "EMERGENCY: Visible bowstringing (tendon cord across palm side of finger) requires imaging and "
-            "surgical consultation before any return to climbing."
+            "Visible bowstringing (the flexor tendon lifting away from the bone when you "
+            "flex the finger) suggests a multi-pulley rupture. See a hand specialist "
+            "before any return to climbing — imaging is usually required."
         )
 
-    # Septic tenosynovitis — finger with fever / spreading redness
-    if "finger" in region and _keyword_affirmed(text, ["fever", "hot", "spreading", "red streak"]):
-        flags.append(
-            "EMERGENCY: Fever with rapidly spreading warmth and redness in a finger may indicate septic "
-            "tenosynovitis — a hand surgery emergency. Go to the ER immediately."
-        )
-
-    # Complete bicep rupture — Popeye deformity
+    # Distal bicep tendon rupture — Popeye look after a campus / hard lockoff pop
     if "elbow" in region and _keyword_affirmed(text, [
         "popeye", "deformity", "muscle moved", "bunched", "bunching", "bunches",
         "muscle lump", "muscle moved up", "bulge in arm", "muscle shifted",
         "retracted", "lump near shoulder",
     ]):
         flags.append(
-            "EMERGENCY: A Popeye deformity (muscle belly bunched in the upper arm) after an elbow pop "
-            "indicates complete distal biceps rupture — surgical referral required within 2–3 weeks."
+            "A 'Popeye' look in the upper arm after a pop at the elbow suggests a complete "
+            "distal biceps tendon rupture. There is roughly a 2–3 week window where surgical "
+            "reattachment gives the best outcome — see an orthopaedic surgeon promptly."
         )
 
     # Locked knee — mechanically cannot extend (not just pain-limited)
@@ -102,67 +123,45 @@ def get_emergency_flags(i: Intake) -> List[str]:
         "stuck at", "cannot extend", "won't straighten", "unable to straighten",
     ]):
         flags.append(
-            "URGENT: A knee that is mechanically locked and cannot be straightened may indicate a displaced "
-            "meniscal tear or loose body — seek same-day orthopaedic evaluation. "
-            "Do not force the knee into extension."
+            "A knee that mechanically cannot be straightened (not just pain-limited) may "
+            "indicate a displaced meniscal tear or loose body. See a sports medicine doctor "
+            "or orthopaedist within a few days. Do not force the knee into extension."
         )
 
-    # Achilles rupture
+    # Achilles tendon rupture — common on climbing-trip approach hikes
     if ("ankle" in region or "foot" in region) and i.weakness == "Significant":
         if _keyword_affirmed(text, ["snap", "pop", "tiptoe", "plantarflex"]):
             flags.append(
-                "EMERGENCY: Inability to push up on tiptoe after a snap at the ankle may indicate Achilles "
-                "rupture — requires urgent surgical evaluation."
+                "Inability to push up on tiptoe after a snap at the back of the ankle "
+                "suggests an Achilles tendon rupture. See an orthopaedist or sports doctor "
+                "promptly — earlier evaluation gives more treatment options."
             )
 
-    # Shoulder neurovascular compromise
-    if "shoulder" in region and _keyword_affirmed(text, [
-        "cold arm", "numb arm", "pulseless", "no pulse", "dislocat",
-        "arm went dead", "arm is cold", "no feeling in arm",
-    ]):
-        flags.append(
-            "EMERGENCY: A cold, pulseless, or completely numb arm following shoulder trauma may indicate "
-            "neurovascular compromise — call 911 immediately."
-        )
-
-    # Pec major rupture
+    # Pec major tear — dynamic catch / big cross-body pull
     if "chest" in region and i.onset == "Sudden":
         if _keyword_affirmed(text, ["pop", "snap", "tear", "rip", "deformity", "retracted"]):
             flags.append(
-                "EMERGENCY: A sudden pop in the chest or armpit during heavy loading (e.g. dynamic catch, "
-                "cross-body pull) may indicate pectoralis major rupture — requires urgent surgical evaluation."
-            )
-
-    # Rib fracture / pneumothorax
-    if "chest" in region and i.severity >= 7:
-        if _keyword_affirmed(text, ["breath", "breathe", "breathing", "inhale", "rib", "ribs"]):
-            flags.append(
-                "Pain that worsens sharply with breathing after chest trauma may indicate a rib fracture "
-                "or, rarely, pneumothorax — seek same-day evaluation."
-            )
-
-    # Cervical myelopathy / spinal cord compression — neck
-    if "neck" in region or "cervical" in region:
-        if _keyword_affirmed(text, [
-            "numb hands", "numb fingers", "weak hands", "dropping things",
-            "electric", "shock down", "jolt", "hands numb", "clumsy hands",
-            "balance", "stumbling", "bladder", "bowel",
-        ]) or (i.numbness == "Yes" and i.weakness == "Significant"):
-            flags.append(
-                "EMERGENCY: Neck pain with upper limb numbness, weakness, or electric sensations may indicate "
-                "cervical myelopathy or cord compression — requires urgent neurological evaluation. "
-                "Do not return to climbing until cleared by a specialist."
+                "A sudden pop in the chest or armpit during a powerful pull or dynamic catch "
+                "may indicate a pectoralis major tear. See an orthopaedist promptly to "
+                "discuss treatment options."
             )
 
     return flags
+
+
+# Backwards-compatible alias — older callers and tests may still import this name.
+def get_emergency_flags(i: Intake) -> List[str]:
+    """Deprecated alias for get_urgent_flags. The 911-tier "emergency" concept was
+    removed from this app; see get_urgent_flags for the current behavior."""
+    return get_urgent_flags(i)
 
 
 # ── Standard safety screen ──────────────────────────────────────────────────
 
 def red_flags(i: Intake) -> List[str]:
     """Returns reasons to seek evaluation based on common red flags.
-    Includes emergency flags first, then urgent and standard flags."""
-    flags: List[str] = get_emergency_flags(i)
+    Urgent climbing-relevant referrals appear first, then standard flags."""
+    flags: List[str] = get_urgent_flags(i)
     region = i.region.lower()
     text   = i.free_text.lower()
 
@@ -182,11 +181,12 @@ def red_flags(i: Intake) -> List[str]:
             "consider evaluation before returning to climbing."
         )
 
-    # Wrist / fall on outstretched hand — scaphoid red flag
+    # Wrist / fall on outstretched hand — scaphoid red flag (treat-as-fracture)
     if "wrist" in region and i.onset == "Sudden":
         flags.append(
             "Sudden wrist injury — if there is tenderness at the base of the thumb (anatomical snuffbox), "
-            "seek evaluation to rule out scaphoid fracture. Initial X-ray can be negative; CT or MRI may be needed."
+            "treat as a scaphoid fracture until imaging clears it, regardless of an initial negative X-ray. "
+            "An undetected scaphoid fracture can lead to avascular necrosis. CT or MRI may be required."
         )
 
     # Finger — PIP extension block (Boutonnière / central slip)
@@ -243,27 +243,22 @@ def red_flags(i: Intake) -> List[str]:
 # ── Severity classification ─────────────────────────────────────────────────
 
 def classify_severity(i: Intake) -> Dict[str, str]:
-    """Classify injury severity and return recommended action."""
-    # Check for emergency flags first
-    emergency = get_emergency_flags(i)
-    if emergency:
-        return {
-            "level": "emergency",
-            "label": "Emergency",
-            "action": "Go to ER or call 911 immediately.",
-            "can_climb": "No",
-        }
+    """Classify injury severity and return recommended action.
 
+    Top tier is 'severe' — this app does not surface 911-level emergencies.
+    Any urgent climbing-relevant referral (bowstringing, distal bicep tear,
+    locked knee, Achilles rupture, pec tear) escalates to severe."""
     score = i.severity
     has_neuro    = i.numbness == "Yes" or i.weakness == "Significant"
     has_instab   = i.instability == "Yes"
     sudden_high  = i.onset == "Sudden" and score >= 7
+    has_urgent   = bool(get_urgent_flags(i))
 
-    if score >= 8 or has_neuro or sudden_high or has_instab:
+    if score >= 8 or has_neuro or sudden_high or has_instab or has_urgent:
         return {
             "level": "severe",
             "label": "Severe",
-            "action": "See a healthcare provider within 24–48 hours.",
+            "action": "See a healthcare provider within 24–48 hours. Do not climb until evaluated.",
             "can_climb": "No — rest until evaluated.",
         }
     elif score >= 5 or (i.swelling == "Yes" and score >= 4):
@@ -469,6 +464,114 @@ def get_training_modifications(i: Intake) -> Dict[str, List[str]]:
             "Reintroduce overhanging terrain gradually — avoid sustained neck extension initially.",
         ]
 
+    elif "tricep" in region:
+        modifications["Permitted during recovery"] = [
+            "Easy slab and vertical climbing — minimal lock-off load.",
+            "Antagonist work: face pulls, band pull-aparts, scapular control.",
+            "Lower body and core training.",
+        ]
+        modifications["Avoid"] = [
+            "Heavy lock-offs and one-arm hangs.",
+            "Campus board and mantling drills during the acute phase.",
+            "Steep board sessions that demand sustained triceps engagement.",
+            "Any pull that reproduces sharp pain in the back of the upper arm or elbow.",
+        ]
+        modifications["Return to climbing progression"] = [
+            "Reintroduce lock-offs gradually — bent-arm pulling first, full lock-off last.",
+            "Mantling and campus moves return after lock-off strength is restored pain-free.",
+            "Triceps issues often pair with elbow tendinopathy — address both together.",
+        ]
+
+    elif "upper back" in region or "trap" in region or "rhomboid" in region:
+        modifications["Permitted during recovery"] = [
+            "Slab and vertical climbing at low intensity — focus on relaxed shoulders.",
+            "Scapular control work: prone Y-T-W raises, band pull-aparts, serratus wall slides.",
+            "Lower body and core training (no loaded shrug positions).",
+        ]
+        modifications["Avoid"] = [
+            "Steep overhanging terrain and board climbing — heavy scapular load.",
+            "Hangboard repeaters with shrugged shoulders.",
+            "Campus board until upper-back endurance is restored.",
+            "Any pull that reproduces sharp pain between the shoulder blades.",
+        ]
+        modifications["Return to climbing progression"] = [
+            "Cue active scap depression on every hang and pull during return.",
+            "Reintroduce volume on vertical first, then steep terrain.",
+            "Check posture and breathing patterns — chronic shrugging is often the root cause.",
+        ]
+
+    elif "lat" in region or "latissimus" in region:
+        modifications["Permitted during recovery"] = [
+            "Easy slab and vertical climbing — minimal pulling load.",
+            "Lower body and core training.",
+            "Gentle band external rotation and scap retraction (antagonist work).",
+        ]
+        modifications["Avoid"] = [
+            "Hangboard, campus board, and steep board climbing during the acute phase.",
+            "Dynamic catches, full hangs, and dyno landings.",
+            "Heavy lock-offs on overhanging terrain.",
+            "Any pull that reproduces sharp pain in the side of the back or armpit.",
+        ]
+        modifications["Return to climbing progression"] = [
+            "Reintroduce moderate hangs before any loaded pulls.",
+            "Lat strains heal slowly — expect 6–12 weeks before full intensity.",
+            "Test dynamic catches last; the eccentric load is what re-injures.",
+        ]
+
+    elif "glute" in region or "buttock" in region:
+        modifications["Permitted during recovery"] = [
+            "Easy vertical climbing avoiding aggressive heel hooks and wide stems.",
+            "Upper body and core training.",
+            "Glute med activation: side-lying clamshells, single-leg bridges, lateral band walks.",
+        ]
+        modifications["Avoid"] = [
+            "Heavy heel hooks — primary aggravator for piriformis and biceps femoris.",
+            "Wide drop knees and aggressive stems that load deep external rotators.",
+            "Prolonged sitting (drives piriformis irritation).",
+            "Any movement that reproduces deep buttock pain or sciatic-type symptoms.",
+        ]
+        modifications["Return to climbing progression"] = [
+            "Reintroduce heel hooks last — start on large, comfortable holds at low intensity.",
+            "Address single-leg stability first; glute med weakness drives recurrence.",
+            "Long approach hikes are fine if they don't reproduce symptoms.",
+        ]
+
+    elif "hamstring" in region:
+        modifications["Permitted during recovery"] = [
+            "Slab and vertical climbing avoiding heel hooks.",
+            "Upper body, core, and quad-dominant lower-body work.",
+            "Isometric hamstring work (e.g. wall heel pulls) once acute pain settles.",
+        ]
+        modifications["Avoid"] = [
+            "Heel hooks — primary mechanism. Last movement to reintroduce.",
+            "Heavy hip hinges or deadlifts during acute phase.",
+            "Sprinting and jumping until pain-free with full extension.",
+            "Prolonged sitting on hard surfaces (proximal hamstring tendinopathy).",
+        ]
+        modifications["Return to climbing progression"] = [
+            "Heel hooks return in stages: comfortable hold → harder hold → progressively more pull.",
+            "Proximal hamstring tendinopathy is slow — 3–6 months of consistent loading isn't unusual.",
+            "Expect a flare or two during reload; manage with the 24-hour rule, don't stop entirely.",
+        ]
+
+    elif "calf" in region or "calves" in region or "gastroc" in region or "soleus" in region:
+        modifications["Permitted during recovery"] = [
+            "Vertical climbing on solid footholds.",
+            "Upper body training: hangboard, pulling, shoulder work.",
+            "Isometric calf raises in pain-free range; progress to slow eccentrics.",
+        ]
+        modifications["Avoid"] = [
+            "Aggressive smearing on slab — high calf load.",
+            "Long approach hikes during the acute phase.",
+            "Calf raises through pain.",
+            "Multi-pitch days until full pain-free walking and climbing are restored.",
+        ]
+        modifications["Return to climbing progression"] = [
+            "Walk → hike → smear → multi-pitch is the sensible reload order.",
+            "Heavy approach packs add load — drop pack weight while reloading.",
+            "Calf strains often recur — finish rehab fully before returning to long days.",
+        ]
+
     else:
         modifications["General guidance"] = [
             "Avoid movements or grip styles that reproduce your symptoms.",
@@ -479,10 +582,6 @@ def get_training_modifications(i: Intake) -> Dict[str, List[str]]:
     if severity == "severe":
         modifications["Current severity note"] = [
             "Given symptom severity: rest from climbing until evaluated by a healthcare provider.",
-        ]
-    elif severity == "emergency":
-        modifications["Current severity note"] = [
-            "Seek emergency medical care before any training decisions.",
         ]
 
     return modifications
@@ -632,6 +731,84 @@ def get_return_to_climbing_protocol(i: Intake) -> Dict[str, List[str]]:
             "4. Roof climbing and inverted positions — last to return.",
         ]
 
+    elif "tricep" in region:
+        protocol["Criteria before returning to full climbing"] = [
+            "Pain-free with a body-weight lock-off held at 90 degrees.",
+            "Pain-free with weighted dips or close-grip pushing at moderate load.",
+            "Symmetrical strength side-to-side on isolated triceps testing.",
+        ]
+        protocol["Progressive loading sequence"] = [
+            "1. Vertical climbing with bent-arm pulling — no full lock-offs.",
+            "2. Moderate overhanging terrain at low intensity.",
+            "3. Reintroduce lock-offs progressively, starting bent-arm.",
+            "4. Mantling and campus moves — last to return.",
+        ]
+
+    elif "upper back" in region or "trap" in region or "rhomboid" in region:
+        protocol["Criteria before returning to full climbing"] = [
+            "Pain-free between the shoulder blades during and after an easy session.",
+            "Active scapular control through full overhead range with no compensation.",
+            "Symmetrical strength on prone Y-T-W and band pull-aparts.",
+        ]
+        protocol["Progressive loading sequence"] = [
+            "1. Vertical climbing with relaxed shoulders, scap retraction cued.",
+            "2. Moderate vertical and mild overhang at low volume.",
+            "3. Steeper terrain — monitor for upper-trap dominance / shrugging.",
+            "4. Hangboard repeaters — last; prioritize active scap depression.",
+        ]
+
+    elif "lat" in region or "latissimus" in region:
+        protocol["Criteria before returning to full climbing"] = [
+            "Pain-free hangs at body weight on a comfortable grip.",
+            "Pain-free pulling through full overhead range.",
+            "No reproduction of symptoms with provocative resisted shoulder extension.",
+        ]
+        protocol["Progressive loading sequence"] = [
+            "1. Easy slab and vertical — minimal pulling.",
+            "2. Moderate hangs, then assisted pull-ups at body weight.",
+            "3. Steep board climbing at low intensity.",
+            "4. Dynamic catches and dynos — last to return.",
+        ]
+
+    elif "glute" in region or "buttock" in region:
+        protocol["Criteria before returning to full climbing"] = [
+            "Pain-free single-leg stability and bridge holds.",
+            "No deep buttock or sciatic-type symptoms with hip rotation under load.",
+            "Pain-free through a full easy climbing session including some heel hooks.",
+        ]
+        protocol["Progressive loading sequence"] = [
+            "1. Vertical climbing with no heel hooks or wide stems.",
+            "2. Easy heel hooks on large, comfortable holds at low intensity.",
+            "3. Progressive heel hook loading and moderate drop knees.",
+            "4. Aggressive heel hook pulling and wide bridging — last to return.",
+        ]
+
+    elif "hamstring" in region:
+        protocol["Criteria before returning to full climbing"] = [
+            "Pain-free with full active and passive hip flexion.",
+            "Symmetrical strength on isometric hamstring testing.",
+            "Pain-free walking, hiking, and easy climbing without heel hooks.",
+        ]
+        protocol["Progressive loading sequence"] = [
+            "1. Vertical climbing with no heel hooks; isometric hamstring loading off the wall.",
+            "2. Easy heel hooks on large, comfortable holds.",
+            "3. Heavier heel hook pulling — increase demand gradually.",
+            "4. Maximal heel hooks on hard moves — last to return.",
+        ]
+
+    elif "calf" in region or "calves" in region or "gastroc" in region or "soleus" in region:
+        protocol["Criteria before returning to full climbing"] = [
+            "Pain-free with single-leg calf raises, full reps and full range.",
+            "Pain-free walking and easy hiking on flat and uphill terrain.",
+            "Pain-free smearing on slab during a full easy session.",
+        ]
+        protocol["Progressive loading sequence"] = [
+            "1. Vertical climbing on solid footholds — minimal smearing.",
+            "2. Reintroduce smearing on less technical terrain.",
+            "3. Approach hikes with light pack at moderate distance.",
+            "4. Multi-pitch and full approach days — last to return.",
+        ]
+
     else:
         protocol["General return-to-climbing guidance"] = [
             "Return when pain is consistently below 3/10 during and 24 hours after activity.",
@@ -707,9 +884,56 @@ def bucket_possibilities(i: Intake) -> List[Tuple[str, str]]:
     elif "hip" in region:
         if i.mechanism in {"High step / rockover", "High volume climbing"}:
             out.append(("Hip flexor strain (common)", "Deep groin ache from repeated high stepping and rockover moves."))
-        if i.mechanism in {"Heel hook", "Stemming / bridging"}:
-            out.append(("Piriformis / deep gluteal irritation (possible)", "Deep buttock pain from repeated external hip rotation."))
         out.append(("Hip impingement-type irritation (possible)", "Deep groin pain at end-range hip flexion — common with FAI anatomy."))
+        if i.mechanism in {"Stemming / bridging"}:
+            out.append(("Adductor strain (possible)", "Inner thigh pain from wide bridging or stemming positions."))
+        if i.onset == "Sudden":
+            out.append(("Hip labral irritation (possible)", "Sudden groin pain with clicking or catching at end-range hip flexion."))
+
+    elif "tricep" in region:
+        if i.mechanism in {"Hard lock-off", "Campusing", "Steep climbing/board"}:
+            out.append(("Triceps tendinopathy at the elbow (most common)", "Aching at the back of the elbow where the triceps insert — overuse from heavy lock-offs, mantling, and campus board."))
+        if i.onset == "Sudden" and i.mechanism in {"Hard lock-off", "Dynamic catch", "Campusing"}:
+            out.append(("Long head triceps strain (likely)", "Sharp pain in the back of the upper arm during a hard lock-off or dynamic catch — felt as a pull, often in cross-body or overhead positions."))
+        out.append(("Posterior elbow impingement (possible)", "Pinching at the back of the elbow at full extension — more common with hyperextension on lock-offs and mantling."))
+        out.append(("Triceps overuse / DOMS (common)", "Diffuse triceps soreness from a sudden volume increase on overhanging or campus-heavy training."))
+
+    elif "upper back" in region or "trap" in region or "rhomboid" in region:
+        out.append(("Rhomboid / mid-trap strain (most common)", "Aching pain between the shoulder blades from steep pulling and lock-offs — climber's classic."))
+        out.append(("Upper trapezius overactivity (common)", "Tension headaches and tight upper traps — overuse from hangboard, sustained overhead positions, and unconscious shrugging."))
+        if i.mechanism in {"Hard lock-off", "High volume pulling", "Steep climbing/board"}:
+            out.append(("Scapular dyskinesis (possible)", "Poor scap control — often a strength imbalance between overdeveloped lats/pecs and weak rhomboids/serratus. Drives shoulder problems downstream."))
+        out.append(("Levator scapulae strain (possible)", "Pain at the neck-shoulder junction — common from sustained head extension on roofs and overhanging belays."))
+
+    elif "lat" in region or "latissimus" in region:
+        if i.onset == "Sudden" and i.mechanism in {"Dynamic catch", "Dyno", "Hard lock-off"}:
+            out.append(("Lat strain (most likely)", "Sharp pain at the side of the back or under the armpit after a dynamic catch or full hang. May feel a pull or pop."))
+        out.append(("Teres major strain (possible)", "Often grouped with the lats — pain along the posterior shoulder/armpit, common from overhead pulling."))
+        out.append(("Lat tendinopathy at humerus insertion (possible)", "Aching at the front of the armpit where the lat inserts — overuse from high-volume steep pulling."))
+        out.append(("Posterior chain overuse (common)", "Diffuse lat soreness from sudden volume increases on steep terrain or board climbing."))
+
+    elif "glute" in region or "buttock" in region:
+        if i.mechanism in {"Heel hook", "Stemming / bridging"}:
+            out.append(("Piriformis / deep gluteal syndrome (possible)", "Deep buttock pain from repeated external hip rotation — heel hooks and wide drop knees. Can refer down the back of the leg."))
+        out.append(("Gluteus medius strain or weakness (common)", "Pain on the side of the hip, often paired with poor single-leg stability. Climbers under-train this."))
+        out.append(("Greater trochanteric pain syndrome / GTPS (possible)", "Outer hip ache, tender to press on the bony point. Worse with side sleeping or crossed-leg sitting."))
+        if i.mechanism in {"Stemming / bridging", "High step / rockover"}:
+            out.append(("SI joint dysfunction (possible)", "Sharp or dull pain at the dimple above the buttock — driven by asymmetric loading like stems and drop knees."))
+
+    elif "hamstring" in region:
+        if i.mechanism in {"Heel hook"}:
+            out.append(("Proximal hamstring tendinopathy (most likely)", "Pain at the sit-bone where the hamstrings attach — the classic climbing hamstring injury, almost always from heel hooking."))
+        if i.onset == "Sudden" and i.mechanism in {"Heel hook"}:
+            out.append(("Biceps femoris (outer hamstring) strain (likely)", "Sudden sharp pain on the outer back of the thigh during a heavy heel hook — the muscle most loaded by heel hook pulling."))
+        out.append(("Hamstring strain — mid-belly (possible)", "Diffuse aching in the back of the thigh from overload or a sudden eccentric load."))
+        out.append(("High hamstring tendinopathy / sit-bone irritation (possible)", "Deep ache at the sit-bone, worse with prolonged sitting and heavy heel hook loading."))
+
+    elif "calf" in region or "calves" in region or "gastroc" in region or "soleus" in region:
+        if i.onset == "Sudden":
+            out.append(("Calf strain — gastrocnemius (most likely)", "Sudden sharp pain in the upper calf from a forceful push-off, often during approach hiking or aggressive smearing."))
+            out.append(("Plantaris rupture (possible)", "Sudden snap behind the knee or upper calf — feels like Achilles rupture but is benign and resolves on its own."))
+        out.append(("Soleus strain (possible)", "Deep, lower calf ache from chronic loading — common from long approach days or extended smearing on slab."))
+        out.append(("Calf overuse / cramping (common)", "Diffuse soreness from new climbing trip volume — long approaches, multi-pitch, or hours on the wall."))
 
     elif "lower back" in region or "back" in region:
         out.append(("Non-specific lower back pain (most common)", "Load-related — driven by volume on steep terrain or sudden training spikes."))
@@ -784,6 +1008,18 @@ def conservative_plan(i: Intake) -> Dict[str, List[str]]:
         avoid_specific = "Avoid dynamic moves, wide pinches, gastons, and cross-body pulls that reproduce chest pain."
     elif "neck" in region or "cervical" in region:
         avoid_specific = "Avoid roof climbing, inverted positions, and overhead positions that reproduce neck or arm symptoms."
+    elif "tricep" in region:
+        avoid_specific = "Avoid heavy lock-offs, mantling, and campus moves until pain settles."
+    elif "upper back" in region or "trap" in region or "rhomboid" in region:
+        avoid_specific = "Avoid steep board climbing, heavy hangboard repeaters, and shrugged-shoulder pulling that reproduces upper-back pain."
+    elif "lat" in region or "latissimus" in region:
+        avoid_specific = "Avoid hangboard work, dynamic catches, full hangs, and heavy steep pulling until pain settles."
+    elif "glute" in region or "buttock" in region:
+        avoid_specific = "Avoid heavy heel hooks, wide drop knees, prolonged sitting, and aggressive stems that reproduce deep buttock pain."
+    elif "hamstring" in region:
+        avoid_specific = "Avoid heel hooks, heavy hip hinges, and prolonged sitting on hard surfaces."
+    elif "calf" in region or "calves" in region or "gastroc" in region or "soleus" in region:
+        avoid_specific = "Avoid aggressive smearing, long approach hikes, and calf raises through pain."
     else:
         avoid_specific = "Avoid movements or grip styles that reproduce your symptoms."
 
@@ -815,3 +1051,274 @@ def conservative_plan(i: Intake) -> Dict[str, List[str]]:
     ]
 
     return plan
+
+
+# ── Severity tone gating (Phase 3) ───────────────────────────────────────────
+#
+# The classifier above (classify_severity) is preserved for the pre-existing
+# /api/triage flow. The functions below add the tone-gating layer specified in
+# the Phase 3 calibration. They are additive — no existing function signature
+# changes.
+
+TONE_REASSURING = "reassuring"
+TONE_INFORMATIVE = "informative"
+TONE_URGENT = "urgent"
+TONE_EMERGENCY = "emergency"
+
+# Words that must NOT appear in REASSURING / INFORMATIVE output. The validator
+# raises ToneValidationError so the caller can regenerate.
+_BANNED_SOFT_WORDS = (
+    "emergency", "immediately", "danger", "serious", "critical",
+    "urgent", "rupture", "surgical", "911",
+)
+
+
+class ToneValidationError(ValueError):
+    """Raised when output text is mismatched to its declared tone."""
+
+
+def _has_pop_in_text(text: str) -> bool:
+    """True if free-text describes an audible / felt pop, snap, crack, or tear at injury time."""
+    try:
+        return _keyword_affirmed(text.lower(), ["pop", "snap", "crack", "tore", "tear"])
+    except Exception:
+        return False
+
+
+def _has_neuro(i: Intake) -> bool:
+    """True if the intake reports any neurological involvement."""
+    try:
+        return i.numbness == "Yes" or i.weakness == "Significant" or i.bilateral_symptoms
+    except Exception:
+        return False
+
+
+def classify_severity_v2(i: Intake) -> Dict[str, str]:
+    """Phase 3 severity classifier with explicit thresholds.
+
+    Top tier is 'severe' — this app does not surface 911-tier emergencies.
+    Severe means "see a provider in 24–48h, don't climb until cleared."
+    Logic precedence: severe -> moderate -> mild.
+    """
+    try:
+        urgent_flags = get_urgent_flags(i)
+    except Exception:
+        urgent_flags = []
+
+    score = i.severity or 0
+    text = (i.free_text or "").lower()
+    pop = _has_pop_in_text(i.free_text or "") or i.pop_reported
+    neuro = _has_neuro(i)
+    # "Visible swelling within first hour" — only treat as severe when the text
+    # explicitly describes rapid swelling, not just any swelling on a sudden onset.
+    rapid_swelling = i.swelling == "Yes" and i.onset == "Sudden" and _keyword_affirmed(
+        text, ["minutes", "rapidly", "immediately", "instantly", "within"]
+    )
+    duration = i.duration_weeks or 0
+    sig_func_limit = i.functional_check == "no" or i.weakness == "Significant"
+    # Scaphoid red flag — fall on outstretched hand + snuffbox tenderness.
+    scaphoid_signal = (
+        "wrist" in (i.region or "").lower()
+        and i.onset == "Sudden"
+        and _keyword_affirmed(text, ["snuffbox", "scaphoid"])
+    )
+
+    # SEVERE — any one. Note duration alone no longer escalates: chronic mild
+    # symptoms are normal climbing wear and tear, not a reason to alarm anyone.
+    if (
+        urgent_flags
+        or score >= 7
+        or pop
+        or sig_func_limit
+        or rapid_swelling
+        or neuro
+        or scaphoid_signal
+    ):
+        return {
+            "level": "severe",
+            "label": "Severe",
+            "action": "See a healthcare provider within 24–48 hours. Do not return to climbing until evaluated.",
+            "can_climb": "No — rest until evaluated.",
+        }
+
+    acute_no_pop = i.onset == "Sudden" and not pop
+    mild_func_limit = i.functional_check == "painful"
+    prior_same_region = i.prior_injury == "yes"
+    chronic_4w_plus = duration >= 4
+
+    # MODERATE — any one
+    if (
+        score >= 4
+        or acute_no_pop
+        or mild_func_limit
+        or chronic_4w_plus
+        or prior_same_region
+    ):
+        return {
+            "level": "moderate",
+            "label": "Moderate",
+            "action": "Worth getting evaluated by a physio or doctor if symptoms persist beyond 1–2 weeks.",
+            "can_climb": "Modified only — keep pain at or below 3/10.",
+        }
+
+    # MILD — everything else
+    return {
+        "level": "mild",
+        "label": "Mild",
+        "action": "Manage with load reduction and monitor. Most climbers recover fully.",
+        "can_climb": "Yes — with modifications; avoid aggravating movements.",
+    }
+
+
+def classify_tone(i: Intake) -> str:
+    """Map the severity level to a tone constant. The classifier no longer
+    returns the emergency tier, so the emergency tone is never produced from
+    here — TONE_EMERGENCY remains for back-compat of imports only."""
+    try:
+        level = classify_severity_v2(i)["level"]
+    except Exception:
+        return TONE_INFORMATIVE
+    if level == "severe":
+        return TONE_URGENT
+    if level == "moderate":
+        return TONE_INFORMATIVE
+    return TONE_REASSURING
+
+
+def validate_tone_text(text: str, tone: str) -> None:
+    """Raise ToneValidationError if `text` contains banned words for a soft tone.
+
+    REASSURING and INFORMATIVE tones must not contain alarming language;
+    URGENT and EMERGENCY tones are not validated by this function (they may
+    legitimately use any of the banned words)."""
+    if not isinstance(text, str):
+        raise ToneValidationError("validate_tone_text expects a string input")
+    if tone not in (TONE_REASSURING, TONE_INFORMATIVE):
+        return
+    lower = text.lower()
+    hits = [w for w in _BANNED_SOFT_WORDS if w in lower]
+    if hits:
+        raise ToneValidationError(
+            f"Text declared tone={tone!r} contains banned alarming words: {sorted(set(hits))}"
+        )
+
+
+# ── Output gating helpers (Phase 3) ──────────────────────────────────────────
+
+def format_differentials_for_tone(buckets: List[Tuple[str, str]], tone: str) -> Dict[str, object]:
+    """Return a tone-gated differentials block.
+
+    Mild: top 1, common name, lead-in copy.
+    Moderate: top 2.
+    Severe: top 3, clinical names acceptable.
+    Emergency: empty list, no differentials.
+    """
+    try:
+        if tone == TONE_EMERGENCY:
+            return {"lead": "", "items": []}
+        if tone == TONE_REASSURING:
+            top = buckets[:1]
+            return {
+                "lead": "Based on what you described this sounds like a common climbing injury.",
+                "items": [{"title": t, "why": w} for t, w in top],
+            }
+        if tone == TONE_INFORMATIVE:
+            top = buckets[:2]
+            return {
+                "lead": "Some possibilities worth discussing with a provider:",
+                "items": [{"title": t, "why": w} for t, w in top],
+            }
+        # URGENT
+        top = buckets[:3]
+        return {
+            "lead": "Injury patterns consistent with your description:",
+            "items": [{"title": t, "why": w} for t, w in top],
+        }
+    except Exception:
+        return {"lead": "", "items": []}
+
+
+def format_red_flags_for_tone(flags: List[str], tone: str) -> Dict[str, object]:
+    """Return a tone-gated red-flags display block."""
+    try:
+        if tone == TONE_EMERGENCY:
+            return {
+                "lead": "",
+                "items": flags,
+                "primary": True,
+            }
+        if tone == TONE_REASSURING:
+            return {
+                "lead": "Watch for these warning signs:",
+                "items": flags[:3],
+                "primary": False,
+            }
+        if tone == TONE_INFORMATIVE:
+            return {
+                "lead": "Reasons to see a doctor sooner:",
+                "items": flags,
+                "primary": False,
+            }
+        # URGENT
+        return {
+            "lead": "Important warning signs in your description:",
+            "items": flags,
+            "primary": True,
+        }
+    except Exception:
+        return {"lead": "", "items": flags, "primary": False}
+
+
+def format_rehab_for_tone(plan: Dict[str, List[str]], tone: str) -> Dict[str, object]:
+    """Return tone-gated rehab output. Severe and Emergency tones suppress the protocol."""
+    try:
+        if tone in (TONE_URGENT, TONE_EMERGENCY):
+            return {"lead": "", "show": False, "sections": {}}
+        if tone == TONE_REASSURING:
+            return {
+                "lead": "Here's what you can do right now:",
+                "show": True,
+                "sections": plan,
+            }
+        # INFORMATIVE
+        return {
+            "lead": "Here's how to manage this while you arrange an evaluation:",
+            "show": True,
+            "sections": plan,
+        }
+    except Exception:
+        return {"lead": "", "show": False, "sections": {}}
+
+
+# ── Climbing situation weighting (Phase 5 engine support) ────────────────────
+#
+# When the wizard surfaces a specific climbing situation, the bucket scorer
+# applies a 2x weight multiplier to the listed differentials. The mapping is
+# read by the API layer (or the wizard) when re-ordering bucket_possibilities.
+
+CLIMBING_SITUATIONS: Dict[str, Tuple[str, ...]] = {
+    "full_crimp_small_hold": ("a2_pulley", "a4_pulley", "flexor_tenosynovitis"),
+    "crack_jamming": ("boutonniere", "tfcc", "finger_jam"),
+    "campus_board": ("a2_pulley", "distal_bicep", "medial_epicondylitis", "slap_tear"),
+    "dynamic_catch": ("a2_pulley", "slap_tear", "shoulder_instability"),
+    "heavy_lockoff": ("distal_bicep", "medial_epicondylitis", "cubital_tunnel"),
+    "undercling": ("medial_epicondylitis", "tfcc", "lateral_epicondylitis"),
+    "dyno_catch": ("slap_tear", "shoulder_instability", "ac_joint"),
+    "heel_hook": ("patellar_tendinopathy", "biceps_femoris", "meniscus"),
+    "drop_knee": ("it_band", "meniscus", "mcl_sprain"),
+    "boulder_landing": ("ankle_sprain", "patellar_tendinopathy", "calcaneus"),
+    "wide_stemming": ("lumbar_strain", "hip_flexor", "si_joint"),
+    "roof_climbing": ("lumbar_strain", "disc_herniation", "rotator_cuff"),
+    "fall_outstretched_hand": ("scaphoid", "distal_radius", "tfcc"),
+    "slab_smearing": ("plantar_fasciitis", "peroneal_tendon", "ankle_sprain"),
+}
+
+
+def situation_weight(situation_key: str, injury_key: str) -> float:
+    """Return 2.0 if the injury is up-weighted by the situation, else 1.0."""
+    try:
+        targets = CLIMBING_SITUATIONS.get(situation_key, ())
+        return 2.0 if injury_key in targets else 1.0
+    except Exception:
+        return 1.0
+

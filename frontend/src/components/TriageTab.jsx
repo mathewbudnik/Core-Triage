@@ -241,10 +241,9 @@ const FreeTextStep = memo(function FreeTextStep({ initialValue, onCommit, onSubm
 // ── Results ───────────────────────────────────────────────────────────────────
 
 const SEVERITY_STYLES = {
-  emergency: { bar: 'bg-accent2', border: 'border-accent2/40', bg: 'bg-accent2/10', text: 'text-accent2', dot: 'bg-accent2' },
-  severe:    { bar: 'bg-accent2', border: 'border-accent2/30', bg: 'bg-accent2/8',  text: 'text-accent2', dot: 'bg-accent2' },
-  moderate:  { bar: 'bg-accent3', border: 'border-accent3/30', bg: 'bg-accent3/8',  text: 'text-accent3', dot: 'bg-accent3' },
-  mild:      { bar: 'bg-accent',  border: 'border-accent/30',  bg: 'bg-accent/8',   text: 'text-accent',  dot: 'bg-accent'  },
+  severe:   { bar: 'bg-accent2', border: 'border-accent2/30', bg: 'bg-accent2/8',  text: 'text-accent2', dot: 'bg-accent2' },
+  moderate: { bar: 'bg-accent3', border: 'border-accent3/30', bg: 'bg-accent3/8',  text: 'text-accent3', dot: 'bg-accent3' },
+  mild:     { bar: 'bg-accent',  border: 'border-accent/30',  bg: 'bg-accent/8',   text: 'text-accent',  dot: 'bg-accent'  },
 }
 
 function SeverityCard({ severity }) {
@@ -310,7 +309,7 @@ function Results({ result, form, onRestart, onSave, saveStatus, user }) {
             ))}
           </ul>
         </div>
-      ) : result.severity?.level !== 'severe' && result.severity?.level !== 'emergency' ? (
+      ) : result.severity?.level !== 'severe' ? (
         <div className="flex items-center gap-3 bg-accent/10 border border-accent/30 rounded-xl px-4 py-3 text-accent text-sm">
           <CheckCircle size={16} /> No major red flags — follow the guidance below.
         </div>
@@ -390,7 +389,7 @@ function Results({ result, form, onRestart, onSave, saveStatus, user }) {
       )}
 
       <div className="flex flex-wrap items-center gap-3 pt-2">
-        {/* PDF download — Core tier gated */}
+        {/* PDF download — Pro tier gated */}
         <button
           onClick={handlePdfDownload}
           disabled={pdfLoading}
@@ -400,7 +399,7 @@ function Results({ result, form, onRestart, onSave, saveStatus, user }) {
             ? <><Loader2 size={15} className="animate-spin" /> Generating…</>
             : user?.tier === 'core' || user?.tier === 'pro'
             ? <><FileText size={15} /> Download PDF</>
-            : <><Lock size={13} /> PDF Report · Core</>
+            : <><Lock size={13} /> PDF Report · Pro</>
           }
         </button>
         <button onClick={() => downloadMarkdown(buildMarkdown(result))} className="btn-secondary flex items-center gap-2">

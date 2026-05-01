@@ -69,7 +69,7 @@ export default function RehabTab({ user, onLoginClick }) {
                   {free ? (
                     <span className="text-[9px] font-semibold bg-accent/15 text-accent px-1.5 py-0.5 rounded-full">Free</span>
                   ) : (
-                    <span className="text-[9px] font-semibold bg-panel2 text-muted px-1.5 py-0.5 rounded-full border border-outline">Core</span>
+                    <span className="text-[9px] font-semibold bg-panel2 text-muted px-1.5 py-0.5 rounded-full border border-outline">Pro</span>
                   )}
                 </div>
                 <p className="text-[11px] text-muted mt-0.5 leading-relaxed">{desc}</p>

@@ -13,7 +13,17 @@ const ZONES = [
   { id: 'Hip',        label: 'HIP',        desc: 'Hip or upper thigh' },
   { id: 'Knee',       label: 'KNEE',       desc: 'Kneecap or knee joint' },
   { id: 'Ankle',      label: 'ANKLE',      desc: 'Ankle or foot' },
+  // Back-side regions — selectable via the pill row below the diagram
+  { id: 'Upper Back', label: 'UPPER BACK', desc: 'Traps, rhomboids, mid-back' },
+  { id: 'Triceps',    label: 'TRICEPS',    desc: 'Triceps and back of upper arm' },
+  { id: 'Lats',       label: 'LATS',       desc: 'Latissimus dorsi, side of back' },
+  { id: 'Glutes',     label: 'GLUTES',     desc: 'Glutes, piriformis, posterior hip' },
+  { id: 'Hamstrings', label: 'HAMSTRINGS', desc: 'Back of thigh' },
+  { id: 'Calves',     label: 'CALVES',     desc: 'Calf, soleus, or shin' },
 ]
+
+// Regions surfaced as pills below the diagram (back-side muscles not visible on the front view)
+const BACK_REGIONS = ['Upper Back', 'Triceps', 'Lats', 'Glutes', 'Hamstrings']
 
 // ── SVG path data (avoids duplicating long strings for clipped instances) ──
 const D = {
@@ -178,9 +188,9 @@ function BodyDiagram({ selected, onSelect }) {
         {/* Left Leg — Knee zone (48% – 66%) */}
         <Slice w="93.626" h="250.625" vb="0 0 93.626 250.625" d={D.lLeg}
           zoneId="Knee" pos={{ ml: -46.5, top: 205, z: 9999 }} clip="inset(48% 0 34% 0)" />
-        {/* Left Leg — Shin, non-interactive */}
+        {/* Left Leg — Calves zone (66% – 100%) */}
         <Slice w="93.626" h="250.625" vb="0 0 93.626 250.625" d={D.lLeg}
-          zoneId={null} pos={{ ml: -46.5, top: 205, z: 9999 }} clip="inset(66% 0 0 0)" />
+          zoneId="Calves" pos={{ ml: -46.5, top: 205, z: 9999 }} clip="inset(66% 0 0 0)" />
 
         {/* Right Leg — Hip zone (top 48%) */}
         <Slice w="80" h="250.625" vb="0 0 80 250.625" d={D.rLeg}
@@ -188,9 +198,9 @@ function BodyDiagram({ selected, onSelect }) {
         {/* Right Leg — Knee zone (48% – 66%) */}
         <Slice w="80" h="250.625" vb="0 0 80 250.625" d={D.rLeg}
           zoneId="Knee" pos={{ ml: 1.5, top: 205, z: 9999 }} clip="inset(48% 0 34% 0)" />
-        {/* Right Leg — Shin, non-interactive */}
+        {/* Right Leg — Calves zone (66% – 100%) */}
         <Slice w="80" h="250.625" vb="0 0 80 250.625" d={D.rLeg}
-          zoneId={null} pos={{ ml: 1.5, top: 205, z: 9999 }} clip="inset(66% 0 0 0)" />
+          zoneId="Calves" pos={{ ml: 1.5, top: 205, z: 9999 }} clip="inset(66% 0 0 0)" />
 
         {/* Hands — Fingers zone */}
         <svg xmlns="http://www.w3.org/2000/svg" width="90" height="38.938" viewBox="0 0 90 38.938"
@@ -235,6 +245,48 @@ function BodyDiagram({ selected, onSelect }) {
             </span>
           )}
         </p>
+      </div>
+
+      {/* ── Back-side region pills ────────────────────────────────────────── */}
+      <div style={{ width: '100%', maxWidth: 360, margin: '20px auto 0', paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 12px' }}>
+          Or pick from the back side
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 6 }}>
+          {BACK_REGIONS.map((zoneId) => {
+            const isSelected = selected === zoneId
+            const isHovered  = hovered  === zoneId
+            return (
+              <button
+                key={zoneId}
+                type="button"
+                onMouseEnter={() => setHovered(zoneId)}
+                onMouseLeave={() => setHovered(null)}
+                onClick={() => onSelect(zoneId === selected ? null : zoneId)}
+                style={{
+                  padding: '5px 12px',
+                  borderRadius: 999,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  letterSpacing: '0.04em',
+                  border: `1px solid ${
+                    isSelected ? '#FF4444' : isHovered ? '#CC3333' : 'rgba(255,255,255,0.15)'
+                  }`,
+                  background: isSelected
+                    ? 'rgba(255,68,68,0.15)'
+                    : isHovered
+                    ? 'rgba(204,51,51,0.1)'
+                    : 'rgba(255,255,255,0.04)',
+                  color: isSelected ? '#FF4444' : isHovered ? '#CC3333' : 'rgba(255,255,255,0.7)',
+                  cursor: 'pointer',
+                  transition: 'all 0.1s ease',
+                }}
+              >
+                {zoneId}
+              </button>
+            )
+          })}
+        </div>
       </div>
     </div>
   )

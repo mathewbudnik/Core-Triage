@@ -106,13 +106,13 @@ function PhaseLockGate({ onUpgrade }) {
         <Lock size={20} className="text-accent" />
       </div>
       <div>
-        <p className="text-sm font-semibold text-text">Core Tier Required</p>
+        <p className="text-sm font-semibold text-text">Pro Subscription Required</p>
         <p className="text-xs text-muted mt-1 max-w-xs">
-          Phase 2 & 3 progressions are available with a Core subscription — full periodized protocols mapped to your injury.
+          Phase 2 &amp; 3 progressions are part of Pro — full periodized protocols mapped to your injury, $10/mo.
         </p>
       </div>
       <button onClick={onUpgrade} className="btn-primary text-sm">
-        Upgrade to Core
+        Upgrade to Pro
       </button>
     </div>
   )
@@ -134,7 +134,7 @@ export default function RehabProtocol({ region, severity, user, compact = false 
   }
 
   const severityNote =
-    severity === 'emergency' || severity === 'severe'
+    severity === 'severe'
       ? 'Your injury sounds significant — stick with Phase 1 until you can move without sharp pain. See a provider before advancing.'
       : severity === 'moderate'
       ? 'Start with Phase 1. Move to Phase 2 once all Phase 1 exercises feel comfortable and pain-free for 5 days.'

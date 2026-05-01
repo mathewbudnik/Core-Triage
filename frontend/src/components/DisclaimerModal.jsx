@@ -29,9 +29,9 @@ export default function DisclaimerModal({ onAccept, onExit, readOnly = false }) 
       onKeyDown={blockEscape}
     >
       <motion.div
-        initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.15 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.08 }}
         className="w-full max-w-lg bg-panel2 border border-outline rounded-2xl shadow-2xl overflow-hidden"
       >
         {/* Header */}
