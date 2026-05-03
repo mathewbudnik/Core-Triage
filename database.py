@@ -126,6 +126,24 @@ def init_db() -> None:
                 "TIMESTAMPTZ NULL")
             _add_column_if_missing(cur, "users", "tier",
                 "TEXT DEFAULT 'free'")
+            _add_column_if_missing(cur, "users", "role",
+                "TEXT DEFAULT 'user'")
+            # Email verification
+            _add_column_if_missing(cur, "users", "email_verified",
+                "BOOLEAN DEFAULT FALSE")
+            _add_column_if_missing(cur, "users", "email_verification_token",
+                "TEXT NULL")
+            _add_column_if_missing(cur, "users", "email_verification_sent_at",
+                "TIMESTAMPTZ NULL")
+            # Stripe billing
+            _add_column_if_missing(cur, "users", "stripe_customer_id",
+                "TEXT NULL")
+            _add_column_if_missing(cur, "users", "stripe_subscription_id",
+                "TEXT NULL")
+            _add_column_if_missing(cur, "users", "subscription_status",
+                "TEXT NULL")  # 'active' | 'trialing' | 'past_due' | 'canceled' | NULL
+            _add_column_if_missing(cur, "users", "subscription_product",
+                "TEXT NULL")  # 'pro' | 'coaching' | NULL
             _add_column_if_missing(cur, "users", "free_chat_used",
                 "INT DEFAULT 0")
 
@@ -375,6 +393,152 @@ def set_user_tier(user_id: int, tier: str) -> None:
                 (tier, int(user_id)),
             )
         conn.commit()
+
+
+def get_user_role(user_id: int) -> str:
+    """Return 'user' | 'coach' | 'admin' for the given user."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT COALESCE(role, 'user') FROM users WHERE id = %s;",
+                (int(user_id),),
+            )
+            row = cur.fetchone()
+    return str(row[0]) if row else "user"
+
+
+def set_user_role_by_email(email: str, role: str) -> bool:
+    """Set a user's role by email. Returns True if a row was updated.
+    Used for the one-time COACH_EMAIL → role='coach' seed on startup."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE users SET role = %s WHERE email = %s AND role IS DISTINCT FROM %s;",
+                (role, email, role),
+            )
+            updated = cur.rowcount > 0
+        conn.commit()
+    return updated
+
+
+# ── Email verification ─────────────────────────────────────────────────────
+
+def set_email_verification_token(user_id: int, token: str) -> None:
+    """Store a verification token + timestamp for the user. Token is a random secret."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE users SET email_verification_token = %s, email_verification_sent_at = NOW() WHERE id = %s;",
+                (token, int(user_id)),
+            )
+        conn.commit()
+
+
+def verify_email_with_token(token: str) -> Optional[int]:
+    """If the token matches an unverified user, mark them verified and return user_id.
+    Returns None if no match or already verified. Tokens never expire (kept simple);
+    if you want expiration, add an `email_verification_sent_at < NOW() - INTERVAL '24 hours'` clause."""
+    if not token:
+        return None
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE users
+                SET email_verified = TRUE,
+                    email_verification_token = NULL
+                WHERE email_verification_token = %s
+                  AND email_verified = FALSE
+                RETURNING id;
+                """,
+                (token,),
+            )
+            row = cur.fetchone()
+        conn.commit()
+    return int(row[0]) if row else None
+
+
+def is_email_verified(user_id: int) -> bool:
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT COALESCE(email_verified, FALSE) FROM users WHERE id = %s;",
+                (int(user_id),),
+            )
+            row = cur.fetchone()
+    return bool(row and row[0])
+
+
+# ── Stripe billing state ───────────────────────────────────────────────────
+
+def get_stripe_customer_id(user_id: int) -> Optional[str]:
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT stripe_customer_id FROM users WHERE id = %s;",
+                (int(user_id),),
+            )
+            row = cur.fetchone()
+    return row[0] if row and row[0] else None
+
+
+def set_stripe_customer_id(user_id: int, customer_id: str) -> None:
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE users SET stripe_customer_id = %s WHERE id = %s;",
+                (customer_id, int(user_id)),
+            )
+        conn.commit()
+
+
+def update_subscription_state(
+    customer_id: str,
+    subscription_id: Optional[str],
+    status: Optional[str],
+    product: Optional[str],
+    tier: Optional[str],
+) -> None:
+    """Webhook-driven update of subscription state for a Stripe customer.
+    Sets stripe_subscription_id, subscription_status, subscription_product, and tier
+    in one transaction. Pass tier=None to leave tier unchanged."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            if tier is not None:
+                cur.execute(
+                    """
+                    UPDATE users
+                    SET stripe_subscription_id = %s,
+                        subscription_status = %s,
+                        subscription_product = %s,
+                        tier = %s
+                    WHERE stripe_customer_id = %s;
+                    """,
+                    (subscription_id, status, product, tier, customer_id),
+                )
+            else:
+                cur.execute(
+                    """
+                    UPDATE users
+                    SET stripe_subscription_id = %s,
+                        subscription_status = %s,
+                        subscription_product = %s
+                    WHERE stripe_customer_id = %s;
+                    """,
+                    (subscription_id, status, product, customer_id),
+                )
+        conn.commit()
+
+
+def get_user_email(user_id: int) -> Optional[str]:
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT email FROM users WHERE id = %s;",
+                (int(user_id),),
+            )
+            row = cur.fetchone()
+    return row[0] if row else None
 
 
 def get_chat_used(user_id: int) -> int:

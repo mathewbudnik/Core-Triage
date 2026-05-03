@@ -3,8 +3,15 @@ CoreTriage FastAPI backend.
 Run with: uvicorn main:app --reload
 """
 
+# Load .env into os.environ before anything else reads from it. python-dotenv
+# is a no-op in production where env vars are already set by the host (Vercel,
+# Render, etc.) — it only fills in missing values, never overwrites.
+from dotenv import load_dotenv
+load_dotenv()
+
 import os
 import re
+import secrets
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
@@ -35,9 +42,18 @@ from database import (
     get_thread_by_user,
     get_thread_messages,
     get_training_logs,
+    get_stripe_customer_id,
     get_user_by_email,
     get_user_by_id,
+    get_user_email,
+    get_user_role,
     get_user_tier,
+    is_email_verified,
+    set_email_verification_token,
+    set_stripe_customer_id,
+    set_user_role_by_email,
+    update_subscription_state,
+    verify_email_with_token,
     increment_chat_used,
     increment_failed_login,
     init_db,
@@ -54,6 +70,8 @@ from database import (
 )
 from dataclasses import asdict
 
+from src import billing
+from src.email import send_verification_email
 from src.render import build_query, format_citations
 from src.retriever import TfidfRetriever, load_kb
 from src.triage import (
@@ -74,6 +92,10 @@ SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-in-prod")
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_HOURS = 24
 COACH_EMAIL = os.getenv("COACH_EMAIL", "mathewbudnik@gmail.com")
+
+# Public-facing URL of the frontend. Used to build email verification links and
+# Stripe Checkout return URLs. In dev defaults to localhost:5173 (Vite dev server).
+FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "http://localhost:5173").rstrip("/")
 
 bearer = HTTPBearer(auto_error=False)
 
@@ -203,6 +225,12 @@ async def lifespan(app: FastAPI):
     try:
         init_db()
         db_ready = True
+        # One-time seed: promote COACH_EMAIL to role='coach' if the user exists.
+        # Idempotent — only updates if role differs.
+        try:
+            set_user_role_by_email(COACH_EMAIL, "coach")
+        except Exception:
+            pass
     except Exception as e:
         db_error = str(e)
     _kb = load_kb("kb")
@@ -247,6 +275,11 @@ async def add_security_headers(request: Request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    # HSTS: tell browsers to always use HTTPS for this domain for 1 year.
+    # `includeSubDomains` covers subdomains; `preload` lets us submit to the
+    # browser HSTS preload list once we're confident HTTPS works everywhere.
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
     return response
 
 
@@ -380,9 +413,35 @@ def register(request: Request, req: RegisterRequest):
 
     password_hash = hash_password(req.password)
     user_id = create_user(req.email, password_hash)
+
+    # Issue email verification token + send the verification email.
+    # Failure to send is logged but does not block registration; the user can
+    # request a resend from the verification banner.
+    _issue_verification_email(user_id, req.email)
+
     token = create_token(user_id, req.email)
-    is_coach = req.email == COACH_EMAIL
-    return {"token": token, "user": {"id": user_id, "email": req.email, "disclaimer_accepted": False, "tier": "free", "is_coach": is_coach}}
+    # Role is set during DB seed (COACH_EMAIL → coach) or via admin tool;
+    # at the moment of registration the user is always a regular 'user'.
+    is_coach = get_user_role(user_id) == "coach"
+    return {
+        "token": token,
+        "user": {
+            "id": user_id,
+            "email": req.email,
+            "disclaimer_accepted": False,
+            "tier": "free",
+            "is_coach": is_coach,
+            "email_verified": False,
+        },
+    }
+
+
+def _issue_verification_email(user_id: int, email: str) -> None:
+    """Generate a fresh verification token, persist it, and send the email."""
+    token = secrets.token_urlsafe(32)
+    set_email_verification_token(user_id, token)
+    verify_url = f"{FRONTEND_BASE_URL}/verify-email?token={token}"
+    send_verification_email(to=email, verify_url=verify_url)
 
 
 @app.post("/api/auth/login")
@@ -422,7 +481,8 @@ def login(request: Request, req: LoginRequest):
             "email": user[1],
             "disclaimer_accepted": bool(user[5]),
             "tier": tier,
-            "is_coach": user[1] == COACH_EMAIL,
+            "is_coach": get_user_role(user[0]) == "coach",
+            "email_verified": is_email_verified(user[0]),
         },
     }
 
@@ -436,7 +496,8 @@ def me(request: Request, user: Dict = Depends(get_current_user)):
         "email": user["email"],
         "disclaimer_accepted": bool(db_user[2]) if db_user else False,
         "tier": db_user[3] if db_user else "free",
-        "is_coach": user["email"] == COACH_EMAIL,
+        "is_coach": get_user_role(user["id"]) == "coach",
+        "email_verified": is_email_verified(user["id"]),
     }
 
 
@@ -444,6 +505,37 @@ def me(request: Request, user: Dict = Depends(get_current_user)):
 @limiter.limit("10/minute")
 def accept_disclaimer_endpoint(request: Request, user: Dict = Depends(get_current_user)):
     accept_disclaimer(user["id"])
+    return {"ok": True}
+
+
+# ── Email verification ──────────────────────────────────────────────────────
+
+class VerifyEmailRequest(BaseModel):
+    token: str
+
+
+@app.post("/api/auth/verify-email")
+@limiter.limit("10/minute")
+def verify_email_endpoint(request: Request, req: VerifyEmailRequest):
+    """Confirm an email-verification token. Returns 200 on success, 400 on invalid/expired."""
+    if not req.token or len(req.token) < 10 or len(req.token) > 200:
+        raise HTTPException(status_code=400, detail="Invalid verification token.")
+    user_id = verify_email_with_token(req.token)
+    if not user_id:
+        raise HTTPException(status_code=400, detail="This verification link is invalid or has already been used.")
+    return {"ok": True}
+
+
+@app.post("/api/auth/resend-verification")
+@limiter.limit("3/minute")
+def resend_verification_endpoint(request: Request, user: Dict = Depends(get_current_user)):
+    """Re-issue a verification email for the currently signed-in user."""
+    if is_email_verified(user["id"]):
+        return {"ok": True, "already_verified": True}
+    email = get_user_email(user["id"])
+    if not email:
+        raise HTTPException(status_code=404, detail="User not found")
+    _issue_verification_email(user["id"], email)
     return {"ok": True}
 
 
@@ -510,7 +602,7 @@ def chat(request: Request, req: ChatRequest):
     # Optional auth — enforce per-user chat limits for free accounts
     opt_user = _optional_user(request)
     if opt_user:
-        is_coach = opt_user["email"] == COACH_EMAIL
+        is_coach = get_user_role(opt_user["id"]) == "coach"
         tier = get_user_tier(opt_user["id"])
         if not is_coach and tier == "free":
             used = get_chat_used(opt_user["id"])
@@ -617,7 +709,7 @@ def get_sessions(request: Request, limit: int = 50, user: Dict = Depends(get_cur
 def create_session(request: Request, req: SaveSessionRequest, user: Dict = Depends(get_current_user)):
     if not db_ready:
         raise HTTPException(status_code=503, detail=db_error or "Database not ready")
-    is_coach = user["email"] == COACH_EMAIL
+    is_coach = get_user_role(user["id"]) == "coach"
     tier = get_user_tier(user["id"])
     if not is_coach and tier == "free":
         count = get_session_count(user["id"])
@@ -719,7 +811,7 @@ def fetch_profile(request: Request, user: Dict = Depends(get_current_user)):
 def generate_plan_endpoint(request: Request, req: GeneratePlanRequest, user: Dict = Depends(get_current_user)):
     from src.coach import generate_plan
 
-    is_coach = user["email"] == COACH_EMAIL
+    is_coach = get_user_role(user["id"]) == "coach"
     tier = get_user_tier(user["id"])
     # Coach account bypasses tier gates entirely.
     if not is_coach:
@@ -792,7 +884,7 @@ def fetch_training_logs(request: Request, limit: int = 30, user: Dict = Depends(
 
 
 def require_coach(user: Dict = Depends(get_current_user)) -> Dict:
-    if user["email"] != COACH_EMAIL:
+    if get_user_role(user["id"]) != "coach":
         raise HTTPException(status_code=403, detail="Coach access only")
     return user
 
@@ -841,3 +933,135 @@ def admin_reply(request: Request, req: CoachReplyRequest, _coach: Dict = Depends
         raise HTTPException(status_code=400, detail="Reply cannot be empty")
     msg_id = send_coach_message(req.thread_id, "coach", clean)
     return {"id": msg_id}
+
+
+# ---------------------------------------------------------------------------
+# Billing endpoints (Stripe)
+# ---------------------------------------------------------------------------
+
+
+_VALID_BILLING_PRODUCTS = {"pro", "coaching"}
+
+
+class CheckoutSessionRequest(BaseModel):
+    product: str  # "pro" | "coaching"
+
+
+@app.post("/api/billing/checkout-session")
+@limiter.limit("10/minute")
+def create_checkout_session_endpoint(
+    request: Request,
+    req: CheckoutSessionRequest,
+    user: Dict = Depends(get_current_user),
+):
+    """Create a Stripe Checkout session and return its URL for client redirect."""
+    if not billing.is_configured():
+        raise HTTPException(status_code=503, detail="Billing is not configured.")
+    if req.product not in _VALID_BILLING_PRODUCTS:
+        raise HTTPException(status_code=400, detail=f"Unknown product: {req.product}")
+    if not is_email_verified(user["id"]):
+        raise HTTPException(
+            status_code=403,
+            detail="Please verify your email before subscribing.",
+        )
+
+    email = get_user_email(user["id"])
+    if not email:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    existing_customer = get_stripe_customer_id(user["id"])
+    try:
+        customer_id = billing.get_or_create_customer(email, existing_customer)
+        if customer_id != existing_customer:
+            set_stripe_customer_id(user["id"], customer_id)
+        url = billing.create_checkout_session(
+            customer_id=customer_id,
+            product=req.product,
+            success_url=f"{FRONTEND_BASE_URL}/billing/success?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{FRONTEND_BASE_URL}/billing/cancel",
+            user_id=user["id"],
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Could not start checkout: {type(exc).__name__}: {exc}") from exc
+    return {"url": url}
+
+
+@app.post("/api/billing/portal")
+@limiter.limit("10/minute")
+def create_portal_session_endpoint(request: Request, user: Dict = Depends(get_current_user)):
+    """Open the Stripe Customer Portal so the user can update card / cancel / view invoices."""
+    if not billing.is_configured():
+        raise HTTPException(status_code=503, detail="Billing is not configured.")
+    customer_id = get_stripe_customer_id(user["id"])
+    if not customer_id:
+        raise HTTPException(status_code=400, detail="No active subscription to manage.")
+    try:
+        url = billing.create_portal_session(
+            customer_id=customer_id,
+            return_url=f"{FRONTEND_BASE_URL}/",
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Could not open portal: {exc}") from exc
+    return {"url": url}
+
+
+@app.post("/api/billing/webhook")
+async def stripe_webhook_endpoint(request: Request):
+    """Handle Stripe subscription lifecycle webhooks. Signature is verified;
+    any unverifiable event is rejected with 400 (Stripe will retry, then give up)."""
+    payload = await request.body()
+    signature = request.headers.get("stripe-signature", "")
+    event = billing.parse_webhook_event(payload, signature)
+    if event is None:
+        raise HTTPException(status_code=400, detail="Invalid webhook signature")
+
+    event_type = event["type"]
+    # Stripe v15+ removed dict-style methods on StripeObject — convert to a
+    # plain dict so .get() works downstream.
+    obj = billing.to_plain_dict(event["data"]["object"])
+
+    if event_type in {
+        "checkout.session.completed",
+        "customer.subscription.created",
+        "customer.subscription.updated",
+        "customer.subscription.deleted",
+    }:
+        customer_id = obj.get("customer")
+        if not customer_id:
+            return {"ok": True}
+
+        # checkout.session.completed gives us a session, not a subscription —
+        # we need to fetch the subscription to read its status + price.
+        if event_type == "checkout.session.completed":
+            subscription_id = obj.get("subscription")
+            if not subscription_id:
+                return {"ok": True}
+            try:
+                subscription = billing.to_plain_dict(billing.retrieve_subscription(subscription_id))
+            except Exception:
+                return {"ok": True}
+        else:
+            subscription = obj
+
+        status, product, tier = billing.extract_subscription_state(subscription)
+
+        # On final cancellation, force back to free regardless of price.
+        if event_type == "customer.subscription.deleted":
+            status = "canceled"
+            tier = "free"
+        elif not billing.is_active_status(status):
+            tier = "free"
+
+        update_subscription_state(
+            customer_id=customer_id,
+            subscription_id=subscription.get("id"),
+            status=status,
+            product=product,
+            tier=tier,
+        )
+
+    return {"ok": True}

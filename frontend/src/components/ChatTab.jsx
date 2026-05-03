@@ -22,7 +22,7 @@ const COACH_EMAIL = 'mathewbudnik@gmail.com'
 
 const MODE_META = {
   kb:  { label: 'KB-only',      icon: Cpu,      color: 'text-accent',  desc: 'Local knowledge base, no LLM' },
-  gpt: { label: 'GPT (OpenAI)', icon: Sparkles, color: 'text-accent3', desc: 'Powered by GPT-4o' },
+  gpt: { label: 'GPT (OpenAI)', icon: Sparkles, color: 'text-accent3', desc: 'Powered by GPT-5 mini' },
 }
 
 // ── Memoized message item — skips re-render on every input keystroke ──────────

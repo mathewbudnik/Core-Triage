@@ -13,6 +13,12 @@ import TipCard from './components/TipCard'
 import TrainTab from './components/TrainTab'
 import RehabTab from './components/RehabTab'
 import DisclaimerModal from './components/DisclaimerModal'
+import LegalModal from './components/LegalModal'
+import VerifyEmailPage from './components/VerifyEmailPage'
+import EmailVerificationBanner from './components/EmailVerificationBanner'
+import BillingReturnPage from './components/BillingReturnPage'
+import { PRIVACY_POLICY, TERMS_OF_SERVICE } from './data/legal'
+import { openBillingPortal } from './api'
 import UpgradeModal from './components/UpgradeModal'
 
 const TABS = [
@@ -38,6 +44,16 @@ export default function App() {
   // Disclaimer state
   const [disclaimerState, setDisclaimerState] = useState('checking') // 'checking' | 'required' | 'accepted'
   const [showTerms, setShowTerms] = useState(false) // read-only re-open
+  const [legalDoc, setLegalDoc] = useState(null)    // PRIVACY_POLICY | TERMS_OF_SERVICE | null
+  const [verifyRoute, setVerifyRoute] = useState(typeof window !== 'undefined' && window.location.pathname === '/verify-email')
+  const [billingRoute, setBillingRoute] = useState(() => {
+    if (typeof window === 'undefined') return null
+    const path = window.location.pathname
+    if (path === '/billing/success') return 'success'
+    if (path === '/billing/cancel') return 'cancel'
+    return null
+  })
+  const [bannerDismissed, setBannerDismissed] = useState(false)
   const [showUpgrade, setShowUpgrade] = useState(false)
   const [upgradeTrigger, setUpgradeTrigger] = useState('coaching')
 
@@ -144,6 +160,17 @@ export default function App() {
 
   const activeTabLabel = useMemo(() => TABS.find((t) => t.id === activeTab)?.label, [activeTab])
 
+  // Email verification landing page — takes priority over everything else
+  // since the user got here from an email link and may not be signed in yet
+  if (verifyRoute) {
+    return <VerifyEmailPage onDone={() => setVerifyRoute(false)} />
+  }
+
+  // Stripe Checkout return pages
+  if (billingRoute) {
+    return <BillingReturnPage outcome={billingRoute} onDone={() => setBillingRoute(null)} />
+  }
+
   // Show disclaimer before anything else
   if (disclaimerState === 'checking') return null
 
@@ -180,10 +207,15 @@ export default function App() {
         <DisclaimerModal readOnly onExit={() => setShowTerms(false)} />
       )}
 
+      {/* Privacy Policy / Terms of Service */}
+      {legalDoc && (
+        <LegalModal document={legalDoc} onClose={() => setLegalDoc(null)} />
+      )}
+
       {/* Plans / upgrade modal */}
       <AnimatePresence>
         {showUpgrade && (
-          <UpgradeModal onClose={() => setShowUpgrade(false)} trigger={upgradeTrigger} />
+          <UpgradeModal onClose={() => setShowUpgrade(false)} trigger={upgradeTrigger} user={user} onSignInClick={() => { setShowUpgrade(false); setShowAuth(true) }} />
         )}
       </AnimatePresence>
 
@@ -298,25 +330,61 @@ export default function App() {
               Severe symptoms or major trauma: seek professional evaluation.
             </p>
           </div>
-          <button
-            onClick={() => { setUpgradeTrigger('feature'); setShowUpgrade(true) }}
-            className="flex items-center gap-1 text-[10px] text-muted/50 hover:text-accent transition-colors"
-          >
-            <ChevronRight size={9} />
-            View plans &amp; pricing
-          </button>
+          {user && user.tier && user.tier !== 'free' ? (
+            <button
+              onClick={async () => {
+                try {
+                  const { url } = await openBillingPortal()
+                  window.location.href = url
+                } catch (err) {
+                  alert(err.message)
+                }
+              }}
+              className="flex items-center gap-1 text-[10px] text-muted/50 hover:text-accent transition-colors"
+            >
+              <ChevronRight size={9} />
+              Manage subscription
+            </button>
+          ) : (
+            <button
+              onClick={() => { setUpgradeTrigger('feature'); setShowUpgrade(true) }}
+              className="flex items-center gap-1 text-[10px] text-muted/50 hover:text-accent transition-colors"
+            >
+              <ChevronRight size={9} />
+              View plans &amp; pricing
+            </button>
+          )}
           <button
             onClick={() => setShowTerms(true)}
             className="flex items-center gap-1 text-[10px] text-muted/50 hover:text-muted transition-colors"
           >
             <FileText size={9} />
-            View Terms &amp; Disclaimer
+            Medical Disclaimer
+          </button>
+          <button
+            onClick={() => setLegalDoc(PRIVACY_POLICY)}
+            className="flex items-center gap-1 text-[10px] text-muted/50 hover:text-muted transition-colors"
+          >
+            <FileText size={9} />
+            Privacy Policy
+          </button>
+          <button
+            onClick={() => setLegalDoc(TERMS_OF_SERVICE)}
+            className="flex items-center gap-1 text-[10px] text-muted/50 hover:text-muted transition-colors"
+          >
+            <FileText size={9} />
+            Terms of Service
           </button>
         </div>
       </aside>
 
       {/* Main content */}
       <main className="flex-1 flex flex-col min-w-0 relative z-10 pb-16 md:pb-0">
+        {/* Email verification banner — shown when user is signed in but unverified */}
+        {user && user.email_verified === false && !bannerDismissed && (
+          <EmailVerificationBanner user={user} onDismiss={() => setBannerDismissed(true)} />
+        )}
+
         {/* Top bar */}
         <header className="border-b border-outline px-4 md:px-8 py-4 flex items-center justify-between bg-panel2/40 backdrop-blur-sm sticky top-0 z-20">
           <div className="flex items-center gap-3">

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { X, Lock, FileText, Dumbbell, Clock, Activity, MessageSquare, UserCircle2, ChevronRight } from 'lucide-react'
+import { X, Lock, FileText, Dumbbell, Clock, Activity, MessageSquare, UserCircle2, ChevronRight, Loader2 } from 'lucide-react'
+import { createCheckoutSession } from '../api'
 
 const PRO_BENEFITS = [
   { icon: Dumbbell,      text: 'Full rehab protocols — all three phases' },
@@ -57,12 +58,30 @@ function triggerToView(trigger) {
   return trigger === 'coaching' ? 'coaching' : 'pro'
 }
 
-export default function UpgradeModal({ onClose, trigger = 'feature' }) {
+export default function UpgradeModal({ onClose, trigger = 'feature', user, onSignInClick }) {
   const [activeView, setActiveView] = useState(triggerToView(trigger))
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const [checkoutError, setCheckoutError] = useState(null)
   const meta = PLAN_META[activeView]
   const otherView = activeView === 'pro' ? 'coaching' : 'pro'
   const otherMeta = PLAN_META[otherView]
   const Icon = meta.icon
+
+  const handleSubscribe = async () => {
+    setCheckoutError(null)
+    if (!user) {
+      onSignInClick && onSignInClick()
+      return
+    }
+    setCheckoutLoading(true)
+    try {
+      const { url } = await createCheckoutSession('pro')
+      window.location.href = url
+    } catch (err) {
+      setCheckoutError(err.message)
+      setCheckoutLoading(false)
+    }
+  }
 
   return (
     <div
@@ -114,12 +133,29 @@ export default function UpgradeModal({ onClose, trigger = 'feature' }) {
 
         {/* CTA */}
         <div className="space-y-2 pt-1">
-          <a
-            href={`mailto:mathewbudnik@gmail.com?subject=${encodeURIComponent(meta.mailSubject)}&body=${encodeURIComponent(meta.mailBody)}`}
-            className="btn-primary w-full flex items-center justify-center gap-2 text-sm"
-          >
-            {meta.cta}
-          </a>
+          {activeView === 'pro' ? (
+            <button
+              onClick={handleSubscribe}
+              disabled={checkoutLoading}
+              className="btn-primary w-full flex items-center justify-center gap-2 text-sm disabled:opacity-60"
+            >
+              {checkoutLoading ? (
+                <><Loader2 size={14} className="animate-spin" /> Opening checkout…</>
+              ) : (
+                user ? 'Subscribe — $10/mo' : 'Sign in to subscribe'
+              )}
+            </button>
+          ) : (
+            <a
+              href={`mailto:mathewbudnik@gmail.com?subject=${encodeURIComponent(meta.mailSubject)}&body=${encodeURIComponent(meta.mailBody)}`}
+              className="btn-primary w-full flex items-center justify-center gap-2 text-sm"
+            >
+              {meta.cta}
+            </a>
+          )}
+          {checkoutError && (
+            <p className="text-xs text-accent2 text-center">{checkoutError}</p>
+          )}
           <button
             onClick={onClose}
             className="btn-secondary w-full text-sm"

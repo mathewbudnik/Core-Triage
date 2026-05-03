@@ -45,6 +45,8 @@ export const authRegister = (payload) => request('POST', '/api/auth/register', p
 export const authLogin = (payload) => request('POST', '/api/auth/login', payload)
 export const getMe = () => request('GET', '/api/auth/me')
 export const acceptDisclaimer = () => request('POST', '/api/auth/disclaimer', {})
+export const verifyEmail = (token) => request('POST', '/api/auth/verify-email', { token })
+export const resendVerification = () => request('POST', '/api/auth/resend-verification', {})
 
 // Profile
 export const saveProfile = (payload) => request('POST', '/api/profile', payload)
@@ -57,6 +59,10 @@ export const getActivePlan = () => request('GET', '/api/plans/active')
 // Training log
 export const logTraining = (payload) => request('POST', '/api/training', payload)
 export const getTrainingLogs = (limit = 30) => request('GET', `/api/training?limit=${limit}`)
+
+// Billing (Stripe)
+export const createCheckoutSession = (product) => request('POST', '/api/billing/checkout-session', { product })
+export const openBillingPortal = () => request('POST', '/api/billing/portal', {})
 
 // Coach messaging (user)
 export const sendCoachMessage = (content) => request('POST', '/api/coach/message', { content })
