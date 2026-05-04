@@ -373,13 +373,16 @@ function SeverityCard({ severity }) {
   return (
     <div className={`rounded-xl border ${s.border} ${s.bg} overflow-hidden`}>
       <div className={`h-1 w-full ${s.bar}`} />
-      <div className="px-4 py-3 flex items-start justify-between gap-4">
-        <div className="flex-1">
+      <div className="px-4 py-3 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="flex-1 min-w-0">
           <p className={`text-sm font-bold ${s.text}`}>{severity.label}</p>
-          <p className="text-xs text-muted mt-0.5">{severity.action}</p>
+          <p className="text-xs text-muted mt-0.5 leading-relaxed">{severity.action}</p>
         </div>
-        <div className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${s.bg} ${s.text} border ${s.border}`}>
-          Climbing: {severity.can_climb}
+        <div
+          className={`text-xs font-semibold px-3 py-1.5 rounded-lg ${s.bg} ${s.text} border ${s.border} self-start sm:shrink-0 sm:max-w-[45%] leading-snug`}
+        >
+          <span className="opacity-70">Climbing:</span>{' '}
+          <span className="break-words">{severity.can_climb}</span>
         </div>
       </div>
     </div>
