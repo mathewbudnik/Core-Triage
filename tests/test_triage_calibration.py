@@ -160,10 +160,24 @@ class SeverityClassifierTests(unittest.TestCase):
         i = make_intake(region="Lower Back", severity=4, numbness="Yes")
         self.assertEqual(classify_severity_v2(i)["level"], "severe")
 
-    def test_severe_bilateral(self):
-        """Bilateral symptoms still escalate via the neuro path."""
-        i = make_intake(region="Neck", severity=3, bilateral_symptoms=True)
+    def test_severe_bilateral_with_neuro(self):
+        """Bilateral symptoms ESCALATE via neuro path only when paired with
+        actual neuro signs (numbness or weakness). Bilateral alone is overuse."""
+        i = make_intake(region="Neck", severity=3, bilateral_symptoms=True, numbness="Yes")
         self.assertEqual(classify_severity_v2(i)["level"], "severe")
+
+    def test_bilateral_alone_does_not_escalate(self):
+        """Bilateral aches alone (no neuro signs) should NOT trigger severe.
+        This was changed in the conservative-neuro recalibration to prevent
+        overuse from being mistaken for spinal cord involvement."""
+        i = make_intake(region="Elbow", severity=3, bilateral_symptoms=True)
+        self.assertNotEqual(classify_severity_v2(i)["level"], "severe")
+
+    def test_transient_numbness_does_not_escalate(self):
+        """Numbness=Yes with low pain and no functional limit should NOT
+        trigger severe. Hand falling asleep once shouldn't stop someone from climbing."""
+        i = make_intake(region="Wrist", severity=3, numbness="Yes")
+        self.assertNotEqual(classify_severity_v2(i)["level"], "severe")
 
     def test_moderate_pain_five(self):
         i = make_intake(region="Elbow", severity=5)

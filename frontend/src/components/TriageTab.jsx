@@ -1,4 +1,4 @@
-import { useState, useCallback, memo } from 'react'
+import { useState, useCallback, useMemo, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronDown, ChevronLeft, AlertTriangle, CheckCircle,
@@ -11,6 +11,97 @@ import BodyDiagram from './BodyDiagram'
 import RehabProtocol from './RehabProtocol'
 import UpgradeModal from './UpgradeModal'
 import { downloadTriagePDF } from './TriageReport'
+
+// ── Pre-submit input validation ──────────────────────────────────────────────
+// Detects user-input issues that would lead to a misleading triage result.
+// Each warning gives the user a chance to fix their input before it reaches
+// the classifier, rather than discovering the problem in the output.
+
+const HIGH_PAIN_LANG = [
+  'worst pain', 'unbearable', '10/10', 'ten out of ten',
+  'excruciating', 'agonizing', "can't sleep", 'cannot sleep',
+]
+
+const LOW_PAIN_LANG = [
+  'tiny twinge', 'just a tiny', 'barely', 'no big deal',
+  'feels fine', 'feels great', 'not bad', 'nothing serious',
+  'no real pain', 'minor', "doesn't hurt much",
+]
+
+const JOKE_PHRASES = [
+  'just testing', 'test test', 'checking the app', 'just checking',
+  'this is a test', 'ignore this',
+]
+
+// Maps each region to the words a user is likely to use in free-text. Used
+// to detect when the selected region doesn't match what they describe.
+const REGION_KEYWORDS = {
+  Finger:       ['finger', 'pulley', 'crimp', 'pip joint', 'a2', 'a4', 'knuckle'],
+  Wrist:        ['wrist', 'forearm', 'tfcc', 'scaphoid', 'snuffbox'],
+  Elbow:        ['elbow', 'epicondyle', 'tricep', 'bicep', 'cubital'],
+  Shoulder:     ['shoulder', 'rotator', 'deltoid', 'scapula', 'clavicle'],
+  Knee:         ['knee', 'meniscus', 'patella', 'lcl', 'mcl', 'acl', 'kneecap'],
+  Hip:          ['hip', 'groin', 'flexor'],
+  'Lower Back': ['back', 'lumbar', 'spine', 'sciatic'],
+  Neck:         ['neck', 'cervical', 'trapezius'],
+  Ankle:        ['ankle'],
+  Foot:         ['foot', 'heel', 'plantar', 'toe', 'arch', 'achilles'],
+  Chest:        ['chest', 'pec', 'sternum', 'rib'],
+  Abs:          ['abs', 'abdominal', 'core', 'oblique'],
+}
+
+function validateBeforeSubmit(form) {
+  const text = (form.free_text || '').toLowerCase()
+  const warnings = []
+
+  // ── #1 Pain slider mismatch ─────────────────────────────────────────────
+  const sev = Number(form.severity) || 0
+  if (sev <= 3 && HIGH_PAIN_LANG.some((p) => text.includes(p))) {
+    warnings.push({
+      kind: 'pain_too_low',
+      title: 'Pain level looks low for what you described',
+      message: `You set pain to ${sev}/10 but described it as severe ("${HIGH_PAIN_LANG.find((p) => text.includes(p))}"). Want to increase the slider?`,
+    })
+  }
+  if (sev >= 7 && LOW_PAIN_LANG.some((p) => text.includes(p))) {
+    warnings.push({
+      kind: 'pain_too_high',
+      title: 'Pain level looks high for what you described',
+      message: `You set pain to ${sev}/10 but described it as minor. Want to lower the slider?`,
+    })
+  }
+
+  // ── #7 Region vs free-text mismatch ─────────────────────────────────────
+  // Only run if free-text is substantial enough to matter.
+  if (text.length > 30) {
+    const selectedKeywords = REGION_KEYWORDS[form.region] || []
+    const mentionsSelected = selectedKeywords.some((w) => text.includes(w))
+    if (!mentionsSelected) {
+      // Find the first OTHER region whose keywords appear in the text.
+      const otherMatch = Object.entries(REGION_KEYWORDS).find(
+        ([region, words]) => region !== form.region && words.some((w) => text.includes(w)),
+      )
+      if (otherMatch) {
+        warnings.push({
+          kind: 'region_mismatch',
+          title: 'Region might not match what you described',
+          message: `You selected ${form.region}, but your description mentions ${otherMatch[0]}. Did you mean to switch regions?`,
+        })
+      }
+    }
+  }
+
+  // ── #8 Joke / test input ────────────────────────────────────────────────
+  if (JOKE_PHRASES.some((p) => text.includes(p))) {
+    warnings.push({
+      kind: 'joke_input',
+      title: 'Looks like a test',
+      message: 'It seems like this might be a test submission. Submit anyway?',
+    })
+  }
+
+  return warnings
+}
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
@@ -191,8 +282,16 @@ function downloadMarkdown(text) {
 // Isolated into its own memo'd component so typing in the textarea only
 // re-renders this subtree, not the entire TriageTab wizard.
 
-const FreeTextStep = memo(function FreeTextStep({ initialValue, onCommit, onSubmit, error, loading }) {
+const FreeTextStep = memo(function FreeTextStep({ initialValue, form, onCommit, onSubmit, error, loading }) {
   const [text, setText] = useState(initialValue)
+
+  // Live validation — re-runs as the user types so warnings appear/disappear
+  // alongside the text. Doesn't block submission, just gives the user a
+  // chance to reconsider before getting an over-cautious result.
+  const warnings = useMemo(
+    () => validateBeforeSubmit({ ...form, free_text: text }),
+    [form, text],
+  )
 
   return (
     <div className="space-y-6">
@@ -214,6 +313,26 @@ const FreeTextStep = memo(function FreeTextStep({ initialValue, onCommit, onSubm
         </p>
       </div>
 
+      {warnings.length > 0 && (
+        <div className="bg-accent3/10 border border-accent3/30 rounded-xl p-4 space-y-3">
+          <div className="flex items-center gap-2 text-accent3 text-sm font-semibold">
+            <AlertCircle size={15} />
+            Before you submit — quick check
+          </div>
+          <ul className="space-y-2">
+            {warnings.map((w) => (
+              <li key={w.kind} className="text-xs text-muted leading-relaxed">
+                <span className="text-text font-medium">{w.title}.</span>{' '}
+                {w.message}
+              </li>
+            ))}
+          </ul>
+          <p className="text-[11px] text-muted/60 leading-snug">
+            You can submit anyway, but small mismatches like these can lead to an over- or under-cautious result.
+          </p>
+        </div>
+      )}
+
       {error && (
         <div className="flex items-center gap-3 bg-accent2/10 border border-accent2/30 rounded-xl px-4 py-3 text-accent2 text-sm">
           <AlertTriangle size={16} /> {error}
@@ -227,6 +346,8 @@ const FreeTextStep = memo(function FreeTextStep({ initialValue, onCommit, onSubm
       >
         {loading
           ? <><Loader2 size={18} className="animate-spin" /> Analysing your symptoms…</>
+          : warnings.length > 0
+          ? <><ArrowRight size={18} /> Submit anyway</>
           : <><ArrowRight size={18} /> Get My Guidance</>
         }
       </button>
@@ -679,11 +800,18 @@ export default function TriageTab({ k, user }) {
           {/* ── Step 3 — Symptoms ───────────────────────────────────────────── */}
           {step === 3 && (
             <div className="space-y-3">
+              {/* Helper note — sets expectations about how these answers affect the result */}
+              <div className="bg-accent3/8 border border-accent3/20 rounded-xl px-4 py-3 mb-2">
+                <p className="text-xs text-muted leading-relaxed">
+                  Be honest about <span className="text-text font-medium">how it actually is right now</span> — not how it might be.
+                  Marking severe symptoms you don&apos;t actually have can lead to an over-cautious result.
+                </p>
+              </div>
+
               {[
-                { key: 'swelling',    label: 'Swelling',              desc: 'The area looks puffy or swollen',            opts: ['No', 'Yes'] },
-                { key: 'bruising',    label: 'Bruising',              desc: 'Any discoloration or black and blue',         opts: ['No', 'Yes'] },
-                { key: 'numbness',    label: 'Numbness or tingling',  desc: 'Pins and needles, or loss of sensation',      opts: ['No', 'Yes'] },
-                { key: 'instability', label: 'Instability',           desc: 'Feels like it might slip or give way',        opts: ['No', 'Yes'] },
+                { key: 'swelling',    label: 'Swelling',  desc: 'Visible puffiness or noticeable size difference compared to the other side',                              opts: ['No', 'Yes'] },
+                { key: 'bruising',    label: 'Bruising',  desc: 'Visible discoloration — purple, black, or blue marks (not just redness)',                                  opts: ['No', 'Yes'] },
+                { key: 'instability', label: 'Instability', desc: 'The joint actually slips, gives way, or feels like it might dislocate during movement',                  opts: ['No', 'Yes'] },
               ].map(({ key, label, desc, opts }) => (
                 <div key={key} className="bg-panel border border-outline rounded-xl p-4">
                   <div className="flex items-start justify-between gap-4">
@@ -713,27 +841,72 @@ export default function TriageTab({ k, user }) {
                 </div>
               ))}
 
+              {/* Numbness — 3-option to distinguish transient ("fell asleep") from persistent.
+                   Persistent maps to "Yes" for the backend; the others map to "No" so a brief
+                   tingle doesn't trip the neuro-escalation path. */}
+              <div className="bg-panel border border-outline rounded-xl p-4">
+                <p className="text-sm font-medium text-text">Numbness or tingling</p>
+                <p className="text-xs text-muted mt-0.5">Pins and needles, or loss of sensation</p>
+                <div className="flex gap-2 mt-3">
+                  {[
+                    { ui: 'None',       sub: 'No tingling',                                    map: 'No'  },
+                    { ui: 'Brief',      sub: 'Hand fell asleep, resolved within minutes',      map: 'No'  },
+                    { ui: 'Persistent', sub: 'Right now, or recurring — not just temporary',   map: 'Yes' },
+                  ].map(({ ui, sub, map }) => {
+                    const isSelected = form.numbness === map && form._numbness_label === ui
+                    return (
+                      <button
+                        key={ui}
+                        type="button"
+                        onClick={() => { set('numbness', map); set('_numbness_label', ui) }}
+                        className={`flex-1 py-2 px-2 rounded-lg text-xs font-medium border-2 transition-all leading-tight ${
+                          isSelected
+                            ? ui === 'Persistent' ? 'border-accent2 bg-accent2/15 text-accent2'
+                            : ui === 'Brief'      ? 'border-accent3 bg-accent3/15 text-accent3'
+                            :                       'border-accent  bg-accent/15  text-accent'
+                            : 'border-outline text-muted hover:border-accent/30'
+                        }`}
+                        title={sub}
+                      >
+                        {ui}
+                      </button>
+                    )
+                  })}
+                </div>
+                <p className="text-[10px] text-muted/60 mt-2 leading-snug">
+                  Brief tingling that resolves on its own is normal. Persistent numbness is the one that needs evaluation.
+                </p>
+              </div>
+
               <div className="bg-panel border border-outline rounded-xl p-4">
                 <p className="text-sm font-medium text-text">Weakness</p>
-                <p className="text-xs text-muted mt-0.5">Difficulty gripping, lifting, or pushing normally</p>
+                <p className="text-xs text-muted mt-0.5">How much your strength is affected right now</p>
                 <div className="flex gap-2 mt-3">
-                  {['None', 'Mild', 'Significant'].map((o) => (
+                  {[
+                    { val: 'None',        sub: 'Full strength' },
+                    { val: 'Mild',        sub: 'Noticeably weaker, but I can still climb' },
+                    { val: 'Significant', sub: "Can't grip, lift, or push normally" },
+                  ].map(({ val, sub }) => (
                     <button
-                      key={o}
+                      key={val}
                       type="button"
-                      onClick={() => set('weakness', o)}
-                      className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-all ${
-                        form.weakness === o
-                          ? o === 'Significant' ? 'border-accent2 bg-accent2/15 text-accent2'
-                          : o === 'Mild'        ? 'border-accent3 bg-accent3/15 text-accent3'
-                          :                       'border-accent  bg-accent/15  text-accent'
+                      onClick={() => set('weakness', val)}
+                      className={`flex-1 py-2 px-2 rounded-lg text-xs font-medium border-2 transition-all leading-tight ${
+                        form.weakness === val
+                          ? val === 'Significant' ? 'border-accent2 bg-accent2/15 text-accent2'
+                          : val === 'Mild'        ? 'border-accent3 bg-accent3/15 text-accent3'
+                          :                         'border-accent  bg-accent/15  text-accent'
                           : 'border-outline text-muted hover:border-accent/30'
                       }`}
+                      title={sub}
                     >
-                      {o}
+                      {val}
                     </button>
                   ))}
                 </div>
+                <p className="text-[10px] text-muted/60 mt-2 leading-snug">
+                  Pick &quot;Significant&quot; only if you can&apos;t do normal daily activities (gripping a glass, pushing a door open).
+                </p>
               </div>
             </div>
           )}
@@ -742,6 +915,7 @@ export default function TriageTab({ k, user }) {
           {step === 4 && (
             <FreeTextStep
               initialValue={form.free_text}
+              form={form}
               onCommit={commitFreeText}
               onSubmit={handleSubmit}
               error={error}

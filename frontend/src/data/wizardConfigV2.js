@@ -182,7 +182,17 @@ export const PAIN_TRAJECTORY = [
 ]
 
 // Region-specific functional check (Screen 6).
+// Options now include "Haven't tried" so a user who's avoiding the movement
+// out of caution doesn't get classified the same as someone who tried and
+// physically couldn't. Only "no" should map to a functional limit signal.
 // `criticalNoFlag` (optional): the flag to raise immediately on No.
+export const FUNCTIONAL_CHECK_OPTIONS = [
+  { key: 'yes',         label: 'Yes, no problem' },
+  { key: 'painful',     label: 'Yes, but it hurts' },
+  { key: 'no',          label: "No, I physically can't" },
+  { key: 'havent_tried', label: "Haven't tried — too cautious or nervous to attempt" },
+]
+
 export const FUNCTIONAL_CHECKS_BY_REGION = {
   'Finger':     { question: 'Can you make a full fist without pain?' },
   'Hand':       { question: 'Can you make a full fist without pain?' },
@@ -194,6 +204,27 @@ export const FUNCTIONAL_CHECKS_BY_REGION = {
   'Ankle':      { question: 'Can you put your full weight on it and take 4 steps?', criticalNoFlag: 'ottawa_rules' },
   'Foot':       { question: 'Can you put your full weight on it and take 4 steps?', criticalNoFlag: 'ottawa_rules' },
   'Neck':       { question: 'Can you turn your head pain-free in both directions?' },
+}
+
+// Pop confidence options. The pop_reported field becomes a 3-way choice
+// instead of a checkbox so users don't accidentally trigger severity
+// escalation for a "maybe" pop. Only `definite` should set pop_reported=true
+// in the submitted Intake.
+export const POP_CONFIDENCE_OPTIONS = [
+  { key: 'no',       label: 'No pop',                                map_to: false },
+  { key: 'maybe',    label: "Maybe — thought I heard one but not sure", map_to: false },
+  { key: 'definite', label: 'Yes — definitely felt or heard a pop',  map_to: true  },
+]
+
+// Bilateral symptoms — clearer label so users don't misclick when only
+// one side hurts. Only true bilateral involvement should be marked.
+export const BILATERAL_QUESTION = {
+  question: 'Are you having symptoms on BOTH sides of your body?',
+  helper: 'For example: BOTH arms tingling, BOTH legs weak. NOT just one elbow that hurts and another that\'s fine.',
+  options: [
+    { key: 'no',  label: 'No — symptoms on one side only' },
+    { key: 'yes', label: 'Yes — both sides truly affected' },
+  ],
 }
 
 // Silent screen (Screen 7) — region-specific natural-language Yes/No questions

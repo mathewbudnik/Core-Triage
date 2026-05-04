@@ -39,7 +39,15 @@ class Intake:
 # Simple substring matching ("bladder" in text) fires on "no bladder symptoms".
 # This helper checks that the matched keyword is not preceded by a negation word.
 
-_NEG_WORDS = frozenset({"no", "not", "without", "denies", "none", "negative", "absent", "deny"})
+# Includes common contractions because climbers naturally write "didn't pop"
+# rather than "did not pop" — without these, the affirmation check would
+# incorrectly fire on the keyword inside the negated clause.
+_NEG_WORDS = frozenset({
+    "no", "not", "without", "denies", "none", "negative", "absent", "deny", "never",
+    "didn't", "doesn't", "don't", "wasn't", "weren't", "isn't", "aren't",
+    "won't", "wouldn't", "can't", "couldn't", "shouldn't",
+    "hadn't", "hasn't", "haven't",
+})
 
 
 def _keyword_affirmed(text: str, keywords: list) -> bool:
@@ -105,6 +113,22 @@ def get_urgent_flags(i: Intake) -> List[str]:
             "before any return to climbing — imaging is usually required."
         )
 
+    # Boutonnière deformity — central slip rupture at the PIP joint. Has a
+    # 72-hour splinting window before deformity becomes permanent, so it's
+    # urgent enough to escalate severity.
+    if "finger" in region and _keyword_affirmed(text, [
+        "won't straighten", "wont straighten", "cannot straighten", "can't straighten",
+        "won't extend", "wont extend", "cannot extend", "can't extend",
+        "stuck bent", "stuck flexed", "pip won't", "central slip",
+        "boutonniere", "boutonnière", "joint won't",
+    ]):
+        flags.append(
+            "A finger joint that cannot actively straighten (PIP joint stuck bent) may "
+            "indicate a central slip rupture / Boutonnière deformity. There is roughly a "
+            "72-hour splinting window before this becomes permanent — see a hand "
+            "specialist or urgent care today."
+        )
+
     # Distal bicep tendon rupture — Popeye look after a campus / hard lockoff pop
     if "elbow" in region and _keyword_affirmed(text, [
         "popeye", "deformity", "muscle moved", "bunched", "bunching", "bunches",
@@ -123,9 +147,10 @@ def get_urgent_flags(i: Intake) -> List[str]:
         "stuck at", "cannot extend", "won't straighten", "unable to straighten",
     ]):
         flags.append(
-            "A knee that mechanically cannot be straightened (not just pain-limited) may "
-            "indicate a displaced meniscal tear or loose body. See a sports medicine doctor "
-            "or orthopaedist within a few days. Do not force the knee into extension."
+            "A locked knee — one that mechanically cannot be straightened (not just "
+            "pain-limited) — may indicate a displaced meniscal tear or loose body. "
+            "See a sports medicine doctor or orthopaedist within a few days. "
+            "Do not force the knee into extension."
         )
 
     # Achilles tendon rupture — common on climbing-trip approach hikes
@@ -835,13 +860,23 @@ def bucket_possibilities(i: Intake) -> List[Tuple[str, str]]:
     out: List[Tuple[str, str]] = []
 
     if "finger" in region:
-        if i.mechanism in {"Hard crimp", "Dynamic catch", "Pocket"}:
+        text_l = i.free_text.lower()
+        # Pulley is the most common climbing finger injury — surface it for any
+        # mechanism that loads the finger flexors, OR if the user explicitly
+        # mentions pulleys in free-text. The previous gate was too narrow.
+        pulley_signals = (
+            i.mechanism in {"Hard crimp", "Dynamic catch", "Pocket", "High volume pulling", "Steep climbing/board"}
+            or "pulley" in text_l
+            or "a2" in text_l
+            or "a4" in text_l
+        )
+        if pulley_signals:
             out.append(("Pulley strain/rupture (A2 most likely)", "Pain on palm-side at base of finger, worse with crimping. May have felt a pop."))
         if i.mechanism in {"Pocket", "Asymmetric hold"}:
             out.append(("Lumbrical tear (possible)", "Deep palm pain that worsens when other fingers are extended — distinctive pattern."))
         out.append(("Flexor tendon tenosynovitis (possible)", "Diffuse swelling along entire finger, worse after rest then with prolonged activity."))
         out.append(("Collateral ligament or joint capsule irritation (possible)", "Side-of-joint pain or persistent swelling at a finger joint."))
-        if "can't straighten" in i.free_text.lower() or "pip" in i.free_text.lower():
+        if "can't straighten" in text_l or "pip" in text_l:
             out.append(("Boutonnière deformity / central slip rupture (urgent)", "PIP that cannot be extended to neutral — requires splinting within 72 hours."))
 
     elif "wrist" in region:
@@ -945,12 +980,24 @@ def bucket_possibilities(i: Intake) -> List[Tuple[str, str]]:
             out.append(("Nerve root irritation / radiculopathy (possible)", "Numbness or tingling travelling down the leg warrants evaluation — especially if following a dermatomal pattern."))
 
     elif "ankle" in region or "foot" in region:
+        text_l = i.free_text.lower()
         if i.onset == "Sudden":
             out.append(("Lateral ankle sprain — ATFL (most common)", "Outer ankle pain after rolling the ankle. Ottawa Rules should be applied to rule out fracture."))
         out.append(("Peroneal tendon strain (possible)", "Pain behind the lateral ankle — worsens with foot eversion and smearing."))
-        if i.mechanism in {"Small holds", "Tight shoes", "Approach"}:
-            out.append(("Plantar fasciitis (possible)", "Heel pain worst with first steps in the morning — common from aggressive shoe downsizing."))
-        if i.mechanism in {"Approach", "High volume hiking"}:
+        # Plantar fasciitis — surface from mechanism OR from common free-text
+        # patterns. Climbers often describe morning heel pain or pain on the
+        # bottom of the foot regardless of which mechanism they tag.
+        plantar_fasciitis_signals = (
+            i.mechanism in {"Small holds", "Tight shoes", "Approach"}
+            or "morning" in text_l
+            or "first step" in text_l
+            or "bottom of" in text_l and "foot" in text_l
+            or "heel pain" in text_l
+            or "plantar" in text_l
+        )
+        if plantar_fasciitis_signals:
+            out.append(("Plantar fasciitis (possible)", "Heel pain worst with first steps in the morning — common from aggressive shoe downsizing or high approach mileage."))
+        if i.mechanism in {"Approach", "High volume hiking"} or "approach" in text_l or "hiking" in text_l:
             out.append(("Achilles tendinopathy (possible)", "Posterior heel/calf pain — associated with high-mileage hiking on climbing trips."))
 
     elif "chest" in region:
@@ -1086,9 +1133,33 @@ def _has_pop_in_text(text: str) -> bool:
 
 
 def _has_neuro(i: Intake) -> bool:
-    """True if the intake reports any neurological involvement."""
+    """True if the intake reports a meaningful neurological pattern.
+
+    A single weak signal (e.g. someone marking 'Yes' for numbness because their
+    hand fell asleep once) shouldn't escalate severity. We require a pattern:
+
+    - `weakness == "Significant"` is an explicit choice (the user picked
+      Significant out of None/Mild/Significant), so it qualifies on its own.
+    - `numbness == "Yes"` qualifies only when paired with another signal —
+      moderate-or-higher pain (>= 4) OR a functional limitation. Transient
+      paresthesia with otherwise mild presentation should NOT escalate.
+    - `bilateral_symptoms` qualifies only when paired with actual neuro
+      symptoms (numbness or weakness). Bilateral aches alone are usually
+      overuse, not neuro.
+    """
     try:
-        return i.numbness == "Yes" or i.weakness == "Significant" or i.bilateral_symptoms
+        score = i.severity or 0
+        func_limit = i.functional_check == "no"
+        # Strong signal — explicit "Significant" choice
+        if i.weakness == "Significant":
+            return True
+        # Numbness + supporting signal
+        if i.numbness == "Yes" and (score >= 4 or func_limit):
+            return True
+        # Bilateral + actual neuro evidence (not just bilateral aches)
+        if i.bilateral_symptoms and (i.numbness == "Yes" or i.weakness in {"Mild", "Significant"}):
+            return True
+        return False
     except Exception:
         return False
 
