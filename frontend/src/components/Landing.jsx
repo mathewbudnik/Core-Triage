@@ -6,12 +6,22 @@ import UpgradeModal from './UpgradeModal'
 
 const FEATURES = [
   {
+    icon: Dumbbell,
+    color: 'text-accent',
+    bg: 'bg-accent/10 border-accent/20',
+    glow: 'hover:border-accent/50 hover:bg-accent/15',
+    title: 'Training Plans',
+    desc: 'Personalised 4-week climbing plans built around your goals, current grades, available days, and injury history. Adapts as you progress — from base-building to projecting.',
+    tab: 'train',
+    cta: 'Build my plan',
+  },
+  {
     icon: Shield,
     color: 'text-accent2',
     bg: 'bg-accent2/10 border-accent2/20',
     glow: 'hover:border-accent2/50 hover:bg-accent2/15',
     title: 'Injury Triage',
-    desc: 'Answer a few questions and get red flag screening, likely injury patterns, and a return-to-climb plan.',
+    desc: 'Hurt yourself? Answer a few questions and get red flag screening, likely injury patterns, and a return-to-climb plan — designed for climbing-specific mechanics.',
     tab: 'triage',
     cta: 'Start triage',
   },
@@ -21,19 +31,9 @@ const FEATURES = [
     bg: 'bg-accent/10 border-accent/20',
     glow: 'hover:border-accent/50 hover:bg-accent/15',
     title: 'Rehab Library',
-    desc: 'Week-by-week exercise protocols for every injury area — gentle Phase 1 exercises free for everyone.',
+    desc: 'Week-by-week exercise protocols for every injury area — gentle Phase 1 exercises free for everyone, full periodised rehab for Pro.',
     tab: 'rehab',
     cta: 'Browse exercises',
-  },
-  {
-    icon: Dumbbell,
-    color: 'text-accent',
-    bg: 'bg-accent/10 border-accent/20',
-    glow: 'hover:border-accent/40 hover:bg-accent/12',
-    title: 'Training Plans',
-    desc: 'Get a personalised 4-week climbing plan built around your goals, grades, and injury history.',
-    tab: 'train',
-    cta: 'Build my plan',
   },
   {
     icon: MessageSquare,
@@ -41,7 +41,7 @@ const FEATURES = [
     bg: 'bg-accent3/10 border-accent3/20',
     glow: 'hover:border-accent3/40 hover:bg-accent3/12',
     title: 'AI Assistant',
-    desc: 'Ask anything about climbing injuries, load management, and rehab — backed by a curated knowledge base.',
+    desc: 'Ask anything about training, climbing injuries, load management, or recovery — backed by a curated climbing-specific knowledge base.',
     tab: 'chat',
     cta: 'Ask a question',
   },
@@ -113,10 +113,10 @@ export default function Landing({ onEnter }) {
           className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight tracking-tight mb-4"
         >
           <span className="bg-gradient-to-r from-accent via-text to-accent2 bg-clip-text text-transparent">
-            Injury triage
+            Train. Recover. Progress.
           </span>
           <br />
-          <span className="text-text">built for climbing.</span>
+          <span className="text-text">Built for climbing.</span>
         </motion.h1>
 
         {/* Subheading */}
@@ -124,7 +124,7 @@ export default function Landing({ onEnter }) {
           variants={item}
           className="text-muted text-base md:text-lg max-w-xl leading-relaxed mb-3"
         >
-          From injury triage to personalised training plans — everything a climber needs to get back on the wall and keep progressing.
+          Personalised training plans, injury triage and rehab, and 1:1 coaching from an outdoor V13 boulderer — three tools every climber needs, in one app.
         </motion.p>
 
         {/* Disclaimer pill */}

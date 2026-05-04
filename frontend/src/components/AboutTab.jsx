@@ -4,18 +4,25 @@ import Logo from './Logo'
 
 const FEATURES = [
   {
-    icon: Shield,
-    color: 'text-accent2',
-    bg: 'bg-accent2/10 border-accent2/20',
-    title: 'Injury Triage',
-    desc: 'Step through a guided intake to screen for red flags, identify likely injury patterns, and get a conservative return-to-climbing plan — all tailored to climbing-specific mechanics.',
-  },
-  {
     icon: Dumbbell,
     color: 'text-accent',
     bg: 'bg-accent/10 border-accent/20',
     title: 'Personalised Training Plans',
-    desc: 'Build a 4-week training plan around your goals, current grade, available days, and injury history. Plans adapt to your level — from beginner to advanced — with full exercise detail and rest periods.',
+    desc: 'Build a 4-week training plan around your goals, current grade, available days, and injury history. Plans adapt to your level — from base-building to limit projects — with full exercise detail, rest periods, and progression cues.',
+  },
+  {
+    icon: Shield,
+    color: 'text-accent2',
+    bg: 'bg-accent2/10 border-accent2/20',
+    title: 'Injury Triage',
+    desc: 'Step through a guided intake to screen for red flags, identify likely injury patterns, and get a conservative return-to-climbing plan — tailored to climbing-specific mechanics like crimp loading, heel hooks, and dynamic catches.',
+  },
+  {
+    icon: Stethoscope,
+    color: 'text-accent',
+    bg: 'bg-accent/10 border-accent/20',
+    title: 'Rehab Library',
+    desc: 'Week-by-week exercise protocols for every injury area. Phase 1 (gentle reactivation) is free; Phase 2 and 3 (progressive loading and sport-specific reload) are part of Pro.',
   },
   {
     icon: UserCircle2,
@@ -29,7 +36,7 @@ const FEATURES = [
     color: 'text-accent',
     bg: 'bg-accent/10 border-accent/20',
     title: 'AI Knowledge Base',
-    desc: 'Ask anything about climbing injuries, load management, and rehab. Responses are grounded in a curated climbing-specific knowledge base and kept intentionally conservative.',
+    desc: 'Ask anything about training, climbing injuries, load management, and rehab. Responses are grounded in a curated climbing-specific knowledge base and kept intentionally conservative.',
   },
 ]
 
@@ -56,7 +63,7 @@ export default function AboutTab() {
           </h2>
         </div>
         <p className="text-muted leading-relaxed max-w-2xl">
-          CoreTriage helps climbers navigate injury — from the moment something goes wrong to getting back on the wall stronger. Built by climbers, for climbers.
+          CoreTriage is the complete app for climbers — <span className="text-text font-medium">personalised training plans</span>, <span className="text-text font-medium">injury triage and rehab</span>, and <span className="text-text font-medium">1:1 coaching</span>. Whether you're chasing your next grade, working through an injury, or both at once, it's all built around climbing-specific demands. Built by climbers, for climbers.
         </p>
         <div className="flex items-center gap-2 text-xs text-muted/60">
           <Mountain size={12} />

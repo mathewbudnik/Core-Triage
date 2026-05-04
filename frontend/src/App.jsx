@@ -267,7 +267,7 @@ export default function App() {
             </button>
           </div>
           <p className="text-xs text-muted leading-relaxed mt-1">
-            Outdoor-inspired triage + rehab guidance
+            Training, rehab &amp; coaching for climbers
           </p>
         </div>
 
