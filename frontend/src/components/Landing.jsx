@@ -187,9 +187,7 @@ export default function Landing({ onEnter }) {
                 Work 1:1 with a climbing coach
               </h2>
               <p className="text-sm text-muted leading-relaxed mb-5 max-w-lg">
-                Not an algorithm. Mathew is a climber and routesetter with nearly a decade of experience.
-                Get your triage results reviewed, a plan built around your actual schedule, and direct
-                access for questions an AI can't answer.
+                Not an algorithm. Mathew is an outdoor V13 boulderer, USAC-certified routesetter at Momentum, and coach with over a decade of climbing experience. Get your triage results reviewed, a plan built around your actual schedule, and direct access for the questions an AI can't answer.
               </p>
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 mb-6">
                 {COACHING_INCLUDES.map((point) => (
@@ -212,7 +210,11 @@ export default function Landing({ onEnter }) {
 
         {/* Injury areas */}
         <motion.div variants={item} className="mt-10 flex flex-wrap gap-2 justify-center">
-          {['Fingers', 'Wrist', 'Elbow', 'Shoulder', 'Neck', 'Knee', 'Hip', 'Lower Back'].map((area) => (
+          {[
+            'Fingers', 'Wrist', 'Elbow', 'Triceps', 'Shoulder', 'Chest',
+            'Upper Back', 'Lats', 'Lower Back',
+            'Hip', 'Glutes', 'Hamstrings', 'Knee', 'Calves', 'Ankle', 'Neck',
+          ].map((area) => (
             <button
               key={area}
               onClick={() => onEnter('triage')}

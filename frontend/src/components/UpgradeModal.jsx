@@ -41,7 +41,7 @@ const PLAN_META = {
     price: '$89',
     cadence: '/ month · application only',
     headline: 'Work 1:1 with Mathew',
-    sub: 'Real human coaching — personal injury review and a return-to-climb plan built around your situation. Apply and we\'ll talk.',
+    sub: '1:1 coaching from an outdoor V13 boulderer and USAC-certified routesetter with over a decade of climbing experience. Personal injury review and a return-to-climb plan built around you. Apply and we\'ll talk.',
     benefits: COACHING_BENEFITS,
     mailSubject: 'CoreTriage Coaching — Application',
     mailBody: "Hi Mathew, I'd like to apply for 1:1 coaching. Here's a bit about my situation:\n\n- Injury / goal:\n- Climbing background:\n- What you'd want help with:\n\n",

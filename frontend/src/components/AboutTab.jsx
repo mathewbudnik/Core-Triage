@@ -22,7 +22,7 @@ const FEATURES = [
     color: 'text-accent3',
     bg: 'bg-accent3/10 border-accent3/20',
     title: 'Coach Chat',
-    desc: 'Message directly with an experienced climber and routesetter. Get personalised advice on training, technique, and recovery — not an AI, a real person who has been climbing for nearly a decade.',
+    desc: 'Direct messaging with an outdoor V13 boulderer and USAC-certified routesetter with over a decade of climbing experience. Personalised advice on training, technique, and recovery — not an AI, a real climber who has lived through the injuries you\'re working through.',
   },
   {
     icon: MessageSquare,
@@ -34,8 +34,14 @@ const FEATURES = [
 ]
 
 const INJURY_AREAS = [
-  'Fingers', 'Wrist', 'Elbow', 'Shoulder', 'Chest',
-  'Hip', 'Knee', 'Ankle', 'Lower Back',
+  // Upper body
+  'Fingers', 'Wrist', 'Elbow', 'Triceps', 'Shoulder', 'Chest',
+  // Trunk
+  'Abs', 'Upper Back', 'Lats', 'Lower Back',
+  // Lower body
+  'Hip', 'Glutes', 'Hamstrings', 'Knee', 'Calves', 'Ankle',
+  // Cervical
+  'Neck',
 ]
 
 export default function AboutTab() {
@@ -107,12 +113,22 @@ export default function AboutTab() {
         <div className="w-10 h-10 rounded-xl bg-accent3/20 border border-accent3/30 flex items-center justify-center shrink-0">
           <UserCircle2 size={20} className="text-accent3" />
         </div>
-        <div>
-          <p className="text-sm font-semibold text-text mb-1">About the Coach</p>
+        <div className="space-y-3">
+          <p className="text-sm font-semibold text-text">About the Coach</p>
+
           <p className="text-xs text-muted leading-relaxed">
-            Mathew has been climbing for nearly a decade across bouldering, sport, and competition formats. As a routesetter and coach he has worked with climbers at all levels — from first-timers to regional competitors. The Coach Chat feature connects you directly with him for advice on training, technique, injury management, and getting back on the wall safely.
+            Mathew is an <span className="text-text font-medium">outdoor V13 boulderer</span> with over a decade of climbing experience across bouldering, sport, and competition. He's been <span className="text-text font-medium">routesetting at Momentum for the past five years</span>, holds <span className="text-text font-medium">USAC L1 and L2 routesetting certifications</span>, and has coached climbers from first-timers to regional competitors. That combination — climbing at a high level AND setting at scale — gives him a rare view of movement from both sides of the wall: how holds load the body, where positions force compromise, and why certain patterns chronically injure climbers.
           </p>
-          <div className="mt-3 flex items-center gap-1.5 text-xs text-accent3">
+
+          <p className="text-xs text-muted leading-relaxed">
+            He's also lived through the injuries climbers actually get on the way up: the slow comeback from a pulley, the elbow flares that won't quite let go, the wrist that flares whenever volume creeps up. CoreTriage exists because he wished a tool like it had existed during his own rehabs.
+          </p>
+
+          <p className="text-xs text-muted leading-relaxed">
+            The Coach Chat connects you directly with him for the questions an algorithm can't answer — load management, return-to-climbing decisions, technique tweaks that protect the bits that hurt.
+          </p>
+
+          <div className="pt-1 flex items-center gap-1.5 text-xs text-accent3">
             <Heart size={11} />
             <span>Real person · Not an AI · Typically responds within 24 hours</span>
           </div>
