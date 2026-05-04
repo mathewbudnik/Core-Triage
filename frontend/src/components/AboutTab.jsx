@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Shield, Dumbbell, MessageSquare, UserCircle2, AlertTriangle, Mountain, Heart } from 'lucide-react'
+import { Shield, Dumbbell, MessageSquare, UserCircle2, AlertTriangle, Mountain, Heart, Stethoscope } from 'lucide-react'
 import Logo from './Logo'
 
 const FEATURES = [
