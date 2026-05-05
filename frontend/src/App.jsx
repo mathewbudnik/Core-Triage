@@ -56,6 +56,7 @@ export default function App() {
   const [bannerDismissed, setBannerDismissed] = useState(false)
   const [showUpgrade, setShowUpgrade] = useState(false)
   const [upgradeTrigger, setUpgradeTrigger] = useState('coaching')
+  const [toast, setToast] = useState(null) // { kind: 'error'|'info', message: string }
 
   // Session timeout
   const timeoutRef = useRef(null)
@@ -81,6 +82,24 @@ export default function App() {
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
     }
   }, [resetTimeout])
+
+  // Server-side token expiry: api.js dispatches this when any request returns 401.
+  useEffect(() => {
+    const handler = () => {
+      setUser(null)
+      setToast({ kind: 'info', message: 'Your session expired. Please sign in again.' })
+      setShowAuth(true)
+    }
+    window.addEventListener('ct:auth-expired', handler)
+    return () => window.removeEventListener('ct:auth-expired', handler)
+  }, [])
+
+  // Auto-dismiss toast after 5s
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 5000)
+    return () => clearTimeout(t)
+  }, [toast])
 
   useEffect(() => {
     getHealth()
@@ -219,6 +238,37 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* Toast (errors, session-expired notices) */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.12 }}
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] max-w-sm w-[calc(100%-2rem)]"
+          >
+            <div
+              role="alert"
+              className={`rounded-lg border px-4 py-3 text-sm shadow-lg backdrop-blur-sm flex items-start gap-3 ${
+                toast.kind === 'error'
+                  ? 'bg-accent3/10 border-accent3/30 text-accent3'
+                  : 'bg-panel2 border-outline text-text'
+              }`}
+            >
+              <span className="flex-1 leading-snug">{toast.message}</span>
+              <button
+                onClick={() => setToast(null)}
+                className="text-muted hover:text-text shrink-0"
+                aria-label="Dismiss"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Auth modal */}
       <AnimatePresence>
         {showAuth && (
@@ -337,7 +387,7 @@ export default function App() {
                   const { url } = await openBillingPortal()
                   window.location.href = url
                 } catch (err) {
-                  alert(err.message)
+                  setToast({ kind: 'error', message: err.message || 'Could not open billing portal.' })
                 }
               }}
               className="flex items-center gap-1 text-[10px] text-muted/50 hover:text-accent transition-colors"

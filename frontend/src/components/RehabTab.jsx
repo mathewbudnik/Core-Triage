@@ -144,7 +144,7 @@ export default function RehabTab({ user, onLoginClick }) {
       {/* Login nudge */}
       {!user && (
         <div className="flex items-center justify-between bg-panel border border-outline rounded-xl px-4 py-3">
-          <p className="text-xs text-muted">Log in to unlock Phase 2 & 3 exercises</p>
+          <p className="text-xs text-muted">Sign in to save your rehab progress · Phase 2 &amp; 3 require Pro</p>
           <button
             onClick={onLoginClick}
             className="flex items-center gap-1.5 text-xs btn-secondary"

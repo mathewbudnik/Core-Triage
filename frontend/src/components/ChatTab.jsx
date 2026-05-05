@@ -104,7 +104,10 @@ export default function ChatTab({ k, user, onLoginClick }) {
     setLoading(true)
 
     try {
-      const data = await sendChat({ message: text, history: messages, mode, k })
+      // Cap chat history sent to the backend at the most recent 20 turns
+      // so request size and token usage stay bounded over a long session.
+      const trimmedHistory = messages.slice(-20)
+      const data = await sendChat({ message: text, history: trimmedHistory, mode, k })
       setMessages([...updated, { role: 'assistant', content: data.response }])
       // Track usage locally for display
       if (isFreeTier) {
@@ -118,7 +121,14 @@ export default function ChatTab({ k, user, onLoginClick }) {
         setMessages(updated) // rollback optimistic user message
         setShowUpgrade(true)
       } else {
-        setMessages([...updated, { role: 'assistant', content: `Error: ${err.message}` }])
+        setMessages([
+          ...updated,
+          {
+            role: 'assistant',
+            content: "Sorry, I couldn't get a response right now. Please try again in a moment.",
+            isError: true,
+          },
+        ])
       }
     } finally {
       setLoading(false)

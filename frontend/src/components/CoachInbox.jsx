@@ -64,6 +64,7 @@ export default function CoachInbox() {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [mobileShowThread, setMobileShowThread] = useState(false)
+  const [error, setError] = useState(null)
   const bottomRef = useRef(null)
   const inputRef = useRef('')
   useEffect(() => { inputRef.current = input }, [input])
@@ -72,8 +73,9 @@ export default function CoachInbox() {
     try {
       const data = await adminGetThreads()
       setThreads(data)
-    } catch {
-      // ignore
+      setError(null)
+    } catch (err) {
+      setError(err.message || 'Could not load inbox.')
     } finally {
       setLoading(false)
     }
@@ -93,8 +95,10 @@ export default function CoachInbox() {
     try {
       const msgs = await adminGetMessages(thread.id)
       setMessages(msgs)
-    } catch {
+      setError(null)
+    } catch (err) {
       setMessages([])
+      setError(err.message || 'Could not load this conversation.')
     }
     // Refresh threads to clear unread badge
     loadThreads()
@@ -108,15 +112,16 @@ export default function CoachInbox() {
     e.preventDefault()
     const text = inputRef.current.trim()
     if (!text || !selectedThread || sending) return
-    setInput('')
     setSending(true)
     try {
       await adminReply(selectedThread.id, text)
+      setInput('')
       const msgs = await adminGetMessages(selectedThread.id)
       setMessages(msgs)
+      setError(null)
       loadThreads()
-    } catch {
-      // ignore
+    } catch (err) {
+      setError(err.message || 'Could not send reply. Your message is still in the input — try again.')
     } finally {
       setSending(false)
     }
@@ -196,6 +201,9 @@ export default function CoachInbox() {
 
             {/* Reply input */}
             <div className="border-t border-outline p-4 bg-panel2/40">
+              {error && (
+                <p className="text-xs text-accent2 mb-2 text-center">{error}</p>
+              )}
               <form onSubmit={handleReply} className="flex gap-3">
                 <input
                   type="text"

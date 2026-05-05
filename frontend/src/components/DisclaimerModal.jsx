@@ -12,7 +12,7 @@ const POINTS = [
 ]
 
 const PRIVACY_POINTS = [
-  'Your injury history and session data is stored securely and is never shared or sold.',
+  'Your injury history and session data are stored securely and are never shared or sold.',
   'You can request deletion of your data at any time by contacting support.',
   'Data is stored in compliance with applicable privacy laws.',
 ]

@@ -15,7 +15,6 @@ const COACHING_BENEFITS = [
   { icon: UserCircle2,   text: 'Direct 1:1 async messaging with Mathew' },
   { icon: Activity,      text: 'Personal review of your triage results' },
   { icon: Dumbbell,      text: 'Custom return-to-climb plan built around you' },
-  { icon: MessageSquare, text: 'Optional in-person session add-ons' },
   { icon: Clock,         text: 'Includes everything in Pro for the month' },
 ]
 
@@ -27,14 +26,11 @@ const PLAN_META = {
     headline: 'Unlock the full app',
     sub: 'Full rehab library, AI training plans, and PDF reports — everything you need to recover and train smarter.',
     benefits: PRO_BENEFITS,
-    mailSubject: 'CoreTriage Pro — Waitlist',
-    mailBody: "Hi, I'd like to join the Pro waitlist.",
-    cta: 'Join Pro Waitlist',
     color: 'text-accent',
     bg: 'bg-accent/10',
     border: 'border-accent/25',
     icon: Lock,
-    note: 'No payment required yet — we\'ll reach out when ready.',
+    note: 'Cancel anytime from your account settings.',
   },
   coaching: {
     label: 'Coaching',

@@ -70,8 +70,8 @@ export default function HistoryTab({ dbReady, user, onLoginClick }) {
           <Database size={24} className="text-accent2" />
         </div>
         <div>
-          <p className="font-semibold text-text">Database offline</p>
-          <p className="text-sm text-muted mt-1">Session history requires a Postgres connection. Check your .env configuration.</p>
+          <p className="font-semibold text-text">History temporarily unavailable</p>
+          <p className="text-sm text-muted mt-1">We can't load saved sessions right now. Please try again in a moment.</p>
         </div>
       </div>
     )

@@ -75,14 +75,14 @@ export default function CoachChat({ user, onLoginClick }) {
     e.preventDefault()
     const text = inputRef.current.trim()
     if (!text || sending) return
-    setInput('')
     setSending(true)
     setError(null)
     try {
       await sendCoachMessage(text)
+      setInput('')
       await load()
     } catch (err) {
-      setError(err.message)
+      setError(err.message || 'Could not send your message. Please try again.')
     } finally {
       setSending(false)
     }
@@ -112,7 +112,7 @@ export default function CoachChat({ user, onLoginClick }) {
       <div className="border-b border-outline px-6 py-3 flex items-center gap-3 bg-panel2/40">
         <img src="/logo.png" alt="Coach" className="w-8 h-8 rounded-xl" />
         <div>
-          <p className="text-sm font-semibold text-text">Mathew — Head Coach</p>
+          <p className="text-sm font-semibold text-text">Mathew · Coach</p>
           <p className="text-xs text-muted">Replies within 24–48 hours</p>
         </div>
       </div>

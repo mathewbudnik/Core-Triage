@@ -6,7 +6,7 @@ const ZONES = [
   { id: 'Shoulder',   label: 'SHOULDER',   desc: 'Shoulder joint or rotator cuff' },
   { id: 'Elbow',      label: 'ELBOW',      desc: 'Elbow or upper arm' },
   { id: 'Wrist',      label: 'WRIST',      desc: 'Forearm or wrist' },
-  { id: 'Fingers',    label: 'FINGERS',    desc: 'Hand or fingers' },
+  { id: 'Finger',     label: 'FINGERS',    desc: 'Hand or fingers' },
   { id: 'Chest',      label: 'CHEST',      desc: 'Chest, ribs, or pec' },
   { id: 'Abs',        label: 'ABS',        desc: 'Abdomen or core' },
   { id: 'Lower Back', label: 'LOWER BACK', desc: 'Lumbar spine or SI joint' },
@@ -204,11 +204,11 @@ function BodyDiagram({ selected, onSelect }) {
 
         {/* Hands — Fingers zone */}
         <svg xmlns="http://www.w3.org/2000/svg" width="90" height="38.938" viewBox="0 0 90 38.938"
-          {...sp('Fingers', { ml: -102.5, top: 224 })}>
+          {...sp('Finger', { ml: -102.5, top: 224 })}>
           <path d={D.lHand} />
         </svg>
         <svg xmlns="http://www.w3.org/2000/svg" width="90" height="38.938" viewBox="0 0 90 38.938"
-          {...sp('Fingers', { ml: 66.5, top: 224, z: 10000 })}>
+          {...sp('Finger', { ml: 66.5, top: 224, z: 10000 })}>
           <path d={D.rHand} />
         </svg>
 

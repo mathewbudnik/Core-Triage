@@ -13,6 +13,16 @@ async function request(method, path, body) {
   if (body !== undefined) opts.body = JSON.stringify(body)
 
   const res = await fetch(`${BASE}${path}`, opts)
+
+  // 401 from an authenticated request → token expired or invalid.
+  // Clear local credentials and notify the app to drop the user back to signed-out state.
+  if (res.status === 401 && token && path !== '/api/auth/login' && path !== '/api/auth/register') {
+    sessionStorage.removeItem('ct_token')
+    localStorage.removeItem('ct_token')
+    window.dispatchEvent(new CustomEvent('ct:auth-expired'))
+    throw new Error('Your session expired. Please sign in again.')
+  }
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }))
     const detail = err.detail

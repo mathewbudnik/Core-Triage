@@ -68,9 +68,6 @@ export default function LegalModal({ document, onClose }) {
             </div>
           ))}
 
-          <p className="text-[11px] text-muted/50 mt-6 pt-4 border-t border-outline">
-            This document is provided as a starting point and may not cover every legal requirement applicable to you. Consider review by qualified legal counsel before relying on it for any commercial use.
-          </p>
         </div>
 
         {/* Footer */}
