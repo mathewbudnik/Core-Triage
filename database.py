@@ -239,6 +239,19 @@ def init_db() -> None:
                 );
                 """
             )
+
+            # ── Stripe webhook idempotency ─────────────────────────────────
+            # Stripe retries failed deliveries. We dedupe by event_id so we
+            # never apply the same subscription state change twice.
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS stripe_webhook_events (
+                    event_id TEXT PRIMARY KEY,
+                    event_type TEXT NOT NULL,
+                    received_at TIMESTAMPTZ DEFAULT NOW()
+                );
+                """
+            )
         conn.commit()
 
 
@@ -490,6 +503,33 @@ def set_stripe_customer_id(user_id: int, customer_id: str) -> None:
                 (customer_id, int(user_id)),
             )
         conn.commit()
+
+
+def record_webhook_event(event_id: str, event_type: str) -> bool:
+    """Insert a Stripe webhook event_id into the dedup table.
+
+    Returns True if the event is new (we should process it), False if it's
+    already been recorded (duplicate delivery — silently ignore). The PK
+    constraint on event_id is what makes this race-safe across workers.
+    """
+    if not event_id:
+        # Defensive: real Stripe events always have an id. If we get here
+        # with no id, fall through and process — better to risk a duplicate
+        # than to silently swallow a real event.
+        return True
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO stripe_webhook_events (event_id, event_type)
+                VALUES (%s, %s)
+                ON CONFLICT (event_id) DO NOTHING;
+                """,
+                (event_id, event_type),
+            )
+            inserted = cur.rowcount > 0
+        conn.commit()
+    return inserted
 
 
 def update_subscription_state(

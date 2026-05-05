@@ -9,6 +9,7 @@ Run with: uvicorn main:app --reload
 from dotenv import load_dotenv
 load_dotenv()
 
+import logging
 import os
 import re
 import secrets
@@ -61,6 +62,7 @@ from database import (
     list_sessions,
     log_security_event,
     log_training,
+    record_webhook_event,
     reset_failed_login,
     save_plan,
     save_profile,
@@ -85,10 +87,30 @@ from src.triage import (
 )
 
 # ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+
+logging.basicConfig(
+    level=os.getenv("LOG_LEVEL", "INFO"),
+    format="%(asctime)s %(levelname)s %(name)s — %(message)s",
+)
+logger = logging.getLogger("coretriage")
+
+# ---------------------------------------------------------------------------
 # Auth config
 # ---------------------------------------------------------------------------
 
+# In production (ENVIRONMENT=production), refuse to start if SECRET_KEY is
+# unset or still the dev placeholder — issuing tokens with a known secret
+# would let anyone forge sessions.
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-in-prod")
+if os.getenv("ENVIRONMENT", "development").lower() == "production" and (
+    not os.getenv("SECRET_KEY") or SECRET_KEY == "dev-secret-change-in-prod"
+):
+    raise RuntimeError(
+        "SECRET_KEY must be set to a strong random value in production. "
+        "Generate one with: python -c 'import secrets; print(secrets.token_urlsafe(64))'"
+    )
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_HOURS = 24
 COACH_EMAIL = os.getenv("COACH_EMAIL", "mathewbudnik@gmail.com")
@@ -547,7 +569,23 @@ def resend_verification_endpoint(request: Request, user: Dict = Depends(get_curr
 @app.get("/api/health")
 @limiter.limit("60/minute")
 def health(request: Request):
-    return {"ok": True, "db_ready": db_ready, "db_error": db_error}
+    """Liveness + DB probe. db_ready=False means something to alert on:
+    Railway healthchecks, uptime monitors, etc. should treat that as DOWN."""
+    db_ok = False
+    db_err = db_error
+    try:
+        from database import _connect  # local import to avoid cycle on cold start
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT 1;")
+                cur.fetchone()
+        db_ok = True
+        db_err = None
+    except Exception as exc:
+        db_ok = False
+        db_err = f"{type(exc).__name__}: {exc}"
+        logger.warning("Health check DB probe failed: %s", db_err)
+    return {"ok": True, "db_ready": db_ok, "db_error": db_err}
 
 
 @app.post("/api/triage")
@@ -984,9 +1022,8 @@ def create_checkout_session_endpoint(
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except Exception as exc:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Could not start checkout: {type(exc).__name__}: {exc}") from exc
+        logger.exception("Checkout session creation failed")
+        raise HTTPException(status_code=500, detail="Could not start checkout. Please try again.") from exc
     return {"url": url}
 
 
@@ -1012,14 +1049,35 @@ def create_portal_session_endpoint(request: Request, user: Dict = Depends(get_cu
 @app.post("/api/billing/webhook")
 async def stripe_webhook_endpoint(request: Request):
     """Handle Stripe subscription lifecycle webhooks. Signature is verified;
-    any unverifiable event is rejected with 400 (Stripe will retry, then give up)."""
+    any unverifiable event is rejected with 400 (Stripe will retry, then give up).
+
+    Idempotent: each event_id is recorded in stripe_webhook_events; duplicate
+    deliveries (Stripe retries on 5xx, sometimes on 2xx) are silently ignored
+    so a single state change never gets applied twice.
+    """
     payload = await request.body()
     signature = request.headers.get("stripe-signature", "")
     event = billing.parse_webhook_event(payload, signature)
     if event is None:
         raise HTTPException(status_code=400, detail="Invalid webhook signature")
 
+    event_id = event.get("id") if hasattr(event, "get") else event["id"]
     event_type = event["type"]
+
+    # Idempotency check FIRST — before any side effects. If this event has
+    # already been recorded, return 200 immediately so Stripe stops retrying.
+    try:
+        is_new = record_webhook_event(event_id, event_type)
+    except Exception:
+        # If the dedup table is unreachable, fall through and process the
+        # event — better to risk a duplicate than to silently drop a real
+        # subscription change.
+        logger.exception("Webhook dedup table write failed for event %s", event_id)
+        is_new = True
+    if not is_new:
+        logger.info("Duplicate Stripe webhook event %s ignored", event_id)
+        return {"ok": True, "duplicate": True}
+
     # Stripe v15+ removed dict-style methods on StripeObject — convert to a
     # plain dict so .get() works downstream.
     obj = billing.to_plain_dict(event["data"]["object"])
@@ -1043,6 +1101,7 @@ async def stripe_webhook_endpoint(request: Request):
             try:
                 subscription = billing.to_plain_dict(billing.retrieve_subscription(subscription_id))
             except Exception:
+                logger.exception("Could not retrieve subscription %s for checkout.session.completed", subscription_id)
                 return {"ok": True}
         else:
             subscription = obj
@@ -1053,6 +1112,17 @@ async def stripe_webhook_endpoint(request: Request):
         if event_type == "customer.subscription.deleted":
             status = "canceled"
             tier = "free"
+        elif product is None:
+            # Subscription with a price ID we don't recognize (e.g. created
+            # via the Stripe dashboard, or for a different product). We won't
+            # promote OR demote the user based on something we can't validate
+            # — log it and bail. This closes the bypass where an out-of-band
+            # subscription could affect tier state.
+            logger.warning(
+                "Webhook %s: unrecognized price for customer %s (subscription %s); skipping tier update",
+                event_type, customer_id, subscription.get("id"),
+            )
+            return {"ok": True, "ignored": "unknown_price"}
         elif not billing.is_active_status(status):
             tier = "free"
 
