@@ -13,6 +13,23 @@ import logging
 import os
 import re
 import secrets
+
+# ── Sentry init ────────────────────────────────────────────────────────────
+# Must run BEFORE `app = FastAPI()` so the integration patches FastAPI on
+# import. If SENTRY_DSN is unset, init() is a no-op — safe for local dev.
+# PII is intentionally OFF: this app is health-adjacent, and we'd rather
+# capture stack traces without auto-attaching client IPs. Flip to True if
+# you decide you want that signal.
+_sentry_dsn = os.getenv("SENTRY_DSN")
+if _sentry_dsn:
+    import sentry_sdk
+    sentry_sdk.init(
+        dsn=_sentry_dsn,
+        environment=os.getenv("ENVIRONMENT", "development"),
+        release=os.getenv("RAILWAY_GIT_COMMIT_SHA") or os.getenv("APP_VERSION", "dev"),
+        send_default_pii=False,
+        traces_sample_rate=0.1,  # 10% perf sampling — well under free-tier limits
+    )
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional

@@ -10,3 +10,4 @@ bcrypt
 slowapi
 stripe
 python-dotenv
+sentry-sdk==2.59.0

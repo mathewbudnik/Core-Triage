@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageSquare, Clock, Info, AlertTriangle, Menu, X, LogIn, LogOut, User, Activity, Dumbbell, FileText, Stethoscope, UserCircle2, ChevronRight, Shield } from 'lucide-react'
+import { MessageSquare, Clock, Info, AlertTriangle, Menu, X, LogIn, LogOut, User, Activity, Dumbbell, FileText, Stethoscope, UserCircle2, ChevronRight, Shield, Bug } from 'lucide-react'
+import * as Sentry from '@sentry/react'
 import { getHealth, getMe, acceptDisclaimer } from './api'
 import Landing from './components/Landing'
 import Logo from './components/Logo'
@@ -424,6 +425,21 @@ export default function App() {
           >
             <FileText size={9} />
             Terms of Service
+          </button>
+          <button
+            onClick={() => {
+              const feedback = Sentry.getFeedback()
+              if (feedback) {
+                feedback.createForm().then((form) => form.appendToDom() && form.open())
+              } else {
+                // Sentry not initialised (no DSN set). Fall back to email.
+                window.location.href = 'mailto:mathewbudnik@gmail.com?subject=CoreTriage%20bug%20report'
+              }
+            }}
+            className="flex items-center gap-1 text-[10px] text-muted/50 hover:text-accent2 transition-colors"
+          >
+            <Bug size={9} />
+            Report a bug
           </button>
         </div>
       </aside>
