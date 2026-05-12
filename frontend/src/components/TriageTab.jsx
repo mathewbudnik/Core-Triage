@@ -11,7 +11,9 @@ import { triageIntake, saveSession } from '../api'
 import BodyDiagram from './BodyDiagram'
 import UpgradeModal from './UpgradeModal'
 import { getExercises } from '../data/exercises'
-import { downloadTriagePDF } from './TriageReport'
+// downloadTriagePDF is lazy-loaded on click — pulls in @react-pdf/renderer
+// (~200KB+) which would otherwise bloat the Triage chunk for every visitor
+// even though most never click "Download PDF". See handlePdfDownload below.
 import Coachmark from './Coachmark'
 import TourReplayButton from './TourReplayButton'
 import useTriageTour from '../hooks/useTriageTour'
@@ -650,6 +652,7 @@ function Results({ result, form, onRestart, onSave, saveStatus, user }) {
     if (user?.tier === 'core' || user?.tier === 'pro') {
       setPdfLoading(true)
       try {
+        const { downloadTriagePDF } = await import('./TriageReport')
         await downloadTriagePDF(result)
       } finally {
         setPdfLoading(false)
