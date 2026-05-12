@@ -329,7 +329,7 @@ export default function App() {
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
         {/* Logo */}
-        <div className="px-6 pt-8 pb-6 border-b border-outline">
+        <div className="shrink-0 px-6 pt-8 pb-6 border-b border-outline">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 mb-1">
               <Logo size={32} dark />
@@ -349,8 +349,10 @@ export default function App() {
           </p>
         </div>
 
+        {/* Scrollable middle — nav + coaching CTA + tip card */}
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col">
         {/* Nav */}
-        <nav className="flex-1 px-3 py-4 space-y-1">
+        <nav className="px-3 py-4 space-y-1">
           {TABS.map(({ id, label, icon: Icon }) => (
             <NavLink
               key={id}
@@ -380,12 +382,12 @@ export default function App() {
         </nav>
 
         {/* Coaching CTA */}
-        <div className="mx-3 mb-3 rounded-xl border border-accent3/25 bg-accent3/8 p-3">
+        <div className="mt-auto mx-3 mb-3 rounded-xl border border-accent3/25 bg-accent3/8 p-3">
           <div className="flex items-center gap-1.5 mb-1">
             <UserCircle2 size={12} className="text-accent3" />
             <span className="text-[10px] font-bold text-accent3 uppercase tracking-wide">1:1 Coaching</span>
           </div>
-          <p className="text-[11px] text-muted leading-snug mb-2 h-8 overflow-hidden">
+          <p className="text-[11px] text-muted leading-snug mb-2">
             $89/mo · application only. Personal injury review &amp; custom return-to-climb plan.
           </p>
           <button
@@ -402,8 +404,9 @@ export default function App() {
         {/* Tip card */}
         <TipCard />
 
+        </div>
         {/* Sidebar footer */}
-        <div className="px-4 py-4 border-t border-outline space-y-2">
+        <div className="shrink-0 px-4 py-4 border-t border-outline space-y-2">
           <div className="flex items-start gap-2">
             <AlertTriangle size={11} className="text-accent3 shrink-0 mt-0.5" />
             <p className="text-[10px] text-muted/70 leading-relaxed">

@@ -56,7 +56,7 @@ function AuthModal({ onClose, onAuth }) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.08 }}
-        className="relative w-full max-w-sm mx-4 bg-panel2 border border-outline rounded-2xl shadow-xl p-6 space-y-5"
+        className="relative w-full max-w-sm mx-4 max-h-[calc(100dvh-2rem)] overflow-y-auto bg-panel2 border border-outline rounded-2xl shadow-xl p-6 space-y-5"
       >
         {/* Close */}
         <button
@@ -131,7 +131,13 @@ function AuthModal({ onClose, onAuth }) {
           <button
             type="submit"
             disabled={loading}
-            className="btn-primary w-full flex items-center justify-center gap-2"
+            className="w-full flex items-center justify-center gap-2
+                       h-11 px-5 rounded-lg text-sm font-semibold text-bg
+                       bg-gradient-to-r from-accent2 to-accent3
+                       shadow-[0_0_14px_rgba(251,113,133,0.22)]
+                       hover:brightness-110 active:brightness-95
+                       transition-all duration-200
+                       disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading && <Loader2 size={14} className="animate-spin" />}
             {mode === 'login' ? 'Log In' : 'Create Account'}
