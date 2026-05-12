@@ -651,12 +651,58 @@ def triage(request: Request, req: IntakeRequest):
     }
 
 
+# ── KB-mode response formatting ─────────────────────────────────────────────
+
+# Special cases where the auto-prettified label reads awkwardly. Anything not
+# in this map falls through to: drop ".md", replace "_" → " ", title-case.
+_PRETTY_SOURCE_OVERRIDES = {
+    "general_load_management": "Load management",
+    "elbow_tendinopathy":      "Elbow tendinopathy",
+    "finger_pulley":           "Finger pulley injuries",
+    "ankle_foot":              "Ankle &amp; foot",
+}
+
+def _pretty_source(filename: str) -> str:
+    base = filename.rsplit(".", 1)[0] if filename.endswith(".md") else filename
+    if base in _PRETTY_SOURCE_OVERRIDES:
+        return _PRETTY_SOURCE_OVERRIDES[base]
+    return base.replace("_", " ").replace("-", " ").title()
+
+# Strip a leading H2 markdown heading from a chunk so we don't render
+# "▸ FINGER PULLEY INJURIES" followed by "## A2 pulley rupture" — the source
+# label already names the section.
+_LEADING_H2_RE = re.compile(r"^\s*##\s+[^\n]+\n+")
+
+def _format_kb_response(hits) -> str:
+    parts = []
+    for chunk, score in hits:
+        if score < 0.05:
+            continue
+        content = _LEADING_H2_RE.sub("", chunk.text.strip())
+        if len(content) > 800:
+            content = content[:800].rsplit(" ", 1)[0] + "…"
+        label = _pretty_source(chunk.source).upper()
+        parts.append(f"▸ {label}\n\n{content}")
+
+    if not parts:
+        return "No relevant content found in the knowledge base for your query."
+
+    text = "\n\n".join(parts)
+    text += (
+        "\n\n*Educational only — not a medical diagnosis. "
+        "Seek professional evaluation if pain is severe, worsening, or "
+        "accompanied by neurological symptoms.*"
+    )
+    return text
+
+
 @app.post("/api/chat")
 @limiter.limit("20/minute;100/hour")
 def chat(request: Request, req: ChatRequest):
-    # Optional auth — enforce per-user chat limits for free accounts
+    # Optional auth — enforce per-user GPT limits for free accounts.
+    # KB-mode requests bypass the limit entirely (free for everyone).
     opt_user = _optional_user(request)
-    if opt_user:
+    if req.mode == "gpt" and opt_user:
         is_coach = get_user_role(opt_user["id"]) == "coach"
         tier = get_user_tier(opt_user["id"])
         if not is_coach and tier == "free":
@@ -709,25 +755,7 @@ def chat(request: Request, req: ChatRequest):
             else:
                 text = f"OpenAI error: {msg}"
     else:
-        parts = []
-        for chunk, score in hits:
-            if score < 0.05:
-                continue
-            content = chunk.text.strip()
-            if len(content) > 2000:
-                content = content[:2000] + "\n\n*(content truncated — see full file for details)*"
-            parts.append(f"**{chunk.source}** *(relevance {score:.2f})*\n\n{content}")
-
-        if parts:
-            text = "\n\n---\n\n".join(parts)
-            text += (
-                "\n\n---\n\n*Educational only — not a medical diagnosis. "
-                "Safety: if worsening, severe pain at rest, numbness/tingling, "
-                "significant weakness, instability, major swelling/bruising, "
-                "or trauma — seek professional evaluation.*"
-            )
-        else:
-            text = "No relevant content found in the knowledge base for your query."
+        text = _format_kb_response(hits)
 
     if citations and req.mode == "gpt":
         text = text.strip() + "\n\nSources used: " + ", ".join([c.split(" (")[0] for c in citations[:5]])
