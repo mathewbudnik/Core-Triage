@@ -26,15 +26,90 @@
     <meta name="twitter:title" content="CoreTriage" />
     <meta name="twitter:description" content="Outdoor injury triage and rehab guidance for climbers and athletes." />
 
+    <!-- Preconnect to API origin so DNS + TLS happen in parallel with the
+         JS download instead of after it. Saves ~50–200ms on the first
+         /api/health call. -->
+    <link rel="preconnect" href="/" crossorigin />
+
     <style>
       body {
         background-color: #0b1220;
         margin: 0;
+        color: #e7eaf0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+      /* ── Instant splash ─────────────────────────────────────────────────
+         Renders the moment the HTML parses (well before any JS), so users
+         see the brand instead of a blank blue screen during the bundle
+         fetch + parse window. React's mount replaces these contents on
+         hydrate, so no cleanup needed.
+
+         Constraints kept tight on purpose:
+         - No external fonts (would block paint)
+         - Only one image (icon-192.png — already cached if PWA installed)
+         - Pure CSS animation (no JS)
+      */
+      .ct-splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        background: #0b1220;
+        animation: ct-fadein 200ms ease-out;
+      }
+      .ct-splash img {
+        width: 72px;
+        height: 72px;
+        border-radius: 16px;
+        animation: ct-breathe 1.6s ease-in-out infinite;
+      }
+      .ct-splash .ct-wordmark {
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        background: linear-gradient(90deg, #7dd3c0, #e7eaf0, #f7bb51);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .ct-splash .ct-spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(125, 211, 192, 0.2);
+        border-top-color: #7dd3c0;
+        border-radius: 50%;
+        animation: ct-spin 0.7s linear infinite;
+        margin-top: 4px;
+      }
+      @keyframes ct-fadein {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+      }
+      @keyframes ct-breathe {
+        0%, 100% { opacity: 1;   transform: scale(1); }
+        50%      { opacity: 0.7; transform: scale(0.96); }
+      }
+      @keyframes ct-spin {
+        to { transform: rotate(360deg); }
+      }
+      /* Respect users who don't want motion */
+      @media (prefers-reduced-motion: reduce) {
+        .ct-splash img { animation: none; }
+        .ct-splash .ct-spinner { animation: none; opacity: 0.6; }
       }
     </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="ct-splash" aria-hidden="true">
+        <img src="/icon-192.png" alt="" />
+        <div class="ct-wordmark">CoreTriage</div>
+        <div class="ct-spinner"></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
