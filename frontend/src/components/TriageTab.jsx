@@ -6,6 +6,7 @@ import {
   Download, Save, Loader2, BookOpen, ArrowRight,
   Clock, Zap, Grip, Target, TrendingUp, Mountain, ChevronsUp, HelpCircle,
   RotateCcw, RotateCw, ArrowUp, Maximize2, AlertCircle, FileText, Lock,
+  CheckCircle2, XCircle, Hand,
 } from 'lucide-react'
 import { triageIntake, saveSession } from '../api'
 import BodyDiagram from './BodyDiagram'
@@ -432,6 +433,7 @@ function extractActionChips(plan) {
 }
 
 function ResultsHero({ result, form }) {
+  const [expanded, setExpanded] = useState(false)
   const severityKey = result.severity?.level ?? 'mild'
   const theme = SEVERITY_HERO_THEME[severityKey] ?? SEVERITY_HERO_THEME.mild
   const topBucket = result.buckets?.[0]
@@ -442,6 +444,11 @@ function ResultsHero({ result, form }) {
   const chips = extractActionChips(result.plan)
   const severityLabel = result.severity?.label
                      || severityKey.charAt(0).toUpperCase() + severityKey.slice(1)
+  const hasDetail = topBucket && (
+    (topBucket.matches_if && topBucket.matches_if.length > 0)
+    || (topBucket.not_likely_if && topBucket.not_likely_if.length > 0)
+    || (topBucket.quick_test && topBucket.quick_test.trim().length > 0)
+  )
 
   return (
     <div className={`rounded-2xl border ${theme.border} ${theme.bg} p-4 sm:p-5`}>
@@ -484,23 +491,158 @@ function ResultsHero({ result, form }) {
           ))}
         </div>
       )}
+
+      {hasDetail && (
+        <>
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="mt-4 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted hover:text-text transition-colors"
+            aria-expanded={expanded}
+          >
+            <span>{expanded ? 'Hide self-check' : 'Why this might be you'}</span>
+            <ChevronDown
+              size={12}
+              className={`transition-transform ${expanded ? 'rotate-180' : ''}`}
+            />
+          </button>
+          <AnimatePresence initial={false}>
+            {expanded && (
+              <motion.div
+                key="detail"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.18 }}
+                className="overflow-hidden"
+              >
+                <BucketDetail bucket={topBucket} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>
+      )}
+    </div>
+  )
+}
+
+function BucketDetail({ bucket }) {
+  const hasMatches = bucket.matches_if && bucket.matches_if.length > 0
+  const hasNotLikely = bucket.not_likely_if && bucket.not_likely_if.length > 0
+  const hasQuickTest = bucket.quick_test && bucket.quick_test.trim().length > 0
+  if (!hasMatches && !hasNotLikely && !hasQuickTest) return null
+  return (
+    <div className="space-y-3 pt-3 mt-3 border-t border-outline/40">
+      {hasMatches && (
+        <div>
+          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-accent font-semibold mb-1.5">
+            <CheckCircle2 size={11} /> Matches if
+          </div>
+          <ul className="space-y-1">
+            {bucket.matches_if.map((m, mi) => (
+              <li key={mi} className="text-xs text-muted leading-relaxed flex items-start gap-1.5">
+                <span className="text-accent mt-0.5">•</span>
+                <span>{m}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {hasNotLikely && (
+        <div>
+          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted font-semibold mb-1.5">
+            <XCircle size={11} /> Probably not this if
+          </div>
+          <ul className="space-y-1">
+            {bucket.not_likely_if.map((m, mi) => (
+              <li key={mi} className="text-xs text-muted/80 leading-relaxed flex items-start gap-1.5">
+                <span className="text-muted/60 mt-0.5">•</span>
+                <span>{m}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {hasQuickTest && (
+        <div>
+          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-accent3 font-semibold mb-1.5">
+            <Hand size={11} /> Quick self-check
+          </div>
+          <p className="text-xs text-muted leading-relaxed">{bucket.quick_test}</p>
+        </div>
+      )}
     </div>
   )
 }
 
 function OtherPossibilities({ buckets }) {
+  const [expandedIdx, setExpandedIdx] = useState(() => new Set())
   if (!buckets || buckets.length < 2) return null
   const others = buckets.slice(1)
+  const toggle = (idx) => {
+    setExpandedIdx((prev) => {
+      const next = new Set(prev)
+      if (next.has(idx)) next.delete(idx)
+      else next.add(idx)
+      return next
+    })
+  }
   return (
-    <p className="text-xs text-muted">
-      <span className="font-semibold text-muted/70">Also possible:</span>{' '}
-      {others.map((b, i) => (
-        <span key={i}>
-          <span className="text-text/70">{b.title}</span>
-          {i < others.length - 1 && <span className="text-muted/40 mx-1.5">·</span>}
-        </span>
-      ))}
-    </p>
+    <div className="space-y-2">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted/70">Also possible</p>
+      <div className="space-y-2">
+        {others.map((b, i) => {
+          const hasDetail = (b.matches_if && b.matches_if.length > 0)
+            || (b.not_likely_if && b.not_likely_if.length > 0)
+            || (b.quick_test && b.quick_test.trim().length > 0)
+          const isExpanded = expandedIdx.has(i)
+          return (
+            <div
+              key={i}
+              className={`rounded-xl border border-outline bg-panel2/40 p-3 ${hasDetail ? 'cursor-pointer hover:border-accent/40 transition-colors' : ''}`}
+              onClick={hasDetail ? () => toggle(i) : undefined}
+              role={hasDetail ? 'button' : undefined}
+              tabIndex={hasDetail ? 0 : undefined}
+              onKeyDown={hasDetail ? (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  toggle(i)
+                }
+              } : undefined}
+            >
+              <div className="flex items-start gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-text/90 leading-snug">{b.title}</p>
+                  {b.why && (
+                    <p className="text-xs text-muted mt-1 leading-relaxed">{b.why}</p>
+                  )}
+                </div>
+                {hasDetail && (
+                  <ChevronDown
+                    size={14}
+                    className={`text-muted shrink-0 mt-0.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                  />
+                )}
+              </div>
+              <AnimatePresence initial={false}>
+                {hasDetail && isExpanded && (
+                  <motion.div
+                    key="detail"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.18 }}
+                    className="overflow-hidden"
+                  >
+                    <BucketDetail bucket={b} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
