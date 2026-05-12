@@ -35,6 +35,44 @@ class Intake:
     bladder_bowel_change: bool = False
 
 
+# ── Bucket dataclass ────────────────────────────────────────────────────────
+# A differential surfaced by bucket_possibilities(). Content (matches_if etc)
+# lives in src/bucket_content.py keyed by `id` — keeping branching logic in
+# triage.py separate from the prose the UI displays.
+@dataclass
+class Bucket:
+    id: str
+    title: str
+    why: str
+    matches_if: List[str]
+    not_likely_if: List[str]
+    quick_test: str
+
+    @classmethod
+    def from_id(cls, id: str, qualifier: str | None = None) -> "Bucket":
+        """Look up bucket content by stable id and construct a Bucket.
+
+        `qualifier` is appended to the canonical base title with an em-dash
+        separator (e.g. "Pulley strain/rupture (A2) — most likely"). It is a
+        runtime decision made by bucket_possibilities() — the same bucket can
+        surface as "most likely" or "possible" depending on intake answers.
+
+        Raises KeyError if the id is not present in BUCKET_CONTENT.
+        """
+        from src.bucket_content import BUCKET_CONTENT  # local import to avoid cycle at module load
+        entry = BUCKET_CONTENT[id]
+        base_title = entry["base_title"]
+        title = f"{base_title} — {qualifier}" if qualifier else base_title
+        return cls(
+            id=id,
+            title=title,
+            why=entry["why"],
+            matches_if=list(entry.get("matches_if", [])),
+            not_likely_if=list(entry.get("not_likely_if", [])),
+            quick_test=entry.get("quick_test", ""),
+        )
+
+
 # ── Negation-aware keyword matching ────────────────────────────────────────
 # Simple substring matching ("bladder" in text) fires on "no bladder symptoms".
 # This helper checks that the matched keyword is not preceded by a negation word.
