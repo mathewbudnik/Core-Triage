@@ -1,4 +1,7 @@
-import { memo, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowRight, X } from 'lucide-react'
 
 // ── Zones ──────────────────────────────────────────────────────────────────
 const ZONES = [
@@ -44,66 +47,118 @@ const D = {
 
 // ── Component ───────────────────────────────────────────────────────────────
 function BodyDiagram({ selected, onSelect }) {
-  const [hovered, setHovered] = useState(null)
-  // touchPreview: zone highlighted by first tap on mobile (awaiting confirmation)
-  const [touchPreview, setTouchPreview] = useState(null)
+  // hoveredInstance / tappedInstance track the SPECIFIC SVG element the user is
+  // interacting with — not the semantic zone. This way tapping the left calf
+  // only highlights the left calf (not both), even though both share zoneId
+  // 'Calves'. The zone is still what gets sent to the parent on confirm.
+  const [hoveredInstance, setHoveredInstance] = useState(null)
+  const [pendingZone, setPendingZone] = useState(null)
+  const [tappedInstance, setTappedInstance] = useState(null)
 
-  const activeZone = touchPreview ?? hovered ?? selected
+  // Detect once: does this device support real hover? On touch-only devices
+  // (iOS/Android), attaching onMouseEnter would trigger Safari's "hover
+  // emulation" — first tap = hover, second tap = click. By skipping mouse
+  // handlers on touch devices, we get genuine single-tap-to-open behavior.
+  const [isHoverDevice] = useState(() =>
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(hover: hover)').matches
+  )
+
+  // Active zone for the label below the diagram. Falls back through
+  // pending → hovered → previously-selected.
+  const activeZone =
+    pendingZone ??
+    (hoveredInstance ? hoveredInstance.split('__')[0] : null) ??
+    selected
   const preview = ZONES.find(z => z.id === activeZone)
 
-  // Returns fill color for a given zone ID
-  const fill = (zoneId) =>
-    zoneId && selected === zoneId   ? '#FF4444'
-    : zoneId && touchPreview === zoneId ? '#CC3333'
-    : zoneId && hovered === zoneId  ? '#CC3333'
-    : '#C8A84B'
+  // Lock body scroll while the sheet is open so the user can't lose context.
+  useEffect(() => {
+    if (!pendingZone) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [pendingZone])
 
-  // Returns event handlers for a zone (null = non-interactive)
-  const on = (zoneId) => zoneId ? {
-    // Mouse: hover to preview, click to select
-    onMouseEnter: () => setHovered(zoneId),
-    onMouseLeave: () => setHovered(null),
-    onClick: () => {
-      // Mouse click — touchPreview will be null, so always select
-      if (!touchPreview) onSelect(zoneId === selected ? null : zoneId)
-    },
-    // Touch: first tap previews, second tap on same zone confirms
-    onTouchStart: (e) => {
-      e.preventDefault()
-      if (touchPreview === zoneId) {
-        // Second tap on same zone — confirm
-        onSelect(zoneId === selected ? null : zoneId)
-        setTouchPreview(null)
-      } else {
-        // First tap — show preview, don't select yet
-        setTouchPreview(zoneId)
-      }
-    },
+  // Esc closes the sheet
+  useEffect(() => {
+    if (!pendingZone) return
+    const handler = (e) => { if (e.key === 'Escape') handleCancel() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [pendingZone]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Per-instance fill. When `selected` is set (returning to step 0 after a
+  // previous pick), we lose which instance was originally tapped — so we
+  // highlight all instances of the chosen zone in that case.
+  const fill = (zoneId, instanceId) => {
+    if (zoneId && selected === zoneId) return '#FF4444'
+    if (instanceId && tappedInstance === instanceId) return '#FF4444'
+    if (instanceId && hoveredInstance === instanceId) return '#CC3333'
+    return '#C8A84B'
+  }
+
+  const openSheet = (zoneId, instanceId) => {
+    if (!zoneId) return
+    setPendingZone(zoneId)
+    setTappedInstance(instanceId || zoneId)
+    setHoveredInstance(null)
+  }
+
+  const handleConfirm = () => {
+    if (!pendingZone) return
+    const zone = pendingZone
+    setPendingZone(null)
+    setTappedInstance(null)
+    onSelect(zone === selected ? null : zone)
+  }
+
+  const handleCancel = () => {
+    setPendingZone(null)
+    setTappedInstance(null)
+  }
+
+  // Returns event handlers for a zone instance (null zoneId = non-interactive).
+  // On touch-only devices we attach ONLY onClick — adding onMouseEnter would
+  // trigger iOS Safari's hover emulation (first tap = hover, second tap =
+  // click), forcing a double-tap. On hover-capable devices (desktop with a
+  // mouse) we attach mouse hover so users see a preview before clicking.
+  // touch-action: manipulation in style{} keeps the tap responsive.
+  const on = (zoneId, instanceId) => zoneId ? {
+    ...(isHoverDevice ? {
+      onMouseEnter: () => setHoveredInstance(instanceId),
+      onMouseLeave: () => setHoveredInstance(null),
+    } : {}),
+    onClick: () => openSheet(zoneId, instanceId),
   } : {}
 
   // Full props for an SVG element.
-  // zoneId   – zone this SVG (or clip slice) belongs to; null = decorative only
-  // pos      – { ml (marginLeft), top, zIndex? } positioning
-  // clip     – optional CSS clip-path string, e.g. 'inset(0 0 45% 0)'
-  const sp = (zoneId, pos, clip) => ({
+  // zoneId     – zone this SVG (or clip slice) belongs to; null = decorative only
+  // instanceId – unique per visual element (e.g. 'Calves__L' vs 'Calves__R')
+  // pos        – { ml (marginLeft), top, zIndex? } positioning
+  // clip       – optional CSS clip-path string, e.g. 'inset(0 0 45% 0)'
+  const sp = (zoneId, instanceId, pos, clip) => ({
     style: {
-      position:   'absolute',
-      left:       '50%',
-      marginLeft: pos.ml,
-      top:        pos.top,
-      zIndex:     pos.z ?? 'auto',
-      fill:       fill(zoneId),
-      transition: 'fill 0.15s ease',
-      cursor:     zoneId ? 'pointer' : 'default',
+      position:    'absolute',
+      left:        '50%',
+      marginLeft:  pos.ml,
+      top:         pos.top,
+      zIndex:      pos.z ?? 'auto',
+      fill:        fill(zoneId, instanceId),
+      transition:  'fill 0.15s ease',
+      cursor:      zoneId ? 'pointer' : 'default',
+      // Skips the historical iOS double-tap-zoom + tap delay so click fires
+      // immediately on touch.
+      touchAction: 'manipulation',
       ...(clip ? { clipPath: clip } : {}),
     },
-    ...on(zoneId),
+    ...on(zoneId, instanceId),
   })
 
   // Shorthand for SVG elements rendered multiple times (clipped zone slices)
-  // Each call renders one <svg> with the same path but a different clip region + zone
-  const Slice = ({ w, h, vb, d, zoneId, pos, clip }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={w} height={h} viewBox={vb} {...sp(zoneId, pos, clip)}>
+  const Slice = ({ w, h, vb, d, zoneId, instanceId, pos, clip }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={w} height={h} viewBox={vb} {...sp(zoneId, instanceId, pos, clip)}>
       <path d={d} />
     </svg>
   )
@@ -128,34 +183,46 @@ function BodyDiagram({ selected, onSelect }) {
   return (
     <div className="flex flex-col items-center w-full select-none" style={{ gap: 0 }}>
 
-      {/* ── Body container ───────────────────────────────────────────────── */}
-      <div style={{ width: 207, position: 'relative', paddingTop: 240, height: 260, margin: '0 auto' }}>
+      {/* ── Body container ─────────────────────────────────────────────────
+        Slides up + slightly shrinks when the sheet is open so the highlighted
+        zone (especially lower-body picks) stays visible above the bottom sheet
+        on phone-sized viewports. */}
+      <div style={{
+        width: 207,
+        position: 'relative',
+        paddingTop: 240,
+        height: 260,
+        margin: '0 auto',
+        transition: 'transform 0.22s ease-out',
+        transform: pendingZone ? 'translateY(-30%) scale(0.82)' : 'translateY(0) scale(1)',
+        transformOrigin: 'top center',
+      }}>
 
         {/* Head — decorative (top 72% of the head SVG, above the neck trapezoids) */}
         <svg xmlns="http://www.w3.org/2000/svg" width="56.594" height="95.031" viewBox="0 0 56.594 95.031"
-          {...sp(null, { ml: -28.5, top: -6 }, 'inset(0 0 28% 0)')}>
+          {...sp(null, null, { ml: -28.5, top: -6 }, 'inset(0 0 28% 0)')}>
           <path d={D.head} />
         </svg>
 
         {/* Neck — interactive (bottom 28% of head SVG: the two trapezoid pieces at y≥68.5) */}
         <svg xmlns="http://www.w3.org/2000/svg" width="56.594" height="95.031" viewBox="0 0 56.594 95.031"
-          {...sp('Neck', { ml: -28.5, top: -6, z: 6 }, 'inset(72% 0 0 0)')}>
+          {...sp('Neck', 'Neck__C', { ml: -28.5, top: -6, z: 6 }, 'inset(72% 0 0 0)')}>
           <path d={D.head} />
         </svg>
 
         {/* Shoulders */}
         <svg xmlns="http://www.w3.org/2000/svg" width="109.532" height="46.594" viewBox="0 0 109.532 46.594"
-          {...sp('Shoulder', { ml: -53.5, top: 69 })}>
+          {...sp('Shoulder', 'Shoulder__L', { ml: -53.5, top: 69 })}>
           <path d={D.lSho} />
         </svg>
         <svg xmlns="http://www.w3.org/2000/svg" width="109.532" height="46.594" viewBox="0 0 109.532 46.594"
-          {...sp('Shoulder', { ml: 13.5, top: 69 })}>
+          {...sp('Shoulder', 'Shoulder__R', { ml: 13.5, top: 69 })}>
           <path d={D.rSho} />
         </svg>
 
         {/* Chest — interactive, rendered after shoulders so it's on top */}
         <svg xmlns="http://www.w3.org/2000/svg" width="86.594" height="45.063" viewBox="0 0 86.594 45.063"
-          {...sp('Chest', { ml: -43.5, top: 88, z: 5 })}>
+          {...sp('Chest', 'Chest__C', { ml: -43.5, top: 88, z: 5 })}>
           {/* Transparent rect gives a full hit area over the whole chest region */}
           <rect width="86.594" height="45.063" fill="transparent" />
           <path d={D.chest} />
@@ -163,62 +230,62 @@ function BodyDiagram({ selected, onSelect }) {
 
         {/* Left Arm — Elbow zone (top 55%) */}
         <Slice w="156.344" h="119.25" vb="0 0 156.344 119.25" d={D.lArm}
-          zoneId="Elbow" pos={{ ml: -78, top: 112 }} clip="inset(0 0 45% 0)" />
+          zoneId="Elbow" instanceId="Elbow__L" pos={{ ml: -78, top: 112 }} clip="inset(0 0 45% 0)" />
         {/* Left Arm — Wrist zone (bottom 45%) */}
         <Slice w="156.344" h="119.25" vb="0 0 156.344 119.25" d={D.lArm}
-          zoneId="Wrist" pos={{ ml: -78, top: 112 }} clip="inset(55% 0 0 0)" />
+          zoneId="Wrist" instanceId="Wrist__L" pos={{ ml: -78, top: 112 }} clip="inset(55% 0 0 0)" />
 
         {/* Right Arm — Elbow zone (top 55%) */}
         <Slice w="156.344" h="119.25" vb="0 0 156.344 119.25" d={D.rArm}
-          zoneId="Elbow" pos={{ ml: 38, top: 112, z: 10001 }} clip="inset(0 0 45% 0)" />
+          zoneId="Elbow" instanceId="Elbow__R" pos={{ ml: 38, top: 112, z: 10001 }} clip="inset(0 0 45% 0)" />
         {/* Right Arm — Wrist zone (bottom 45%) */}
         <Slice w="156.344" h="119.25" vb="0 0 156.344 119.25" d={D.rArm}
-          zoneId="Wrist" pos={{ ml: 38, top: 112, z: 10001 }} clip="inset(55% 0 0 0)" />
+          zoneId="Wrist" instanceId="Wrist__R" pos={{ ml: 38, top: 112, z: 10001 }} clip="inset(55% 0 0 0)" />
 
         {/* Stomach — Abs zone (top 50%) */}
         <Slice w="75.25" h="107.594" vb="0 0 75.25 107.594" d={D.stomach}
-          zoneId="Abs" pos={{ ml: -37.5, top: 130 }} clip="inset(0 0 50% 0)" />
+          zoneId="Abs" instanceId="Abs__C" pos={{ ml: -37.5, top: 130 }} clip="inset(0 0 50% 0)" />
         {/* Stomach — Lower Back zone (bottom 50%) */}
         <Slice w="75.25" h="107.594" vb="0 0 75.25 107.594" d={D.stomach}
-          zoneId="Lower Back" pos={{ ml: -37.5, top: 130 }} clip="inset(50% 0 0 0)" />
+          zoneId="Lower Back" instanceId="Lower Back__C" pos={{ ml: -37.5, top: 130 }} clip="inset(50% 0 0 0)" />
 
         {/* Left Leg — Hip zone (top 48%) */}
         <Slice w="93.626" h="250.625" vb="0 0 93.626 250.625" d={D.lLeg}
-          zoneId="Hip" pos={{ ml: -46.5, top: 205, z: 9999 }} clip="inset(0 0 52% 0)" />
+          zoneId="Hip" instanceId="Hip__L" pos={{ ml: -46.5, top: 205, z: 9999 }} clip="inset(0 0 52% 0)" />
         {/* Left Leg — Knee zone (48% – 66%) */}
         <Slice w="93.626" h="250.625" vb="0 0 93.626 250.625" d={D.lLeg}
-          zoneId="Knee" pos={{ ml: -46.5, top: 205, z: 9999 }} clip="inset(48% 0 34% 0)" />
+          zoneId="Knee" instanceId="Knee__L" pos={{ ml: -46.5, top: 205, z: 9999 }} clip="inset(48% 0 34% 0)" />
         {/* Left Leg — Calves zone (66% – 100%) */}
         <Slice w="93.626" h="250.625" vb="0 0 93.626 250.625" d={D.lLeg}
-          zoneId="Calves" pos={{ ml: -46.5, top: 205, z: 9999 }} clip="inset(66% 0 0 0)" />
+          zoneId="Calves" instanceId="Calves__L" pos={{ ml: -46.5, top: 205, z: 9999 }} clip="inset(66% 0 0 0)" />
 
         {/* Right Leg — Hip zone (top 48%) */}
         <Slice w="80" h="250.625" vb="0 0 80 250.625" d={D.rLeg}
-          zoneId="Hip" pos={{ ml: 1.5, top: 205, z: 9999 }} clip="inset(0 0 52% 0)" />
+          zoneId="Hip" instanceId="Hip__R" pos={{ ml: 1.5, top: 205, z: 9999 }} clip="inset(0 0 52% 0)" />
         {/* Right Leg — Knee zone (48% – 66%) */}
         <Slice w="80" h="250.625" vb="0 0 80 250.625" d={D.rLeg}
-          zoneId="Knee" pos={{ ml: 1.5, top: 205, z: 9999 }} clip="inset(48% 0 34% 0)" />
+          zoneId="Knee" instanceId="Knee__R" pos={{ ml: 1.5, top: 205, z: 9999 }} clip="inset(48% 0 34% 0)" />
         {/* Right Leg — Calves zone (66% – 100%) */}
         <Slice w="80" h="250.625" vb="0 0 80 250.625" d={D.rLeg}
-          zoneId="Calves" pos={{ ml: 1.5, top: 205, z: 9999 }} clip="inset(66% 0 0 0)" />
+          zoneId="Calves" instanceId="Calves__R" pos={{ ml: 1.5, top: 205, z: 9999 }} clip="inset(66% 0 0 0)" />
 
-        {/* Hands — Fingers zone */}
+        {/* Hands — Finger zone */}
         <svg xmlns="http://www.w3.org/2000/svg" width="90" height="38.938" viewBox="0 0 90 38.938"
-          {...sp('Finger', { ml: -102.5, top: 224 })}>
+          {...sp('Finger', 'Finger__L', { ml: -102.5, top: 224 })}>
           <path d={D.lHand} />
         </svg>
         <svg xmlns="http://www.w3.org/2000/svg" width="90" height="38.938" viewBox="0 0 90 38.938"
-          {...sp('Finger', { ml: 66.5, top: 224, z: 10000 })}>
+          {...sp('Finger', 'Finger__R', { ml: 66.5, top: 224, z: 10000 })}>
           <path d={D.rHand} />
         </svg>
 
         {/* Feet — Ankle zone */}
         <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30"
-          {...sp('Ankle', { ml: -35.5, top: 455 })}>
+          {...sp('Ankle', 'Ankle__L', { ml: -35.5, top: 455 })}>
           <path d={D.lFoot} />
         </svg>
         <svg xmlns="http://www.w3.org/2000/svg" width="90" height="38.938" viewBox="0 0 90 38.938"
-          {...sp('Ankle', { ml: 5.5, top: 455 })}>
+          {...sp('Ankle', 'Ankle__R', { ml: 5.5, top: 455 })}>
           <path d={D.rFoot} />
         </svg>
 
@@ -233,11 +300,6 @@ function BodyDiagram({ selected, onSelect }) {
                 {preview.label}
               </span>
               <span style={{ color: 'rgba(255,255,255,0.4)' }}> · {preview.desc}</span>
-              {touchPreview && (
-                <span style={{ display: 'block', fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 4, letterSpacing: '0.04em' }}>
-                  Tap again to confirm
-                </span>
-              )}
             </>
           ) : (
             <span style={{ color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em' }}>
@@ -247,6 +309,86 @@ function BodyDiagram({ selected, onSelect }) {
         </p>
       </div>
 
+      {/* ── Slide-up confirmation sheet ─────────────────────────────────────
+        Portaled to document.body so the framer-motion transformed ancestor
+        (the wizard step's slide animation) doesn't capture our fixed
+        positioning — without the portal the sheet centers inside the wizard
+        column, not the viewport. */}
+      {typeof document !== 'undefined' && createPortal(
+      <AnimatePresence>
+        {pendingZone && (() => {
+          const zone = ZONES.find(z => z.id === pendingZone)
+          if (!zone) return null
+          return (
+            <motion.div
+              key="sheet-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              onClick={(e) => { if (e.target === e.currentTarget) handleCancel() }}
+              className="fixed inset-0 z-[150] flex items-end sm:items-center justify-center bg-bg/70 backdrop-blur-sm"
+            >
+              <motion.div
+                key="sheet-panel"
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 30, stiffness: 320 }}
+                className="relative w-full sm:max-w-sm bg-panel2 border border-outline rounded-t-3xl sm:rounded-3xl shadow-2xl px-6 pt-5 pb-8 sm:p-7 space-y-5 select-text"
+              >
+                {/* Drag handle (mobile only — visual cue that this is a sheet) */}
+                <div className="sm:hidden -mt-1 mb-2 flex justify-center">
+                  <div className="w-10 h-1 rounded-full bg-outline/60" />
+                </div>
+
+                {/* Close — large tap target (40px square) with a circular bg
+                    so it reads as a real button on mobile, not a hairline icon. */}
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  aria-label="Close"
+                  className="absolute top-3 right-3 w-10 h-10 rounded-full bg-panel border border-outline flex items-center justify-center text-muted hover:text-text hover:bg-panel2 active:bg-outline transition-colors"
+                  style={{ touchAction: 'manipulation' }}
+                >
+                  <X size={18} />
+                </button>
+
+                <div className="text-center space-y-1.5">
+                  <p className="text-[11px] font-semibold text-muted/70 uppercase tracking-widest">
+                    You selected
+                  </p>
+                  <h3 className="text-3xl font-bold text-text tracking-tight">
+                    {zone.label}
+                  </h3>
+                  <p className="text-sm text-muted">{zone.desc}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={handleConfirm}
+                    autoFocus
+                    className="btn-primary w-full text-base py-3 flex items-center justify-center gap-2"
+                  >
+                    Confirm &amp; continue
+                    <ArrowRight size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="btn-secondary w-full text-sm"
+                  >
+                    Pick a different area
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )
+        })()}
+      </AnimatePresence>,
+      document.body)}
+
       {/* ── Back-side region pills ────────────────────────────────────────── */}
       <div style={{ width: '100%', maxWidth: 360, margin: '20px auto 0', paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
         <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 12px' }}>
@@ -255,14 +397,16 @@ function BodyDiagram({ selected, onSelect }) {
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 6 }}>
           {BACK_REGIONS.map((zoneId) => {
             const isSelected = selected === zoneId
-            const isHovered  = hovered  === zoneId
+            const isHovered  = hoveredInstance === zoneId
             return (
               <button
                 key={zoneId}
                 type="button"
-                onMouseEnter={() => setHovered(zoneId)}
-                onMouseLeave={() => setHovered(null)}
-                onClick={() => onSelect(zoneId === selected ? null : zoneId)}
+                {...(isHoverDevice ? {
+                  onMouseEnter: () => setHoveredInstance(zoneId),
+                  onMouseLeave: () => setHoveredInstance(null),
+                } : {})}
+                onClick={() => openSheet(zoneId, zoneId)}
                 style={{
                   padding: '5px 12px',
                   borderRadius: 999,

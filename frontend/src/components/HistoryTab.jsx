@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Clock, Trash2, AlertTriangle, Database, RefreshCw, Loader2, LogIn } from 'lucide-react'
 import { getSessions, fetchSession, deleteSession } from '../api'
 
@@ -10,10 +11,17 @@ const PAIN_COLOR = (level) => {
 }
 
 export default function HistoryTab({ dbReady, user, onLoginClick }) {
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  // Selected session id is URL-driven so the back button steps from
+  // /history/42 → /history cleanly.
+  const urlIdSeg = location.pathname.replace(/^\/history\/?/, '').split('/')[0]
+  const selectedId = urlIdSeg ? Number(urlIdSeg) || null : null
+
   const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [selectedId, setSelectedId] = useState(null)
   const [selected, setSelected] = useState(null)
   const [deleting, setDeleting] = useState(false)
 
@@ -33,14 +41,21 @@ export default function HistoryTab({ dbReady, user, onLoginClick }) {
 
   useEffect(() => { load() }, [dbReady, user])
 
-  async function handleSelect(id) {
-    setSelectedId(id)
-    try {
-      const data = await fetchSession(id)
-      setSelected(data)
-    } catch (err) {
+  // When the URL changes to /history/:id, fetch the selected session details.
+  useEffect(() => {
+    if (!selectedId || !user) {
       setSelected(null)
+      return
     }
+    let cancelled = false
+    fetchSession(selectedId)
+      .then((data) => { if (!cancelled) setSelected(data) })
+      .catch(() => { if (!cancelled) setSelected(null) })
+    return () => { cancelled = true }
+  }, [selectedId, user])
+
+  function handleSelect(id) {
+    navigate(`/history/${id}`)
   }
 
   async function handleDelete() {
@@ -48,8 +63,7 @@ export default function HistoryTab({ dbReady, user, onLoginClick }) {
     setDeleting(true)
     try {
       await deleteSession(selectedId)
-      setSelectedId(null)
-      setSelected(null)
+      navigate('/history')
       await load()
     } catch (err) {
       setError(err.message)

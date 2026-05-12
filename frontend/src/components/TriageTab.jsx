@@ -1,5 +1,6 @@
-import { useState, useCallback, useMemo, memo } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   ChevronDown, ChevronLeft, AlertTriangle, CheckCircle,
   Download, Save, Loader2, BookOpen, ArrowRight,
@@ -11,6 +12,10 @@ import BodyDiagram from './BodyDiagram'
 import RehabProtocol from './RehabProtocol'
 import UpgradeModal from './UpgradeModal'
 import { downloadTriagePDF } from './TriageReport'
+import Coachmark from './Coachmark'
+import TourReplayButton from './TourReplayButton'
+import useTriageTour from '../hooks/useTriageTour'
+import useScrollToContinue from '../hooks/useScrollToContinue'
 
 // ── Pre-submit input validation ──────────────────────────────────────────────
 // Detects user-input issues that would lead to a misleading triage result.
@@ -156,6 +161,24 @@ const STEP_TITLES = [
 ]
 
 const TOTAL_STEPS = 5
+
+// Map step index ↔ URL slug. The bare /triage path is step 0 (region picker).
+// /triage/results is the post-submission state.
+const STEP_SLUGS = ['', 'onset', 'symptoms', 'details', 'finish']
+const RESULTS_SLUG = 'results'
+
+function pathToStep(pathname) {
+  const seg = pathname.replace(/^\/triage\/?/, '').split('/')[0]
+  if (seg === RESULTS_SLUG) return 'results'
+  const idx = STEP_SLUGS.indexOf(seg)
+  return idx >= 0 ? idx : 0
+}
+
+function stepToPath(step) {
+  if (step === 'results') return `/triage/${RESULTS_SLUG}`
+  const slug = STEP_SLUGS[step] || ''
+  return slug ? `/triage/${slug}` : '/triage'
+}
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -566,7 +589,15 @@ const INITIAL_FORM = {
 }
 
 export default function TriageTab({ k, user }) {
-  const [step, setStep]           = useState(0)
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  // Step is derived from the URL — back/forward browser buttons "just work"
+  // because they change the URL, which changes which step we render.
+  const urlStep = pathToStep(location.pathname)
+  const step = urlStep === 'results' ? 0 : urlStep
+  const isResultsRoute = urlStep === 'results'
+
   const [direction, setDirection] = useState(1)
   const [form, setForm]           = useState(INITIAL_FORM)
   const [loading, setLoading]     = useState(false)
@@ -582,16 +613,41 @@ export default function TriageTab({ k, user }) {
 
   const mechanisms = LOWER_BODY.includes(form.region) ? MECHANISMS.lower : MECHANISMS.upper
 
-  const advance = useCallback(() => { setDirection(1);  setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1)) }, [])
-  const retreat  = useCallback(() => { setDirection(-1); setStep((s) => Math.max(s - 1, 0)) }, [])
+  // If the user lands on /triage/results without having submitted (e.g.,
+  // direct URL or refresh), bounce them back to the start.
+  useEffect(() => {
+    if (isResultsRoute && !result) {
+      navigate('/triage', { replace: true })
+    }
+  }, [isResultsRoute, result, navigate])
+
+  // If they jump to a deep step without prior data (region not picked), reset
+  // them to step 0. Keeps the wizard coherent on direct-URL access.
+  useEffect(() => {
+    if (!isResultsRoute && step >= 1 && !form.region) {
+      navigate('/triage', { replace: true })
+    }
+  }, [step, isResultsRoute, form.region, navigate])
+
+  const advance = useCallback(() => {
+    setDirection(1)
+    const next = Math.min(step + 1, TOTAL_STEPS - 1)
+    navigate(stepToPath(next))
+  }, [step, navigate])
+
+  const retreat = useCallback(() => {
+    setDirection(-1)
+    const prev = Math.max(step - 1, 0)
+    navigate(stepToPath(prev))
+  }, [step, navigate])
 
   const selectRegion = useCallback((value) => {
     const isLower  = LOWER_BODY.includes(value)
     const wasLower = LOWER_BODY.includes(form.region)
     setForm((f) => ({ ...f, region: value, mechanism: isLower !== wasLower ? '' : f.mechanism }))
     setDirection(1)
-    setStep(1)
-  }, [form.region])
+    navigate(stepToPath(1))
+  }, [form.region, navigate])
 
   const canAdvance = () => {
     if (step === 0) return !!form.region
@@ -599,6 +655,27 @@ export default function TriageTab({ k, user }) {
     if (step === 2) return !!form.pain_type
     return true
   }
+
+  // First-time-user tour + scroll-to-action wiring
+  const tour = useTriageTour({ step })
+  const continueBtnRef = useRef(null)
+
+  // Trigger 1 — scroll when the user finishes filling required fields.
+  const continueReady = step >= 1 && step <= 2 && canAdvance()
+  useScrollToContinue(continueBtnRef, continueReady)
+
+  // Trigger 2 — scroll the moment the coachmark is dismissed (any reason).
+  // Reset on step change so the rising-edge fires again on the next step.
+  const [tipDismissedHere, setTipDismissedHere] = useState(false)
+  useEffect(() => { setTipDismissedHere(false) }, [step])
+  const prevTipRef = useRef(tour.tip)
+  useEffect(() => {
+    if (prevTipRef.current !== null && tour.tip === null && step >= 1 && step <= 3) {
+      setTipDismissedHere(true)
+    }
+    prevTipRef.current = tour.tip
+  }, [tour.tip, step])
+  useScrollToContinue(continueBtnRef, tipDismissedHere)
 
   // Accepts the current free-text directly from FreeTextStep to avoid a
   // stale-closure race between setForm and the read inside this function.
@@ -613,12 +690,13 @@ export default function TriageTab({ k, user }) {
         k,
       })
       setResult(data)
+      navigate(stepToPath('results'))
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
     }
-  }, [form, k])
+  }, [form, k, navigate])
 
   const handleSave = useCallback(async () => {
     if (!result) return
@@ -638,10 +716,11 @@ export default function TriageTab({ k, user }) {
 
   const restart = useCallback(() => {
     setResult(null); setError(null); setSaveStatus(null)
-    setStep(0); setDirection(1); setForm(INITIAL_FORM)
-  }, [])
+    setDirection(1); setForm(INITIAL_FORM)
+    navigate('/triage')
+  }, [navigate])
 
-  if (result) {
+  if (isResultsRoute && result) {
     return (
       <Results
         result={result} form={form}
@@ -657,7 +736,10 @@ export default function TriageTab({ k, user }) {
       <div className="mb-8 space-y-3">
         <StepDots current={step} total={TOTAL_STEPS} />
         <div className="text-center">
-          <h2 className="text-xl font-bold text-text">{STEP_TITLES[step].title}</h2>
+          <div className="flex items-center justify-center gap-2">
+            <h2 className="text-xl font-bold text-text">{STEP_TITLES[step].title}</h2>
+            <TourReplayButton onReplay={tour.replay} />
+          </div>
           <p className="text-sm text-muted mt-1">{STEP_TITLES[step].sub}</p>
         </div>
       </div>
@@ -676,15 +758,17 @@ export default function TriageTab({ k, user }) {
 
           {/* ── Step 0 — Region (body diagram) ──────────────────────────────── */}
           {step === 0 && (
-            <BodyDiagram
-              selected={form.region}
-              onSelect={selectRegion}
-            />
+            <div ref={tour.anchor('region-diagram')}>
+              <BodyDiagram
+                selected={form.region}
+                onSelect={selectRegion}
+              />
+            </div>
           )}
 
           {/* ── Step 1 — Onset + Mechanism ──────────────────────────────────── */}
           {step === 1 && (
-            <div className="space-y-8">
+            <div className="space-y-8" ref={tour.anchor('onset-row')}>
               {/* Onset — two colored cards */}
               <div>
                 <p className="flex items-center gap-2 text-sm font-medium text-text mb-4">
@@ -757,7 +841,7 @@ export default function TriageTab({ k, user }) {
 
           {/* ── Step 2 — Severity + Pain type ───────────────────────────────── */}
           {step === 2 && (
-            <div className="space-y-8">
+            <div className="space-y-8" ref={tour.anchor('severity-slider')}>
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-sm font-medium text-text">Pain level right now</p>
@@ -802,7 +886,7 @@ export default function TriageTab({ k, user }) {
 
           {/* ── Step 3 — Symptoms ───────────────────────────────────────────── */}
           {step === 3 && (
-            <div className="space-y-3">
+            <div className="space-y-3" ref={tour.anchor('symptoms-grid')}>
               {/* Helper note — sets expectations about how these answers affect the result */}
               <div className="bg-accent3/8 border border-accent3/20 rounded-xl px-4 py-3 mb-2">
                 <p className="text-xs text-muted leading-relaxed">
@@ -916,14 +1000,16 @@ export default function TriageTab({ k, user }) {
 
           {/* ── Step 4 — Notes + Submit ─────────────────────────────────────── */}
           {step === 4 && (
-            <FreeTextStep
-              initialValue={form.free_text}
-              form={form}
-              onCommit={commitFreeText}
-              onSubmit={handleSubmit}
-              error={error}
-              loading={loading}
-            />
+            <div ref={tour.anchor('free-text')}>
+              <FreeTextStep
+                initialValue={form.free_text}
+                form={form}
+                onCommit={commitFreeText}
+                onSubmit={handleSubmit}
+                error={error}
+                loading={loading}
+              />
+            </div>
           )}
 
         </motion.div>
@@ -937,6 +1023,7 @@ export default function TriageTab({ k, user }) {
           </button>
           {step < TOTAL_STEPS - 1 && (
             <button
+              ref={continueBtnRef}
               onClick={advance}
               disabled={!canAdvance()}
               className="btn-primary flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
@@ -946,6 +1033,8 @@ export default function TriageTab({ k, user }) {
           )}
         </div>
       )}
+
+      <Coachmark tour={tour} />
     </div>
   )
 }

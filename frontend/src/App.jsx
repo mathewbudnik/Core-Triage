@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Routes, Route, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { MessageSquare, Clock, Info, AlertTriangle, Menu, X, LogIn, LogOut, User, Activity, Dumbbell, FileText, Stethoscope, UserCircle2, ChevronRight, Shield, Bug } from 'lucide-react'
 import * as Sentry from '@sentry/react'
 import { getHealth, getMe, acceptDisclaimer } from './api'
@@ -34,8 +35,9 @@ const TABS = [
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
 
 export default function App() {
-  const [showLanding, setShowLanding] = useState(true)
-  const [activeTab, setActiveTab] = useState('triage')
+  const navigate = useNavigate()
+  const location = useLocation()
+
   const k = 4
   const [dbReady, setDbReady] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -46,18 +48,28 @@ export default function App() {
   const [disclaimerState, setDisclaimerState] = useState('checking') // 'checking' | 'required' | 'accepted'
   const [showTerms, setShowTerms] = useState(false) // read-only re-open
   const [legalDoc, setLegalDoc] = useState(null)    // PRIVACY_POLICY | TERMS_OF_SERVICE | null
-  const [verifyRoute, setVerifyRoute] = useState(typeof window !== 'undefined' && window.location.pathname === '/verify-email')
-  const [billingRoute, setBillingRoute] = useState(() => {
-    if (typeof window === 'undefined') return null
-    const path = window.location.pathname
-    if (path === '/billing/success') return 'success'
-    if (path === '/billing/cancel') return 'cancel'
-    return null
-  })
   const [bannerDismissed, setBannerDismissed] = useState(false)
   const [showUpgrade, setShowUpgrade] = useState(false)
   const [upgradeTrigger, setUpgradeTrigger] = useState('coaching')
   const [toast, setToast] = useState(null) // { kind: 'error'|'info', message: string }
+
+  // Derive "is on landing?" and "is on a special standalone page?" from URL
+  // — landing has its own full-bleed layout; verify-email + billing/* are
+  // standalone pages that bypass the sidebar/header chrome.
+  const isLandingRoute  = location.pathname === '/'
+  const isStandalonePage = location.pathname === '/verify-email'
+                        || location.pathname === '/billing/success'
+                        || location.pathname === '/billing/cancel'
+
+  // Sidebar nav still uses these labels — derive activeTabLabel from the URL.
+  const activeTabId = useMemo(() => {
+    const seg = location.pathname.split('/')[1] || ''
+    return TABS.find((t) => t.id === seg)?.id || null
+  }, [location.pathname])
+  const activeTabLabel = useMemo(
+    () => TABS.find((t) => t.id === activeTabId)?.label || '',
+    [activeTabId],
+  )
 
   // Session timeout
   const timeoutRef = useRef(null)
@@ -155,14 +167,6 @@ export default function App() {
     window.location.href = 'about:blank'
   }, [])
 
-  const [triageKey, setTriageKey] = useState(0)
-
-  const handleTabChange = useCallback((id) => {
-    setActiveTab(id)
-    setSidebarOpen(false)
-    if (id === 'triage') setTriageKey((k) => k + 1)
-  }, [])
-
   const handleAuth = useCallback((_token, userData) => {
     setUser(userData)
     setShowAuth(false)
@@ -178,17 +182,16 @@ export default function App() {
     setUser(null)
   }, [])
 
-  const activeTabLabel = useMemo(() => TABS.find((t) => t.id === activeTab)?.label, [activeTab])
-
-  // Email verification landing page — takes priority over everything else
-  // since the user got here from an email link and may not be signed in yet
-  if (verifyRoute) {
-    return <VerifyEmailPage onDone={() => setVerifyRoute(false)} />
+  // Standalone routes (verify-email, billing/*) bypass sidebar/disclaimer chrome
+  // entirely — user got here from an external link and shouldn't see the rest.
+  if (location.pathname === '/verify-email') {
+    return <VerifyEmailPage onDone={() => navigate('/')} />
   }
-
-  // Stripe Checkout return pages
-  if (billingRoute) {
-    return <BillingReturnPage outcome={billingRoute} onDone={() => setBillingRoute(null)} />
+  if (location.pathname === '/billing/success') {
+    return <BillingReturnPage outcome="success" onDone={() => navigate('/')} />
+  }
+  if (location.pathname === '/billing/cancel') {
+    return <BillingReturnPage outcome="cancel" onDone={() => navigate('/')} />
   }
 
   // Show disclaimer before anything else
@@ -198,14 +201,11 @@ export default function App() {
     return <DisclaimerModal onAccept={handleDisclaimerAccept} onExit={handleDisclaimerExit} />
   }
 
-  if (showLanding) {
+  // Landing has its own full-bleed layout — no sidebar.
+  if (isLandingRoute) {
     return (
       <>
-        <AnimatePresence>
-          <motion.div key="landing" initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <Landing onEnter={(tab) => { setShowLanding(false); if (tab) setActiveTab(tab) }} />
-          </motion.div>
-        </AnimatePresence>
+        <Landing onEnter={(tab) => navigate(tab ? `/${tab}` : '/triage')} />
         {showTerms && (
           <DisclaimerModal readOnly onExit={() => setShowTerms(false)} />
         )}
@@ -324,30 +324,32 @@ export default function App() {
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-1">
-          {TABS.map(({ id, label, icon: Icon }) => {
-            const active = activeTab === id
-            return (
-              <button
-                key={id}
-                onClick={() => handleTabChange(id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-100
-                  ${active
-                    ? 'bg-accent/15 text-accent border border-accent/25 shadow-glow'
-                    : 'text-muted hover:text-text hover:bg-panel'
-                  }`}
-              >
-                <Icon size={16} />
-                {label}
-                {active && (
-                  <motion.div
-                    layoutId="nav-indicator"
-                    transition={{ duration: 0.12, ease: 'easeOut' }}
-                    className="ml-auto w-1.5 h-1.5 rounded-full bg-accent"
-                  />
-                )}
-              </button>
-            )
-          })}
+          {TABS.map(({ id, label, icon: Icon }) => (
+            <NavLink
+              key={id}
+              to={`/${id}`}
+              onClick={() => setSidebarOpen(false)}
+              className={({ isActive }) => `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-100
+                ${isActive
+                  ? 'bg-accent/15 text-accent border border-accent/25 shadow-glow'
+                  : 'text-muted hover:text-text hover:bg-panel'
+                }`}
+            >
+              {({ isActive }) => (
+                <>
+                  <Icon size={16} />
+                  {label}
+                  {isActive && (
+                    <motion.div
+                      layoutId="nav-indicator"
+                      transition={{ duration: 0.12, ease: 'easeOut' }}
+                      className="ml-auto w-1.5 h-1.5 rounded-full bg-accent"
+                    />
+                  )}
+                </>
+              )}
+            </NavLink>
+          ))}
         </nav>
 
         {/* Coaching CTA */}
@@ -504,61 +506,48 @@ export default function App() {
           </div>
         </header>
 
-        {/* Tab content — no wrapper animation; each tab handles its own entrance */}
+        {/* Tab content — driven by URL routes. Each tab handles its own
+            internal navigation (e.g. /triage/onset, /rehab/finger). */}
         <div className="flex-1 overflow-auto">
-          <div key={activeTab} className="h-full">
-            {activeTab === 'triage' && <TriageTab key={triageKey} k={k} user={user} />}
-            {activeTab === 'rehab' && (
-              <RehabTab
-                user={user}
-                onLoginClick={() => setShowAuth(true)}
-              />
-            )}
-            {activeTab === 'chat' && <ChatTab k={k} user={user} onLoginClick={() => setShowAuth(true)} />}
-            {activeTab === 'history' && (
-              <HistoryTab
-                dbReady={dbReady}
-                user={user}
-                onLoginClick={() => setShowAuth(true)}
-              />
-            )}
-            {activeTab === 'train' && (
-              <TrainTab
-                user={user}
-                dbReady={dbReady}
-                onLoginClick={() => setShowAuth(true)}
-              />
-            )}
-            {activeTab === 'about' && <AboutTab />}
-          </div>
+          <Routes>
+            <Route path="/triage/*"  element={<TriageTab k={k} user={user} />} />
+            <Route path="/rehab/*"   element={<RehabTab user={user} onLoginClick={() => setShowAuth(true)} />} />
+            <Route path="/train"     element={<TrainTab user={user} dbReady={dbReady} onLoginClick={() => setShowAuth(true)} />} />
+            <Route path="/chat"      element={<ChatTab k={k} user={user} onLoginClick={() => setShowAuth(true)} />} />
+            <Route path="/history/*" element={<HistoryTab dbReady={dbReady} user={user} onLoginClick={() => setShowAuth(true)} />} />
+            <Route path="/about"     element={<AboutTab />} />
+            {/* Any unknown path lands the user on Triage. */}
+            <Route path="*"          element={<Navigate to="/triage" replace />} />
+          </Routes>
         </div>
       </main>
 
       {/* Bottom nav — mobile only */}
       <nav className="fixed bottom-0 left-0 right-0 z-20 md:hidden bg-panel2/95 backdrop-blur-sm border-t border-outline">
         <div className="flex">
-          {TABS.map(({ id, label, icon: Icon }) => {
-            const active = activeTab === id
-            return (
-              <button
-                key={id}
-                onClick={() => handleTabChange(id)}
-                className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors duration-100 ${
-                  active ? 'text-accent' : 'text-muted'
-                }`}
-              >
-                <Icon size={18} />
-                {label}
-                {active && (
-                  <motion.div
-                    layoutId="bottom-nav-indicator"
-                    transition={{ duration: 0.12, ease: 'easeOut' }}
-                    className="absolute bottom-0 w-8 h-0.5 bg-accent rounded-full"
-                  />
-                )}
-              </button>
-            )
-          })}
+          {TABS.map(({ id, label, icon: Icon }) => (
+            <NavLink
+              key={id}
+              to={`/${id}`}
+              className={({ isActive }) => `flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors duration-100 ${
+                isActive ? 'text-accent' : 'text-muted'
+              }`}
+            >
+              {({ isActive }) => (
+                <>
+                  <Icon size={18} />
+                  {label}
+                  {isActive && (
+                    <motion.div
+                      layoutId="bottom-nav-indicator"
+                      transition={{ duration: 0.12, ease: 'easeOut' }}
+                      className="absolute bottom-0 w-8 h-0.5 bg-accent rounded-full"
+                    />
+                  )}
+                </>
+              )}
+            </NavLink>
+          ))}
         </div>
       </nav>
     </div>
