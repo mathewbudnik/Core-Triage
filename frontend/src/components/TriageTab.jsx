@@ -9,8 +9,8 @@ import {
 } from 'lucide-react'
 import { triageIntake, saveSession } from '../api'
 import BodyDiagram from './BodyDiagram'
-import RehabProtocol from './RehabProtocol'
 import UpgradeModal from './UpgradeModal'
+import { getExercises } from '../data/exercises'
 import { downloadTriagePDF } from './TriageReport'
 import Coachmark from './Coachmark'
 import TourReplayButton from './TourReplayButton'
@@ -215,41 +215,6 @@ function OptionCard({ selected, onClick, className = '', children }) {
   )
 }
 
-function AccordionSection({ title, items, defaultOpen }) {
-  const [open, setOpen] = useState(defaultOpen ?? false)
-  return (
-    <div className="border border-outline rounded-lg overflow-hidden">
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-text hover:bg-panel/50 transition-colors"
-      >
-        <span>{title}</span>
-        <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
-          <ChevronDown size={16} className="text-muted" />
-        </motion.div>
-      </button>
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25 }}
-          >
-            <ul className="px-4 pb-4 space-y-2 border-t border-outline">
-              {items.map((item, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-muted pt-3">
-                  <span className="w-1 h-1 rounded-full bg-accent mt-2 shrink-0" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  )
-}
 
 function buildMarkdown(result) {
   const lines = ['# CoreTriage Summary (Educational)\n']
@@ -384,30 +349,295 @@ const FreeTextStep = memo(function FreeTextStep({ initialValue, form, onCommit, 
 
 // ── Results ───────────────────────────────────────────────────────────────────
 
-const SEVERITY_STYLES = {
-  severe:   { bar: 'bg-accent2', border: 'border-accent2/30', bg: 'bg-accent2/8',  text: 'text-accent2', dot: 'bg-accent2' },
-  moderate: { bar: 'bg-accent3', border: 'border-accent3/30', bg: 'bg-accent3/8',  text: 'text-accent3', dot: 'bg-accent3' },
-  mild:     { bar: 'bg-accent',  border: 'border-accent/30',  bg: 'bg-accent/8',   text: 'text-accent',  dot: 'bg-accent'  },
+// Severity-driven hero card theming. Picked once per render based on
+// result.severity.level. Null-safe via the .mild fallback.
+const SEVERITY_HERO_THEME = {
+  severe: {
+    bg:     'bg-[linear-gradient(135deg,rgba(244,114,114,0.22),rgba(244,114,114,0.06))]',
+    border: 'border-[rgba(244,114,114,0.4)]',
+    pillBg: 'bg-[rgba(244,114,114,0.25)]',
+    pillBd: 'border-[rgba(244,114,114,0.4)]',
+    pillTx: 'text-accent2',
+  },
+  moderate: {
+    bg:     'bg-[linear-gradient(135deg,rgba(247,187,81,0.18),rgba(244,114,114,0.08))]',
+    border: 'border-[rgba(247,187,81,0.3)]',
+    pillBg: 'bg-[rgba(247,187,81,0.25)]',
+    pillBd: 'border-[rgba(247,187,81,0.4)]',
+    pillTx: 'text-accent3',
+  },
+  mild: {
+    bg:     'bg-[linear-gradient(135deg,rgba(125,211,192,0.18),rgba(125,211,192,0.04))]',
+    border: 'border-[rgba(125,211,192,0.3)]',
+    pillBg: 'bg-[rgba(125,211,192,0.18)]',
+    pillBd: 'border-[rgba(125,211,192,0.3)]',
+    pillTx: 'text-accent',
+  },
 }
 
-function SeverityCard({ severity }) {
-  if (!severity) return null
-  const s = SEVERITY_STYLES[severity.level] ?? SEVERITY_STYLES.mild
+// URL-safe slug for the rehab navigation link. "Lower Back" → "lower-back".
+// Matches RehabTab.jsx's slug logic (kept inline to avoid a cross-file import).
+function _regionToSlug(r) {
+  return (r || '').toLowerCase().replace(/\s+/g, '-')
+}
+
+// Heuristic chip extractor for the hero "quick-action" grid.
+// Pattern-matches a handful of common phrasings in the immediate plan + avoid
+// list and turns each into a short ✓ / ✗ chip. Caps at 4 chips. Returns []
+// when fewer than 2 chips can be extracted — caller falls back to the plain
+// guidance list in that case.
+function extractActionChips(plan) {
+  if (!plan) return []
+  const immediate = plan['Immediate next 7–10 days']
+                 ?? plan['Immediate next 7-10 days']
+                 ?? []
+  const avoid     = plan['What to avoid for now']
+                 ?? plan['Avoid']
+                 ?? []
+  const chips = []
+
+  for (const raw of immediate) {
+    const s = String(raw).trim()
+    if (chips.length >= 4) break
+    const low = s.toLowerCase()
+    if (/(^|\b)rest\b.*?\d+/i.test(s)) {
+      const m = s.match(/(\d+\s*[-–]?\s*\d*)\s*days?/i)
+      chips.push({ kind: 'do', text: m ? `Rest ${m[1]} days` : 'Rest' })
+    } else if (low.startsWith('ice') || /\bice\b/.test(low)) {
+      chips.push({ kind: 'do', text: 'Ice 15 min' })
+    } else if (/buddy[- ]?tape|tape\b/.test(low)) {
+      chips.push({ kind: 'do', text: 'Buddy-tape' })
+    } else if (/elevat/.test(low)) {
+      chips.push({ kind: 'do', text: 'Elevate' })
+    } else if (/open[- ]hand|antagonist|stretch/.test(low)) {
+      chips.push({ kind: 'do', text: 'Light open-hand' })
+    }
+  }
+
+  for (const raw of avoid) {
+    const s = String(raw).trim()
+    if (chips.length >= 4) break
+    const low = s.toLowerCase()
+    if (/crimp/.test(low))           chips.push({ kind: 'dont', text: 'No crimping' })
+    else if (/hangboard/.test(low))  chips.push({ kind: 'dont', text: 'No hangboard' })
+    else if (/campus/.test(low))     chips.push({ kind: 'dont', text: 'No campusing' })
+    else if (/dyno|dynamic/.test(low)) chips.push({ kind: 'dont', text: 'No dynos' })
+    else if (/heel hook/.test(low))  chips.push({ kind: 'dont', text: 'No heel hooks' })
+    else if (/pull|pulling/.test(low)) chips.push({ kind: 'dont', text: 'No hard pulling' })
+  }
+
+  return chips.length >= 2 ? chips : []
+}
+
+function ResultsHero({ result, form }) {
+  const severityKey = result.severity?.level ?? 'mild'
+  const theme = SEVERITY_HERO_THEME[severityKey] ?? SEVERITY_HERO_THEME.mild
+  const topBucket = result.buckets?.[0]
+  const title = topBucket?.title || 'Your guidance'
+  const lead  = topBucket?.why
+             || result.severity?.action
+             || 'Follow the plan in the tabs below to recover and return to climbing.'
+  const chips = extractActionChips(result.plan)
+  const severityLabel = result.severity?.label
+                     || severityKey.charAt(0).toUpperCase() + severityKey.slice(1)
+
   return (
-    <div className={`rounded-xl border ${s.border} ${s.bg} overflow-hidden`}>
-      <div className={`h-1 w-full ${s.bar}`} />
-      <div className="px-4 py-3 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <p className={`text-sm font-bold ${s.text}`}>{severity.label}</p>
-          <p className="text-xs text-muted mt-0.5 leading-relaxed">{severity.action}</p>
-        </div>
-        <div
-          className={`text-xs font-semibold px-3 py-1.5 rounded-lg ${s.bg} ${s.text} border ${s.border} self-start sm:shrink-0 sm:max-w-[45%] leading-snug`}
-        >
-          <span className="opacity-70">Climbing:</span>{' '}
-          <span className="break-words">{severity.can_climb}</span>
-        </div>
+    <div className={`rounded-2xl border ${theme.border} ${theme.bg} p-4 sm:p-5`}>
+      {/* Pill row */}
+      <div className="flex flex-wrap gap-1.5 mb-2">
+        <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${theme.pillBg} ${theme.pillTx} border ${theme.pillBd}`}>
+          {severityLabel}
+        </span>
+        {form.region && (
+          <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[rgba(125,211,192,0.12)] text-accent border border-[rgba(125,211,192,0.25)]">
+            {form.region}
+          </span>
+        )}
+        {form.onset && (
+          <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/5 text-muted border border-white/10">
+            {form.onset} onset
+          </span>
+        )}
       </div>
+
+      <h3 className="text-base sm:text-lg font-bold text-text leading-snug">{title}</h3>
+      <p className="text-xs sm:text-sm text-muted mt-1.5 leading-relaxed">{lead}</p>
+
+      {chips.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mt-3.5">
+          {chips.map((c, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5"
+            >
+              <span className={`w-4 h-4 rounded flex items-center justify-center text-[9px] font-bold shrink-0 ${
+                c.kind === 'do'
+                  ? 'bg-[rgba(247,187,81,0.2)] text-accent3'
+                  : 'bg-[rgba(244,114,114,0.18)] text-accent2'
+              }`}>
+                {c.kind === 'do' ? '✓' : '✗'}
+              </span>
+              <span className="text-[11px] text-text leading-tight">{c.text}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function OtherPossibilities({ buckets }) {
+  if (!buckets || buckets.length < 2) return null
+  const others = buckets.slice(1)
+  return (
+    <p className="text-xs text-muted">
+      <span className="font-semibold text-muted/70">Also possible:</span>{' '}
+      {others.map((b, i) => (
+        <span key={i}>
+          <span className="text-text/70">{b.title}</span>
+          {i < others.length - 1 && <span className="text-muted/40 mx-1.5">·</span>}
+        </span>
+      ))}
+    </p>
+  )
+}
+
+// One-line summary of an exercise — name + the cleaner of (feel | area), capped.
+function _exerciseLine(ex) {
+  const cue = ex.feel || ex.area || ''
+  const trimmed = cue.length > 90 ? cue.slice(0, 88).trimEnd() + '…' : cue
+  return { name: ex.name, cue: trimmed }
+}
+
+function GuidanceTab({ guidance, region, phase }) {
+  const navigate = useNavigate()
+  const exercises = (region ? getExercises(region, phase) : []) || []
+  const previewLimit = 5
+  const visible = exercises.slice(0, previewLimit)
+  const more = Math.max(0, exercises.length - previewLimit)
+  const hasGuidance = guidance && Object.keys(guidance).length > 0
+  const hasExercises = exercises.length > 0
+
+  if (!hasGuidance && !hasExercises) {
+    return (
+      <div className="text-sm text-muted text-center py-6">
+        No specific guidance for this phase yet.
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-5">
+      {hasGuidance && Object.entries(guidance).map(([section, items]) => (
+        <div key={section}>
+          <p className="text-xs font-semibold text-text mb-2">{section}</p>
+          <ul className="space-y-1.5">
+            {items.map((item, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-muted leading-relaxed">
+                <span className="w-3.5 h-3.5 rounded border border-accent/40 bg-accent/5 shrink-0 mt-0.5" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+
+      {hasExercises && (
+        <div>
+          <p className="text-xs font-semibold text-text mb-2">
+            What you'll do this phase
+          </p>
+          <ul className="space-y-2">
+            {visible.map((ex, i) => {
+              const { name, cue } = _exerciseLine(ex)
+              return (
+                <li key={i} className="flex items-start gap-2.5 bg-panel/60 border border-outline rounded-lg px-3 py-2">
+                  <span className="w-5 h-5 rounded-full bg-accent/15 border border-accent/25 text-accent text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                    {i + 1}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-text">{name}</p>
+                    {cue && <p className="text-[11px] text-muted mt-0.5 leading-snug">{cue}</p>}
+                  </div>
+                </li>
+              )
+            })}
+            {more > 0 && (
+              <li className="text-[11px] text-muted/70 italic pl-7">+ {more} more in the full plan</li>
+            )}
+          </ul>
+        </div>
+      )}
+
+      {region && (
+        <button
+          type="button"
+          onClick={() => navigate(`/rehab/${_regionToSlug(region)}`)}
+          className="btn-secondary w-full sm:w-auto flex items-center justify-center gap-1.5 text-xs"
+        >
+          Open full rehab plan
+          <ArrowRight size={12} />
+        </button>
+      )}
+    </div>
+  )
+}
+
+const TABS = [
+  { key: 'action',   label: 'Action plan',     phase: 1 },
+  { key: 'training', label: 'Training',        phase: 2 },
+  { key: 'return',   label: 'Return to climb', phase: 3 },
+]
+
+function ResultsTabs({ result, form }) {
+  const [active, setActive] = useState('action')
+  const guidanceFor = {
+    action:   result.plan,
+    training: result.training_modifications,
+    return:   result.return_protocol,
+  }
+  const phaseFor = { action: 1, training: 2, return: 3 }
+  const region = form.region || result.intake?.region
+
+  return (
+    <div className="space-y-4">
+      <div role="tablist" className="grid grid-cols-3 gap-1 bg-panel border border-outline rounded-xl p-1">
+        {TABS.map((t) => {
+          const isActive = active === t.key
+          return (
+            <button
+              key={t.key}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => setActive(t.key)}
+              className={`text-xs font-semibold py-2 rounded-lg transition-colors ${
+                isActive
+                  ? 'bg-panel2 text-accent shadow'
+                  : 'text-muted hover:text-text'
+              }`}
+            >
+              {t.label}
+            </button>
+          )
+        })}
+      </div>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={active}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.15 }}
+          className="bg-panel2/40 border border-outline rounded-xl p-4"
+        >
+          <GuidanceTab
+            guidance={guidanceFor[active]}
+            region={region}
+            phase={phaseFor[active]}
+          />
+        </motion.div>
+      </AnimatePresence>
     </div>
   )
 }
@@ -441,8 +671,9 @@ function Results({ result, form, onRestart, onSave, saveStatus, user }) {
         <button onClick={onRestart} className="btn-secondary text-xs">Start over</button>
       </div>
 
-      <SeverityCard severity={result.severity} />
-
+      {/* Red flags first — when present they're the most important thing on
+          the page; the hero sits below so the user reads "danger" before
+          "guidance plan". */}
       {result.red_flags.length > 0 ? (
         <div className="bg-accent2/10 border border-accent2/30 rounded-xl p-4">
           <div className="flex items-center gap-2 text-accent2 font-semibold mb-3">
@@ -462,54 +693,11 @@ function Results({ result, form, onRestart, onSave, saveStatus, user }) {
         </div>
       ) : null}
 
-      <div>
-        <h3 className="text-xs font-semibold text-muted uppercase tracking-wide mb-3">What it could be</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {result.buckets.map((b, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.07 }}
-              className="card"
-            >
-              <p className="text-sm font-semibold text-text mb-1">{b.title}</p>
-              <p className="text-xs text-muted">{b.why}</p>
-            </motion.div>
-          ))}
-        </div>
-      </div>
+      <ResultsHero result={result} form={form} />
 
-      <div>
-        <h3 className="text-xs font-semibold text-muted uppercase tracking-wide mb-3">What to do</h3>
-        <div className="space-y-2">
-          {Object.entries(result.plan).map(([section, items], i) => (
-            <AccordionSection key={section} title={section} items={items} defaultOpen={i === 0} />
-          ))}
-        </div>
-      </div>
+      <OtherPossibilities buckets={result.buckets} />
 
-      {result.training_modifications && Object.keys(result.training_modifications).length > 0 && (
-        <div>
-          <h3 className="text-xs font-semibold text-muted uppercase tracking-wide mb-3">Training modifications</h3>
-          <div className="space-y-2">
-            {Object.entries(result.training_modifications).map(([section, items]) => (
-              <AccordionSection key={section} title={section} items={items} defaultOpen={false} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {result.return_protocol && Object.keys(result.return_protocol).length > 0 && (
-        <div>
-          <h3 className="text-xs font-semibold text-muted uppercase tracking-wide mb-3">Return to climbing</h3>
-          <div className="space-y-2">
-            {Object.entries(result.return_protocol).map(([section, items]) => (
-              <AccordionSection key={section} title={section} items={items} defaultOpen={false} />
-            ))}
-          </div>
-        </div>
-      )}
+      <ResultsTabs result={result} form={form} />
 
       {result.citations.length > 0 && (
         <div>
@@ -521,17 +709,6 @@ function Results({ result, form, onRestart, onSave, saveStatus, user }) {
               <span key={i} className="text-xs bg-panel border border-outline rounded-full px-3 py-1 text-muted">{c}</span>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* Rehab protocol — inline after results */}
-      {result.intake?.region && (
-        <div className="bg-panel2 border border-outline rounded-2xl p-5">
-          <RehabProtocol
-            region={result.intake.region}
-            severity={result.severity?.level}
-            user={user}
-          />
         </div>
       )}
 
