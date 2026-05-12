@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 
 # Normalized injury intake used across the app (UI -> triage -> retrieval)
@@ -39,7 +39,7 @@ class Intake:
 # A differential surfaced by bucket_possibilities(). Content (matches_if etc)
 # lives in src/bucket_content.py keyed by `id` — keeping branching logic in
 # triage.py separate from the prose the UI displays.
-@dataclass
+@dataclass(frozen=True)
 class Bucket:
     id: str
     title: str
@@ -49,7 +49,7 @@ class Bucket:
     quick_test: str
 
     @classmethod
-    def from_id(cls, id: str, qualifier: str | None = None) -> "Bucket":
+    def from_id(cls, id: str, qualifier: Optional[str] = None) -> "Bucket":
         """Look up bucket content by stable id and construct a Bucket.
 
         `qualifier` is appended to the canonical base title with an em-dash

@@ -30,6 +30,11 @@ class BucketFactoryTests(unittest.TestCase):
         with self.assertRaises(KeyError):
             Bucket.from_id("definitely_not_a_real_id")
 
+    def test_from_id_empty_string_qualifier_treated_as_no_qualifier(self):
+        """An empty-string qualifier should produce just the base title — no trailing em-dash."""
+        b = Bucket.from_id("_test_placeholder", qualifier="")
+        self.assertEqual(b.title, "Test Bucket")
+
 
 if __name__ == "__main__":
     unittest.main()
