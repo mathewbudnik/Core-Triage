@@ -210,6 +210,21 @@ BUCKET_CONTENT: dict[str, dict] = {
         "why": "Pain at the neck-shoulder junction — common from sustained head extension on roofs and overhanging belays.",
         "matches_if": [], "not_likely_if": [], "quick_test": "",
     },
+    "thoracic_spine_hypomobility": {
+        "base_title": "Thoracic spine hypomobility",
+        "why": "Central mid-back stiffness and ache from poor T-spine mobility. Often improves with movement and worsens with sustained postures — the mechanical root behind many of the muscular complaints.",
+        "matches_if": [], "not_likely_if": [], "quick_test": "",
+    },
+    "costovertebral_rib_dysfunction": {
+        "base_title": "Costovertebral / rib joint dysfunction",
+        "why": "Sharp localized pain that follows a rib line, often worse with deep breaths or rotating the trunk. Common from gastons and twisting moves.",
+        "matches_if": [], "not_likely_if": [], "quick_test": "",
+    },
+    "cervicothoracic_junction_strain": {
+        "base_title": "Cervicothoracic junction strain",
+        "why": "Combined neck and upper-back pain at the base of the neck — common from looking up at routes while pulling hard, especially on overhang.",
+        "matches_if": [], "not_likely_if": [], "quick_test": "",
+    },
 
     # ── Lat ────────────────────────────────────────────────────────────────
     "lat_strain": {
@@ -290,12 +305,22 @@ BUCKET_CONTENT: dict[str, dict] = {
     },
     "soleus_strain": {
         "base_title": "Soleus strain",
-        "why": "Deep, lower calf ache from chronic loading — common from long approach days or extended smearing on slab.",
+        "why": "Deep, lower calf ache from chronic loading — often worse when standing or walking with the knee bent (smearing, slab, multi-pitch belays).",
         "matches_if": [], "not_likely_if": [], "quick_test": "",
     },
     "calf_overuse_cramp": {
         "base_title": "Calf overuse / cramping",
-        "why": "Diffuse soreness from new climbing trip volume — long approaches, multi-pitch, or hours on the wall.",
+        "why": "Diffuse soreness or transient cramping from new climbing trip volume — long approaches, multi-pitch, or hours on the wall. Distinct from a true strain — resolves with rest and electrolytes.",
+        "matches_if": [], "not_likely_if": [], "quick_test": "",
+    },
+    "tennis_leg": {
+        "base_title": "Tennis leg — medial gastroc tear at the musculotendinous junction",
+        "why": "Sudden sharp pain mid-calf during a push-off or heel hook — a tear where the gastroc joins the Achilles. Often felt as a snap or sting at the inner calf.",
+        "matches_if": [], "not_likely_if": [], "quick_test": "",
+    },
+    "posterior_tibial_tendinopathy": {
+        "base_title": "Posterior tibial tendinopathy",
+        "why": "Medial calf and inner-ankle ache from heavy approach hiking — pain along the inside of the ankle and lower calf, worse with loaded downhill carries.",
         "matches_if": [], "not_likely_if": [], "quick_test": "",
     },
 
