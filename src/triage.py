@@ -284,6 +284,65 @@ def red_flags(i: Intake) -> List[str]:
             "continuing dynamic overhead climbing."
         )
 
+    # Calf — acute compartment syndrome (disproportionate pain + tightness ± neuro symptoms).
+    if ("calf" in region or "calves" in region) and i.severity >= 8 and (
+        i.numbness == "Yes"
+        or _keyword_affirmed(text, ["tight", "swollen", "rock hard", "won't release", "feels like bursting"])
+    ):
+        flags.append(
+            "Severe disproportionate calf pain with tightness, swelling, or numbness can indicate acute "
+            "compartment syndrome — a surgical emergency requiring immediate evaluation. Do not wait."
+        )
+
+    # Knee — mechanical block (locked, unable to fully extend).
+    if "knee" in region and _keyword_affirmed(text, [
+        "locked", "stuck", "can't straighten", "cannot straighten",
+        "won't extend", "unable to straighten",
+    ]):
+        flags.append(
+            "A knee that won't fully extend (locked or 'stuck') may indicate a meniscal lock, loose body, "
+            "or ACL bucket-handle tear — requires evaluation before any return to load."
+        )
+
+    # Hamstring — proximal avulsion screen (sudden + severe + bruising or audible pop).
+    if "hamstring" in region and i.onset == "Sudden" and i.severity >= 8 and (
+        i.bruising == "Yes" or _keyword_affirmed(text, ["pop", "snap", "tore"])
+    ):
+        flags.append(
+            "Sudden severe proximal hamstring pain with bruising or an audible pop can indicate a proximal "
+            "hamstring avulsion — surgical repair within 2–4 weeks dramatically improves outcomes."
+        )
+
+    # Chest — severe pain or breathing changes (cardiopulmonary screen takes precedence).
+    if "chest" in region and (
+        i.severity >= 8
+        or _keyword_affirmed(text, ["can't breathe", "shortness of breath", "trouble breathing", "short of breath"])
+    ):
+        flags.append(
+            "Severe chest pain or any change in breathing requires immediate medical evaluation to rule out "
+            "cardiac or pulmonary causes before any musculoskeletal diagnosis."
+        )
+
+    # Abdomen — hernia screen (visible bulge during exertion) and visceral pain screen.
+    if "abs" in region or "abdomin" in region:
+        if i.visible_deformity or _keyword_affirmed(text, [
+            "bulge", "lump", "sticks out", "pokes out", "ball under the skin",
+        ]):
+            flags.append(
+                "A visible bulge or lump in the abdomen — especially one that becomes more obvious with "
+                "straining, coughing, or hard pulling — can indicate an abdominal wall hernia. Evaluation "
+                "is recommended before returning to climbing load."
+            )
+        if i.severity >= 8 and _keyword_affirmed(text, [
+            "fever", "vomit", "vomiting", "can't walk", "cannot walk",
+            "radiating", "rigid", "blood",
+        ]):
+            flags.append(
+                "Severe abdominal pain with fever, vomiting, blood, rigidity, or pain that prevents "
+                "walking can indicate a visceral cause (appendicitis, internal injury) — seek immediate "
+                "medical evaluation rather than musculoskeletal triage."
+            )
+
     # Catch-all: ensure that high-severity pain always surfaces at least one flag.
     # classify_severity() can score "severe" on pain alone (score ≥ 8, or sudden ≥ 7) even when
     # none of the specific pattern checks above triggered.  Without this, the results page would
@@ -892,10 +951,10 @@ def get_return_to_climbing_protocol(i: Intake) -> Dict[str, List[str]]:
 
 # ── Heuristic buckets ───────────────────────────────────────────────────────
 
-def bucket_possibilities(i: Intake) -> List[Tuple[str, str]]:
+def bucket_possibilities(i: Intake) -> List[Bucket]:
     """Heuristic likely patterns given region + mechanism. Not a diagnosis."""
     region = i.region.lower()
-    out: List[Tuple[str, str]] = []
+    out: List[Bucket] = []
 
     if "finger" in region:
         text_l = i.free_text.lower()
@@ -909,119 +968,129 @@ def bucket_possibilities(i: Intake) -> List[Tuple[str, str]]:
             or "a4" in text_l
         )
         if pulley_signals:
-            out.append(("Pulley strain/rupture (A2 most likely)", "Pain on palm-side at base of finger, worse with crimping. May have felt a pop."))
+            out.append(Bucket.from_id("pulley_a2", qualifier="most likely"))
         if i.mechanism in {"Pocket", "Asymmetric hold"}:
-            out.append(("Lumbrical tear (possible)", "Deep palm pain that worsens when other fingers are extended — distinctive pattern."))
-        out.append(("Flexor tendon tenosynovitis (possible)", "Diffuse swelling along entire finger, worse after rest then with prolonged activity."))
-        out.append(("Collateral ligament or joint capsule irritation (possible)", "Side-of-joint pain or persistent swelling at a finger joint."))
+            out.append(Bucket.from_id("lumbrical_tear", qualifier="possible"))
+        out.append(Bucket.from_id("flexor_tenosynovitis", qualifier="possible"))
+        out.append(Bucket.from_id("collateral_ligament_finger", qualifier="possible"))
         if "can't straighten" in text_l or "pip" in text_l:
-            out.append(("Boutonnière deformity / central slip rupture (urgent)", "PIP that cannot be extended to neutral — requires splinting within 72 hours."))
+            out.append(Bucket.from_id("boutonniere", qualifier="urgent"))
 
     elif "wrist" in region:
         if i.mechanism in {"Hard crimp", "High volume pulling", "Dynamic catch"}:
-            out.append(("Wrist flexor tendinopathy (common)", "Overuse from high-volume gripping; tender along wrist crease."))
+            out.append(Bucket.from_id("wrist_flexor_tendinopathy", qualifier="common"))
         if i.onset == "Sudden" or i.mechanism in {"Fall", "Dynamic catch"}:
-            out.append(("Scaphoid fracture (must exclude)", "Fall on outstretched hand + radial wrist pain = scaphoid screening required before climbing."))
-        out.append(("TFCC irritation / tear (possible)", "Ulnar-side wrist pain from rotation, sidepulls, or gastons."))
-        out.append(("De Quervain's tenosynovitis (possible)", "Base-of-thumb pain with pinch holds or sidepulls; positive Finkelstein test."))
+            out.append(Bucket.from_id("scaphoid_fracture", qualifier="must exclude"))
+        out.append(Bucket.from_id("tfcc", qualifier="possible"))
+        out.append(Bucket.from_id("de_quervain", qualifier="possible"))
 
     elif "elbow" in region:
         if i.mechanism in {"High volume pulling", "Steep climbing/board", "Campusing"}:
-            out.append(("Medial epicondylitis — Climber's Elbow (most likely)", "Overuse tendinopathy; inside elbow pain worse with gripping and wrist flexion."))
-        out.append(("Lateral epicondylitis (possible)", "Outside elbow pain; less common in climbers but occurs with extensor overuse."))
+            out.append(Bucket.from_id("medial_epicondylitis", qualifier="most likely"))
+        out.append(Bucket.from_id("lateral_epicondylitis", qualifier="possible"))
         if i.numbness == "Yes":
-            out.append(("Cubital tunnel syndrome / ulnar nerve irritation (possible)", "Tingling in ring and pinky fingers with medial elbow pain."))
+            out.append(Bucket.from_id("cubital_tunnel", qualifier="possible"))
         if i.mechanism in {"Hard lock-off", "Campusing", "Dynamic catch"} and i.onset == "Sudden":
-            out.append(("Distal biceps injury (possible)", "Anterior elbow pain with supination weakness — rule out complete rupture if pop occurred."))
+            out.append(Bucket.from_id("distal_biceps", qualifier="possible"))
 
     elif "shoulder" in region:
-        out.append(("Rotator cuff tendinopathy / impingement (most common)", "Painful arc, overhead discomfort — often related to muscle imbalance in climbers."))
+        out.append(Bucket.from_id("rotator_cuff_impingement", qualifier="most common"))
         if i.mechanism in {"Dynamic catch", "Dyno", "Fall"}:
-            out.append(("SLAP tear (possible)", "Deep shoulder clicking with overhead pain after a dynamic load."))
+            out.append(Bucket.from_id("slap_tear", qualifier="possible"))
         if i.instability == "Yes":
-            out.append(("Shoulder instability / Bankart lesion (possible)", "Slipping sensation, especially with arm abducted and externally rotated."))
+            out.append(Bucket.from_id("shoulder_instability_bankart", qualifier="possible"))
         if i.onset == "Sudden" and i.mechanism in {"Fall", "Compression"}:
-            out.append(("AC joint sprain / separation (possible)", "Top-of-shoulder pain after a fall onto the shoulder or outstretched arm."))
+            out.append(Bucket.from_id("ac_joint", qualifier="possible"))
 
     elif "knee" in region:
         if i.mechanism in {"Heel hook"}:
-            out.append(("LCL sprain — Heel hook injury (most likely)", "Outer knee pain from rotational load during heel hook. The most common acute knee injury in boulderers."))
+            out.append(Bucket.from_id("lcl_heel_hook", qualifier="most likely"))
         if i.mechanism in {"Drop knee"}:
-            out.append(("IT band syndrome (possible)", "Lateral knee pain at 30 degrees flexion; worsens with repeated drop knee."))
-            out.append(("Meniscus tear (possible)", "Joint line pain with twisting under load — requires evaluation if significant swelling."))
+            out.append(Bucket.from_id("it_band", qualifier="possible"))
+            out.append(Bucket.from_id("meniscus_tear", qualifier="possible"))
         if i.mechanism in {"High step / rockover", "High volume climbing"}:
-            out.append(("Patellar tendinopathy (possible)", "Below-kneecap pain; worse the day after climbing than during. Heel hooks are primary mechanism."))
+            out.append(Bucket.from_id("patellar_tendinopathy", qualifier="possible"))
         if i.onset == "Sudden" and i.severity >= 6:
-            out.append(("Acute ligament or meniscus injury (consider evaluation)", "Sudden high-pain knee injury warrants evaluation to rule out structural damage."))
+            out.append(Bucket.from_id("acute_knee_ligament_meniscus", qualifier="consider evaluation"))
 
     elif "hip" in region:
         if i.mechanism in {"High step / rockover", "High volume climbing"}:
-            out.append(("Hip flexor strain (common)", "Deep groin ache from repeated high stepping and rockover moves."))
-        out.append(("Hip impingement-type irritation (possible)", "Deep groin pain at end-range hip flexion — common with FAI anatomy."))
+            out.append(Bucket.from_id("hip_flexor_strain", qualifier="common"))
+        out.append(Bucket.from_id("hip_impingement", qualifier="possible"))
         if i.mechanism in {"Stemming / bridging"}:
-            out.append(("Adductor strain (possible)", "Inner thigh pain from wide bridging or stemming positions."))
+            out.append(Bucket.from_id("adductor_strain", qualifier="possible"))
         if i.onset == "Sudden":
-            out.append(("Hip labral irritation (possible)", "Sudden groin pain with clicking or catching at end-range hip flexion."))
+            out.append(Bucket.from_id("hip_labral", qualifier="possible"))
 
     elif "tricep" in region:
         if i.mechanism in {"Hard lock-off", "Campusing", "Steep climbing/board"}:
-            out.append(("Triceps tendinopathy at the elbow (most common)", "Aching at the back of the elbow where the triceps insert — overuse from heavy lock-offs, mantling, and campus board."))
+            out.append(Bucket.from_id("triceps_tendinopathy_elbow", qualifier="most common"))
         if i.onset == "Sudden" and i.mechanism in {"Hard lock-off", "Dynamic catch", "Campusing"}:
-            out.append(("Long head triceps strain (likely)", "Sharp pain in the back of the upper arm during a hard lock-off or dynamic catch — felt as a pull, often in cross-body or overhead positions."))
-        out.append(("Posterior elbow impingement (possible)", "Pinching at the back of the elbow at full extension — more common with hyperextension on lock-offs and mantling."))
-        out.append(("Triceps overuse / DOMS (common)", "Diffuse triceps soreness from a sudden volume increase on overhanging or campus-heavy training."))
+            out.append(Bucket.from_id("long_head_triceps_strain", qualifier="likely"))
+        out.append(Bucket.from_id("posterior_elbow_impingement", qualifier="possible"))
+        out.append(Bucket.from_id("triceps_overuse_doms", qualifier="common"))
 
     elif "upper back" in region or "trap" in region or "rhomboid" in region:
-        out.append(("Rhomboid / mid-trap strain (most common)", "Aching pain between the shoulder blades from steep pulling and lock-offs — climber's classic."))
-        out.append(("Upper trapezius overactivity (common)", "Tension headaches and tight upper traps — overuse from hangboard, sustained overhead positions, and unconscious shrugging."))
+        text_l = i.free_text.lower()
+        out.append(Bucket.from_id("rhomboid_midtrap_strain", qualifier="most common"))
+        out.append(Bucket.from_id("upper_trap_overactivity", qualifier="common"))
+        out.append(Bucket.from_id("thoracic_spine_hypomobility", qualifier="common"))
         if i.mechanism in {"Hard lock-off", "High volume pulling", "Steep climbing/board"}:
-            out.append(("Scapular dyskinesis (possible)", "Poor scap control — often a strength imbalance between overdeveloped lats/pecs and weak rhomboids/serratus. Drives shoulder problems downstream."))
-        out.append(("Levator scapulae strain (possible)", "Pain at the neck-shoulder junction — common from sustained head extension on roofs and overhanging belays."))
+            out.append(Bucket.from_id("scapular_dyskinesis", qualifier="possible"))
+        out.append(Bucket.from_id("levator_scapulae_strain", qualifier="possible"))
+        if _keyword_affirmed(text_l, ["breath", "deep breath", "rib", "twist", "rotation"]):
+            out.append(Bucket.from_id("costovertebral_rib_dysfunction", qualifier="possible"))
+        out.append(Bucket.from_id("cervicothoracic_junction_strain", qualifier="possible"))
 
     elif "lat" in region or "latissimus" in region:
         if i.onset == "Sudden" and i.mechanism in {"Dynamic catch", "Dyno", "Hard lock-off"}:
-            out.append(("Lat strain (most likely)", "Sharp pain at the side of the back or under the armpit after a dynamic catch or full hang. May feel a pull or pop."))
-        out.append(("Teres major strain (possible)", "Often grouped with the lats — pain along the posterior shoulder/armpit, common from overhead pulling."))
-        out.append(("Lat tendinopathy at humerus insertion (possible)", "Aching at the front of the armpit where the lat inserts — overuse from high-volume steep pulling."))
-        out.append(("Posterior chain overuse (common)", "Diffuse lat soreness from sudden volume increases on steep terrain or board climbing."))
+            out.append(Bucket.from_id("lat_strain", qualifier="most likely"))
+        out.append(Bucket.from_id("teres_major_strain", qualifier="possible"))
+        out.append(Bucket.from_id("lat_tendinopathy_humerus", qualifier="possible"))
+        out.append(Bucket.from_id("posterior_chain_overuse", qualifier="common"))
 
     elif "glute" in region or "buttock" in region:
         if i.mechanism in {"Heel hook", "Stemming / bridging"}:
-            out.append(("Piriformis / deep gluteal syndrome (possible)", "Deep buttock pain from repeated external hip rotation — heel hooks and wide drop knees. Can refer down the back of the leg."))
-        out.append(("Gluteus medius strain or weakness (common)", "Pain on the side of the hip, often paired with poor single-leg stability. Climbers under-train this."))
-        out.append(("Greater trochanteric pain syndrome / GTPS (possible)", "Outer hip ache, tender to press on the bony point. Worse with side sleeping or crossed-leg sitting."))
+            out.append(Bucket.from_id("piriformis_deep_gluteal", qualifier="possible"))
+        out.append(Bucket.from_id("glute_med_strain", qualifier="common"))
+        out.append(Bucket.from_id("gtps", qualifier="possible"))
         if i.mechanism in {"Stemming / bridging", "High step / rockover"}:
-            out.append(("SI joint dysfunction (possible)", "Sharp or dull pain at the dimple above the buttock — driven by asymmetric loading like stems and drop knees."))
+            out.append(Bucket.from_id("si_joint_dysfunction", qualifier="possible"))
 
     elif "hamstring" in region:
         if i.mechanism in {"Heel hook"}:
-            out.append(("Proximal hamstring tendinopathy (most likely)", "Pain at the sit-bone where the hamstrings attach — the classic climbing hamstring injury, almost always from heel hooking."))
+            out.append(Bucket.from_id("proximal_hamstring_tendinopathy", qualifier="most likely"))
         if i.onset == "Sudden" and i.mechanism in {"Heel hook"}:
-            out.append(("Biceps femoris (outer hamstring) strain (likely)", "Sudden sharp pain on the outer back of the thigh during a heavy heel hook — the muscle most loaded by heel hook pulling."))
-        out.append(("Hamstring strain — mid-belly (possible)", "Diffuse aching in the back of the thigh from overload or a sudden eccentric load."))
-        out.append(("High hamstring tendinopathy / sit-bone irritation (possible)", "Deep ache at the sit-bone, worse with prolonged sitting and heavy heel hook loading."))
+            out.append(Bucket.from_id("biceps_femoris_strain", qualifier="likely"))
+        out.append(Bucket.from_id("hamstring_midbelly", qualifier="possible"))
+        out.append(Bucket.from_id("high_hamstring_tendinopathy", qualifier="possible"))
 
     elif "calf" in region or "calves" in region or "gastroc" in region or "soleus" in region:
+        text_l = i.free_text.lower()
+        if i.onset == "Sudden" and (i.mechanism in {"Heel hook", "High step / rockover", "Fall"} or _keyword_affirmed(text_l, ["pop", "snap", "felt a tear", "tore"])):
+            out.append(Bucket.from_id("tennis_leg", qualifier="likely"))
         if i.onset == "Sudden":
-            out.append(("Calf strain — gastrocnemius (most likely)", "Sudden sharp pain in the upper calf from a forceful push-off, often during approach hiking or aggressive smearing."))
-            out.append(("Plantaris rupture (possible)", "Sudden snap behind the knee or upper calf — feels like Achilles rupture but is benign and resolves on its own."))
-        out.append(("Soleus strain (possible)", "Deep, lower calf ache from chronic loading — common from long approach days or extended smearing on slab."))
-        out.append(("Calf overuse / cramping (common)", "Diffuse soreness from new climbing trip volume — long approaches, multi-pitch, or hours on the wall."))
+            out.append(Bucket.from_id("calf_strain_gastroc", qualifier="most likely"))
+            out.append(Bucket.from_id("plantaris_rupture", qualifier="possible"))
+        out.append(Bucket.from_id("soleus_strain", qualifier="possible"))
+        if i.mechanism in {"High volume climbing", "High step / rockover"} or _keyword_affirmed(text_l, ["approach", "hiking", "downhill", "long walk"]):
+            out.append(Bucket.from_id("posterior_tibial_tendinopathy", qualifier="possible"))
+        out.append(Bucket.from_id("calf_overuse_cramp", qualifier="common"))
 
     elif "lower back" in region or "back" in region:
-        out.append(("Non-specific lower back pain (most common)", "Load-related — driven by volume on steep terrain or sudden training spikes."))
+        out.append(Bucket.from_id("nonspecific_lower_back", qualifier="most common"))
         if i.mechanism in {"Heel hook", "High step / rockover", "Stemming / bridging"}:
-            out.append(("Lumbar muscle / facet strain (possible)", "Awkward loaded positions strain paraspinal muscles and facet joints."))
+            out.append(Bucket.from_id("lumbar_strain_facet", qualifier="possible"))
         if i.onset == "Sudden":
-            out.append(("Lumbar disc irritation (possible)", "Sudden back pain from a loaded movement may involve disc irritation."))
+            out.append(Bucket.from_id("lumbar_disc", qualifier="possible"))
         if i.numbness == "Yes":
-            out.append(("Nerve root irritation / radiculopathy (possible)", "Numbness or tingling travelling down the leg warrants evaluation — especially if following a dermatomal pattern."))
+            out.append(Bucket.from_id("radiculopathy", qualifier="possible"))
 
     elif "ankle" in region or "foot" in region:
         text_l = i.free_text.lower()
         if i.onset == "Sudden":
-            out.append(("Lateral ankle sprain — ATFL (most common)", "Outer ankle pain after rolling the ankle. Ottawa Rules should be applied to rule out fracture."))
-        out.append(("Peroneal tendon strain (possible)", "Pain behind the lateral ankle — worsens with foot eversion and smearing."))
+            out.append(Bucket.from_id("ankle_sprain_atfl", qualifier="most common"))
+        out.append(Bucket.from_id("peroneal_strain", qualifier="possible"))
         # Plantar fasciitis — surface from mechanism OR from common free-text
         # patterns. Climbers often describe morning heel pain or pain on the
         # bottom of the foot regardless of which mechanism they tag.
@@ -1034,34 +1103,34 @@ def bucket_possibilities(i: Intake) -> List[Tuple[str, str]]:
             or "plantar" in text_l
         )
         if plantar_fasciitis_signals:
-            out.append(("Plantar fasciitis (possible)", "Heel pain worst with first steps in the morning — common from aggressive shoe downsizing or high approach mileage."))
+            out.append(Bucket.from_id("plantar_fasciitis", qualifier="possible"))
         if i.mechanism in {"Approach", "High volume hiking"} or "approach" in text_l or "hiking" in text_l:
-            out.append(("Achilles tendinopathy (possible)", "Posterior heel/calf pain — associated with high-mileage hiking on climbing trips."))
+            out.append(Bucket.from_id("achilles_tendinopathy", qualifier="possible"))
 
     elif "chest" in region:
-        out.append(("Pectoralis minor / costochondral strain (common)", "Overuse from high volume pulling, steep climbing, or a sudden dynamic catch."))
+        out.append(Bucket.from_id("pec_minor_costochondral", qualifier="common"))
         if i.onset == "Sudden" and i.mechanism in {"Dynamic / jumping move", "Powerful move / slap"}:
-            out.append(("Pectoralis major strain or tear (consider evaluation)", "Sudden pop or sharp pain during a powerful cross-body or dynamic move warrants evaluation."))
+            out.append(Bucket.from_id("pec_major_tear", qualifier="consider evaluation"))
         if _keyword_affirmed(i.free_text.lower(), ["rib", "ribs", "breath", "breathe"]):
-            out.append(("Rib stress / costochondritis (possible)", "Localised rib pain that worsens with breathing, coughing, or twisting. Can result from repeated rib cage loading on overhangs."))
+            out.append(Bucket.from_id("rib_costochondritis", qualifier="possible"))
         if i.onset == "Gradual":
-            out.append(("Serratus anterior / intercostal overuse (possible)", "Dull ache along the ribcage from sustained isometric loading on steep terrain."))
+            out.append(Bucket.from_id("serratus_intercostal_overuse", qualifier="possible"))
 
     elif "neck" in region or "cervical" in region:
-        out.append(("Cervical muscle strain (common)", "Neck stiffness and pain from sustained overhead positions or awkward body positions on the wall."))
+        out.append(Bucket.from_id("cervical_muscle_strain", qualifier="common"))
         if i.numbness == "Yes":
-            out.append(("Cervical radiculopathy (possible)", "Numbness or tingling radiating into the arm from a compressed nerve root in the neck — warrants evaluation."))
+            out.append(Bucket.from_id("cervical_radiculopathy", qualifier="possible"))
         if i.severity >= 6 and i.onset == "Sudden":
-            out.append(("Acute cervical disc injury (consider evaluation)", "Sudden high-intensity neck pain may involve disc irritation — imaging recommended."))
+            out.append(Bucket.from_id("acute_cervical_disc", qualifier="consider evaluation"))
         if i.onset == "Gradual":
-            out.append(("Cervical facet irritation (possible)", "Gradually worsening neck stiffness from repeated sustained positions — common in roof climbers."))
+            out.append(Bucket.from_id("cervical_facet", qualifier="possible"))
 
     else:
-        out.append(("Overuse / load spike pattern (common)", "Often driven by sudden increases in intensity, volume, or frequency."))
+        out.append(Bucket.from_id("overuse_load_spike", qualifier="common"))
 
     # If symptoms are severe and sudden, surface a higher-concern bucket first
     if i.onset == "Sudden" and i.severity >= 7:
-        out.insert(0, ("Acute tissue injury (consider evaluation)", "High pain with sudden onset can indicate significant tissue damage."))
+        out.insert(0, Bucket.from_id("acute_tissue_injury", qualifier="consider evaluation"))
 
     return out[:4]
 
@@ -1314,7 +1383,7 @@ def validate_tone_text(text: str, tone: str) -> None:
 
 # ── Output gating helpers (Phase 3) ──────────────────────────────────────────
 
-def format_differentials_for_tone(buckets: List[Tuple[str, str]], tone: str) -> Dict[str, object]:
+def format_differentials_for_tone(buckets: List[Bucket], tone: str) -> Dict[str, object]:
     """Return a tone-gated differentials block.
 
     Mild: top 1, common name, lead-in copy.
@@ -1329,19 +1398,19 @@ def format_differentials_for_tone(buckets: List[Tuple[str, str]], tone: str) -> 
             top = buckets[:1]
             return {
                 "lead": "Based on what you described this sounds like a common climbing injury.",
-                "items": [{"title": t, "why": w} for t, w in top],
+                "items": [{"title": b.title, "why": b.why} for b in top],
             }
         if tone == TONE_INFORMATIVE:
             top = buckets[:2]
             return {
                 "lead": "Some possibilities worth discussing with a provider:",
-                "items": [{"title": t, "why": w} for t, w in top],
+                "items": [{"title": b.title, "why": b.why} for b in top],
             }
         # URGENT
         top = buckets[:3]
         return {
             "lead": "Injury patterns consistent with your description:",
-            "items": [{"title": t, "why": w} for t, w in top],
+            "items": [{"title": b.title, "why": b.why} for b in top],
         }
     except Exception:
         return {"lead": "", "items": []}

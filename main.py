@@ -643,7 +643,7 @@ def triage(request: Request, req: IntakeRequest):
         "intake": asdict(intake),
         "red_flags": flags,
         "severity": severity,
-        "buckets": [{"title": t, "why": w} for t, w in buckets],
+        "buckets": [asdict(b) for b in buckets],
         "plan": plan,
         "training_modifications": training_mods,
         "return_protocol": return_protocol,

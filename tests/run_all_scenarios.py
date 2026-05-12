@@ -69,9 +69,9 @@ def _joined_output(intake: Intake) -> str:
     for flag in red_flags(intake):
         parts.append(flag)
     # Bucket possibilities
-    for title, why in bucket_possibilities(intake):
-        parts.append(title)
-        parts.append(why)
+    for b in bucket_possibilities(intake):
+        parts.append(b.title)
+        parts.append(b.why)
     # Conservative plan
     for section, items in conservative_plan(intake).items():
         parts.append(section)

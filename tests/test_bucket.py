@@ -43,5 +43,45 @@ class BucketFactoryTests(unittest.TestCase):
             self.assertIsInstance(entry["why"], str, f"{bucket_id} why not str")
 
 
+class BucketPossibilitiesShapeTests(unittest.TestCase):
+    """Verify bucket_possibilities() emits Bucket instances with stable IDs."""
+
+    def _make_intake(self, region: str, mechanism: str = "Hard crimp",
+                     onset: str = "Sudden", severity: int = 5):
+        from src.triage import Intake
+        return Intake(
+            region=region, onset=onset, pain_type="Sharp",
+            severity=severity, swelling="No", bruising="No",
+            numbness="No", weakness="No", instability="No",
+            mechanism=mechanism, free_text="",
+        )
+
+    def test_finger_crimp_returns_bucket_instances(self):
+        from src.triage import bucket_possibilities, Bucket
+        buckets = bucket_possibilities(self._make_intake("Finger", "Hard crimp"))
+        self.assertGreater(len(buckets), 0)
+        for b in buckets:
+            self.assertIsInstance(b, Bucket)
+            self.assertTrue(b.id, f"Bucket {b.title} has empty id")
+
+    def test_finger_crimp_surfaces_pulley_a2(self):
+        from src.triage import bucket_possibilities
+        buckets = bucket_possibilities(self._make_intake("Finger", "Hard crimp"))
+        ids = [b.id for b in buckets]
+        self.assertIn("pulley_a2", ids)
+
+    def test_heel_hook_knee_surfaces_lcl(self):
+        from src.triage import bucket_possibilities
+        buckets = bucket_possibilities(self._make_intake("Knee", "Heel hook"))
+        ids = [b.id for b in buckets]
+        self.assertIn("lcl_heel_hook", ids)
+
+    def test_severe_sudden_prepends_acute_tissue_injury(self):
+        from src.triage import bucket_possibilities
+        intake = self._make_intake("Finger", "Hard crimp", onset="Sudden", severity=8)
+        buckets = bucket_possibilities(intake)
+        self.assertEqual(buckets[0].id, "acute_tissue_injury")
+
+
 if __name__ == "__main__":
     unittest.main()

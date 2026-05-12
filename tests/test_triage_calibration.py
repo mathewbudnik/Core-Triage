@@ -20,6 +20,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from src.triage import (  # noqa: E402
     Intake,
+    Bucket,
     classify_severity,
     classify_severity_v2,
     classify_tone,
@@ -292,25 +293,32 @@ class CalibrationToneTests(unittest.TestCase):
 
 class OutputGatingTests(unittest.TestCase):
     def test_mild_shows_one_differential(self):
-        out = format_differentials_for_tone(
-            [("A2 pulley", "x"), ("Boutonniere", "y"), ("TFCC", "z")],
-            TONE_REASSURING,
-        )
+        buckets = [
+            Bucket.from_id("pulley_a2"),
+            Bucket.from_id("boutonniere"),
+            Bucket.from_id("tfcc"),
+        ]
+        out = format_differentials_for_tone(buckets, TONE_REASSURING)
         self.assertEqual(len(out["items"]), 1)
         self.assertIn("common climbing injury", out["lead"])
 
     def test_moderate_shows_two_differentials(self):
-        out = format_differentials_for_tone(
-            [("A2 pulley", "x"), ("Boutonniere", "y"), ("TFCC", "z")],
-            TONE_INFORMATIVE,
-        )
+        buckets = [
+            Bucket.from_id("pulley_a2"),
+            Bucket.from_id("boutonniere"),
+            Bucket.from_id("tfcc"),
+        ]
+        out = format_differentials_for_tone(buckets, TONE_INFORMATIVE)
         self.assertEqual(len(out["items"]), 2)
 
     def test_severe_shows_three_differentials(self):
-        out = format_differentials_for_tone(
-            [("A2 pulley", "x"), ("Boutonniere", "y"), ("TFCC", "z"), ("DRUJ", "q")],
-            TONE_URGENT,
-        )
+        buckets = [
+            Bucket.from_id("pulley_a2"),
+            Bucket.from_id("boutonniere"),
+            Bucket.from_id("tfcc"),
+            Bucket.from_id("de_quervain"),
+        ]
+        out = format_differentials_for_tone(buckets, TONE_URGENT)
         self.assertEqual(len(out["items"]), 3)
 
     def test_severe_suppresses_rehab(self):
