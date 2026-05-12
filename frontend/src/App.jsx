@@ -1,27 +1,42 @@
-import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef, lazy, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Routes, Route, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom'
-import { MessageSquare, Clock, Info, AlertTriangle, Menu, X, LogIn, LogOut, User, Activity, Dumbbell, FileText, Stethoscope, UserCircle2, ChevronRight, Shield, Bug } from 'lucide-react'
+import { MessageSquare, Clock, Info, AlertTriangle, Menu, X, LogIn, LogOut, User, Activity, Dumbbell, FileText, Stethoscope, UserCircle2, ChevronRight, Shield, Bug, Loader2 } from 'lucide-react'
 import * as Sentry from '@sentry/react'
 import { getHealth, getMe, acceptDisclaimer } from './api'
 import Landing from './components/Landing'
 import Logo from './components/Logo'
-import TriageTab from './components/TriageTab'
-import ChatTab from './components/ChatTab'
-import HistoryTab from './components/HistoryTab'
-import AboutTab from './components/AboutTab'
 import AuthModal from './components/AuthModal'
 import TipCard from './components/TipCard'
-import TrainTab from './components/TrainTab'
-import RehabTab from './components/RehabTab'
 import DisclaimerModal from './components/DisclaimerModal'
 import LegalModal from './components/LegalModal'
-import VerifyEmailPage from './components/VerifyEmailPage'
 import EmailVerificationBanner from './components/EmailVerificationBanner'
-import BillingReturnPage from './components/BillingReturnPage'
 import { PRIVACY_POLICY, TERMS_OF_SERVICE } from './data/legal'
 import { openBillingPortal } from './api'
 import UpgradeModal from './components/UpgradeModal'
+
+// Lazy-loaded routes — each tab + the standalone pages download only when
+// the user navigates to them. First-paint bundle drops dramatically because
+// users don't pay for tabs they may never visit.
+const TriageTab         = lazy(() => import('./components/TriageTab'))
+const RehabTab          = lazy(() => import('./components/RehabTab'))
+const TrainTab          = lazy(() => import('./components/TrainTab'))
+const ChatTab           = lazy(() => import('./components/ChatTab'))
+const HistoryTab        = lazy(() => import('./components/HistoryTab'))
+const AboutTab          = lazy(() => import('./components/AboutTab'))
+const VerifyEmailPage   = lazy(() => import('./components/VerifyEmailPage'))
+const BillingReturnPage = lazy(() => import('./components/BillingReturnPage'))
+
+// Tiny full-screen loader used as the Suspense fallback while a route chunk
+// is fetched. Sized to match the visual weight of a real tab so the layout
+// doesn't pop.
+function RouteLoading() {
+  return (
+    <div className="flex items-center justify-center h-[60vh]">
+      <Loader2 size={20} className="text-accent animate-spin" />
+    </div>
+  )
+}
 
 const TABS = [
   { id: 'triage',  label: 'Triage',  icon: Activity    },
@@ -185,13 +200,25 @@ export default function App() {
   // Standalone routes (verify-email, billing/*) bypass sidebar/disclaimer chrome
   // entirely — user got here from an external link and shouldn't see the rest.
   if (location.pathname === '/verify-email') {
-    return <VerifyEmailPage onDone={() => navigate('/')} />
+    return (
+      <Suspense fallback={<RouteLoading />}>
+        <VerifyEmailPage onDone={() => navigate('/')} />
+      </Suspense>
+    )
   }
   if (location.pathname === '/billing/success') {
-    return <BillingReturnPage outcome="success" onDone={() => navigate('/')} />
+    return (
+      <Suspense fallback={<RouteLoading />}>
+        <BillingReturnPage outcome="success" onDone={() => navigate('/')} />
+      </Suspense>
+    )
   }
   if (location.pathname === '/billing/cancel') {
-    return <BillingReturnPage outcome="cancel" onDone={() => navigate('/')} />
+    return (
+      <Suspense fallback={<RouteLoading />}>
+        <BillingReturnPage outcome="cancel" onDone={() => navigate('/')} />
+      </Suspense>
+    )
   }
 
   // Show disclaimer before anything else
@@ -507,18 +534,22 @@ export default function App() {
         </header>
 
         {/* Tab content — driven by URL routes. Each tab handles its own
-            internal navigation (e.g. /triage/onset, /rehab/finger). */}
+            internal navigation (e.g. /triage/onset, /rehab/finger). The
+            Suspense wrapper covers the lazy-load gap as a route's chunk
+            downloads on first navigation to it. */}
         <div className="flex-1 overflow-auto">
-          <Routes>
-            <Route path="/triage/*"  element={<TriageTab k={k} user={user} />} />
-            <Route path="/rehab/*"   element={<RehabTab user={user} onLoginClick={() => setShowAuth(true)} />} />
-            <Route path="/train"     element={<TrainTab user={user} dbReady={dbReady} onLoginClick={() => setShowAuth(true)} />} />
-            <Route path="/chat"      element={<ChatTab k={k} user={user} onLoginClick={() => setShowAuth(true)} />} />
-            <Route path="/history/*" element={<HistoryTab dbReady={dbReady} user={user} onLoginClick={() => setShowAuth(true)} />} />
-            <Route path="/about"     element={<AboutTab />} />
-            {/* Any unknown path lands the user on Triage. */}
-            <Route path="*"          element={<Navigate to="/triage" replace />} />
-          </Routes>
+          <Suspense fallback={<RouteLoading />}>
+            <Routes>
+              <Route path="/triage/*"  element={<TriageTab k={k} user={user} />} />
+              <Route path="/rehab/*"   element={<RehabTab user={user} onLoginClick={() => setShowAuth(true)} />} />
+              <Route path="/train"     element={<TrainTab user={user} dbReady={dbReady} onLoginClick={() => setShowAuth(true)} />} />
+              <Route path="/chat"      element={<ChatTab k={k} user={user} onLoginClick={() => setShowAuth(true)} />} />
+              <Route path="/history/*" element={<HistoryTab dbReady={dbReady} user={user} onLoginClick={() => setShowAuth(true)} />} />
+              <Route path="/about"     element={<AboutTab />} />
+              {/* Any unknown path lands the user on Triage. */}
+              <Route path="*"          element={<Navigate to="/triage" replace />} />
+            </Routes>
+          </Suspense>
         </div>
       </main>
 
