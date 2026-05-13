@@ -225,5 +225,58 @@ class ExercisePoolSchemaTests(unittest.TestCase):
                     self.assertIn(e, VALID_EQUIPMENT, f"{label}: '{e}' is not valid equipment")
 
 
+class BlockCoverageTests(unittest.TestCase):
+    """Sweep experience × discipline × equipment-subsets and assert every block
+    returns at least one exercise for every combination. Guards against
+    fallback-chain leaks and discipline tags that accidentally exclude
+    a valid user."""
+
+    EXPERIENCE_LEVELS = ["beginner", "intermediate", "advanced", "elite"]
+    DISCIPLINES = ["bouldering", "sport", "trad", "competition"]
+    EQUIPMENT_SUBSETS = [
+        [],  # nothing
+        ["hangboard"],
+        ["gym_membership"],
+        ["hangboard", "campus_board", "gym_membership"],
+        ["hangboard", "home_wall", "gym_membership", "outdoor_crag", "campus_board", "system_wall"],  # full kit
+    ]
+
+    BLOCK_NAMES = ["hangboard", "power", "endurance", "strength", "footwork", "mental"]
+
+    def _get_block(self, name):
+        from src import coach
+        return getattr(coach, f"_{name}_block")
+
+    def test_every_block_returns_nonempty_for_every_combination(self):
+        from itertools import product
+        for block_name in self.BLOCK_NAMES:
+            block = self._get_block(block_name)
+            for exp, disc, equip in product(self.EXPERIENCE_LEVELS, self.DISCIPLINES, self.EQUIPMENT_SUBSETS):
+                result = block(exp, disc, equip)
+                self.assertGreaterEqual(
+                    len(result), 1,
+                    f"{block_name} returned empty for ({exp}, {disc}, {equip!r})",
+                )
+
+    def test_returned_exercises_have_canonical_fields_only(self):
+        """Tag fields must be stripped from the returned exercises so the
+        generated plan dict matches the legacy schema."""
+        for block_name in self.BLOCK_NAMES:
+            block = self._get_block(block_name)
+            result = block("intermediate", "bouldering", ["hangboard", "campus_board"])
+            for ex in result:
+                for tag_key in ("disciplines", "min_experience", "max_experience", "equipment_needed"):
+                    self.assertNotIn(
+                        tag_key, ex,
+                        f"{block_name}: tag field '{tag_key}' leaked into returned exercise '{ex.get('exercise', '?')}'",
+                    )
+                # Canonical fields must survive
+                for canonical in ("exercise", "detail", "sets", "reps", "rest_seconds", "effort_note", "benchmark"):
+                    self.assertIn(
+                        canonical, ex,
+                        f"{block_name}: canonical field '{canonical}' missing from '{ex.get('exercise', '?')}'",
+                    )
+
+
 if __name__ == "__main__":
     unittest.main()
