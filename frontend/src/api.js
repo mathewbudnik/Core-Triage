@@ -70,6 +70,18 @@ export const getActivePlan = () => request('GET', '/api/plans/active')
 export const logTraining = (payload) => request('POST', '/api/training', payload)
 export const getTrainingLogs = (limit = 30) => request('GET', `/api/training?limit=${limit}`)
 
+// Train stats + leaderboard
+export const getTrainingStats = () => request('GET', '/api/training/stats')
+export const getLeaderboard = ({ window = 'week', cohort, limit = 10 } = {}) => {
+  const params = new URLSearchParams({ window, limit })
+  if (cohort) params.set('cohort', cohort)
+  return request('GET', `/api/training/leaderboard?${params}`)
+}
+
+// Display name + leaderboard privacy
+export const setDisplayName       = (name)   => request('PATCH', '/api/auth/me/display-name',       { display_name: name })
+export const setLeaderboardPrivate = (priv)  => request('PATCH', '/api/auth/me/leaderboard-private', { private: !!priv })
+
 // Billing (Stripe)
 export const createCheckoutSession = (product) => request('POST', '/api/billing/checkout-session', { product })
 export const openBillingPortal = () => request('POST', '/api/billing/portal', {})

@@ -146,6 +146,23 @@ def init_db() -> None:
                 "TEXT NULL")  # 'pro' | 'coaching' | NULL
             _add_column_if_missing(cur, "users", "free_chat_used",
                 "INT DEFAULT 0")
+            # Train tab — leaderboard identity. display_name is what shows
+            # in leaderboards; NULL until set (existing users get prompted
+            # on next login). leaderboard_private hides the name but keeps
+            # the user's stats in the cohort aggregate.
+            _add_column_if_missing(cur, "users", "display_name",
+                "TEXT NULL")
+            _add_column_if_missing(cur, "users", "leaderboard_private",
+                "BOOLEAN DEFAULT FALSE")
+            # Case-insensitive uniqueness on display_name. Allows NULLs
+            # (users who haven't set one yet) — partial index.
+            cur.execute(
+                """
+                CREATE UNIQUE INDEX IF NOT EXISTS users_display_name_lower_idx
+                ON users (LOWER(display_name))
+                WHERE display_name IS NOT NULL;
+                """
+            )
 
             # ── Security log ───────────────────────────────────────────────
             cur.execute(
@@ -893,6 +910,380 @@ def get_training_logs(user_id: int, limit: int = 30) -> List[Dict[str, Any]]:
         }
         for r in rows
     ]
+
+
+# ---------------------------------------------------------------------------
+# Train stats + leaderboard helpers
+# ---------------------------------------------------------------------------
+
+
+# Window → SQL filter snippet. "all" means no time filter.
+_WINDOW_SQL = {
+    "week":  "tl.created_at >= NOW() - INTERVAL '7 days'",
+    "month": "tl.created_at >= NOW() - INTERVAL '30 days'",
+    "all":   "TRUE",
+}
+
+
+def _hours_in_window(user_id: int, window: str) -> Dict[str, Any]:
+    """Sum of training-log duration (hours) + session count for one user in
+    the given window. Window must be one of: week, month, all."""
+    where = _WINDOW_SQL.get(window, _WINDOW_SQL["week"])
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT COALESCE(SUM(tl.duration_min), 0) / 60.0 AS hours,
+                       COUNT(tl.id) AS sessions
+                FROM training_logs tl
+                WHERE tl.user_id = %s AND {where};
+                """,
+                (int(user_id),),
+            )
+            row = cur.fetchone()
+    return {"hours": round(float(row[0]), 1), "sessions": int(row[1])}
+
+
+def _current_streak_days(user_id: int) -> int:
+    """Count of consecutive calendar days ending today (or yesterday if no
+    log today) where the user has at least one training_log entry."""
+    from datetime import date, timedelta
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT DISTINCT DATE(created_at AT TIME ZONE 'UTC') AS d
+                FROM training_logs
+                WHERE user_id = %s
+                ORDER BY d DESC
+                LIMIT 365;
+                """,
+                (int(user_id),),
+            )
+            days = [r[0] for r in cur.fetchall()]
+    if not days:
+        return 0
+    today = date.today()
+    # Today or yesterday counts as the anchor (user might not have logged today yet).
+    if days[0] != today and days[0] != today - timedelta(days=1):
+        return 0
+    streak = 1
+    for i in range(1, len(days)):
+        if days[i] == days[i - 1] - timedelta(days=1):
+            streak += 1
+        else:
+            break
+    return streak
+
+
+def _trend_8_weeks(user_id: int, cohort: Optional[str]) -> List[Dict[str, Any]]:
+    """User hours per week for the last 8 ISO weeks (oldest first) plus the
+    cohort's mean hours per user for the same week. Missing weeks → 0."""
+    from datetime import date, timedelta
+    today = date.today()
+    weeks = []
+    for i in range(7, -1, -1):
+        start = today - timedelta(days=today.weekday()) - timedelta(weeks=i)
+        end = start + timedelta(days=7)
+        weeks.append((start, end))
+
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT
+                    DATE(created_at AT TIME ZONE 'UTC') AS d,
+                    SUM(duration_min) / 60.0 AS h
+                FROM training_logs
+                WHERE user_id = %s
+                  AND created_at >= %s
+                GROUP BY d
+                ORDER BY d;
+                """,
+                (int(user_id), weeks[0][0]),
+            )
+            user_by_day = {r[0]: float(r[1]) for r in cur.fetchall()}
+
+            peer_avgs = {}
+            if cohort and cohort != "global":
+                cur.execute(
+                    """
+                    SELECT wk, AVG(per_user_hours)
+                    FROM (
+                        SELECT
+                            tl.user_id,
+                            DATE_TRUNC('week', tl.created_at AT TIME ZONE 'UTC')::date AS wk,
+                            SUM(tl.duration_min) / 60.0 AS per_user_hours
+                        FROM training_logs tl
+                        JOIN athlete_profiles p ON p.user_id = tl.user_id
+                        WHERE p.experience_level = %s
+                          AND tl.created_at >= %s
+                        GROUP BY tl.user_id, wk
+                    ) sub
+                    GROUP BY wk;
+                    """,
+                    (cohort, weeks[0][0]),
+                )
+                for r in cur.fetchall():
+                    peer_avgs[r[0]] = float(r[1])
+
+    result = []
+    for start, end in weeks:
+        user_hours = sum(h for d, h in user_by_day.items() if start <= d < end)
+        peer_avg = peer_avgs.get(start, 0.0)
+        result.append({
+            "week_start":     str(start),
+            "hours":          round(user_hours, 1),
+            "peer_avg_hours": round(peer_avg, 1),
+        })
+    return result
+
+
+def _percentile_in_cohort(user_id: int, cohort: Optional[str], window: str) -> int:
+    """User's hours-percentile within their cohort, in the given window.
+    0–100 (100 = at top). Returns 0 if cohort is empty / global."""
+    where = _WINDOW_SQL.get(window, _WINDOW_SQL["week"])
+    if not cohort or cohort == "global":
+        return 0
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                WITH user_hours AS (
+                    SELECT p.user_id,
+                           COALESCE(SUM(tl.duration_min), 0) / 60.0 AS h
+                    FROM athlete_profiles p
+                    LEFT JOIN training_logs tl
+                      ON tl.user_id = p.user_id AND {where}
+                    WHERE p.experience_level = %s
+                    GROUP BY p.user_id
+                )
+                SELECT
+                    (SELECT h FROM user_hours WHERE user_id = %s) AS my,
+                    COUNT(*) AS total,
+                    SUM(CASE WHEN h < (SELECT h FROM user_hours WHERE user_id = %s) THEN 1 ELSE 0 END) AS below
+                FROM user_hours;
+                """,
+                (cohort, int(user_id), int(user_id)),
+            )
+            row = cur.fetchone()
+    if not row or not row[1]:
+        return 0
+    my, total, below = row[0], int(row[1]), int(row[2] or 0)
+    if my is None or total <= 1:
+        return 0
+    return int(round(100 * below / max(total - 1, 1)))
+
+
+def _personal_records(user_id: int) -> Dict[str, Any]:
+    """All-time records: longest streak, most hours in a calendar week,
+    most sessions in a calendar week."""
+    from datetime import timedelta
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT DISTINCT DATE(created_at AT TIME ZONE 'UTC') AS d
+                FROM training_logs
+                WHERE user_id = %s
+                ORDER BY d;
+                """,
+                (int(user_id),),
+            )
+            days = [r[0] for r in cur.fetchall()]
+            longest = 0
+            run = 0
+            for i, d in enumerate(days):
+                if i == 0 or d != days[i - 1] + timedelta(days=1):
+                    run = 1
+                else:
+                    run += 1
+                longest = max(longest, run)
+
+            cur.execute(
+                """
+                SELECT
+                    DATE_TRUNC('week', created_at AT TIME ZONE 'UTC') AS wk,
+                    SUM(duration_min) / 60.0 AS hours,
+                    COUNT(*) AS sessions
+                FROM training_logs
+                WHERE user_id = %s
+                GROUP BY wk;
+                """,
+                (int(user_id),),
+            )
+            rows = cur.fetchall()
+            most_hours    = max((float(r[1]) for r in rows), default=0.0)
+            most_sessions = max((int(r[2])  for r in rows), default=0)
+
+    return {
+        "longest_streak_days":   int(longest),
+        "most_hours_in_week":    round(most_hours, 1),
+        "most_sessions_in_week": int(most_sessions),
+    }
+
+
+def get_user_cohort(user_id: int) -> Optional[str]:
+    """The user's experience_level from athlete_profiles, or None if
+    they haven't set up a profile yet."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT experience_level FROM athlete_profiles WHERE user_id = %s;",
+                (int(user_id),),
+            )
+            row = cur.fetchone()
+    return row[0] if row and row[0] else None
+
+
+def get_training_stats(user_id: int) -> Dict[str, Any]:
+    """Full personal-dashboard payload — see /api/training/stats."""
+    cohort = get_user_cohort(user_id)
+    return {
+        "this_week":             _hours_in_window(user_id, "week"),
+        "this_month":            _hours_in_window(user_id, "month"),
+        "all_time":              _hours_in_window(user_id, "all"),
+        "current_streak_days":   _current_streak_days(user_id),
+        "trend_8_weeks":         _trend_8_weeks(user_id, cohort),
+        "percentile_this_week":  _percentile_in_cohort(user_id, cohort, "week"),
+        "cohort":                cohort,
+        "personal_records":      _personal_records(user_id),
+    }
+
+
+def get_leaderboard(
+    *,
+    viewer_user_id: int,
+    window: str = "week",
+    cohort: Optional[str] = None,
+    limit: int = 10,
+) -> Dict[str, Any]:
+    """Top N + the viewer's own row. cohort=None defaults to viewer's
+    own experience_level. Pass cohort='global' to skip the cohort filter."""
+    where_time = _WINDOW_SQL.get(window, _WINDOW_SQL["week"])
+    is_global = cohort == "global"
+    effective_cohort = cohort if cohort is not None else get_user_cohort(viewer_user_id)
+
+    cohort_join   = "JOIN athlete_profiles p ON p.user_id = u.id" if not is_global else "LEFT JOIN athlete_profiles p ON p.user_id = u.id"
+    cohort_filter = "" if is_global else "AND p.experience_level = %(cohort)s"
+
+    base = f"""
+        SELECT
+            u.id,
+            u.display_name,
+            u.leaderboard_private,
+            COALESCE(SUM(tl.duration_min), 0) / 60.0 AS hours
+        FROM users u
+        {cohort_join}
+        LEFT JOIN training_logs tl
+          ON tl.user_id = u.id AND {where_time}
+        WHERE u.display_name IS NOT NULL
+          {cohort_filter}
+        GROUP BY u.id, u.display_name, u.leaderboard_private
+        HAVING COALESCE(SUM(tl.duration_min), 0) > 0
+        ORDER BY hours DESC
+    """
+
+    params = {"cohort": effective_cohort}
+
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(base + " LIMIT %(limit)s;", {**params, "limit": int(limit)})
+            top_rows = cur.fetchall()
+            top = [
+                {
+                    "rank":         i + 1,
+                    "user_id":      int(r[0]),
+                    "display_name": "Private climber" if r[2] else r[1],
+                    "is_private":   bool(r[2]),
+                    "hours":        round(float(r[3]), 1),
+                }
+                for i, r in enumerate(top_rows)
+            ]
+
+            cur.execute(
+                f"""
+                WITH ranked AS (
+                    SELECT
+                        u.id,
+                        u.display_name,
+                        u.leaderboard_private,
+                        COALESCE(SUM(tl.duration_min), 0) / 60.0 AS hours,
+                        RANK() OVER (ORDER BY COALESCE(SUM(tl.duration_min), 0) DESC) AS r
+                    FROM users u
+                    {cohort_join}
+                    LEFT JOIN training_logs tl
+                      ON tl.user_id = u.id AND {where_time}
+                    WHERE u.display_name IS NOT NULL
+                      {cohort_filter}
+                    GROUP BY u.id, u.display_name, u.leaderboard_private
+                )
+                SELECT id, display_name, leaderboard_private, hours, r
+                FROM ranked
+                WHERE id = %(viewer)s;
+                """,
+                {**params, "viewer": int(viewer_user_id)},
+            )
+            mr = cur.fetchone()
+
+    me = None
+    if mr:
+        me = {
+            "rank":         int(mr[4]) if mr[3] and mr[3] > 0 else None,
+            "user_id":      int(mr[0]),
+            "display_name": "Private climber" if mr[2] else mr[1],
+            "is_private":   bool(mr[2]),
+            "hours":        round(float(mr[3]), 1),
+        }
+
+    return {"window": window, "cohort": effective_cohort or "global", "top": top, "me": me}
+
+
+def set_display_name(user_id: int, display_name: str) -> bool:
+    """Save the user's display name. Caller validates; uniqueness violation
+    surfaces as psycopg2.errors.UniqueViolation (sqlstate 23505)."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE users SET display_name = %s WHERE id = %s;",
+                (display_name, int(user_id)),
+            )
+            updated = cur.rowcount > 0
+        conn.commit()
+    return updated
+
+
+def get_display_name(user_id: int) -> Optional[str]:
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT display_name FROM users WHERE id = %s;",
+                (int(user_id),),
+            )
+            row = cur.fetchone()
+    return row[0] if row else None
+
+
+def set_leaderboard_private(user_id: int, private: bool) -> None:
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE users SET leaderboard_private = %s WHERE id = %s;",
+                (bool(private), int(user_id)),
+            )
+        conn.commit()
+
+
+def get_leaderboard_private(user_id: int) -> bool:
+    """Whether the user's leaderboard rows show as 'Private climber'."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT COALESCE(leaderboard_private, FALSE) FROM users WHERE id = %s;",
+                (int(user_id),),
+            )
+            row = cur.fetchone()
+    return bool(row[0]) if row else False
 
 
 # ---------------------------------------------------------------------------

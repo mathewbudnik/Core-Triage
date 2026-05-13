@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, ChevronDown, Clock, Flame, RefreshCw, Target, Tag } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronDown, Clock, Flame, RefreshCw, Target, Tag, PlayCircle } from 'lucide-react'
 import TrainingLogEntry from './TrainingLogEntry'
+import { buildExerciseVideoUrl } from '../data/exercises'
 
 const TYPE_COLOR = {
   hangboard: 'text-accent border-accent/40 bg-accent/8',
@@ -58,6 +59,15 @@ function ExerciseCard({ ex }) {
         <span className="text-accent3">Rest {ex.rest_seconds}s</span>
         <span className="text-muted">· {ex.effort_note}</span>
       </div>
+      <a
+        href={buildExerciseVideoUrl(ex)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/30 text-accent text-xs font-semibold hover:bg-accent/20 hover:border-accent/50 transition-colors"
+      >
+        <PlayCircle size={14} />
+        Watch demo
+      </a>
       {ex.benchmark && (
         <p className="text-xs text-muted/70 italic border-t border-outline pt-1.5 mt-1">{ex.benchmark}</p>
       )}
@@ -249,7 +259,7 @@ function WeekSummary({ meta, week, weekSessions }) {
   )
 }
 
-export default function PlanView({ plan, onRefresh }) {
+export default function PlanView({ plan, onRefresh, onSessionLogged }) {
   const sessions = plan?.plan_data?.sessions || []
   const totalWeeks = plan?.duration_weeks || 4
   const weekMeta = plan?.plan_data?.week_meta || []
@@ -347,7 +357,10 @@ export default function PlanView({ plan, onRefresh }) {
                     <SessionDetail
                       session={session}
                       plan={plan}
-                      onLogSaved={() => setSelectedIdx(null)}
+                      onLogSaved={() => {
+                        setSelectedIdx(null)
+                        onSessionLogged?.()
+                      }}
                     />
                   </div>
                 </motion.div>

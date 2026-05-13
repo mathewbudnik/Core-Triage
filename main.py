@@ -60,6 +60,12 @@ from database import (
     get_thread_by_user,
     get_thread_messages,
     get_training_logs,
+    get_training_stats,
+    get_leaderboard,
+    get_display_name,
+    get_leaderboard_private,
+    set_display_name,
+    set_leaderboard_private,
     get_stripe_customer_id,
     get_user_by_email,
     get_user_by_id,
@@ -428,6 +434,14 @@ class CoachReplyRequest(BaseModel):
     content: str
 
 
+class DisplayNameRequest(BaseModel):
+    display_name: str
+
+
+class LeaderboardPrivacyRequest(BaseModel):
+    private: bool
+
+
 # ---------------------------------------------------------------------------
 # Auth endpoints  (rate limited: 5/minute)
 # ---------------------------------------------------------------------------
@@ -476,6 +490,10 @@ def register(request: Request, req: RegisterRequest):
             "tier": "free",
             "is_coach": is_coach,
             "email_verified": False,
+            # New users haven't picked a display name; frontend uses this to
+            # prompt them. leaderboard_private defaults to False in the DB.
+            "display_name": None,
+            "leaderboard_private": False,
         },
     }
 
@@ -527,6 +545,8 @@ def login(request: Request, req: LoginRequest):
             "tier": tier,
             "is_coach": get_user_role(user[0]) == "coach",
             "email_verified": is_email_verified(user[0]),
+            "display_name": get_display_name(user[0]),
+            "leaderboard_private": get_leaderboard_private(user[0]),
         },
     }
 
@@ -542,6 +562,11 @@ def me(request: Request, user: Dict = Depends(get_current_user)):
         "tier": db_user[3] if db_user else "free",
         "is_coach": get_user_role(user["id"]) == "coach",
         "email_verified": is_email_verified(user["id"]),
+        # display_name is NULL until set — frontend uses this to decide
+        # whether to show the migration prompt modal.
+        "display_name": get_display_name(user["id"]),
+        # leaderboard_private — current state of the user's privacy toggle.
+        "leaderboard_private": get_leaderboard_private(user["id"]),
     }
 
 
@@ -954,6 +979,22 @@ def get_plan(request: Request, user: Dict = Depends(get_current_user)):
 @app.post("/api/training")
 @limiter.limit("60/minute")
 def log_session(request: Request, req: TrainingLogRequest, user: Dict = Depends(get_current_user)):
+    # Anti-abuse validation — prevent log inflation that would skew leaderboards.
+    # Max 12h per single logged session (anything longer is clearly an outlier).
+    if req.duration_min is not None and (req.duration_min < 0 or req.duration_min > 720):
+        raise HTTPException(status_code=400, detail="Session length must be between 0 and 720 minutes (12 hours).")
+    # Clamp intensity defensively (frontend already constrains 1-10).
+    if req.intensity is not None and (req.intensity < 1 or req.intensity > 10):
+        raise HTTPException(status_code=400, detail="Intensity must be between 1 and 10.")
+    # No future-dated sessions.
+    if req.date:
+        try:
+            session_date = datetime.fromisoformat(req.date).date() if "T" in req.date else datetime.strptime(req.date, "%Y-%m-%d").date()
+            if session_date > datetime.now(timezone.utc).date():
+                raise HTTPException(status_code=400, detail="Session date cannot be in the future.")
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
+
     log_id = log_training(
         user["id"],
         {
@@ -972,6 +1013,96 @@ def log_session(request: Request, req: TrainingLogRequest, user: Dict = Depends(
 @limiter.limit("60/minute")
 def fetch_training_logs(request: Request, limit: int = 30, user: Dict = Depends(get_current_user)):
     return get_training_logs(user["id"], limit)
+
+
+# ---------------------------------------------------------------------------
+# Train stats + leaderboard endpoints (auth required)
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/training/stats")
+@limiter.limit("60/minute")
+def fetch_training_stats(request: Request, user: Dict = Depends(get_current_user)):
+    """Personal stats payload for the TrainStatsPanel — hero number, tiles,
+    trend, percentile, personal records. See design spec for shape."""
+    return get_training_stats(user["id"])
+
+
+_LEADERBOARD_WINDOWS = {"week", "month", "all"}
+_LEADERBOARD_COHORTS = {"beginner", "intermediate", "advanced", "elite", "global"}
+
+
+@app.get("/api/training/leaderboard")
+@limiter.limit("60/minute")
+def fetch_leaderboard(
+    request: Request,
+    window: str = "week",
+    cohort: Optional[str] = None,
+    limit: int = 10,
+    user: Dict = Depends(get_current_user),
+):
+    if window not in _LEADERBOARD_WINDOWS:
+        raise HTTPException(status_code=400, detail=f"Invalid window. Use one of: {sorted(_LEADERBOARD_WINDOWS)}")
+    if cohort is not None and cohort not in _LEADERBOARD_COHORTS:
+        raise HTTPException(status_code=400, detail=f"Invalid cohort. Use one of: {sorted(_LEADERBOARD_COHORTS)}")
+    if limit < 1 or limit > 50:
+        raise HTTPException(status_code=400, detail="limit must be between 1 and 50.")
+    return get_leaderboard(
+        viewer_user_id=user["id"],
+        window=window,
+        cohort=cohort,
+        limit=limit,
+    )
+
+
+# ---------------------------------------------------------------------------
+# User profile — display name + leaderboard privacy
+# ---------------------------------------------------------------------------
+
+
+# Display-name validation rules. Kept conservative for v1.
+_DISPLAY_NAME_RE = re.compile(r"^[A-Za-z0-9_-]{3,20}$")
+
+
+@app.patch("/api/auth/me/display-name")
+@limiter.limit("10/minute")
+def update_display_name(request: Request, req: DisplayNameRequest, user: Dict = Depends(get_current_user)):
+    """Set or update the user's display name. Validated for length, charset,
+    profanity, and uniqueness."""
+    name = (req.display_name or "").strip()
+    if not _DISPLAY_NAME_RE.match(name):
+        raise HTTPException(
+            status_code=400,
+            detail="Display name must be 3-20 characters, letters/digits/underscore/dash only.",
+        )
+    # Profanity check — hardcoded blocklist in src/profanity.py
+    from src.profanity import is_clean
+    if not is_clean(name):
+        raise HTTPException(
+            status_code=400,
+            detail="That display name isn't allowed. Try another.",
+        )
+    # Save — catch the unique-constraint violation as a friendly 409.
+    try:
+        set_display_name(user["id"], name)
+    except Exception as exc:
+        # Postgres unique-violation surfaces as psycopg2.errors.UniqueViolation
+        # (sqlstate 23505). Be defensive about how we detect it without
+        # importing psycopg2.errors at the top.
+        if "23505" in str(exc) or "users_display_name_lower_idx" in str(exc):
+            raise HTTPException(status_code=409, detail="That display name is already taken.")
+        raise
+    return {"display_name": name}
+
+
+@app.patch("/api/auth/me/leaderboard-private")
+@limiter.limit("10/minute")
+def update_leaderboard_privacy(request: Request, req: LeaderboardPrivacyRequest, user: Dict = Depends(get_current_user)):
+    """Toggle the user's leaderboard privacy flag. When TRUE, leaderboard
+    rows show 'Private climber' instead of their display_name; their stats
+    still aggregate into percentiles."""
+    set_leaderboard_private(user["id"], req.private)
+    return {"private": bool(req.private)}
 
 
 # ---------------------------------------------------------------------------
