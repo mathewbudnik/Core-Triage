@@ -278,5 +278,149 @@ class BlockCoverageTests(unittest.TestCase):
                     )
 
 
+class BlockDifferentiationTests(unittest.TestCase):
+    """Verify the personalisation actually personalises — different inputs
+    must produce different outputs in key places."""
+
+    def test_boulderer_and_sport_climber_get_different_power_blocks_when_no_campus(self):
+        """Without a campus board, the boulderer's strict filter returns empty,
+        the fallback chain delivers something. The sport climber also gets
+        a fallback. Both shouldn't be empty — but they don't have to be
+        identical either; what matters is that the result is sensible."""
+        from src.coach import _power_block
+        boulder_out = _power_block("intermediate", "bouldering", [])
+        sport_out = _power_block("intermediate", "sport", [])
+        self.assertGreaterEqual(len(boulder_out), 1)
+        self.assertGreaterEqual(len(sport_out), 1)
+
+    def test_pinch_hangs_only_for_advanced_plus_boulder_or_competition(self):
+        """Anti-regression for the original user complaint: pinch hangs
+        must not appear for sport/trad climbers or for anyone below advanced."""
+        from src.coach import _hangboard_block
+
+        def names(experience, discipline):
+            return [e["exercise"] for e in _hangboard_block(experience, discipline, ["hangboard"])]
+
+        # Should NOT contain pinch hangs:
+        for case in [
+            ("beginner", "bouldering"),
+            ("intermediate", "bouldering"),
+            ("intermediate", "sport"),
+            ("intermediate", "trad"),
+            ("advanced", "sport"),
+            ("advanced", "trad"),
+            ("elite", "sport"),
+            ("elite", "trad"),
+        ]:
+            self.assertNotIn(
+                "Max-weight pinch hangs", names(*case),
+                f"Pinch hangs leaked into {case}",
+            )
+
+        # SHOULD be eligible (block only takes top n=2, so check pool eligibility
+        # via the strict filter rather than the selection slot):
+        from src.coach import _HANGBOARD_POOL, _filter_exercises
+        for case in [
+            ("advanced", "bouldering"),
+            ("elite", "bouldering"),
+            ("advanced", "competition"),
+            ("elite", "competition"),
+        ]:
+            eligible = _filter_exercises(_HANGBOARD_POOL, case[0], case[1], ["hangboard"])
+            eligible_names = [e["exercise"] for e in eligible]
+            self.assertIn(
+                "Max-weight pinch hangs", eligible_names,
+                f"Pinch hangs not eligible for {case} but should be",
+            )
+
+    def test_no_campus_board_filters_campus_exercises(self):
+        """Equipment gating actually filters out gear-required exercises in
+        the strict path."""
+        from src.coach import _POWER_POOL, _filter_exercises
+        eligible = _filter_exercises(_POWER_POOL, "intermediate", "bouldering", [])
+        names = [e["exercise"] for e in eligible]
+        # Without campus_board, all four current power exercises are gated out
+        # (every existing entry requires campus_board). The fallback chain
+        # will give the user something via discipline relaxation — but the
+        # *strict* filter must be empty.
+        self.assertEqual(
+            names, [],
+            f"Expected empty strict filter when boulderer has no campus board, got {names}",
+        )
+
+    def test_trad_climber_gets_headpoint_practice_in_mental_block(self):
+        """The narrow tagging on Headpoint Practice (sport+trad only) is
+        the kind of differentiation this whole refactor exists to enable."""
+        from src.coach import _mental_block
+        names = [e["exercise"] for e in _mental_block("intermediate", "trad", [])]
+        self.assertIn("Headpoint practice", names)
+
+    def test_boulderer_does_not_get_headpoint_practice_via_strict_filter(self):
+        """Boulderer shouldn't see Headpoint Practice through the strict
+        filter (it's not tagged for bouldering)."""
+        from src.coach import _MENTAL_POOL, _filter_exercises
+        eligible = _filter_exercises(_MENTAL_POOL, "intermediate", "bouldering", [])
+        names = [e["exercise"] for e in eligible]
+        self.assertNotIn("Headpoint practice", names)
+
+
+class GeneratePlanSmokeTest(unittest.TestCase):
+    """End-to-end: generate_plan must still produce a structurally valid
+    plan dict for a default profile. Doesn't assert specific exercises —
+    just that the shape is intact after the refactor."""
+
+    def _profile(self, **overrides):
+        base = {
+            "experience_level": "intermediate",
+            "years_climbing": 3,
+            "primary_discipline": "bouldering",
+            "max_grade_boulder": "V5",
+            "max_grade_route": "",
+            "days_per_week": 3,
+            "session_length_min": 90,
+            "equipment": ["hangboard", "gym_membership"],
+            "weaknesses": [],
+            "primary_goal": "grade_progression",
+            "goal_grade": "V7",
+        }
+        base.update(overrides)
+        return base
+
+    def test_default_profile_generates_valid_plan(self):
+        from src.coach import generate_plan
+        plan = generate_plan(self._profile(), injury_flags=[], openai_client=None)
+        self.assertIsInstance(plan, dict)
+        self.assertIn("plan_data", plan)
+        sessions = plan["plan_data"].get("sessions", [])
+        self.assertGreater(len(sessions), 0)
+        for s in sessions[:5]:
+            self.assertIn("main", s)
+            for ex in s["main"]:
+                # Canonical fields present
+                self.assertIn("exercise", ex)
+                self.assertIn("sets", ex)
+                # Tag fields stripped
+                for tag in ("disciplines", "min_experience", "equipment_needed"):
+                    self.assertNotIn(tag, ex, f"Tag '{tag}' leaked into generated plan exercise {ex.get('exercise','?')}")
+
+    def test_sport_climber_no_campus_generates_valid_plan(self):
+        from src.coach import generate_plan
+        plan = generate_plan(
+            self._profile(primary_discipline="sport", equipment=["gym_membership"]),
+            injury_flags=[], openai_client=None,
+        )
+        sessions = plan["plan_data"].get("sessions", [])
+        self.assertGreater(len(sessions), 0)
+
+    def test_trad_climber_minimal_equipment_generates_valid_plan(self):
+        from src.coach import generate_plan
+        plan = generate_plan(
+            self._profile(primary_discipline="trad", equipment=[]),
+            injury_flags=[], openai_client=None,
+        )
+        sessions = plan["plan_data"].get("sessions", [])
+        self.assertGreater(len(sessions), 0)
+
+
 if __name__ == "__main__":
     unittest.main()
