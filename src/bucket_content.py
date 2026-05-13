@@ -97,6 +97,143 @@ BUCKET_CONTENT: dict[str, dict] = {
         ],
         "quick_test": "Try to straighten the PIP (middle) joint actively against gentle resistance on the back of the finger. If you cannot bring it to neutral, this is urgent — splint within 72 hours and see a hand specialist.",
     },
+    "pulley_a3": {
+        "base_title": "A3 pulley strain",
+        "why": "Mid-finger palm-side pain, often on half-crimp or open-hand grips. Less common than A2.",
+        "matches_if": [
+            "Palm-side pain in the middle of the finger between the two main joints",
+            "Worse on half-crimp or open-hand grips rather than full crimp",
+            "Tender to press on the proximal third of the middle phalanx, palm side",
+            "Often gradual onset rather than a discrete pop",
+        ],
+        "not_likely_if": [
+            "Pain is at the base of the finger (consider A2 instead)",
+            "Pain is at the tip near the DIP joint (consider A4 instead)",
+            "Pain is on the side of the joint rather than palm side",
+        ],
+        "quick_test": "Press on the palm side of the middle of the finger while pulling on a half-crimp position. Localized pain in that exact spot is the A3 pattern.",
+    },
+    "pulley_a4": {
+        "base_title": "A4 pulley strain",
+        "why": "Palm-side pain at the finger tip, almost always full-crimp loading on small holds.",
+        "matches_if": [
+            "Sharp pain on the palm side of the finger near the DIP joint (last knuckle)",
+            "Worse on full crimp on small, hard edges",
+            "Tender to press at the distal third of the middle phalanx, palm side",
+            "May have heard a small pop on a hard crimp move",
+        ],
+        "not_likely_if": [
+            "Pain is at the base of the finger (consider A2)",
+            "Pain is in the middle of the finger (consider A3)",
+            "Pain is on the side of the joint or back of the finger",
+        ],
+        "quick_test": "Press at the distal end of the middle phalanx (just before the last knuckle) on the palm side. Sharp localized pain that reproduces during a small-edge full crimp is the A4 pattern.",
+    },
+    "volar_plate": {
+        "base_title": "Volar plate injury (PIP)",
+        "why": "PIP joint hyperextension injury — pain on the palm side or back of the middle joint after a jam or backward bend.",
+        "matches_if": [
+            "The finger was hyperextended or jammed backward at the moment of injury",
+            "Pain and swelling at the middle finger joint (PIP), often on the palm side or front",
+            "Joint feels stiff and reluctant to fully straighten or fully bend",
+            "Often follows catching a fall, jamming on a hold, or a hold breaking unexpectedly",
+        ],
+        "not_likely_if": [
+            "There was no hyperextension or jamming mechanism",
+            "Pain is at the base or tip of the finger (palm side) rather than the middle joint",
+        ],
+        "quick_test": "Gently extend the middle joint backward by a few degrees. Pain and apprehension at the front or palm side of the joint is the volar plate pattern.",
+    },
+    "trigger_finger": {
+        "base_title": "Trigger finger (stenosing tenosynovitis)",
+        "why": "Catching or locking sensation when the finger bends or straightens, usually with chronic onset.",
+        "matches_if": [
+            "Finger catches, locks, or pops when you bend or straighten it",
+            "Worst in the morning or after the finger has been still for a while",
+            "Tender lump at the base of the finger on the palm side (A1 pulley region)",
+            "Gradual onset rather than from a single event",
+        ],
+        "not_likely_if": [
+            "Pain is from a discrete acute event with no catching sensation",
+            "Pain is at the joints rather than at the base of the finger",
+        ],
+        "quick_test": "Slowly close and open the affected finger. A click, catch, or sudden release as the finger moves through its range is the trigger finger pattern.",
+    },
+    "mallet_finger": {
+        "base_title": "Mallet finger (extensor tendon avulsion at DIP)",
+        "why": "Cannot fully straighten the fingertip after a jam — the tip droops down. Time-sensitive.",
+        "matches_if": [
+            "The fingertip cannot be fully extended — it droops down at the last joint",
+            "Often happened from a ball or hold hitting the end of the finger",
+            "Pain and swelling at the back of the DIP joint",
+            "The finger can still bend, but won't straighten the tip on its own",
+        ],
+        "not_likely_if": [
+            "The fingertip extends fully when you try (just hurts)",
+            "Pain is at the middle joint rather than at the tip",
+        ],
+        "quick_test": "Rest the back of the hand flat on a table with all fingers extended. If the affected fingertip cannot be straightened to match the others, this is the mallet pattern — see a clinician within 1 week for splinting.",
+    },
+    "jersey_finger": {
+        "base_title": "Jersey finger (FDP avulsion)",
+        "why": "Cannot bend the fingertip after a forceful grip pull — most often the ring finger. Surgical urgency.",
+        "matches_if": [
+            "Cannot actively bend the fingertip at the last joint, especially after a hard grip pull",
+            "Almost always the ring finger, occasionally middle",
+            "Often happened catching a fall, a hold popping off, or grabbing as something jerked away",
+            "Pain in the palm or finger, sometimes with bruising along the palm",
+        ],
+        "not_likely_if": [
+            "You can fully bend the fingertip on its own (even if painful)",
+            "Mechanism was a backward bend rather than a forceful pull",
+        ],
+        "quick_test": "Hold the middle phalanx still and try to bend only the fingertip. If the tip cannot move at all on its own, this is the jersey pattern — see a hand surgeon within 7-14 days; surgical repair after that window is much harder.",
+    },
+    "sagittal_band_rupture": {
+        "base_title": "Sagittal band rupture (boxer's knuckle)",
+        "why": "Extensor tendon slips off the knuckle when the finger is bent — felt as a pop on the back of the hand.",
+        "matches_if": [
+            "Pain on the back of the hand at the knuckle (MCP joint)",
+            "Tendon visibly slips to one side when the finger is bent",
+            "Felt a pop on the top of the hand at the moment of injury",
+            "Most common on the middle or ring finger MCP",
+        ],
+        "not_likely_if": [
+            "Pain is on the palm side of the finger",
+            "Tendon stays straight throughout the bend",
+        ],
+        "quick_test": "Make a fist slowly while watching the back of the hand. Visible side-to-side movement of the extensor tendon over the knuckle, with a clunk, is the sagittal band pattern.",
+    },
+    "hamate_hook_fracture": {
+        "base_title": "Hook of hamate fracture",
+        "why": "Ulnar-side palm pain near the pinky, usually from jamming or a forceful grip — often missed on standard X-rays.",
+        "matches_if": [
+            "Deep pain on the pinky side of the palm, just below the ring/pinky knuckles",
+            "Often from a hand jam, crack climbing, or catching something heavy",
+            "Tender to press at the hook of hamate (pinky-side palm, near the base of the heel of the hand)",
+            "Pain worsens with strong grip pulling, especially on small holds with the pinky engaged",
+        ],
+        "not_likely_if": [
+            "Pain is on the thumb side of the palm or wrist",
+            "Pain is at a specific finger joint rather than deep in the palm",
+        ],
+        "quick_test": "Press firmly into the pinky-side palm just below the ring-finger knuckle. Sharp focal pain in this exact spot warrants imaging (often CT rather than plain X-ray) — hook of hamate fractures are easily missed.",
+    },
+    "pip_synovitis": {
+        "base_title": "PIP joint synovitis",
+        "why": "Chronic capsular swelling at the middle finger joint, common in long-time crimpers as a session-driven overuse.",
+        "matches_if": [
+            "Persistent puffy swelling at the middle finger joint that doesn't fully resolve",
+            "Gradual onset over weeks or months, often related to high session volume",
+            "Worse after climbing sessions, easier after a day off",
+            "Joint feels stiff first thing in the morning",
+        ],
+        "not_likely_if": [
+            "Acute onset from a single event with a clear pop",
+            "Pain is at the base or tip of the finger rather than the middle joint",
+        ],
+        "quick_test": "Compare the size of the painful PIP joint to the same joint on the other hand. Persistent puffiness with no acute event points to capsular synovitis from chronic load.",
+    },
 
     # ── Wrist ──────────────────────────────────────────────────────────────
     "wrist_flexor_tendinopathy": {
