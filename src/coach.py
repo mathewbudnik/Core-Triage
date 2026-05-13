@@ -18,6 +18,100 @@ from typing import Any, Dict, List, Optional
 
 
 # ---------------------------------------------------------------------------
+# Exercise selection helpers
+# ---------------------------------------------------------------------------
+
+_EXPERIENCE_LEVELS = ["beginner", "intermediate", "advanced", "elite"]
+
+_TAG_KEYS = ("disciplines", "min_experience", "max_experience", "equipment_needed")
+
+
+def _filter_exercises(
+    pool: List[Dict],
+    experience: str,
+    discipline: str,
+    equipment: List[str],
+) -> List[Dict]:
+    """Return entries from `pool` that match all four constraints.
+
+    Filtering is conjunctive: experience window AND discipline AND equipment.
+    Order is preserved — pool authors control priority via list order.
+    Returns an empty list if nothing matches. Callers should use
+    `_select_with_fallback` if they want a graceful degradation chain.
+    """
+    user_idx = _EXPERIENCE_LEVELS.index(experience)
+    out: List[Dict] = []
+    for ex in pool:
+        min_idx = _EXPERIENCE_LEVELS.index(ex["min_experience"])
+        max_idx = _EXPERIENCE_LEVELS.index(ex.get("max_experience", "elite"))
+        if not (min_idx <= user_idx <= max_idx):
+            continue
+        if discipline not in ex["disciplines"]:
+            continue
+        needed = ex.get("equipment_needed", [])
+        if needed and not any(e in equipment for e in needed):
+            continue
+        out.append(ex)
+    return out
+
+
+def _select_with_fallback(
+    pool: List[Dict],
+    experience: str,
+    discipline: str,
+    equipment: List[str],
+    n: int,
+) -> List[Dict]:
+    """Pick up to `n` exercises from `pool` with graceful fallback.
+
+    Tries the strict filter first. If it returns empty:
+    1. Drop the equipment filter (user has gear gaps but exercise still valuable)
+    2. Drop the discipline filter (give them a generic, common-sense alternative)
+
+    Always strips tag fields from the returned dicts so the generated plan
+    dict matches the legacy shape. Returns an empty list only if no exercise
+    in the pool matches the user's experience level at all (caller bug).
+    """
+    # Step 1: strict filter
+    strict = _filter_exercises(pool, experience, discipline, equipment)
+    if strict:
+        return [_strip_tags(ex) for ex in strict[:n]]
+    # Step 2: relax equipment — same filter minus the equipment step
+    user_idx = _EXPERIENCE_LEVELS.index(experience)
+    relaxed_equipment: List[Dict] = []
+    for ex in pool:
+        min_idx = _EXPERIENCE_LEVELS.index(ex["min_experience"])
+        max_idx = _EXPERIENCE_LEVELS.index(ex.get("max_experience", "elite"))
+        if not (min_idx <= user_idx <= max_idx):
+            continue
+        if discipline not in ex["disciplines"]:
+            continue
+        relaxed_equipment.append(ex)
+    if relaxed_equipment:
+        return [_strip_tags(ex) for ex in relaxed_equipment[:n]]
+    # Step 3: relax discipline too — only experience window remains
+    relaxed_all: List[Dict] = []
+    for ex in pool:
+        min_idx = _EXPERIENCE_LEVELS.index(ex["min_experience"])
+        max_idx = _EXPERIENCE_LEVELS.index(ex.get("max_experience", "elite"))
+        if not (min_idx <= user_idx <= max_idx):
+            continue
+        relaxed_all.append(ex)
+    return [_strip_tags(ex) for ex in relaxed_all[:n]]
+
+
+def _strip_tags(exercise: Dict) -> Dict:
+    """Return a copy of `exercise` with tag-only fields removed.
+
+    The tag fields (`disciplines`, `min_experience`, `max_experience`,
+    `equipment_needed`) are authoring metadata for selection logic; they
+    don't belong in the generated plan dict that gets saved to the database
+    and rendered in the UI.
+    """
+    return {k: v for k, v in exercise.items() if k not in _TAG_KEYS}
+
+
+# ---------------------------------------------------------------------------
 # Exercise library blocks
 # ---------------------------------------------------------------------------
 
