@@ -163,6 +163,37 @@ const STEP_TITLES = [
   { title: 'Anything else to add?',  sub: 'Optional — describe what happened in your own words' },
 ]
 
+const FINGER_STEP_TITLES = [
+  { title: 'Which finger?',          sub: 'Pick the one bothering you most' },
+  { title: 'Where on the finger?',   sub: 'The spot that hurts most' },
+  { title: 'What grip were you using?', sub: 'When the pain started' },
+]
+
+const WHICH_FINGER_OPTIONS = [
+  'Index', 'Middle', 'Ring', 'Pinky', 'Thumb', 'Multiple', 'Not sure',
+]
+
+const FINGER_LOCATION_OPTIONS = [
+  { key: 'palm_base', label: 'Palm-side base (knuckle / A1 area)' },
+  { key: 'palm_mid',  label: 'Palm-side middle (PIP / A2 area)' },
+  { key: 'palm_tip',  label: 'Palm-side tip (DIP / A4 area)' },
+  { key: 'side',      label: 'Side of a joint' },
+  { key: 'dorsal',    label: 'Back of the finger' },
+  { key: 'whole',     label: 'Whole finger' },
+]
+
+const GRIP_MODE_OPTIONS = [
+  { key: 'full_crimp',   label: 'Full crimp' },
+  { key: 'half_crimp',   label: 'Half crimp' },
+  { key: 'open_hand',    label: 'Open hand / drag' },
+  { key: 'pocket_1',     label: 'Pocket (1 finger)' },
+  { key: 'pocket_2',     label: 'Pocket (2 fingers)' },
+  { key: 'pinch',        label: 'Pinch' },
+  { key: 'sloper',       label: 'Sloper' },
+  { key: 'jam',          label: 'Jam (crack)' },
+  { key: 'not_climbing', label: 'Not climbing-related' },
+]
+
 const TOTAL_STEPS = 5
 
 // Map step index ↔ URL slug. The bare /triage path is step 0 (region picker).
@@ -1090,6 +1121,78 @@ export default function TriageTab({ k, user }) {
                 selected={form.region}
                 onSelect={selectRegion}
               />
+            </div>
+          )}
+
+          {/* ── Finger-only — Which finger? ─────────────────────────────────── */}
+          {form.region === 'Finger' && step === 'finger_which' && (
+            <div ref={tour.anchor('which-finger')} className="space-y-3">
+              <p className="text-sm font-medium text-text mb-3">Which finger?</p>
+              <div className="grid grid-cols-2 gap-3">
+                {WHICH_FINGER_OPTIONS.map((opt) => (
+                  <OptionCard
+                    key={opt}
+                    selected={form.which_finger === opt}
+                    onClick={() => { set('which_finger', opt); setDirection(1); advance() }}
+                  >
+                    <p className="font-semibold text-text text-sm">{opt}</p>
+                  </OptionCard>
+                ))}
+              </div>
+              <button
+                onClick={() => { set('which_finger', ''); setDirection(1); advance() }}
+                className="text-xs text-muted hover:text-accent transition-colors mt-3"
+              >
+                Skip — not sure
+              </button>
+            </div>
+          )}
+
+          {/* ── Finger-only — Where on the finger? ──────────────────────────── */}
+          {form.region === 'Finger' && step === 'finger_location' && (
+            <div ref={tour.anchor('finger-location')} className="space-y-3">
+              <p className="text-sm font-medium text-text mb-3">Where on the finger?</p>
+              <div className="space-y-3">
+                {FINGER_LOCATION_OPTIONS.map(({ key, label }) => (
+                  <OptionCard
+                    key={key}
+                    selected={form.finger_location === key}
+                    onClick={() => { set('finger_location', key); setDirection(1); advance() }}
+                  >
+                    <p className="font-semibold text-text text-sm">{label}</p>
+                  </OptionCard>
+                ))}
+              </div>
+              <button
+                onClick={() => { set('finger_location', ''); setDirection(1); advance() }}
+                className="text-xs text-muted hover:text-accent transition-colors mt-3"
+              >
+                Skip — not sure
+              </button>
+            </div>
+          )}
+
+          {/* ── Finger-only — Grip mode at injury ───────────────────────────── */}
+          {form.region === 'Finger' && step === 'grip_mode' && (
+            <div ref={tour.anchor('grip-mode')} className="space-y-3">
+              <p className="text-sm font-medium text-text mb-3">What grip were you using?</p>
+              <div className="grid grid-cols-2 gap-3">
+                {GRIP_MODE_OPTIONS.map(({ key, label }) => (
+                  <OptionCard
+                    key={key}
+                    selected={form.grip_mode === key}
+                    onClick={() => { set('grip_mode', key); setDirection(1); advance() }}
+                  >
+                    <p className="font-semibold text-text text-sm">{label}</p>
+                  </OptionCard>
+                ))}
+              </div>
+              <button
+                onClick={() => { set('grip_mode', ''); setDirection(1); advance() }}
+                className="text-xs text-muted hover:text-accent transition-colors mt-3"
+              >
+                Skip — not sure
+              </button>
             </div>
           )}
 
