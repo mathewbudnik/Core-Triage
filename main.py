@@ -742,8 +742,13 @@ def chat(request: Request, req: ChatRequest):
                 model="gpt-4o",
                 messages=[{"role": "system", "content": system_prompt}] + messages,
                 temperature=0.2,
-                max_tokens=600,
-                timeout=15,
+                # Bumped from 600 → 1500 so the model can actually give specific
+                # week-by-week guidance with sets/reps without being cut off.
+                # Short answers still stay short; this is a ceiling, not a target.
+                # Timeout bumped from 15 → 25s to give the longer generations
+                # time to land (gpt-4o is fast but 1500 tokens can take 8-12s).
+                max_tokens=1500,
+                timeout=25,
             )
             text = response.choices[0].message.content
         except Exception as e:
