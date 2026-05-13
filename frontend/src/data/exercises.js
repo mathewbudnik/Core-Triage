@@ -3354,3 +3354,16 @@ export function getExercises(region, phase) {
  * All regions that have specific exercise protocols.
  */
 export const EXERCISE_REGIONS = Object.keys(EXERCISES)
+
+/**
+ * Build a "Watch demo" URL for an exercise. If the exercise has a curated
+ * `video_url` field, that wins. Otherwise return a YouTube search URL —
+ * always live (it's a search page, not a video), and lets users pick the
+ * best-looking demo from the results. Curated URLs can be added per-exercise
+ * later by setting `video_url` on the exercise object.
+ */
+export function buildExerciseVideoUrl(exercise) {
+  if (exercise?.video_url) return exercise.video_url
+  const query = `${exercise?.name ?? ''} exercise demonstration`.trim()
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`
+}

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Lock, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, Clock, Repeat, Zap } from 'lucide-react'
-import { getExercises } from '../data/exercises'
+import { Lock, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, Clock, Repeat, Zap, PlayCircle } from 'lucide-react'
+import { getExercises, buildExerciseVideoUrl } from '../data/exercises'
 import UpgradeModal from './UpgradeModal'
 
 const PHASE_LABELS = {
@@ -65,6 +65,17 @@ function ExerciseCard({ exercise, index }) {
           >
             <div className="px-4 pb-4 space-y-3 border-t border-outline pt-3">
               <p className="text-xs text-muted leading-relaxed italic">{exercise.rationale}</p>
+
+              <a
+                href={buildExerciseVideoUrl(exercise)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-accent hover:text-accent/80 transition-colors"
+              >
+                <PlayCircle size={13} />
+                Watch demo
+              </a>
 
               <div className="space-y-2">
                 <div className="flex items-start gap-2">
