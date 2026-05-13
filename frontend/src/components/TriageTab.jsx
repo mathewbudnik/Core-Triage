@@ -1157,7 +1157,10 @@ export default function TriageTab({ k, user }) {
                   <OptionCard
                     key={opt}
                     selected={form.which_finger === opt}
-                    onClick={() => { set('which_finger', opt); setDirection(1); advance() }}
+                    onClick={() => {
+                      set('which_finger', opt === 'Not sure' ? '' : opt)
+                      setDirection(1); advance()
+                    }}
                   >
                     <p className="font-semibold text-text text-sm">{opt}</p>
                   </OptionCard>
