@@ -194,23 +194,29 @@ const GRIP_MODE_OPTIONS = [
   { key: 'not_climbing', label: 'Not climbing-related' },
 ]
 
-const TOTAL_STEPS = 5
+// Step flow is dynamic: Finger region inserts three drill-down steps between
+// the region picker and the onset/mechanism step.
+const BASE_FLOW = ['', 'onset', 'symptoms', 'details', 'finish']
+const FINGER_FLOW = ['', 'finger_which', 'finger_location', 'grip_mode',
+                     'onset', 'symptoms', 'details', 'finish']
 
-// Map step index ↔ URL slug. The bare /triage path is step 0 (region picker).
-// /triage/results is the post-submission state.
-const STEP_SLUGS = ['', 'onset', 'symptoms', 'details', 'finish']
+function flowFor(region) {
+  return region === 'Finger' ? FINGER_FLOW : BASE_FLOW
+}
 const RESULTS_SLUG = 'results'
 
-function pathToStep(pathname) {
+function pathToStep(pathname, region) {
   const seg = pathname.replace(/^\/triage\/?/, '').split('/')[0]
   if (seg === RESULTS_SLUG) return 'results'
-  const idx = STEP_SLUGS.indexOf(seg)
+  const flow = flowFor(region)
+  const idx = flow.indexOf(seg)
   return idx >= 0 ? idx : 0
 }
 
-function stepToPath(step) {
+function stepToPath(step, region) {
   if (step === 'results') return `/triage/${RESULTS_SLUG}`
-  const slug = STEP_SLUGS[step] || ''
+  const flow = flowFor(region)
+  const slug = flow[step] || ''
   return slug ? `/triage/${slug}` : '/triage'
 }
 
@@ -947,18 +953,22 @@ export default function TriageTab({ k, user }) {
   const location = useLocation()
   const navigate = useNavigate()
 
-  // Step is derived from the URL — back/forward browser buttons "just work"
-  // because they change the URL, which changes which step we render.
-  const urlStep = pathToStep(location.pathname)
-  const step = urlStep === 'results' ? 0 : urlStep
-  const isResultsRoute = urlStep === 'results'
-
   const [direction, setDirection] = useState(1)
   const [form, setForm]           = useState(INITIAL_FORM)
   const [loading, setLoading]     = useState(false)
   const [result, setResult]       = useState(null)
   const [error, setError]         = useState(null)
   const [saveStatus, setSaveStatus] = useState(null)
+
+  // Step is derived from the URL — back/forward browser buttons "just work"
+  // because they change the URL, which changes which step we render.
+  // The flow depends on form.region (Finger inserts 3 drill-down steps).
+  const urlStep = pathToStep(location.pathname, form.region)
+  const step = urlStep === 'results' ? 0 : urlStep
+  const isResultsRoute = urlStep === 'results'
+  const flow = flowFor(form.region)
+  const TOTAL_STEPS = flow.length
+  const currentSlug = flow[step] || ''
 
   // Stable setter — only depends on setForm which is stable from useState
   const set = useCallback((key, value) => setForm((f) => ({ ...f, [key]: value })), [])
@@ -987,27 +997,30 @@ export default function TriageTab({ k, user }) {
   const advance = useCallback(() => {
     setDirection(1)
     const next = Math.min(step + 1, TOTAL_STEPS - 1)
-    navigate(stepToPath(next))
-  }, [step, navigate])
+    navigate(stepToPath(next, form.region))
+  }, [step, TOTAL_STEPS, form.region, navigate])
 
   const retreat = useCallback(() => {
     setDirection(-1)
     const prev = Math.max(step - 1, 0)
-    navigate(stepToPath(prev))
-  }, [step, navigate])
+    navigate(stepToPath(prev, form.region))
+  }, [step, form.region, navigate])
 
   const selectRegion = useCallback((value) => {
     const isLower  = LOWER_BODY.includes(value)
     const wasLower = LOWER_BODY.includes(form.region)
     setForm((f) => ({ ...f, region: value, mechanism: isLower !== wasLower ? '' : f.mechanism }))
     setDirection(1)
-    navigate(stepToPath(1))
+    navigate(stepToPath(1, value))
   }, [form.region, navigate])
 
   const canAdvance = () => {
-    if (step === 0) return !!form.region
-    if (step === 1) return !!form.onset && !!form.mechanism
-    if (step === 2) return !!form.pain_type
+    if (currentSlug === '') return !!form.region
+    if (currentSlug === 'finger_which') return true   // Skip allowed
+    if (currentSlug === 'finger_location') return true
+    if (currentSlug === 'grip_mode') return true
+    if (currentSlug === 'onset') return !!form.onset && !!form.mechanism
+    if (currentSlug === 'symptoms') return !!form.pain_type
     return true
   }
 
@@ -1078,6 +1091,17 @@ export default function TriageTab({ k, user }) {
     navigate('/triage')
   }, [navigate])
 
+  // Map current slug → step title. Finger drill-down steps get their own
+  // titles; base-flow slugs map back to STEP_TITLES by position in BASE_FLOW.
+  const stepTitleFor = (slug) => {
+    if (slug === 'finger_which')    return FINGER_STEP_TITLES[0]
+    if (slug === 'finger_location') return FINGER_STEP_TITLES[1]
+    if (slug === 'grip_mode')       return FINGER_STEP_TITLES[2]
+    const idx = BASE_FLOW.indexOf(slug)
+    return idx >= 0 ? STEP_TITLES[idx] : STEP_TITLES[0]
+  }
+  const currentTitle = stepTitleFor(currentSlug)
+
   if (isResultsRoute && result) {
     return (
       <Results
@@ -1095,10 +1119,10 @@ export default function TriageTab({ k, user }) {
         <StepDots current={step} total={TOTAL_STEPS} />
         <div className="text-center">
           <div className="flex items-center justify-center gap-2">
-            <h2 className="text-xl font-bold text-text">{STEP_TITLES[step].title}</h2>
+            <h2 className="text-xl font-bold text-text">{currentTitle.title}</h2>
             <TourReplayButton onReplay={tour.replay} />
           </div>
-          <p className="text-sm text-muted mt-1">{STEP_TITLES[step].sub}</p>
+          <p className="text-sm text-muted mt-1">{currentTitle.sub}</p>
         </div>
       </div>
 
@@ -1115,7 +1139,7 @@ export default function TriageTab({ k, user }) {
         >
 
           {/* ── Step 0 — Region (body diagram) ──────────────────────────────── */}
-          {step === 0 && (
+          {currentSlug === '' && (
             <div ref={tour.anchor('region-diagram')}>
               <BodyDiagram
                 selected={form.region}
@@ -1125,7 +1149,7 @@ export default function TriageTab({ k, user }) {
           )}
 
           {/* ── Finger-only — Which finger? ─────────────────────────────────── */}
-          {form.region === 'Finger' && step === 'finger_which' && (
+          {form.region === 'Finger' && currentSlug === 'finger_which' && (
             <div ref={tour.anchor('which-finger')} className="space-y-3">
               <p className="text-sm font-medium text-text mb-3">Which finger?</p>
               <div className="grid grid-cols-2 gap-3">
@@ -1149,7 +1173,7 @@ export default function TriageTab({ k, user }) {
           )}
 
           {/* ── Finger-only — Where on the finger? ──────────────────────────── */}
-          {form.region === 'Finger' && step === 'finger_location' && (
+          {form.region === 'Finger' && currentSlug === 'finger_location' && (
             <div ref={tour.anchor('finger-location')} className="space-y-3">
               <p className="text-sm font-medium text-text mb-3">Where on the finger?</p>
               <div className="space-y-3">
@@ -1173,7 +1197,7 @@ export default function TriageTab({ k, user }) {
           )}
 
           {/* ── Finger-only — Grip mode at injury ───────────────────────────── */}
-          {form.region === 'Finger' && step === 'grip_mode' && (
+          {form.region === 'Finger' && currentSlug === 'grip_mode' && (
             <div ref={tour.anchor('grip-mode')} className="space-y-3">
               <p className="text-sm font-medium text-text mb-3">What grip were you using?</p>
               <div className="grid grid-cols-2 gap-3">
@@ -1197,7 +1221,7 @@ export default function TriageTab({ k, user }) {
           )}
 
           {/* ── Step 1 — Onset + Mechanism ──────────────────────────────────── */}
-          {step === 1 && (
+          {currentSlug === 'onset' && (
             <div className="space-y-8" ref={tour.anchor('onset-row')}>
               {/* Onset — two colored cards */}
               <div>
@@ -1270,7 +1294,7 @@ export default function TriageTab({ k, user }) {
           )}
 
           {/* ── Step 2 — Severity + Pain type ───────────────────────────────── */}
-          {step === 2 && (
+          {currentSlug === 'symptoms' && (
             <div className="space-y-8" ref={tour.anchor('severity-slider')}>
               <div>
                 <div className="flex items-center justify-between mb-4">
@@ -1315,7 +1339,7 @@ export default function TriageTab({ k, user }) {
           )}
 
           {/* ── Step 3 — Symptoms ───────────────────────────────────────────── */}
-          {step === 3 && (
+          {currentSlug === 'details' && (
             <div className="space-y-3" ref={tour.anchor('symptoms-grid')}>
               {/* Helper note — sets expectations about how these answers affect the result */}
               <div className="bg-accent3/8 border border-accent3/20 rounded-xl px-4 py-3 mb-2">
@@ -1429,7 +1453,7 @@ export default function TriageTab({ k, user }) {
           )}
 
           {/* ── Step 4 — Notes + Submit ─────────────────────────────────────── */}
-          {step === 4 && (
+          {currentSlug === 'finish' && (
             <div ref={tour.anchor('free-text')}>
               <FreeTextStep
                 initialValue={form.free_text}
