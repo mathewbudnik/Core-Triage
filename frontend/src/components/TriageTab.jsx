@@ -1025,7 +1025,7 @@ export default function TriageTab({ k, user }) {
   }
 
   // First-time-user tour + scroll-to-action wiring
-  const tour = useTriageTour({ step })
+  const tour = useTriageTour({ slug: currentSlug, totalSteps: TOTAL_STEPS })
   const continueBtnRef = useRef(null)
 
   // Trigger 1 — scroll when the user finishes filling required fields.

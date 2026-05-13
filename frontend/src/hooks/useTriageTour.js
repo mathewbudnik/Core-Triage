@@ -2,13 +2,19 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 const STORAGE_KEY = 'coretriage_tour_v1'
 
-const TIPS = [
-  { step: 0, anchorId: 'region-diagram', label: 'Step 1 of 5', body: 'Tap where it hurts. You can change this anytime.' },
-  { step: 1, anchorId: 'onset-row',      label: 'Step 2 of 5', body: 'Was it gradual or sudden? Then pick how it happened.' },
-  { step: 2, anchorId: 'severity-slider', label: 'Step 3 of 5', body: "Slide to rate today's pain, then pick what it feels like." },
-  { step: 3, anchorId: 'symptoms-grid',  label: 'Step 4 of 5', body: 'Tick everything that applies — none is fine too.' },
-  { step: 4, anchorId: 'free-text',      label: 'Step 5 of 5', body: 'Add anything else (climbs, holds, history). Optional.' },
-]
+// Tour tips keyed by slug. The wizard renders different slugs depending on
+// region (non-finger: 5 steps; finger: 8 steps with three drill-down screens
+// inserted). Slug-based lookup keeps the right tip on the right screen.
+const TIPS_BY_SLUG = {
+  '':                { anchorId: 'region-diagram',  label: 'Where',         body: 'Tap where it hurts. You can change this anytime.' },
+  'finger_which':    { anchorId: 'which-finger',     label: 'Finger',        body: 'Which finger? Helps narrow what got hurt.' },
+  'finger_location': { anchorId: 'finger-location',  label: 'Location',      body: 'Where on the finger? Picks out pulley vs joint vs side.' },
+  'grip_mode':       { anchorId: 'grip-mode',        label: 'Grip',          body: 'What grip? Crimp loads A2/A4 — pockets load lumbrical.' },
+  'onset':           { anchorId: 'onset-row',        label: 'Onset',         body: 'Was it gradual or sudden? Then pick how it happened.' },
+  'symptoms':        { anchorId: 'severity-slider', label: 'Pain',          body: "Slide to rate today's pain, then pick what it feels like." },
+  'details':         { anchorId: 'symptoms-grid',    label: 'Symptoms',      body: 'Tick everything that applies — none is fine too.' },
+  'finish':          { anchorId: 'free-text',        label: 'Notes',         body: 'Add anything else (climbs, holds, history). Optional.' },
+}
 
 function readSeen() {
   try {
@@ -31,7 +37,7 @@ function clearSeen() {
   try { localStorage.removeItem(STORAGE_KEY) } catch {}
 }
 
-export default function useTriageTour({ step }) {
+export default function useTriageTour({ slug, totalSteps }) {
   const [seen, setSeen] = useState(() => readSeen())
   const [skipped, setSkipped] = useState(false)
   const [dismissed, setDismissed] = useState(() => new Set())
@@ -42,19 +48,23 @@ export default function useTriageTour({ step }) {
 
   const tip = useMemo(() => {
     if (!active) return null
-    if (dismissed.has(step)) return null
-    const t = TIPS.find((x) => x.step === step)
+    if (dismissed.has(slug)) return null
+    const t = TIPS_BY_SLUG[slug]
     if (!t) return null
-    return { ...t, index: step, total: TIPS.length }
-  }, [active, dismissed, step])
+    // We don't have a meaningful "tip index" anymore because the visible-tip
+    // set depends on which flow the user is on. Surface the slug and the
+    // current totalSteps so the Coachmark component can render a relative
+    // position label if it wants.
+    return { ...t, slug, total: totalSteps ?? 0 }
+  }, [active, dismissed, slug, totalSteps])
 
   const dismiss = useCallback(() => {
     setDismissed((prev) => {
       const next = new Set(prev)
-      next.add(step)
+      next.add(slug)
       return next
     })
-  }, [step])
+  }, [slug])
 
   const skip = useCallback(() => setSkipped(true), [])
 
@@ -70,15 +80,14 @@ export default function useTriageTour({ step }) {
     setDismissed(new Set())
   }, [])
 
-  // Auto-mark-seen the first time the user reaches the final step while
-  // the tour is active — so completing the wizard naturally completes the tour.
+  // Auto-mark-seen when the user reaches the final wizard step (the 'finish'
+  // slug) for the first time while the tour is active.
   useEffect(() => {
-    if (active && step === TIPS.length - 1) markSeen()
-  }, [active, step, markSeen])
+    if (active && slug === 'finish') markSeen()
+  }, [active, slug, markSeen])
 
-  // Auto-dismiss the current tip the first time the user interacts with the
-  // step's content. Lets them act on the hint without having to dismiss it
-  // manually, so the coachmark never sits between the user and the next tap.
+  // Auto-dismiss the current tip on the first pointer interaction with the
+  // step's anchor — so the coachmark never blocks the user from continuing.
   useEffect(() => {
     if (!tip) return
     const el = anchors.current.get(tip.anchorId)
@@ -88,7 +97,6 @@ export default function useTriageTour({ step }) {
     return () => el.removeEventListener('pointerdown', handler, { capture: true })
   }, [tip, dismiss])
 
-  // Returns a callback ref that stashes the element under the given anchorId
   const anchor = useCallback((id) => (el) => {
     if (el) anchors.current.set(id, el)
     else anchors.current.delete(id)
