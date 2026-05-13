@@ -33,6 +33,14 @@ class Intake:
     visible_deformity: bool = False
     bilateral_symptoms: bool = False
     bladder_bowel_change: bool = False
+    # Finger-specific drill-down (Phase 6). Filled by the wizard only when
+    # region == "Finger"; left blank otherwise. Drives the rewritten Finger
+    # branch in bucket_possibilities(); blank values fall through to the
+    # legacy generic fallback so existing callers keep working unchanged.
+    which_finger: str = ""       # Index | Middle | Ring | Pinky | Thumb | Multiple | ""
+    finger_location: str = ""    # palm_base | palm_mid | palm_tip | side | dorsal | whole | ""
+    grip_mode: str = ""          # full_crimp | half_crimp | open_hand | pocket_1 | pocket_2 |
+                                 # pinch | sloper | jam | not_climbing | ""
 
 
 # ── Bucket dataclass ────────────────────────────────────────────────────────
