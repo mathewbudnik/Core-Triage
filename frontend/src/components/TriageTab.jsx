@@ -908,6 +908,8 @@ const INITIAL_FORM = {
   region: '', onset: '', mechanism: '', pain_type: '',
   severity: 5, swelling: 'No', bruising: 'No',
   numbness: 'No', weakness: 'None', instability: 'No', free_text: '',
+  // Finger-specific drill-down — only filled when region === 'Finger'
+  which_finger: '', finger_location: '', grip_mode: '',
 }
 
 export default function TriageTab({ k, user }) {
@@ -1009,6 +1011,9 @@ export default function TriageTab({ k, user }) {
         ...form,
         free_text: freeText ?? form.free_text,
         severity: Number(form.severity),
+        which_finger: form.which_finger || '',
+        finger_location: form.finger_location || '',
+        grip_mode: form.grip_mode || '',
         k,
       })
       setResult(data)
