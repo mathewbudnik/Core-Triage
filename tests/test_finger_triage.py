@@ -101,3 +101,20 @@ class FingerPulleyPatternTests(unittest.TestCase):
         i = _intake(which_finger="Pinky", finger_location="palm_mid", grip_mode="half_crimp")
         ids = [b.id for b in bucket_possibilities(i)]
         self.assertIn("pulley_a3", ids)
+
+
+class FingerJointAndPocketPatternTests(unittest.TestCase):
+    def test_lumbrical_pocket_palm_base(self):
+        i = _intake(finger_location="palm_base", grip_mode="pocket_1")
+        ids = [b.id for b in bucket_possibilities(i)]
+        self.assertIn("lumbrical_tear", ids)
+
+    def test_collateral_side_jam(self):
+        i = _intake(finger_location="side", grip_mode="jam", onset="Sudden")
+        ids = [b.id for b in bucket_possibilities(i)]
+        self.assertIn("collateral_ligament_finger", ids)
+
+    def test_volar_plate_dorsal_hyperextend_text(self):
+        i = _intake(finger_location="dorsal", free_text="finger got jammed back hard")
+        ids = [b.id for b in bucket_possibilities(i)]
+        self.assertIn("volar_plate", ids)

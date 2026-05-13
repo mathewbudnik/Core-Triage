@@ -1012,8 +1012,25 @@ def bucket_possibilities(i: Intake) -> List[Bucket]:
         elif loc == "palm_mid" and grip in {"half_crimp", "open_hand"}:
             out.append(Bucket.from_id("pulley_a3", qualifier="possible"))
 
-        # (Remaining patterns added in Tasks 6-8: joint/pocket patterns,
-        # sagittal/hamate/trigger/PIP synovitis, legacy fallback, catch-all.)
+        # ── LUMBRICAL — pocket grip on the palmar lumbrical region ───────
+        if grip in {"pocket_1", "pocket_2"} and loc in {"palm_base", "palm_mid"}:
+            out.append(Bucket.from_id("lumbrical_tear", qualifier="likely"))
+
+        # ── COLLATERAL — side-of-joint pain on sudden injury or jam ──────
+        if loc == "side" and (i.onset == "Sudden" or grip == "jam"):
+            out.append(Bucket.from_id("collateral_ligament_finger", qualifier="likely"))
+
+        # ── VOLAR PLATE — dorsal/side joint pain with hyperextension text
+        if loc in {"dorsal", "side"} and (
+            "hyperextend" in text_l
+            or "jammed back" in text_l
+            or "bent backward" in text_l
+            or "bent back" in text_l
+        ):
+            out.append(Bucket.from_id("volar_plate", qualifier="likely"))
+
+        # (Remaining patterns added in Tasks 7-8: sagittal/hamate/trigger/PIP
+        # synovitis, legacy fallback, tail catch-all.)
 
     elif "wrist" in region:
         if i.mechanism in {"Hard crimp", "High volume pulling", "Dynamic catch"}:
