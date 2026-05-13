@@ -61,3 +61,22 @@ class IntakeRequestForwardingTests(unittest.TestCase):
         self.assertEqual(req.which_finger, "")
         self.assertEqual(req.finger_location, "")
         self.assertEqual(req.grip_mode, "")
+
+
+class FingerUrgentPatternTests(unittest.TestCase):
+    """Urgent finger patterns must surface first, regardless of other signals."""
+
+    def test_mallet_finger_text_trigger(self):
+        i = _intake(free_text="my fingertip droops and I can't extend tip")
+        ids = [b.id for b in bucket_possibilities(i)]
+        self.assertIn("mallet_finger", ids)
+        self.assertEqual(ids.index("mallet_finger"), 0,
+                         f"mallet_finger should surface first; got {ids}")
+
+    def test_jersey_finger_ring_sudden_text(self):
+        i = _intake(
+            which_finger="Ring", onset="Sudden",
+            free_text="grabbed a hold and now I can't bend tip on my ring finger",
+        )
+        ids = [b.id for b in bucket_possibilities(i)]
+        self.assertIn("jersey_finger", ids)

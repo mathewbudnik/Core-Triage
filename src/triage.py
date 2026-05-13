@@ -965,24 +965,44 @@ def bucket_possibilities(i: Intake) -> List[Bucket]:
     out: List[Bucket] = []
 
     if "finger" in region:
+        wf, loc, grip = i.which_finger, i.finger_location, i.grip_mode
         text_l = i.free_text.lower()
-        # Pulley is the most common climbing finger injury — surface it for any
-        # mechanism that loads the finger flexors, OR if the user explicitly
-        # mentions pulleys in free-text. The previous gate was too narrow.
-        pulley_signals = (
-            i.mechanism in {"Hard crimp", "Dynamic catch", "Pocket", "High volume pulling", "Steep climbing/board"}
-            or "pulley" in text_l
-            or "a2" in text_l
-            or "a4" in text_l
-        )
-        if pulley_signals:
-            out.append(Bucket.from_id("pulley_a2", qualifier="most likely"))
-        if i.mechanism in {"Pocket", "Asymmetric hold"}:
-            out.append(Bucket.from_id("lumbrical_tear", qualifier="possible"))
-        out.append(Bucket.from_id("flexor_tenosynovitis", qualifier="possible"))
-        out.append(Bucket.from_id("collateral_ligament_finger", qualifier="possible"))
-        if "can't straighten" in text_l or "pip" in text_l:
+
+        # ── URGENT patterns first ─────────────────────────────────────────
+        # Mallet finger — extensor avulsion at DIP, splint within 1 week
+        if (
+            "can't extend tip" in text_l
+            or "cannot extend tip" in text_l
+            or "tip droops" in text_l
+            or "mallet" in text_l
+        ):
+            out.append(Bucket.from_id("mallet_finger", qualifier="urgent"))
+
+        # Jersey finger — FDP avulsion, surgical within 7-14 days
+        if (
+            wf == "Ring"
+            and i.onset == "Sudden"
+            and (
+                "can't bend tip" in text_l
+                or "cannot bend tip" in text_l
+                or "can't flex tip" in text_l
+                or grip == "jam"
+            )
+        ):
+            out.append(Bucket.from_id("jersey_finger", qualifier="urgent"))
+
+        # Boutonnière — central slip rupture, splint within 72h
+        if (
+            "can't straighten" in text_l
+            or "won't extend" in text_l
+            or "stuck bent" in text_l
+            or "boutonniere" in text_l
+        ):
             out.append(Bucket.from_id("boutonniere", qualifier="urgent"))
+
+        # (Remaining patterns added in subsequent tasks: pulleys, joint,
+        # lumbrical, sagittal, hamate, trigger, PIP synovitis, fallback,
+        # tail catch-all. See Tasks 5-8.)
 
     elif "wrist" in region:
         if i.mechanism in {"Hard crimp", "High volume pulling", "Dynamic catch"}:
