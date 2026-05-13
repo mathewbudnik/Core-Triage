@@ -80,3 +80,24 @@ class FingerUrgentPatternTests(unittest.TestCase):
         )
         ids = [b.id for b in bucket_possibilities(i)]
         self.assertIn("jersey_finger", ids)
+
+
+class FingerPulleyPatternTests(unittest.TestCase):
+    def test_a2_ring_full_crimp_palm_mid(self):
+        i = _intake(which_finger="Ring", finger_location="palm_mid", grip_mode="full_crimp")
+        ids = [b.id for b in bucket_possibilities(i)]
+        self.assertIn("pulley_a2", ids)
+
+    def test_a4_palm_tip_full_crimp(self):
+        i = _intake(finger_location="palm_tip", grip_mode="full_crimp")
+        ids = [b.id for b in bucket_possibilities(i)]
+        self.assertIn("pulley_a4", ids)
+        self.assertNotIn("pulley_a2", ids,
+                         "A2 should not surface when location is palm_tip")
+
+    def test_a3_palm_mid_half_crimp_pinky(self):
+        # Pinky at palm_mid with half-crimp — not the A2 pattern (wrong finger),
+        # not the A4 pattern (wrong location), should be A3.
+        i = _intake(which_finger="Pinky", finger_location="palm_mid", grip_mode="half_crimp")
+        ids = [b.id for b in bucket_possibilities(i)]
+        self.assertIn("pulley_a3", ids)

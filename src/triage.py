@@ -1000,9 +1000,20 @@ def bucket_possibilities(i: Intake) -> List[Bucket]:
         ):
             out.append(Bucket.from_id("boutonniere", qualifier="urgent"))
 
-        # (Remaining patterns added in subsequent tasks: pulleys, joint,
-        # lumbrical, sagittal, hamate, trigger, PIP synovitis, fallback,
-        # tail catch-all. See Tasks 5-8.)
+        # ── PULLEY patterns ───────────────────────────────────────────────
+        if (
+            loc == "palm_mid"
+            and grip in {"full_crimp", "half_crimp"}
+            and wf in {"Ring", "Middle", "Index"}
+        ):
+            out.append(Bucket.from_id("pulley_a2", qualifier="most likely"))
+        elif loc == "palm_tip" and grip in {"full_crimp", "half_crimp"}:
+            out.append(Bucket.from_id("pulley_a4", qualifier="likely"))
+        elif loc == "palm_mid" and grip in {"half_crimp", "open_hand"}:
+            out.append(Bucket.from_id("pulley_a3", qualifier="possible"))
+
+        # (Remaining patterns added in Tasks 6-8: joint/pocket patterns,
+        # sagittal/hamate/trigger/PIP synovitis, legacy fallback, catch-all.)
 
     elif "wrist" in region:
         if i.mechanism in {"Hard crimp", "High volume pulling", "Dynamic catch"}:
