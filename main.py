@@ -355,6 +355,11 @@ class IntakeRequest(BaseModel):
     mechanism: str
     free_text: str = ""
     k: int = 4
+    # Finger-specific drill-down (Phase 6). Optional with safe defaults so
+    # pre-Phase-6 clients continue to work.
+    which_finger: str = ""
+    finger_location: str = ""
+    grip_mode: str = ""
 
 
 class ChatMessage(BaseModel):
@@ -620,6 +625,9 @@ def triage(request: Request, req: IntakeRequest):
         instability=req.instability,
         mechanism=req.mechanism,
         free_text=req.free_text,
+        which_finger=req.which_finger,
+        finger_location=req.finger_location,
+        grip_mode=req.grip_mode,
     )
 
     try:

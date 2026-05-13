@@ -34,3 +34,30 @@ class IntakeNewFieldDefaultsTests(unittest.TestCase):
         self.assertEqual(i.which_finger, "")
         self.assertEqual(i.finger_location, "")
         self.assertEqual(i.grip_mode, "")
+
+
+class IntakeRequestForwardingTests(unittest.TestCase):
+    """The FastAPI IntakeRequest must accept and forward the three new fields."""
+
+    def test_intake_request_accepts_new_fields(self):
+        from main import IntakeRequest
+        req = IntakeRequest(
+            region="Finger", onset="Sudden", pain_type="Sharp", severity=5,
+            swelling="No", bruising="No", numbness="No", weakness="None",
+            instability="No", mechanism="Hard crimp", free_text="",
+            which_finger="Ring", finger_location="palm_mid", grip_mode="full_crimp",
+        )
+        self.assertEqual(req.which_finger, "Ring")
+        self.assertEqual(req.finger_location, "palm_mid")
+        self.assertEqual(req.grip_mode, "full_crimp")
+
+    def test_intake_request_new_fields_default_blank(self):
+        from main import IntakeRequest
+        req = IntakeRequest(
+            region="Finger", onset="Sudden", pain_type="Sharp", severity=5,
+            swelling="No", bruising="No", numbness="No", weakness="None",
+            instability="No", mechanism="Hard crimp",
+        )
+        self.assertEqual(req.which_finger, "")
+        self.assertEqual(req.finger_location, "")
+        self.assertEqual(req.grip_mode, "")
