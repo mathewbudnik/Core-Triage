@@ -147,5 +147,83 @@ class StripTagsTests(unittest.TestCase):
         self.assertIn("disciplines", ex, "input should be untouched")
 
 
+
+
+# Schema validation — every pool entry must have the required tag fields
+# with correct types. This catches authoring errors that would otherwise
+# only surface when a specific (experience × discipline × equipment) combo
+# happens to filter to that entry.
+
+VALID_DISCIPLINES = {"bouldering", "sport", "trad", "competition"}
+VALID_EQUIPMENT = {"hangboard", "home_wall", "gym_membership", "outdoor_crag", "campus_board", "system_wall"}
+
+
+class ExercisePoolSchemaTests(unittest.TestCase):
+    def _collect_pools(self):
+        from src.coach import (
+            _HANGBOARD_POOL, _POWER_POOL, _ENDURANCE_POOL,
+            _STRENGTH_POOL, _FOOTWORK_POOL, _MENTAL_POOL,
+        )
+        return {
+            "hangboard": _HANGBOARD_POOL,
+            "power": _POWER_POOL,
+            "endurance": _ENDURANCE_POOL,
+            "strength": _STRENGTH_POOL,
+            "footwork": _FOOTWORK_POOL,
+            "mental": _MENTAL_POOL,
+        }
+
+    def test_every_pool_entry_has_required_tag_fields(self):
+        for pool_name, pool in self._collect_pools().items():
+            for ex in pool:
+                label = f"{pool_name}::{ex.get('exercise', '?')}"
+                self.assertIn("disciplines", ex, f"{label}: missing disciplines")
+                self.assertIn("min_experience", ex, f"{label}: missing min_experience")
+                # equipment_needed and max_experience are optional fields,
+                # but if present must be the right shape — checked separately below
+
+    def test_disciplines_values_are_valid(self):
+        for pool_name, pool in self._collect_pools().items():
+            for ex in pool:
+                label = f"{pool_name}::{ex.get('exercise', '?')}"
+                discs = ex["disciplines"]
+                self.assertIsInstance(discs, list, f"{label}: disciplines must be list")
+                self.assertGreater(len(discs), 0, f"{label}: disciplines must be non-empty")
+                for d in discs:
+                    self.assertIn(d, VALID_DISCIPLINES, f"{label}: '{d}' is not a valid discipline")
+
+    def test_min_experience_is_valid_level(self):
+        for pool_name, pool in self._collect_pools().items():
+            for ex in pool:
+                label = f"{pool_name}::{ex.get('exercise', '?')}"
+                self.assertIn(ex["min_experience"], _EXPERIENCE_LEVELS, f"{label}: invalid min_experience")
+
+    def test_max_experience_when_present_is_valid(self):
+        for pool_name, pool in self._collect_pools().items():
+            for ex in pool:
+                label = f"{pool_name}::{ex.get('exercise', '?')}"
+                if "max_experience" in ex:
+                    self.assertIn(ex["max_experience"], _EXPERIENCE_LEVELS, f"{label}: invalid max_experience")
+
+    def test_max_experience_not_below_min(self):
+        for pool_name, pool in self._collect_pools().items():
+            for ex in pool:
+                if "max_experience" not in ex:
+                    continue
+                label = f"{pool_name}::{ex.get('exercise', '?')}"
+                min_idx = _EXPERIENCE_LEVELS.index(ex["min_experience"])
+                max_idx = _EXPERIENCE_LEVELS.index(ex["max_experience"])
+                self.assertLessEqual(min_idx, max_idx, f"{label}: max_experience < min_experience")
+
+    def test_equipment_needed_values_are_valid(self):
+        for pool_name, pool in self._collect_pools().items():
+            for ex in pool:
+                label = f"{pool_name}::{ex.get('exercise', '?')}"
+                eq = ex.get("equipment_needed", [])
+                self.assertIsInstance(eq, list, f"{label}: equipment_needed must be list")
+                for e in eq:
+                    self.assertIn(e, VALID_EQUIPMENT, f"{label}: '{e}' is not valid equipment")
+
+
 if __name__ == "__main__":
     unittest.main()
