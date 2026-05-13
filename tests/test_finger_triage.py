@@ -143,3 +143,26 @@ class FingerRemainingPatternTests(unittest.TestCase):
         i = _intake(onset="Gradual", finger_location="palm_mid", swelling="Yes")
         ids = [b.id for b in bucket_possibilities(i)]
         self.assertIn("pip_synovitis", ids)
+
+
+class FingerFallbackTests(unittest.TestCase):
+    """When the user skips the new finger drill-down (blank fields),
+    we fall back to legacy generic buckets so old clients still work."""
+
+    def test_legacy_fallback_blank_fields_still_surfaces_pulley(self):
+        # All new fields blank — should fall back to legacy logic.
+        i = _intake(mechanism="Hard crimp", free_text="")
+        ids = [b.id for b in bucket_possibilities(i)]
+        self.assertIn("pulley_a2", ids,
+                      "blank new fields should fall back and surface pulley_a2")
+        self.assertIn("flexor_tenosynovitis", ids,
+                      "legacy fallback should always surface generic tenosynovitis")
+
+    def test_tail_catch_all_for_unmatched_specific_combo(self):
+        # Pinky + palm_mid + full_crimp — no specific pulley rule matches
+        # (A2 needs Ring/Middle/Index; A4 needs palm_tip; A3 needs half/open).
+        # Tail catch-all should ensure flexor_tenosynovitis still surfaces.
+        i = _intake(which_finger="Pinky", finger_location="palm_mid", grip_mode="full_crimp")
+        ids = [b.id for b in bucket_possibilities(i)]
+        self.assertIn("flexor_tenosynovitis", ids,
+                      "tail catch-all should surface generic bucket when no pattern matches")

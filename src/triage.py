@@ -1060,7 +1060,35 @@ def bucket_possibilities(i: Intake) -> List[Bucket]:
         if i.onset == "Gradual" and loc == "palm_mid" and i.swelling == "Yes":
             out.append(Bucket.from_id("pip_synovitis", qualifier="common"))
 
-        # (Legacy fallback + tail catch-all added in Task 8.)
+        # ── LEGACY FALLBACK — when ALL new finger fields are blank ──────
+        # Pre-Phase-6 clients and users who skipped the drill-down still get
+        # sensible results via the original mechanism + free-text logic.
+        if not any([wf, loc, grip]):
+            pulley_signals = (
+                i.mechanism in {"Hard crimp", "Dynamic catch", "Pocket",
+                                "High volume pulling", "Steep climbing/board"}
+                or "pulley" in text_l
+                or "a2" in text_l
+                or "a4" in text_l
+            )
+            if pulley_signals:
+                out.append(Bucket.from_id("pulley_a2", qualifier="most likely"))
+            if i.mechanism in {"Pocket", "Asymmetric hold"}:
+                out.append(Bucket.from_id("lumbrical_tear", qualifier="possible"))
+            out.append(Bucket.from_id("flexor_tenosynovitis", qualifier="possible"))
+            out.append(Bucket.from_id("collateral_ligament_finger", qualifier="possible"))
+
+        # ── TAIL CATCH-ALL — surface a generic bucket if none of the
+        # specific rules above fired (e.g. Pinky + palm_mid + full_crimp,
+        # which is a valid input that no pulley rule matches). Without this,
+        # the user would see zero finger buckets and a confusing UI.
+        _FINGER_BUCKET_PREFIXES = (
+            "pulley", "lumbrical", "collateral", "volar", "trigger",
+            "mallet", "jersey", "sagittal", "hamate", "pip_",
+            "boutonniere", "flexor",
+        )
+        if not any(b.id.startswith(_FINGER_BUCKET_PREFIXES) for b in out):
+            out.append(Bucket.from_id("flexor_tenosynovitis", qualifier="possible"))
 
     elif "wrist" in region:
         if i.mechanism in {"Hard crimp", "High volume pulling", "Dynamic catch"}:
