@@ -119,6 +119,15 @@ class FingerContentQualityTests(unittest.TestCase):
         "boutonniere",
         "acute_tissue_injury",
         "overuse_load_spike",
+        "pulley_a3",
+        "pulley_a4",
+        "volar_plate",
+        "trigger_finger",
+        "mallet_finger",
+        "jersey_finger",
+        "sagittal_band_rupture",
+        "hamate_hook_fracture",
+        "pip_synovitis",
     )
 
     def test_finger_buckets_have_at_least_three_matches_if(self):
@@ -144,26 +153,6 @@ class FingerContentQualityTests(unittest.TestCase):
                 entry["quick_test"].strip(),
                 f"{bid}: quick_test should be non-empty",
             )
-
-
-class NewFingerBucketsPresentTests(unittest.TestCase):
-    """Coverage check: every bucket ID referenced by the rewritten
-    Finger classifier branch must have a BUCKET_CONTENT entry."""
-
-    EXPECTED_NEW_IDS = [
-        "pulley_a3", "pulley_a4", "volar_plate", "trigger_finger",
-        "mallet_finger", "jersey_finger", "sagittal_band_rupture",
-        "hamate_hook_fracture", "pip_synovitis",
-    ]
-
-    def test_all_new_finger_bucket_ids_present(self):
-        for bid in self.EXPECTED_NEW_IDS:
-            self.assertIn(bid, BUCKET_CONTENT, f"missing bucket id: {bid}")
-            entry = BUCKET_CONTENT[bid]
-            self.assertIn("base_title", entry)
-            self.assertIn("why", entry)
-            self.assertGreater(len(entry["base_title"]), 0)
-            self.assertGreater(len(entry["why"]), 0)
 
 
 if __name__ == "__main__":

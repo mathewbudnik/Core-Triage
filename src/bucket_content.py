@@ -108,7 +108,7 @@ BUCKET_CONTENT: dict[str, dict] = {
         ],
         "not_likely_if": [
             "Pain is at the base of the finger (consider A2 instead)",
-            "Pain is at the tip near the DIP joint (consider A4 instead)",
+            "Pain is at the tip near the DIP (fingertip) joint (consider A4 instead)",
             "Pain is on the side of the joint rather than palm side",
         ],
         "quick_test": "Press on the palm side of the middle of the finger while pulling on a half-crimp position. Localized pain in that exact spot is the A3 pattern.",
@@ -117,7 +117,7 @@ BUCKET_CONTENT: dict[str, dict] = {
         "base_title": "A4 pulley strain",
         "why": "Palm-side pain at the finger tip, almost always full-crimp loading on small holds.",
         "matches_if": [
-            "Sharp pain on the palm side of the finger near the DIP joint (last knuckle)",
+            "Sharp pain on the palm side of the finger near the DIP (fingertip) joint",
             "Worse on full crimp on small, hard edges",
             "Tender to press at the distal third of the middle phalanx, palm side",
             "May have heard a small pop on a hard crimp move",
@@ -127,22 +127,22 @@ BUCKET_CONTENT: dict[str, dict] = {
             "Pain is in the middle of the finger (consider A3)",
             "Pain is on the side of the joint or back of the finger",
         ],
-        "quick_test": "Press at the distal end of the middle phalanx (just before the last knuckle) on the palm side. Sharp localized pain that reproduces during a small-edge full crimp is the A4 pattern.",
+        "quick_test": "Press at the distal end of the middle phalanx (just before the DIP joint) on the palm side. Sharp localized pain that reproduces during a small-edge full crimp is the A4 pattern.",
     },
     "volar_plate": {
         "base_title": "Volar plate injury (PIP)",
-        "why": "PIP joint hyperextension injury — pain on the palm side or back of the middle joint after a jam or backward bend.",
+        "why": "PIP (middle) joint hyperextension injury — pain on the palm side or back of the PIP joint after a jam or backward bend.",
         "matches_if": [
             "The finger was hyperextended or jammed backward at the moment of injury",
-            "Pain and swelling at the middle finger joint (PIP), often on the palm side or front",
+            "Pain and swelling at the PIP (middle) joint, often on the palm side or front",
             "Joint feels stiff and reluctant to fully straighten or fully bend",
             "Often follows catching a fall, jamming on a hold, or a hold breaking unexpectedly",
         ],
         "not_likely_if": [
             "There was no hyperextension or jamming mechanism",
-            "Pain is at the base or tip of the finger (palm side) rather than the middle joint",
+            "Pain is at the base or tip of the finger (palm side) rather than the PIP joint",
         ],
-        "quick_test": "Gently extend the middle joint backward by a few degrees. Pain and apprehension at the front or palm side of the joint is the volar plate pattern.",
+        "quick_test": "Gently extend the PIP joint backward by a few degrees. Pain and apprehension at the front or palm side of the joint is the volar plate pattern.",
     },
     "trigger_finger": {
         "base_title": "Trigger finger (stenosing tenosynovitis)",
@@ -163,22 +163,22 @@ BUCKET_CONTENT: dict[str, dict] = {
         "base_title": "Mallet finger (extensor tendon avulsion at DIP)",
         "why": "Cannot fully straighten the fingertip after a jam — the tip droops down. Time-sensitive.",
         "matches_if": [
-            "The fingertip cannot be fully extended — it droops down at the last joint",
+            "The fingertip cannot be fully extended — it droops down at the DIP (fingertip) joint",
             "Often happened from a ball or hold hitting the end of the finger",
             "Pain and swelling at the back of the DIP joint",
             "The finger can still bend, but won't straighten the tip on its own",
         ],
         "not_likely_if": [
             "The fingertip extends fully when you try (just hurts)",
-            "Pain is at the middle joint rather than at the tip",
+            "Pain is at the PIP (middle) joint rather than at the tip",
         ],
         "quick_test": "Rest the back of the hand flat on a table with all fingers extended. If the affected fingertip cannot be straightened to match the others, this is the mallet pattern — see a clinician within 1 week for splinting.",
     },
     "jersey_finger": {
-        "base_title": "Jersey finger (FDP avulsion)",
+        "base_title": "Jersey finger (flexor digitorum profundus avulsion)",
         "why": "Cannot bend the fingertip after a forceful grip pull — most often the ring finger. Surgical urgency.",
         "matches_if": [
-            "Cannot actively bend the fingertip at the last joint, especially after a hard grip pull",
+            "Cannot actively bend the fingertip at the DIP (fingertip) joint, especially after a hard grip pull",
             "Almost always the ring finger, occasionally middle",
             "Often happened catching a fall, a hold popping off, or grabbing as something jerked away",
             "Pain in the palm or finger, sometimes with bruising along the palm",
@@ -193,7 +193,7 @@ BUCKET_CONTENT: dict[str, dict] = {
         "base_title": "Sagittal band rupture (boxer's knuckle)",
         "why": "Extensor tendon slips off the knuckle when the finger is bent — felt as a pop on the back of the hand.",
         "matches_if": [
-            "Pain on the back of the hand at the knuckle (MCP joint)",
+            "Pain on the back of the hand at the MCP (knuckle) joint",
             "Tendon visibly slips to one side when the finger is bent",
             "Felt a pop on the top of the hand at the moment of injury",
             "Most common on the middle or ring finger MCP",
@@ -221,16 +221,16 @@ BUCKET_CONTENT: dict[str, dict] = {
     },
     "pip_synovitis": {
         "base_title": "PIP joint synovitis",
-        "why": "Chronic capsular swelling at the middle finger joint, common in long-time crimpers as a session-driven overuse.",
+        "why": "Chronic capsular swelling at the PIP (middle) joint, common in long-time crimpers as a session-driven overuse.",
         "matches_if": [
-            "Persistent puffy swelling at the middle finger joint that doesn't fully resolve",
+            "Persistent puffy swelling at the PIP joint that doesn't fully resolve",
             "Gradual onset over weeks or months, often related to high session volume",
             "Worse after climbing sessions, easier after a day off",
             "Joint feels stiff first thing in the morning",
         ],
         "not_likely_if": [
             "Acute onset from a single event with a clear pop",
-            "Pain is at the base or tip of the finger rather than the middle joint",
+            "Pain is at the base or tip of the finger rather than the PIP joint",
         ],
         "quick_test": "Compare the size of the painful PIP joint to the same joint on the other hand. Persistent puffiness with no acute event points to capsular synovitis from chronic load.",
     },
