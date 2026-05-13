@@ -118,3 +118,28 @@ class FingerJointAndPocketPatternTests(unittest.TestCase):
         i = _intake(finger_location="dorsal", free_text="finger got jammed back hard")
         ids = [b.id for b in bucket_possibilities(i)]
         self.assertIn("volar_plate", ids)
+
+
+class FingerRemainingPatternTests(unittest.TestCase):
+    def test_sagittal_band_middle_dorsal_pop_top(self):
+        i = _intake(
+            which_finger="Middle", finger_location="dorsal",
+            free_text="felt a pop on top of my knuckle",
+        )
+        ids = [b.id for b in bucket_possibilities(i)]
+        self.assertIn("sagittal_band_rupture", ids)
+
+    def test_hamate_hook_pinky_jam(self):
+        i = _intake(which_finger="Pinky", grip_mode="jam")
+        ids = [b.id for b in bucket_possibilities(i)]
+        self.assertIn("hamate_hook_fracture", ids)
+
+    def test_trigger_finger_gradual_catch(self):
+        i = _intake(onset="Gradual", free_text="finger catches when I close my hand")
+        ids = [b.id for b in bucket_possibilities(i)]
+        self.assertIn("trigger_finger", ids)
+
+    def test_pip_synovitis_gradual_palm_mid_swelling(self):
+        i = _intake(onset="Gradual", finger_location="palm_mid", swelling="Yes")
+        ids = [b.id for b in bucket_possibilities(i)]
+        self.assertIn("pip_synovitis", ids)

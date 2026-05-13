@@ -1029,8 +1029,38 @@ def bucket_possibilities(i: Intake) -> List[Bucket]:
         ):
             out.append(Bucket.from_id("volar_plate", qualifier="likely"))
 
-        # (Remaining patterns added in Tasks 7-8: sagittal/hamate/trigger/PIP
-        # synovitis, legacy fallback, tail catch-all.)
+        # ── SAGITTAL BAND — middle/ring extensor tendon slip ─────────────
+        if loc == "dorsal" and wf in {"Middle", "Ring"} and (
+            "pop on top" in text_l
+            or "tendon shifts" in text_l
+            or "tendon slips" in text_l
+            or "knuckle pops" in text_l
+        ):
+            out.append(Bucket.from_id("sagittal_band_rupture", qualifier="likely"))
+
+        # ── HAMATE HOOK — pinky-side palm pain from jamming ──────────────
+        if wf == "Pinky" and (
+            grip == "jam"
+            or "pinky-side palm" in text_l
+            or "ulnar palm" in text_l
+            or "hamate" in text_l
+        ):
+            out.append(Bucket.from_id("hamate_hook_fracture", qualifier="consider evaluation"))
+
+        # ── TRIGGER FINGER — chronic catching ────────────────────────────
+        if i.onset == "Gradual" and (
+            "catch" in text_l
+            or "lock" in text_l
+            or "stuck" in text_l
+            or "trigger" in text_l
+        ):
+            out.append(Bucket.from_id("trigger_finger", qualifier="possible"))
+
+        # ── PIP SYNOVITIS — chronic mid-joint swelling ───────────────────
+        if i.onset == "Gradual" and loc == "palm_mid" and i.swelling == "Yes":
+            out.append(Bucket.from_id("pip_synovitis", qualifier="common"))
+
+        # (Legacy fallback + tail catch-all added in Task 8.)
 
     elif "wrist" in region:
         if i.mechanism in {"Hard crimp", "High volume pulling", "Dynamic catch"}:
