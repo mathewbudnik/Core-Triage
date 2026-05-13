@@ -115,234 +115,311 @@ def _strip_tags(exercise: Dict) -> Dict:
 # Exercise library blocks
 # ---------------------------------------------------------------------------
 
-def _hangboard_block(experience: str) -> List[Dict]:
-    if experience in ("beginner",):
-        return [
-            {
-                "exercise": "Half-crimp hangs",
-                "detail": "Shoulder-width on 20mm edge, half-crimp grip",
-                "sets": 4,
-                "reps": "7s on / 3s off",
-                "rest_seconds": 120,
-                "effort_note": "~80% of max — you should be able to complete all reps but feel challenged",
-                "benchmark": "Beginner target: hang 7s at 80–90% body weight on a 20mm edge",
-            },
-            {
-                "exercise": "Open-hand hangs",
-                "detail": "Same edge, open-hand position — gentler on pulleys",
-                "sets": 3,
-                "reps": "7s on / 3s off",
-                "rest_seconds": 120,
-                "effort_note": "Should feel distinct from half-crimp — don't white-knuckle",
-                "benchmark": "This position recruits the A2 pulley less — use it as a recovery set",
-            },
-        ]
-    if experience in ("intermediate",):
-        return [
-            {
-                "exercise": "Max-weight half-crimp hangs",
-                "detail": "20mm edge, add weight via belt/vest",
-                "sets": 5,
-                "reps": "10s on / 50s off",
-                "rest_seconds": 180,
-                "effort_note": "True max — you should barely complete 10s. Log the added weight.",
-                "benchmark": "Intermediate: typically +5–15 kg on 20mm at 10s",
-            },
-            {
-                "exercise": "Open-hand density hangs",
-                "detail": "18mm edge, open hand, bodyweight",
-                "sets": 4,
-                "reps": "6 × (7s on / 3s off)",
-                "rest_seconds": 180,
-                "effort_note": "Accumulate time under tension — pace yourself evenly across all 6 reps",
-                "benchmark": "If you can't complete 6 reps, drop to 5 and build over weeks",
-            },
-        ]
-    # advanced / elite
-    return [
-        {
-            "exercise": "Max-weight pinch hangs",
-            "detail": "Pinch block or wide pinch on board, add weight",
-            "sets": 5,
-            "reps": "10s on / 50s off",
-            "rest_seconds": 180,
-            "effort_note": "Target ≥ 120% body weight across all grip positions over the mesocycle",
-            "benchmark": "Elite: pinch at bodyweight is the baseline — train beyond",
-        },
-        {
-            "exercise": "One-arm lock-off hangs",
-            "detail": "Assisted one-arm on 20mm, assistance via pulley or foot loop",
-            "sets": 4,
-            "reps": "5s per arm",
-            "rest_seconds": 120,
-            "effort_note": "Reduce assistance each session — track assistance weight",
-            "benchmark": "Goal: unassisted 5s one-arm hang within 6–8 weeks",
-        },
-    ]
+_HANGBOARD_POOL: List[Dict] = [
+    {
+        "exercise": "Half-crimp hangs",
+        "detail": "Shoulder-width on 20mm edge, half-crimp grip",
+        "sets": 4,
+        "reps": "7s on / 3s off",
+        "rest_seconds": 120,
+        "effort_note": "~80% of max — you should be able to complete all reps but feel challenged",
+        "benchmark": "Beginner target: hang 7s at 80–90% body weight on a 20mm edge",
+        "disciplines": ["bouldering", "sport", "trad", "competition"],
+        "min_experience": "beginner",
+        "max_experience": "intermediate",
+        "equipment_needed": ["hangboard"],
+    },
+    {
+        "exercise": "Open-hand hangs",
+        "detail": "Same edge, open-hand position — gentler on pulleys",
+        "sets": 3,
+        "reps": "7s on / 3s off",
+        "rest_seconds": 120,
+        "effort_note": "Should feel distinct from half-crimp — don't white-knuckle",
+        "benchmark": "This position recruits the A2 pulley less — use it as a recovery set",
+        "disciplines": ["bouldering", "sport", "trad", "competition"],
+        "min_experience": "beginner",
+        "max_experience": "intermediate",
+        "equipment_needed": ["hangboard"],
+    },
+    {
+        "exercise": "Max-weight half-crimp hangs",
+        "detail": "20mm edge, add weight via belt/vest",
+        "sets": 5,
+        "reps": "10s on / 50s off",
+        "rest_seconds": 180,
+        "effort_note": "True max — you should barely complete 10s. Log the added weight.",
+        "benchmark": "Intermediate: typically +5–15 kg on 20mm at 10s",
+        "disciplines": ["bouldering", "sport", "trad", "competition"],
+        "min_experience": "intermediate",
+        "equipment_needed": ["hangboard"],
+    },
+    {
+        "exercise": "Open-hand density hangs",
+        "detail": "18mm edge, open hand, bodyweight",
+        "sets": 4,
+        "reps": "6 × (7s on / 3s off)",
+        "rest_seconds": 180,
+        "effort_note": "Accumulate time under tension — pace yourself evenly across all 6 reps",
+        "benchmark": "If you can't complete 6 reps, drop to 5 and build over weeks",
+        "disciplines": ["bouldering", "sport", "trad", "competition"],
+        "min_experience": "intermediate",
+        "equipment_needed": ["hangboard"],
+    },
+    {
+        "exercise": "Max-weight pinch hangs",
+        "detail": "Pinch block or wide pinch on board, add weight",
+        "sets": 5,
+        "reps": "10s on / 50s off",
+        "rest_seconds": 180,
+        "effort_note": "Target ≥ 120% body weight across all grip positions over the mesocycle",
+        "benchmark": "Elite: pinch at bodyweight is the baseline — train beyond",
+        "disciplines": ["bouldering", "competition"],
+        "min_experience": "advanced",
+        "equipment_needed": ["hangboard"],
+    },
+    {
+        "exercise": "One-arm lock-off hangs",
+        "detail": "Assisted one-arm on 20mm, assistance via pulley or foot loop",
+        "sets": 4,
+        "reps": "5s per arm",
+        "rest_seconds": 120,
+        "effort_note": "Reduce assistance each session — track assistance weight",
+        "benchmark": "Goal: unassisted 5s one-arm hang within 6–8 weeks",
+        "disciplines": ["bouldering", "competition"],
+        "min_experience": "elite",
+        "equipment_needed": ["hangboard"],
+    },
+]
 
 
-def _power_block(experience: str) -> List[Dict]:
-    if experience == "beginner":
-        return [
-            {
-                "exercise": "Feet-on campusing",
-                "detail": "Use campus rungs with feet on. Match each rung before moving up.",
-                "sets": 4,
-                "reps": "5 moves",
-                "rest_seconds": 120,
-                "effort_note": "Explosive pull — don't muscle through slowly",
-                "benchmark": "Beginner: focus on keeping hips in and generating power from lats",
-            },
-        ]
-    if experience == "intermediate":
-        return [
-            {
-                "exercise": "Campus board 1-3-5",
-                "detail": "Start on rung 1, skip to 3, skip to 5. No feet.",
-                "sets": 5,
-                "reps": "3 ladders each arm leading",
-                "rest_seconds": 180,
-                "effort_note": "Each move should feel explosive — if it's slow, rest more",
-                "benchmark": "Intermediate: 1-3-5 is the baseline. Progress to 1-4-7 over the cycle.",
-            },
-            {
-                "exercise": "Double dynos",
-                "detail": "Jump both hands simultaneously to a higher pair of rungs",
-                "sets": 4,
-                "reps": "4 attempts",
-                "rest_seconds": 180,
-                "effort_note": "Commit fully — half-committed dynos cause injuries",
-                "benchmark": "Most intermediate climbers hit 2-rung dynos; target 3-rung by end of phase",
-            },
-        ]
-    return [
-        {
-            "exercise": "Campus board 1-5-8",
-            "detail": "Max-distance campus ladders, both arms",
-            "sets": 6,
-            "reps": "3 ladders each arm",
-            "rest_seconds": 240,
-            "effort_note": "Full rest between sets — this is CNS-intensive, don't rush",
-            "benchmark": "Advanced/elite: 1-5-8 is baseline. 1-5-9 is the benchmark for elite fingerboarders.",
-        },
-    ]
+def _hangboard_block(experience: str, discipline: str, equipment: List[str]) -> List[Dict]:
+    return _select_with_fallback(_HANGBOARD_POOL, experience, discipline, equipment, n=2)
 
 
-def _endurance_block(experience: str) -> List[Dict]:
-    base = [
-        {
-            "exercise": "4×4s",
-            "detail": "Pick 4 boulder problems 2–3 grades below max. Climb all 4 back to back, rest 3 min, repeat 4 rounds.",
-            "sets": 4,
-            "reps": "4 problems continuous",
-            "rest_seconds": 180,
-            "effort_note": "The last round should feel very hard — if it's easy, the problems are too easy",
-            "benchmark": "Your forearms should be noticeably pumped after round 2. Full pump by round 4.",
-        },
-        {
-            "exercise": "Linked route laps",
-            "detail": "Climb a moderate route, immediately downclimb or lower and repeat",
-            "sets": 3,
-            "reps": "5 laps per route",
-            "rest_seconds": 300,
-            "effort_note": "Pace yourself — the goal is maintaining technique under fatigue, not sprinting",
-            "benchmark": "Intermediate: maintain footwork quality on laps 4–5. Beginners: 3 laps is the target.",
-        },
-    ]
-    if experience in ("advanced", "elite"):
-        base.append({
-            "exercise": "ARCing (aerobic restoration and capillarity)",
-            "detail": "20–40 min of continuous easy climbing (50–60% effort). No stopping.",
-            "sets": 1,
-            "reps": "20–40 min",
-            "rest_seconds": 0,
-            "effort_note": "You should be able to hold a full conversation throughout — this is recovery training",
-            "benchmark": "If you're breathing hard, you're going too hard. The adaptation is in the sustained duration.",
-        })
-    return base
+_POWER_POOL: List[Dict] = [
+    {
+        "exercise": "Feet-on campusing",
+        "detail": "Use campus rungs with feet on. Match each rung before moving up.",
+        "sets": 4,
+        "reps": "5 moves",
+        "rest_seconds": 120,
+        "effort_note": "Explosive pull — don't muscle through slowly",
+        "benchmark": "Beginner: focus on keeping hips in and generating power from lats",
+        "disciplines": ["bouldering", "sport", "competition"],
+        "min_experience": "beginner",
+        "max_experience": "intermediate",
+        "equipment_needed": ["campus_board"],
+    },
+    {
+        "exercise": "Campus board 1-3-5",
+        "detail": "Start on rung 1, skip to 3, skip to 5. No feet.",
+        "sets": 5,
+        "reps": "3 ladders each arm leading",
+        "rest_seconds": 180,
+        "effort_note": "Each move should feel explosive — if it's slow, rest more",
+        "benchmark": "Intermediate: 1-3-5 is the baseline. Progress to 1-4-7 over the cycle.",
+        "disciplines": ["bouldering", "competition"],
+        "min_experience": "intermediate",
+        "equipment_needed": ["campus_board"],
+    },
+    {
+        "exercise": "Double dynos",
+        "detail": "Jump both hands simultaneously to a higher pair of rungs",
+        "sets": 4,
+        "reps": "4 attempts",
+        "rest_seconds": 180,
+        "effort_note": "Commit fully — half-committed dynos cause injuries",
+        "benchmark": "Most intermediate climbers hit 2-rung dynos; target 3-rung by end of phase",
+        "disciplines": ["bouldering", "competition"],
+        "min_experience": "intermediate",
+        "equipment_needed": ["campus_board"],
+    },
+    {
+        "exercise": "Campus board 1-5-8",
+        "detail": "Max-distance campus ladders, both arms",
+        "sets": 6,
+        "reps": "3 ladders each arm",
+        "rest_seconds": 240,
+        "effort_note": "Full rest between sets — this is CNS-intensive, don't rush",
+        "benchmark": "Advanced/elite: 1-5-8 is baseline. 1-5-9 is the benchmark for elite fingerboarders.",
+        "disciplines": ["bouldering", "competition"],
+        "min_experience": "advanced",
+        "equipment_needed": ["campus_board"],
+    },
+]
 
 
-def _strength_block(experience: str) -> List[Dict]:
-    return [
-        {
-            "exercise": "Pull-up variations",
-            "detail": "Weighted pull-ups or archer pull-ups depending on level",
-            "sets": 4 if experience != "beginner" else 3,
-            "reps": "5" if experience in ("advanced", "elite") else "8",
-            "rest_seconds": 180,
-            "effort_note": "Last rep should be hard but form must stay clean — no kipping",
-            "benchmark": {
-                "beginner": "Bodyweight pull-ups with full ROM. Use assistance band if needed.",
-                "intermediate": "Add 5–10 kg. Archer pull-ups count as assisted one-arm.",
-                "advanced": "Add 20+ kg. Progress toward one-arm pull-ups.",
-                "elite": "One-arm pull-up training is the standard.",
-            }.get(experience, "Full ROM, controlled descent"),
-        },
-        {
-            "exercise": "Front lever progressions",
-            "detail": "Tuck → advanced tuck → straddle → full. Hold each for 3×5s.",
-            "sets": 4,
-            "reps": "3 × 5s holds",
-            "rest_seconds": 120,
-            "effort_note": "Hold the position where you're working — don't sacrifice form for a harder position",
-            "benchmark": "Intermediate: advanced tuck. Advanced: straddle. Elite: full front lever.",
-        },
-        {
-            "exercise": "Core tension: hollow body holds",
-            "detail": "Supine, arms overhead, press low back flat to floor, lift legs to ~30°",
-            "sets": 3,
-            "reps": "30s",
-            "rest_seconds": 60,
-            "effort_note": "If low back lifts off the floor, raise legs higher — quality over quantity",
-            "benchmark": "Beginners: 15s is a solid starting point. Build to 45s over the phase.",
-        },
-    ]
+def _power_block(experience: str, discipline: str, equipment: List[str]) -> List[Dict]:
+    return _select_with_fallback(_POWER_POOL, experience, discipline, equipment, n=2)
 
 
-def _footwork_block() -> List[Dict]:
-    return [
-        {
-            "exercise": "Silent feet drills",
-            "detail": "Climb a moderate route/problem — no sound when placing feet. Reset if you hear a foot.",
-            "sets": 3,
-            "reps": "5 problems",
-            "rest_seconds": 90,
-            "effort_note": "Slow down — this is technique, not training to failure",
-            "benchmark": "Even V8+ climbers benefit from this drill. Precision > speed at all levels.",
-        },
-        {
-            "exercise": "Slab technique — smearing",
-            "detail": "Find or set 3–4 slab sequences that require smearing. Focus on hip position.",
-            "sets": 2,
-            "reps": "10 min",
-            "rest_seconds": 120,
-            "effort_note": "Weight over feet, trust the rubber — lean into the discomfort of slab",
-            "benchmark": "Most climbers undertrain slab. 10 min of focused slab work pays dividends on overhang too.",
-        },
-    ]
+_ENDURANCE_POOL: List[Dict] = [
+    {
+        "exercise": "4×4s",
+        "detail": "Pick 4 boulder problems 2–3 grades below max. Climb all 4 back to back, rest 3 min, repeat 4 rounds.",
+        "sets": 4,
+        "reps": "4 problems continuous",
+        "rest_seconds": 180,
+        "effort_note": "The last round should feel very hard — if it's easy, the problems are too easy",
+        "benchmark": "Your forearms should be noticeably pumped after round 2. Full pump by round 4.",
+        "disciplines": ["bouldering", "sport", "trad", "competition"],
+        "min_experience": "beginner",
+        "equipment_needed": [],
+    },
+    {
+        "exercise": "Linked route laps",
+        "detail": "Climb a moderate route, immediately downclimb or lower and repeat",
+        "sets": 3,
+        "reps": "5 laps per route",
+        "rest_seconds": 300,
+        "effort_note": "Pace yourself — the goal is maintaining technique under fatigue, not sprinting",
+        "benchmark": "Intermediate: maintain footwork quality on laps 4–5. Beginners: 3 laps is the target.",
+        "disciplines": ["bouldering", "sport", "trad", "competition"],
+        "min_experience": "beginner",
+        "equipment_needed": [],
+    },
+    {
+        "exercise": "ARCing (aerobic restoration and capillarity)",
+        "detail": "20–40 min of continuous easy climbing (50–60% effort). No stopping.",
+        "sets": 1,
+        "reps": "20–40 min",
+        "rest_seconds": 0,
+        "effort_note": "You should be able to hold a full conversation throughout — this is recovery training",
+        "benchmark": "If you're breathing hard, you're going too hard. The adaptation is in the sustained duration.",
+        "disciplines": ["sport", "trad", "competition"],
+        "min_experience": "advanced",
+        "equipment_needed": [],
+    },
+]
 
 
-def _mental_block() -> List[Dict]:
-    return [
-        {
-            "exercise": "Headpoint practice",
-            "detail": "Take a route/problem at your limit. Rehearse the crux moves on TR or with padding first, then commit.",
-            "sets": 1,
-            "reps": "2–3 attempts from the ground",
-            "rest_seconds": 300,
-            "effort_note": "The goal is committing to the move — falling is part of the process",
-            "benchmark": "Most climbers avoid this drill. Scheduling it makes it happen.",
-        },
-        {
-            "exercise": "Breath reset drill",
-            "detail": "Before each attempt, take 3 slow diaphragmatic breaths. On the wall, breathe at every rest hold.",
-            "sets": 1,
-            "reps": "Every attempt in the session",
-            "rest_seconds": 0,
-            "effort_note": "This is a habit drill — the reps are every single attempt, not a separate exercise block",
-            "benchmark": "Most climbers forget to breathe on hard moves. This drill rewires that pattern.",
-        },
-    ]
+def _endurance_block(experience: str, discipline: str, equipment: List[str]) -> List[Dict]:
+    return _select_with_fallback(_ENDURANCE_POOL, experience, discipline, equipment, n=3)
+
+
+def _pullup_benchmark(experience: str) -> str:
+    return {
+        "beginner": "Bodyweight pull-ups with full ROM. Use assistance band if needed.",
+        "intermediate": "Add 5–10 kg. Archer pull-ups count as assisted one-arm.",
+        "advanced": "Add 20+ kg. Progress toward one-arm pull-ups.",
+        "elite": "One-arm pull-up training is the standard.",
+    }.get(experience, "Full ROM, controlled descent")
+
+
+_STRENGTH_POOL: List[Dict] = [
+    {
+        "exercise": "Pull-up variations",
+        "detail": "Weighted pull-ups or archer pull-ups depending on level",
+        "sets": 4,
+        "reps": "5-8",
+        "rest_seconds": 180,
+        "effort_note": "Last rep should be hard but form must stay clean — no kipping",
+        "benchmark": "Full ROM, controlled descent",
+        "disciplines": ["bouldering", "sport", "trad", "competition"],
+        "min_experience": "beginner",
+        "equipment_needed": [],
+    },
+    {
+        "exercise": "Front lever progressions",
+        "detail": "Tuck → advanced tuck → straddle → full. Hold each for 3×5s.",
+        "sets": 4,
+        "reps": "3 × 5s holds",
+        "rest_seconds": 120,
+        "effort_note": "Hold the position where you're working — don't sacrifice form for a harder position",
+        "benchmark": "Intermediate: advanced tuck. Advanced: straddle. Elite: full front lever.",
+        "disciplines": ["bouldering", "sport", "trad", "competition"],
+        "min_experience": "beginner",
+        "equipment_needed": [],
+    },
+    {
+        "exercise": "Core tension: hollow body holds",
+        "detail": "Supine, arms overhead, press low back flat to floor, lift legs to ~30°",
+        "sets": 3,
+        "reps": "30s",
+        "rest_seconds": 60,
+        "effort_note": "If low back lifts off the floor, raise legs higher — quality over quantity",
+        "benchmark": "Beginners: 15s is a solid starting point. Build to 45s over the phase.",
+        "disciplines": ["bouldering", "sport", "trad", "competition"],
+        "min_experience": "beginner",
+        "equipment_needed": [],
+    },
+]
+
+
+def _strength_block(experience: str, discipline: str, equipment: List[str]) -> List[Dict]:
+    selected = _select_with_fallback(_STRENGTH_POOL, experience, discipline, equipment, n=3)
+    # Patch the pull-up entry with experience-specific sets/reps/benchmark
+    for ex in selected:
+        if ex["exercise"] == "Pull-up variations":
+            ex["sets"] = 4 if experience != "beginner" else 3
+            ex["reps"] = "5" if experience in ("advanced", "elite") else "8"
+            ex["benchmark"] = _pullup_benchmark(experience)
+    return selected
+
+
+_FOOTWORK_POOL: List[Dict] = [
+    {
+        "exercise": "Silent feet drills",
+        "detail": "Climb a moderate route/problem — no sound when placing feet. Reset if you hear a foot.",
+        "sets": 3,
+        "reps": "5 problems",
+        "rest_seconds": 90,
+        "effort_note": "Slow down — this is technique, not training to failure",
+        "benchmark": "Even V8+ climbers benefit from this drill. Precision > speed at all levels.",
+        "disciplines": ["bouldering", "sport", "trad", "competition"],
+        "min_experience": "beginner",
+        "equipment_needed": [],
+    },
+    {
+        "exercise": "Slab technique — smearing",
+        "detail": "Find or set 3–4 slab sequences that require smearing. Focus on hip position.",
+        "sets": 2,
+        "reps": "10 min",
+        "rest_seconds": 120,
+        "effort_note": "Weight over feet, trust the rubber — lean into the discomfort of slab",
+        "benchmark": "Most climbers undertrain slab. 10 min of focused slab work pays dividends on overhang too.",
+        "disciplines": ["bouldering", "sport", "trad", "competition"],
+        "min_experience": "beginner",
+        "equipment_needed": [],
+    },
+]
+
+
+def _footwork_block(experience: str, discipline: str, equipment: List[str]) -> List[Dict]:
+    return _select_with_fallback(_FOOTWORK_POOL, experience, discipline, equipment, n=2)
+
+
+_MENTAL_POOL: List[Dict] = [
+    {
+        "exercise": "Headpoint practice",
+        "detail": "Take a route/problem at your limit. Rehearse the crux moves on TR or with padding first, then commit.",
+        "sets": 1,
+        "reps": "2–3 attempts from the ground",
+        "rest_seconds": 300,
+        "effort_note": "The goal is committing to the move — falling is part of the process",
+        "benchmark": "Most climbers avoid this drill. Scheduling it makes it happen.",
+        "disciplines": ["sport", "trad"],
+        "min_experience": "intermediate",
+        "equipment_needed": [],
+    },
+    {
+        "exercise": "Breath reset drill",
+        "detail": "Before each attempt, take 3 slow diaphragmatic breaths. On the wall, breathe at every rest hold.",
+        "sets": 1,
+        "reps": "Every attempt in the session",
+        "rest_seconds": 0,
+        "effort_note": "This is a habit drill — the reps are every single attempt, not a separate exercise block",
+        "benchmark": "Most climbers forget to breathe on hard moves. This drill rewires that pattern.",
+        "disciplines": ["bouldering", "sport", "trad", "competition"],
+        "min_experience": "beginner",
+        "equipment_needed": [],
+    },
+]
+
+
+def _mental_block(experience: str, discipline: str, equipment: List[str]) -> List[Dict]:
+    return _select_with_fallback(_MENTAL_POOL, experience, discipline, equipment, n=2)
 
 
 # ---------------------------------------------------------------------------
@@ -450,7 +527,14 @@ def _knee_injured(injury_flags: List[str]) -> bool:
 # Template: (session_type, primary_blocks_fn) pairs per week
 # Each entry is a list of day descriptors for that week structure
 
-def _goal_template(goal: str, days: int, experience: str, injury_flags: List[str]) -> List[Dict]:
+def _goal_template(
+    goal: str,
+    days: int,
+    experience: str,
+    injury_flags: List[str],
+    discipline: str,
+    equipment: List[str],
+) -> List[Dict]:
     """
     Build a 4-week plan as a flat list of session dicts.
     Returns sessions ordered by session_index.
@@ -467,7 +551,8 @@ def _goal_template(goal: str, days: int, experience: str, injury_flags: List[str
         for day_in_week in range(1, days + 1):
             session_type, main_blocks = _pick_session(
                 goal, day_in_week, days, week, is_deload,
-                experience, finger_ok, shoulder_ok, injury_flags
+                experience, finger_ok, shoulder_ok, injury_flags,
+                discipline, equipment,
             )
 
             coach_note = STATIC_COACH_NOTES.get(session_type, STATIC_COACH_NOTES["project"])
@@ -493,6 +578,8 @@ def _pick_session(
     week: int, is_deload: bool,
     experience: str, finger_ok: bool, shoulder_ok: bool,
     injury_flags: List[str],
+    discipline: str,
+    equipment: List[str],
 ) -> tuple[str, List[Dict]]:
     """Return (session_type, main_blocks) for a given day slot."""
 
@@ -500,43 +587,43 @@ def _pick_session(
 
     if goal == "grade_progression":
         schedule = {
-            1: ("hangboard", lambda: _hangboard_block(experience) if finger_ok else _strength_block(experience)),
-            2: ("power", lambda: _power_block(experience) if finger_ok else _endurance_block(experience)),
-            3: ("project", lambda: [_footwork_block()[0], _mental_block()[0]]),
-            4: ("strength", lambda: _strength_block(experience)),
-            5: ("endurance", lambda: _endurance_block(experience)),
+            1: ("hangboard", lambda: _hangboard_block(experience, discipline, equipment) if finger_ok else _strength_block(experience, discipline, equipment)),
+            2: ("power", lambda: _power_block(experience, discipline, equipment) if finger_ok else _endurance_block(experience, discipline, equipment)),
+            3: ("project", lambda: [_footwork_block(experience, discipline, equipment)[0], _mental_block(experience, discipline, equipment)[0]]),
+            4: ("strength", lambda: _strength_block(experience, discipline, equipment)),
+            5: ("endurance", lambda: _endurance_block(experience, discipline, equipment)),
         }
     elif goal == "route_endurance":
         schedule = {
-            1: ("endurance", lambda: _endurance_block(experience)),
-            2: ("strength", lambda: _strength_block(experience)),
-            3: ("endurance", lambda: _endurance_block(experience)),
-            4: ("technique", lambda: _footwork_block()),
-            5: ("endurance", lambda: _endurance_block(experience)),
+            1: ("endurance", lambda: _endurance_block(experience, discipline, equipment)),
+            2: ("strength", lambda: _strength_block(experience, discipline, equipment)),
+            3: ("endurance", lambda: _endurance_block(experience, discipline, equipment)),
+            4: ("technique", lambda: _footwork_block(experience, discipline, equipment)),
+            5: ("endurance", lambda: _endurance_block(experience, discipline, equipment)),
         }
     elif goal == "competition":
         schedule = {
-            1: ("power", lambda: _power_block(experience) if finger_ok else _strength_block(experience)),
-            2: ("hangboard", lambda: _hangboard_block(experience) if finger_ok else _endurance_block(experience)),
-            3: ("project", lambda: _mental_block()),
-            4: ("strength", lambda: _strength_block(experience)),
-            5: ("power", lambda: _power_block(experience) if finger_ok else _footwork_block()),
+            1: ("power", lambda: _power_block(experience, discipline, equipment) if finger_ok else _strength_block(experience, discipline, equipment)),
+            2: ("hangboard", lambda: _hangboard_block(experience, discipline, equipment) if finger_ok else _endurance_block(experience, discipline, equipment)),
+            3: ("project", lambda: _mental_block(experience, discipline, equipment)),
+            4: ("strength", lambda: _strength_block(experience, discipline, equipment)),
+            5: ("power", lambda: _power_block(experience, discipline, equipment) if finger_ok else _footwork_block(experience, discipline, equipment)),
         }
     elif goal == "injury_prevention":
         schedule = {
-            1: ("technique", lambda: _footwork_block()),
-            2: ("strength", lambda: _strength_block(experience)),
-            3: ("endurance", lambda: _endurance_block(experience)),
-            4: ("technique", lambda: _footwork_block() + _mental_block()),
-            5: ("strength", lambda: _strength_block(experience)),
+            1: ("technique", lambda: _footwork_block(experience, discipline, equipment)),
+            2: ("strength", lambda: _strength_block(experience, discipline, equipment)),
+            3: ("endurance", lambda: _endurance_block(experience, discipline, equipment)),
+            4: ("technique", lambda: _footwork_block(experience, discipline, equipment) + _mental_block(experience, discipline, equipment)),
+            5: ("strength", lambda: _strength_block(experience, discipline, equipment)),
         }
     else:  # general
         schedule = {
-            1: ("hangboard", lambda: _hangboard_block(experience) if finger_ok else _strength_block(experience)),
-            2: ("endurance", lambda: _endurance_block(experience)),
-            3: ("technique", lambda: _footwork_block()),
-            4: ("strength", lambda: _strength_block(experience)),
-            5: ("project", lambda: _mental_block()),
+            1: ("hangboard", lambda: _hangboard_block(experience, discipline, equipment) if finger_ok else _strength_block(experience, discipline, equipment)),
+            2: ("endurance", lambda: _endurance_block(experience, discipline, equipment)),
+            3: ("technique", lambda: _footwork_block(experience, discipline, equipment)),
+            4: ("strength", lambda: _strength_block(experience, discipline, equipment)),
+            5: ("project", lambda: _mental_block(experience, discipline, equipment)),
         }
 
     slot = ((day - 1) % len(schedule)) + 1
@@ -756,8 +843,10 @@ def generate_plan(
     goal = profile.get("primary_goal", "general")
     experience = profile.get("experience_level", "beginner")
     days = max(1, min(6, profile.get("days_per_week", 3)))
+    discipline = profile.get("primary_discipline") or "bouldering"
+    equipment = profile.get("equipment") or []
 
-    sessions = _goal_template(goal, days, experience, injury_flags)
+    sessions = _goal_template(goal, days, experience, injury_flags, discipline, equipment)
 
     if openai_client:
         _enrich_coach_notes(sessions, profile, openai_client)
