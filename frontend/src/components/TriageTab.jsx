@@ -954,7 +954,18 @@ export default function TriageTab({ k, user }) {
   const navigate = useNavigate()
 
   const [direction, setDirection] = useState(1)
-  const [form, setForm]           = useState(INITIAL_FORM)
+  // Lazy-init form from sessionStorage so the wizard survives accidental
+  // bottom-nav taps mid-flow. Cleared on explicit reset (resetWizard) and
+  // automatically on browser tab close.
+  const [form, setForm]           = useState(() => {
+    try {
+      const stored = sessionStorage.getItem('ct_triage_form')
+      if (stored) return { ...INITIAL_FORM, ...JSON.parse(stored) }
+    } catch {
+      // ignore storage parse errors — fall through to initial form
+    }
+    return INITIAL_FORM
+  })
   const [loading, setLoading]     = useState(false)
   const [result, setResult]       = useState(null)
   const [error, setError]         = useState(null)
@@ -969,6 +980,16 @@ export default function TriageTab({ k, user }) {
   const flow = flowFor(form.region)
   const TOTAL_STEPS = flow.length
   const currentSlug = flow[step] || ''
+
+  // Persist form to sessionStorage whenever it changes — wizard state
+  // survives an accidental bottom-nav tap or refresh mid-flow.
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('ct_triage_form', JSON.stringify(form))
+    } catch {
+      // sessionStorage can throw under private-mode quotas; non-fatal
+    }
+  }, [form])
 
   // Stable setter — only depends on setForm which is stable from useState
   const set = useCallback((key, value) => setForm((f) => ({ ...f, [key]: value })), [])
@@ -1088,6 +1109,7 @@ export default function TriageTab({ k, user }) {
   const restart = useCallback(() => {
     setResult(null); setError(null); setSaveStatus(null)
     setDirection(1); setForm(INITIAL_FORM)
+    try { sessionStorage.removeItem('ct_triage_form') } catch {}
     navigate('/triage')
   }, [navigate])
 
