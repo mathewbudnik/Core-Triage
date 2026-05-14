@@ -361,3 +361,82 @@ class SeedLoginBlockedTests(unittest.TestCase):
             json={"email": "seed+1@coretriage.local", "password": "guess"},
         )
         self.assertEqual(resp.status_code, 401, f"expected 401, got {resp.status_code}: {resp.text}")
+
+
+class LeaderboardSeedSurfaceTests(unittest.TestCase):
+    """End-to-end: the existing leaderboard query returns seed climbers
+    naturally. No code changes to database.get_leaderboard or the API."""
+
+    def setUp(self):
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM users WHERE is_seed = TRUE;")
+                conn.commit()
+        from scripts.seed_climbers_init import main as init_main
+        init_main()
+
+    def tearDown(self):
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM users WHERE is_seed = TRUE;")
+                conn.commit()
+
+    def test_leaderboard_all_window_returns_seed_climbers(self):
+        from database import get_leaderboard
+        # Create a viewer user so the leaderboard has a "viewer_user_id"
+        # — they'll just be unranked since they have no training_logs.
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """INSERT INTO users (email, password_hash, display_name)
+                       VALUES ('viewer@test.local', 'x', 'Viewer')
+                       ON CONFLICT (email) DO UPDATE SET display_name = 'Viewer'
+                       RETURNING id;"""
+                )
+                viewer_id = cur.fetchone()[0]
+                # Give viewer an intermediate cohort
+                cur.execute(
+                    """INSERT INTO athlete_profiles (user_id, experience_level)
+                       VALUES (%s, 'intermediate')
+                       ON CONFLICT (user_id) DO UPDATE SET experience_level = 'intermediate';""",
+                    (viewer_id,),
+                )
+                conn.commit()
+
+        result = get_leaderboard(viewer_user_id=viewer_id, window="all",
+                                 cohort="global", limit=20)
+        top = result.get("top", [])
+        # At least 1 seed climber surfaces (real users may also exist)
+        seed_names = {p.handle for p in __import__("src.seed_climbers", fromlist=["SEED_PERSONAS"]).SEED_PERSONAS}
+        surfaced = [r for r in top if r["display_name"] in seed_names]
+        self.assertGreaterEqual(len(surfaced), 1,
+                                f"expected >=1 seed climber in global leaderboard; got: {[r['display_name'] for r in top]}")
+
+    def test_leaderboard_per_cohort_each_has_at_least_one(self):
+        """Every cohort with personas should see at least 1 climber."""
+        from database import get_leaderboard
+        from src.seed_climbers import SEED_PERSONAS
+        for cohort in {p.cohort for p in SEED_PERSONAS}:
+            display_name = f"CohortViewer_{cohort}"
+            with _connect() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """INSERT INTO users (email, password_hash, display_name)
+                           VALUES (%s, 'x', %s)
+                           ON CONFLICT (email) DO UPDATE SET display_name = EXCLUDED.display_name
+                           RETURNING id;""",
+                        (f"viewer-{cohort}@test.local", display_name),
+                    )
+                    viewer_id = cur.fetchone()[0]
+                    cur.execute(
+                        """INSERT INTO athlete_profiles (user_id, experience_level)
+                           VALUES (%s, %s)
+                           ON CONFLICT (user_id) DO UPDATE SET experience_level = EXCLUDED.experience_level;""",
+                        (viewer_id, cohort),
+                    )
+                    conn.commit()
+
+            result = get_leaderboard(viewer_user_id=viewer_id, window="all",
+                                     cohort=cohort, limit=10)
+            self.assertGreater(len(result.get("top", [])), 0,
+                               f"cohort {cohort} leaderboard is empty")
