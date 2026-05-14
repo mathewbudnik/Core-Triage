@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo, useRef, lazy, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Routes, Route, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom'
-import { MessageSquare, Clock, Info, AlertTriangle, Menu, X, LogIn, LogOut, User, Activity, Dumbbell, FileText, Stethoscope, UserCircle2, ChevronRight, Shield, Bug, Loader2 } from 'lucide-react'
+import { MessageSquare, Clock, Info, AlertTriangle, Menu, X, LogIn, Activity, Dumbbell, FileText, Stethoscope, UserCircle2, ChevronRight, Bug, Loader2, Trophy } from 'lucide-react'
 import * as Sentry from '@sentry/react'
 import { getHealth, getMe, acceptDisclaimer } from './api'
 import Landing from './components/Landing'
@@ -11,6 +11,7 @@ import TipCard from './components/TipCard'
 import DisclaimerModal from './components/DisclaimerModal'
 import LegalModal from './components/LegalModal'
 import EmailVerificationBanner from './components/EmailVerificationBanner'
+import AccountMenu from './components/AccountMenu'
 import { PRIVACY_POLICY, TERMS_OF_SERVICE } from './data/legal'
 import { openBillingPortal } from './api'
 import UpgradeModal from './components/UpgradeModal'
@@ -21,6 +22,7 @@ import UpgradeModal from './components/UpgradeModal'
 const TriageTab         = lazy(() => import('./components/TriageTab'))
 const RehabTab          = lazy(() => import('./components/RehabTab'))
 const TrainTab          = lazy(() => import('./components/TrainTab'))
+const ProgressTab       = lazy(() => import('./components/ProgressTab'))
 const ChatTab           = lazy(() => import('./components/ChatTab'))
 const HistoryTab        = lazy(() => import('./components/HistoryTab'))
 const AboutTab          = lazy(() => import('./components/AboutTab'))
@@ -39,12 +41,13 @@ function RouteLoading() {
 }
 
 const TABS = [
-  { id: 'triage',  label: 'Triage',  icon: Activity    },
-  { id: 'rehab',   label: 'Rehab',   icon: Stethoscope },
-  { id: 'train',   label: 'Train',   icon: Dumbbell    },
-  { id: 'chat',    label: 'Chat',    icon: MessageSquare },
-  { id: 'history', label: 'History', icon: Clock       },
-  { id: 'about',   label: 'About',   icon: Info        },
+  { id: 'triage',   label: 'Triage',   icon: Activity,      subtitle: 'Symptom-based guidance — educational only, always seek a pro for serious injuries' },
+  { id: 'rehab',    label: 'Rehab',    icon: Stethoscope,   subtitle: 'Stage-based protocols built around climbing-specific demands' },
+  { id: 'train',    label: 'Train',    icon: Dumbbell,      subtitle: 'Personalised training plans tuned to your goals and history' },
+  { id: 'progress', label: 'Progress', icon: Trophy,        subtitle: 'Your training stats, streaks, and how you stack up' },
+  { id: 'chat',     label: 'Chat',     icon: MessageSquare, subtitle: 'Ask the climbing-trained AI about training, rehab, or beta' },
+  { id: 'history',  label: 'History',  icon: Clock,         subtitle: 'Your past triage and rehab sessions' },
+  { id: 'about',    label: 'About',    icon: Info,          subtitle: 'What CoreTriage is, who built it, and how it works' },
 ]
 
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
@@ -81,10 +84,12 @@ export default function App() {
     const seg = location.pathname.split('/')[1] || ''
     return TABS.find((t) => t.id === seg)?.id || null
   }, [location.pathname])
-  const activeTabLabel = useMemo(
-    () => TABS.find((t) => t.id === activeTabId)?.label || '',
+  const activeTab = useMemo(
+    () => TABS.find((t) => t.id === activeTabId) || null,
     [activeTabId],
   )
+  const activeTabLabel    = activeTab?.label    || ''
+  const activeTabSubtitle = activeTab?.subtitle || ''
 
   // Session timeout
   const timeoutRef = useRef(null)
@@ -221,8 +226,10 @@ export default function App() {
     )
   }
 
-  // Show disclaimer before anything else
-  if (disclaimerState === 'checking') return null
+  // Show disclaimer before anything else.
+  // While checking, render the route-loading spinner so users on slow
+  // connections see feedback rather than a blank white screen.
+  if (disclaimerState === 'checking') return <RouteLoading />
 
   if (disclaimerState === 'required') {
     return <DisclaimerModal onAccept={handleDisclaimerAccept} onExit={handleDisclaimerExit} />
@@ -477,7 +484,7 @@ export default function App() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col min-w-0 relative z-10 pb-16 md:pb-0">
+      <main className="flex-1 flex flex-col min-w-0 relative z-10 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
         {/* Email verification banner — shown when user is signed in but unverified */}
         {user && user.email_verified === false && !bannerDismissed && (
           <EmailVerificationBanner user={user} onDismiss={() => setBannerDismissed(true)} />
@@ -496,34 +503,24 @@ export default function App() {
               <h1 className="text-base md:text-xl font-bold text-text">
                 {activeTabLabel}
               </h1>
-              <p className="text-xs text-muted hidden sm:block mt-0.5">
-                Educational climbing injury guidance · Not a medical diagnosis
-              </p>
+              {activeTabSubtitle && (
+                <p className="text-xs text-muted hidden sm:block mt-0.5">
+                  {activeTabSubtitle}
+                </p>
+              )}
             </div>
           </div>
 
           {/* Auth area */}
           <div className="flex items-center gap-2">
             {user ? (
-              <>
-                {user.is_coach && (
-                  <div className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-accent3 bg-accent3/10 border border-accent3/30 px-3 py-1.5 rounded-full">
-                    <Shield size={12} />
-                    <span>Coach</span>
-                  </div>
-                )}
-                <div className={`hidden sm:flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border ${user.is_coach ? 'text-accent3 bg-accent3/5 border-accent3/20' : 'text-muted bg-panel border-outline'}`}>
-                  <User size={12} className={user.is_coach ? 'text-accent3' : 'text-accent'} />
-                  <span className="max-w-[120px] truncate">{user.email}</span>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-1.5 text-xs text-muted hover:text-text bg-panel border border-outline px-3 py-1.5 rounded-full transition-colors"
-                >
-                  <LogOut size={12} />
-                  <span className="hidden sm:inline">Log out</span>
-                </button>
-              </>
+              <AccountMenu
+                user={user}
+                onUserChange={setUser}
+                onLogout={handleLogout}
+                onUpgradeClick={() => { setUpgradeTrigger('feature'); setShowUpgrade(true) }}
+                onToast={setToast}
+              />
             ) : (
               <button
                 onClick={() => setShowAuth(true)}
@@ -546,6 +543,7 @@ export default function App() {
               <Route path="/triage/*"  element={<TriageTab k={k} user={user} />} />
               <Route path="/rehab/*"   element={<RehabTab user={user} onLoginClick={() => setShowAuth(true)} />} />
               <Route path="/train"     element={<TrainTab user={user} dbReady={dbReady} onLoginClick={() => setShowAuth(true)} />} />
+              <Route path="/progress"  element={<ProgressTab user={user} onLoginClick={() => setShowAuth(true)} />} />
               <Route path="/chat"      element={<ChatTab k={k} user={user} onLoginClick={() => setShowAuth(true)} />} />
               <Route path="/history/*" element={<HistoryTab dbReady={dbReady} user={user} onLoginClick={() => setShowAuth(true)} />} />
               <Route path="/about"     element={<AboutTab />} />
@@ -556,8 +554,9 @@ export default function App() {
         </div>
       </main>
 
-      {/* Bottom nav — mobile only */}
-      <nav className="fixed bottom-0 left-0 right-0 z-20 md:hidden bg-panel2/95 backdrop-blur-sm border-t border-outline">
+      {/* Bottom nav — mobile only. pb-[env(safe-area-inset-bottom)] keeps
+          tap targets above the iPhone home-indicator strip. */}
+      <nav className="fixed bottom-0 left-0 right-0 z-20 md:hidden bg-panel2/95 backdrop-blur-sm border-t border-outline pb-[env(safe-area-inset-bottom)]">
         <div className="flex">
           {TABS.map(({ id, label, icon: Icon }) => (
             <NavLink
