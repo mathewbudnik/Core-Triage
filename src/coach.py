@@ -492,6 +492,30 @@ def _strength_block(experience: str, discipline: str, equipment: List[str]) -> L
 
 _FOOTWORK_POOL: List[Dict] = [
     {
+        "exercise": "Dual-tex drill",
+        "detail": "Climb the same problem twice — once in stiff shoes, once in soft. Notice the difference in foot feel.",
+        "sets": 2,
+        "reps": "3 problems each shoe",
+        "rest_seconds": 60,
+        "effort_note": "Develops shoe-feel and rubber-trust. Helps you learn what your footwear actually gives you.",
+        "benchmark": "Many climbers fail on foot-sensitive routes because they don't know what their shoes do — address it directly.",
+        "disciplines": ["bouldering", "sport", "trad", "competition"],
+        "min_experience": "intermediate",
+        "equipment_needed": [],
+    },
+    {
+        "exercise": "Edging precision drill",
+        "detail": "On vertical or slightly overhanging wall, place your foot on the smallest possible point of each hold. No re-adjusting after placement.",
+        "sets": 3,
+        "reps": "5 problems",
+        "rest_seconds": 60,
+        "effort_note": "Pure precision work — climb slow. The failure mode is shifting feet after placement, not the move itself.",
+        "benchmark": "Universal drill — pays off at every level. Even pros benefit.",
+        "disciplines": ["bouldering", "sport", "trad", "competition"],
+        "min_experience": "intermediate",
+        "equipment_needed": [],
+    },
+    {
         "exercise": "Silent feet drills",
         "detail": "Climb a moderate route/problem — no sound when placing feet. Reset if you hear a foot.",
         "sets": 3,
