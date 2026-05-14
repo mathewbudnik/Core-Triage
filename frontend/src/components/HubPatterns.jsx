@@ -43,7 +43,7 @@ const PATTERNS = {
       style={{
         position: 'absolute', inset: 0, opacity: 0.65,
         backgroundImage:
-          'repeating-linear-gradient(45deg, transparent 0 8px, rgba(20,184,166,0.10) 8px 10px)',
+          'repeating-linear-gradient(45deg, transparent 0 8px, rgba(167,139,250,0.12) 8px 10px)',
       }}
     />
   ),
