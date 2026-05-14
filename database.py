@@ -154,6 +154,21 @@ def init_db() -> None:
                 "TEXT NULL")
             _add_column_if_missing(cur, "users", "leaderboard_private",
                 "BOOLEAN DEFAULT FALSE")
+            # Profile customization — avatar_icon is the preset key (e.g.
+            # "flame"); avatar_color overrides the preset's default bg
+            # gradient with one of the palette swatches. Both NULL → fall
+            # back to the generated initial chip on the frontend.
+            _add_column_if_missing(cur, "users", "avatar_icon",
+                "TEXT NULL")
+            _add_column_if_missing(cur, "users", "avatar_color",
+                "TEXT NULL")
+            # Train tab — seed climbers (synthetic accounts for leaderboard
+            # bootstrap). is_seed=TRUE marks an account that's not a real user;
+            # they're excluded from business metrics and visible only on the
+            # leaderboard. See docs/superpowers/specs/2026-05-13-leaderboard-seed-climbers-design.md.
+            _add_column_if_missing(cur, "users", "is_seed",
+                "BOOLEAN NOT NULL DEFAULT FALSE")
+            cur.execute("CREATE INDEX IF NOT EXISTS users_is_seed_idx ON users (is_seed) WHERE is_seed = TRUE;")
             # Case-insensitive uniqueness on display_name. Allows NULLs
             # (users who haven't set one yet) — partial index.
             cur.execute(
@@ -1172,14 +1187,16 @@ def get_leaderboard(
             u.id,
             u.display_name,
             u.leaderboard_private,
-            COALESCE(SUM(tl.duration_min), 0) / 60.0 AS hours
+            COALESCE(SUM(tl.duration_min), 0) / 60.0 AS hours,
+            u.avatar_icon,
+            u.avatar_color
         FROM users u
         {cohort_join}
         LEFT JOIN training_logs tl
           ON tl.user_id = u.id AND {where_time}
         WHERE u.display_name IS NOT NULL
           {cohort_filter}
-        GROUP BY u.id, u.display_name, u.leaderboard_private
+        GROUP BY u.id, u.display_name, u.leaderboard_private, u.avatar_icon, u.avatar_color
         HAVING COALESCE(SUM(tl.duration_min), 0) > 0
         ORDER BY hours DESC
     """
@@ -1190,6 +1207,8 @@ def get_leaderboard(
         with conn.cursor() as cur:
             cur.execute(base + " LIMIT %(limit)s;", {**params, "limit": int(limit)})
             top_rows = cur.fetchall()
+            # For private users, suppress both name and chosen avatar — they
+            # render as a generic anonymous chip on the frontend.
             top = [
                 {
                     "rank":         i + 1,
@@ -1197,6 +1216,8 @@ def get_leaderboard(
                     "display_name": "Private climber" if r[2] else r[1],
                     "is_private":   bool(r[2]),
                     "hours":        round(float(r[3]), 1),
+                    "avatar_icon":  None if r[2] else r[4],
+                    "avatar_color": None if r[2] else r[5],
                 }
                 for i, r in enumerate(top_rows)
             ]
@@ -1208,6 +1229,8 @@ def get_leaderboard(
                         u.id,
                         u.display_name,
                         u.leaderboard_private,
+                        u.avatar_icon,
+                        u.avatar_color,
                         COALESCE(SUM(tl.duration_min), 0) / 60.0 AS hours,
                         RANK() OVER (ORDER BY COALESCE(SUM(tl.duration_min), 0) DESC) AS r
                     FROM users u
@@ -1216,9 +1239,9 @@ def get_leaderboard(
                       ON tl.user_id = u.id AND {where_time}
                     WHERE u.display_name IS NOT NULL
                       {cohort_filter}
-                    GROUP BY u.id, u.display_name, u.leaderboard_private
+                    GROUP BY u.id, u.display_name, u.leaderboard_private, u.avatar_icon, u.avatar_color
                 )
-                SELECT id, display_name, leaderboard_private, hours, r
+                SELECT id, display_name, leaderboard_private, hours, r, avatar_icon, avatar_color
                 FROM ranked
                 WHERE id = %(viewer)s;
                 """,
@@ -1234,6 +1257,10 @@ def get_leaderboard(
             "display_name": "Private climber" if mr[2] else mr[1],
             "is_private":   bool(mr[2]),
             "hours":        round(float(mr[3]), 1),
+            # Viewer sees their own avatar even when private — it's only
+            # other viewers who see the anonymous version.
+            "avatar_icon":  mr[5],
+            "avatar_color": mr[6],
         }
 
     return {"window": window, "cohort": effective_cohort or "global", "top": top, "me": me}
@@ -1284,6 +1311,30 @@ def get_leaderboard_private(user_id: int) -> bool:
             )
             row = cur.fetchone()
     return bool(row[0]) if row else False
+
+
+def set_avatar(user_id: int, icon: Optional[str], color: Optional[str]) -> None:
+    """Save the user's chosen avatar preset + optional color override.
+    Caller validates against the allowed sets."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE users SET avatar_icon = %s, avatar_color = %s WHERE id = %s;",
+                (icon, color, int(user_id)),
+            )
+        conn.commit()
+
+
+def get_avatar(user_id: int) -> Tuple[Optional[str], Optional[str]]:
+    """Return (avatar_icon, avatar_color) for the user. Either may be None."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT avatar_icon, avatar_color FROM users WHERE id = %s;",
+                (int(user_id),),
+            )
+            row = cur.fetchone()
+    return (row[0], row[1]) if row else (None, None)
 
 
 # ---------------------------------------------------------------------------
