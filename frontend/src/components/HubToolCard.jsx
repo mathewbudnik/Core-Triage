@@ -19,15 +19,30 @@ export default function HubToolCard({ toolKey, status, isLive = false, progress 
   const c = ACCENT_CLASSES[tool.accent]
   const Icon = tool.icon
 
+  // Uses motion.div (not motion.button) so layoutId animation pairs cleanly
+  // with HubFeaturedCard's motion.div on swap — Framer Motion's FLIP gets
+  // confused when shared layoutIds span different DOM element types and can
+  // leave the featured slot empty after a cycle. role + tabIndex + keyboard
+  // handler keep accessibility.
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      onTap?.()
+    }
+  }
+
   return (
-    <motion.button
-      type="button"
+    <motion.div
+      role="button"
+      tabIndex={0}
       onClick={onTap}
+      onKeyDown={handleKeyDown}
       layoutId={`hub-card-${toolKey}`}
       transition={{ duration: 0.18, ease: 'easeInOut' }}
       className={`relative overflow-hidden rounded-2xl border ${c.borderSoft} ${c.bgGradient}
-                  flex items-center gap-3 px-4 py-3.5 min-h-[86px] text-left
-                  hover:-translate-y-0.5 transition-transform group w-full`}
+                  flex items-center gap-3 px-4 py-3.5 min-h-[86px] text-left cursor-pointer
+                  hover:-translate-y-0.5 transition-transform group w-full
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40`}
     >
       {/* glow orb (behind pattern + content) */}
       <span className={`pointer-events-none absolute -top-10 -right-10 w-[140px] h-[140px]
@@ -60,6 +75,6 @@ export default function HubToolCard({ toolKey, status, isLive = false, progress 
         className="relative z-10 text-text/25 group-hover:text-text/60 group-hover:translate-x-0.5
                    transition-all shrink-0"
       />
-    </motion.button>
+    </motion.div>
   )
 }
