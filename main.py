@@ -512,6 +512,18 @@ def login(request: Request, req: LoginRequest):
     ip = _get_client_ip(request)
     user = get_user_by_email(req.email)
 
+    # Defense in depth: seed climbers have unguessable random password_hashes
+    # but we add an explicit reject in case anyone resets one.
+    if user:
+        from database import _connect  # local import to avoid cycle on cold start
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT is_seed FROM users WHERE email = %s;", (req.email,))
+                row = cur.fetchone()
+                if row and row[0] is True:
+                    log_security_event("login_failed_seed", ip, req.email)
+                    raise HTTPException(status_code=401, detail="Invalid email or password")
+
     # user = (id, email, password_hash, failed_login_attempts, locked_until, disclaimer_accepted)
     if user:
         locked_until = user[4]

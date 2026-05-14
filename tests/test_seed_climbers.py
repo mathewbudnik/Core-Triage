@@ -331,3 +331,33 @@ class TickScriptTests(unittest.TestCase):
         tick_main()
         self.assertEqual(self._count_today_seed_logs(), first,
                          "tick is not idempotent on re-run same day")
+
+
+class SeedLoginBlockedTests(unittest.TestCase):
+    """A seed user must never authenticate, even if someone discovers the
+    sentinel email pattern. The password_hash is unguessable random bytes,
+    but defense-in-depth adds an explicit early return."""
+
+    def setUp(self):
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM users WHERE is_seed = TRUE;")
+                conn.commit()
+        from scripts.seed_climbers_init import main as init_main
+        init_main()
+
+    def tearDown(self):
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM users WHERE is_seed = TRUE;")
+                conn.commit()
+
+    def test_login_with_seed_email_returns_401(self):
+        from fastapi.testclient import TestClient
+        from main import app
+        client = TestClient(app)
+        resp = client.post(
+            "/api/auth/login",
+            json={"email": "seed+1@coretriage.local", "password": "guess"},
+        )
+        self.assertEqual(resp.status_code, 401, f"expected 401, got {resp.status_code}: {resp.text}")
