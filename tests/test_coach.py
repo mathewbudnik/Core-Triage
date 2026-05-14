@@ -334,19 +334,35 @@ class BlockDifferentiationTests(unittest.TestCase):
             )
 
     def test_no_campus_board_filters_campus_exercises(self):
-        """Equipment gating actually filters out gear-required exercises in
-        the strict path."""
+        """Equipment gating filters out campus_board-required exercises;
+        no-equipment entries still qualify in the strict path."""
         from src.coach import _POWER_POOL, _filter_exercises
         eligible = _filter_exercises(_POWER_POOL, "intermediate", "bouldering", [])
         names = [e["exercise"] for e in eligible]
-        # Without campus_board, all four current power exercises are gated out
-        # (every existing entry requires campus_board). The fallback chain
-        # will give the user something via discipline relaxation — but the
-        # *strict* filter must be empty.
-        self.assertEqual(
-            names, [],
-            f"Expected empty strict filter when boulderer has no campus board, got {names}",
-        )
+        # Campus-board-required entries must be absent when no campus_board is provided.
+        campus_required = [
+            e["exercise"]
+            for e in _POWER_POOL
+            if "campus_board" in e.get("equipment_needed", [])
+        ]
+        for ex in campus_required:
+            self.assertNotIn(
+                ex, names,
+                f"Campus-board exercise '{ex}' should be filtered when campus_board absent",
+            )
+        # No-equipment entries that match discipline + experience should be present.
+        no_equip_matching = [
+            e["exercise"]
+            for e in _POWER_POOL
+            if not e.get("equipment_needed")
+            and "bouldering" in e.get("disciplines", [])
+            and e.get("min_experience") in ("beginner", "intermediate")
+        ]
+        for ex in no_equip_matching:
+            self.assertIn(
+                ex, names,
+                f"No-equipment exercise '{ex}' should pass the strict filter for boulderer with no gear",
+            )
 
     def test_trad_climber_gets_headpoint_practice_in_mental_block(self):
         """The narrow tagging on Headpoint Practice (sport+trad only) is
