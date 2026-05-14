@@ -19,6 +19,7 @@ athlete_profiles, training_logs, seed_progression via FK.
 """
 from __future__ import annotations
 
+import hashlib
 import random
 from dataclasses import dataclass
 from datetime import date, timedelta
@@ -180,6 +181,18 @@ def _per_day_probability(persona: Persona) -> float:
     return min(0.95, persona.sessions_per_week / 7.0)
 
 
+def _stable_seed(*parts) -> int:
+    """SHA-256-based deterministic seed.
+
+    Unlike Python's built-in `hash()` (which is randomized per process via
+    PYTHONHASHSEED), this produces the same integer for the same inputs across
+    separate script invocations. Required so re-running the init script
+    inserts the same dates and ON CONFLICT correctly de-duplicates.
+    """
+    key = "|".join(str(p) for p in parts).encode("utf-8")
+    return int(hashlib.sha256(key).hexdigest()[:8], 16)
+
+
 def generate_initial_history(
     persona: Persona,
     days: int = 30,
@@ -199,7 +212,7 @@ def generate_initial_history(
         today = date.today()
     # Use a deterministic seed per-persona-per-window so re-running yields
     # the same backfill (avoids stochastic drift between runs).
-    seed = rng_seed if rng_seed is not None else hash((persona.handle, days, today.toordinal())) & 0xFFFFFFFF
+    seed = rng_seed if rng_seed is not None else _stable_seed(persona.handle, days, today.toordinal())
     rng = random.Random(seed)
 
     rows: List[Dict] = []
@@ -246,7 +259,7 @@ def generate_today_session(
     # Deterministic per-persona-per-day seed so re-running the tick same day
     # makes the same choice (helps with idempotency even before the SQL
     # UNIQUE-INDEX layer kicks in).
-    seed = rng_seed if rng_seed is not None else hash((persona.handle, today.toordinal())) & 0xFFFFFFFF
+    seed = rng_seed if rng_seed is not None else _stable_seed(persona.handle, today.toordinal())
     rng = random.Random(seed)
 
     if rng.random() > _per_day_probability(persona):

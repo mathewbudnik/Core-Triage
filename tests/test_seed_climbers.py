@@ -244,6 +244,49 @@ class InitScriptTests(unittest.TestCase):
         self.assertEqual(self._count_seed_users(), first_users)
         self.assertEqual(self._count_seed_training_logs(), first_logs)
 
+    def test_init_is_idempotent_across_processes(self):
+        """The same Python invocation idempotency is already tested above.
+        This test catches a subtle bug where the deterministic seed used
+        Python's `hash()` (PYTHONHASHSEED-randomized per process) — re-running
+        the init script in a separate subprocess would produce different
+        random dates and bypass ON CONFLICT, inserting duplicate-shifted logs.
+
+        Fixed by using hashlib.sha256 (stable across processes).
+        """
+        import subprocess
+        import sys as _sys
+        env = dict(os.environ)
+        # Force the hash randomization on (this is the default in Python 3.3+
+        # but make it explicit so the test is robust against env tweaks).
+        env["PYTHONHASHSEED"] = "random"
+
+        # Clean state
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM users WHERE is_seed = TRUE;")
+                conn.commit()
+
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        # First invocation
+        subprocess.run(
+            [_sys.executable, "-m", "scripts.seed_climbers_init"],
+            cwd=project_root, env=env, check=True, capture_output=True,
+        )
+        first = self._count_seed_training_logs()
+
+        # Second invocation in a separate process (different PYTHONHASHSEED)
+        subprocess.run(
+            [_sys.executable, "-m", "scripts.seed_climbers_init"],
+            cwd=project_root, env=env, check=True, capture_output=True,
+        )
+        second = self._count_seed_training_logs()
+
+        self.assertEqual(
+            second, first,
+            f"second run should add 0 new logs (got {second - first} extra). "
+            f"Indicates the deterministic seed is not stable across processes."
+        )
+
     def test_init_creates_athlete_profiles(self):
         from scripts.seed_climbers_init import main
         main()
