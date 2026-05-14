@@ -273,6 +273,20 @@ def init_db() -> None:
                     e,
                 )
 
+            # Seed-climber progression side table — stores per-seed nudges
+            # (intensity bump, extra grades) that accumulate over time so
+            # the activity generator can produce gradual improvement.
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS seed_progression (
+                    user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                    intensity_bump REAL NOT NULL DEFAULT 0.0,
+                    extra_grades TEXT[] NOT NULL DEFAULT '{}',
+                    last_progressed_at TIMESTAMPTZ NULL
+                );
+                """
+            )
+
             # ── Coach messaging ────────────────────────────────────────────
             cur.execute(
                 """

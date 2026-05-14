@@ -49,3 +49,18 @@ class SchemaMigrationTests(unittest.TestCase):
                 self.assertEqual(len(rows), 1,
                                  "expected a UNIQUE index named training_logs_user_date_idx")
                 self.assertIn("UNIQUE", rows[0][1].upper())
+
+    def test_seed_progression_table_exists(self):
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """SELECT column_name, data_type FROM information_schema.columns
+                       WHERE table_name = 'seed_progression'
+                       ORDER BY ordinal_position;"""
+                )
+                cols = {name: dtype for name, dtype in cur.fetchall()}
+                self.assertIn("user_id", cols)
+                self.assertIn("intensity_bump", cols)
+                self.assertIn("extra_grades", cols)
+                self.assertIn("last_progressed_at", cols)
+                self.assertEqual(cols["intensity_bump"], "real")
