@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo, useRef, lazy, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Routes, Route, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom'
-import { MessageSquare, Clock, Info, AlertTriangle, Menu, X, LogIn, Activity, Dumbbell, FileText, Stethoscope, UserCircle2, ChevronRight, Bug, Loader2, Trophy } from 'lucide-react'
+import { MessageSquare, Clock, Info, AlertTriangle, Menu, X, LogIn, Activity, Dumbbell, FileText, Stethoscope, UserCircle2, ChevronRight, Bug, Loader2, Trophy, Home } from 'lucide-react'
 import * as Sentry from '@sentry/react'
 import { getHealth, getMe, acceptDisclaimer } from './api'
 import Landing from './components/Landing'
@@ -19,6 +19,7 @@ import UpgradeModal from './components/UpgradeModal'
 // Lazy-loaded routes — each tab + the standalone pages download only when
 // the user navigates to them. First-paint bundle drops dramatically because
 // users don't pay for tabs they may never visit.
+const HubTab            = lazy(() => import('./components/HubTab'))
 const TriageTab         = lazy(() => import('./components/TriageTab'))
 const RehabTab          = lazy(() => import('./components/RehabTab'))
 const TrainTab          = lazy(() => import('./components/TrainTab'))
@@ -41,6 +42,7 @@ function RouteLoading() {
 }
 
 const TABS = [
+  { id: 'hub',      label: 'Hub',      icon: Home,          subtitle: 'Your climbing health dashboard' },
   { id: 'triage',   label: 'Triage',   icon: Activity,      subtitle: 'Symptom-based guidance — educational only, always seek a pro for serious injuries' },
   { id: 'rehab',    label: 'Rehab',    icon: Stethoscope,   subtitle: 'Stage-based protocols built around climbing-specific demands' },
   { id: 'train',    label: 'Train',    icon: Dumbbell,      subtitle: 'Personalised training plans tuned to your goals and history' },
@@ -237,9 +239,13 @@ export default function App() {
 
   // Landing has its own full-bleed layout — no sidebar.
   if (isLandingRoute) {
+    // Signed-in users land on the Hub, not the marketing page.
+    if (user) {
+      return <Navigate to="/hub" replace />
+    }
     return (
       <>
-        <Landing onEnter={(tab) => navigate(tab ? `/${tab}` : '/triage')} />
+        <Landing onEnter={(tab) => navigate(tab ? `/${tab}` : '/hub')} />
         {showTerms && (
           <DisclaimerModal readOnly onExit={() => setShowTerms(false)} />
         )}
@@ -338,15 +344,21 @@ export default function App() {
         {/* Logo */}
         <div className="shrink-0 px-6 pt-8 pb-6 border-b border-outline">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 mb-1">
+            <NavLink
+              to="/hub"
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Go to hub"
+              className="flex items-center gap-2 mb-1 hover:opacity-90 transition-opacity"
+            >
               <Logo size={32} dark />
               <span className="text-lg font-bold bg-gradient-to-r from-accent via-text to-accent2 bg-clip-text text-transparent">
                 CoreTriage
               </span>
-            </div>
+            </NavLink>
             <button
               onClick={() => setSidebarOpen(false)}
               className="md:hidden text-muted hover:text-text"
+              aria-label="Close menu"
             >
               <X size={18} />
             </button>
@@ -496,6 +508,7 @@ export default function App() {
             <button
               onClick={() => setSidebarOpen(true)}
               className="md:hidden text-muted hover:text-text p-1"
+              aria-label="Open menu"
             >
               <Menu size={20} />
             </button>
@@ -540,6 +553,7 @@ export default function App() {
         <div className="flex-1 overflow-auto">
           <Suspense fallback={<RouteLoading />}>
             <Routes>
+              <Route path="/hub/*"     element={<HubTab user={user} />} />
               <Route path="/triage/*"  element={<TriageTab k={k} user={user} />} />
               <Route path="/rehab/*"   element={<RehabTab user={user} onLoginClick={() => setShowAuth(true)} />} />
               <Route path="/train"     element={<TrainTab user={user} dbReady={dbReady} onLoginClick={() => setShowAuth(true)} />} />
@@ -547,8 +561,8 @@ export default function App() {
               <Route path="/chat"      element={<ChatTab k={k} user={user} onLoginClick={() => setShowAuth(true)} />} />
               <Route path="/history/*" element={<HistoryTab dbReady={dbReady} user={user} onLoginClick={() => setShowAuth(true)} />} />
               <Route path="/about"     element={<AboutTab />} />
-              {/* Any unknown path lands the user on Triage. */}
-              <Route path="*"          element={<Navigate to="/triage" replace />} />
+              {/* Any unknown path lands the user on Hub. */}
+              <Route path="*"          element={<Navigate to="/hub" replace />} />
             </Routes>
           </Suspense>
         </div>
@@ -562,14 +576,14 @@ export default function App() {
             <NavLink
               key={id}
               to={`/${id}`}
-              className={({ isActive }) => `flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors duration-100 ${
+              className={({ isActive }) => `flex-1 min-w-0 flex flex-col items-center gap-1 py-3 text-[10px] sm:text-xs font-medium leading-tight transition-colors duration-100 ${
                 isActive ? 'text-accent' : 'text-muted'
               }`}
             >
               {({ isActive }) => (
                 <>
                   <Icon size={18} />
-                  {label}
+                  <span className="truncate max-w-full px-0.5">{label}</span>
                   {isActive && (
                     <motion.div
                       layoutId="bottom-nav-indicator"
