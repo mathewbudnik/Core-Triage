@@ -248,6 +248,31 @@ def init_db() -> None:
                 """
             )
 
+            # Idempotency support for the seed-climbers daily tick — needed
+            # so `INSERT ... ON CONFLICT (user_id, date) DO NOTHING` works.
+            #
+            # Wrapped in try/except: if real users somehow have legitimate
+            # multi-session-per-day rows, the unique index can't be created.
+            # In that case we log and continue — the tick will fail with a
+            # clear UniqueViolation at runtime, signalling the operator to
+            # clean up duplicates manually. Don't crash app startup.
+            try:
+                cur.execute(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS training_logs_user_date_idx "
+                    "ON training_logs (user_id, date);"
+                )
+            except Exception as e:
+                # Common cause: pre-existing (user_id, date) duplicates.
+                # Run the SELECT in the comment below to inspect them.
+                # SELECT user_id, date, COUNT(*) FROM training_logs
+                #   GROUP BY user_id, date HAVING COUNT(*) > 1;
+                import logging
+                logging.warning(
+                    "Could not create training_logs_user_date_idx: %s. "
+                    "Seed-climber tick script will fail until duplicates are cleaned.",
+                    e,
+                )
+
             # ── Coach messaging ────────────────────────────────────────────
             cur.execute(
                 """

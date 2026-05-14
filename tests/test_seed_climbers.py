@@ -36,3 +36,16 @@ class SchemaMigrationTests(unittest.TestCase):
                 # Default should resolve to FALSE
                 self.assertIn("false", (default or "").lower(),
                               f"expected FALSE default, got {default!r}")
+
+    def test_training_logs_has_user_date_unique_index(self):
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """SELECT indexname, indexdef FROM pg_indexes
+                       WHERE tablename = 'training_logs'
+                         AND indexname = 'training_logs_user_date_idx';"""
+                )
+                rows = cur.fetchall()
+                self.assertEqual(len(rows), 1,
+                                 "expected a UNIQUE index named training_logs_user_date_idx")
+                self.assertIn("UNIQUE", rows[0][1].upper())
