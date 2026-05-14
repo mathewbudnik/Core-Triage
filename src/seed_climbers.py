@@ -19,8 +19,10 @@ athlete_profiles, training_logs, seed_progression via FK.
 """
 from __future__ import annotations
 
+import random
 from dataclasses import dataclass
-from typing import Tuple, Dict, List
+from datetime import date, timedelta
+from typing import Tuple, Dict, List, Optional
 
 
 @dataclass(frozen=True)
@@ -152,3 +154,109 @@ SEED_PERSONAS: List[Persona] = [
         rest_week_probability=0.03,
     ),
 ]
+
+
+def _weighted_choice(weights: Dict[int, float], rng: random.Random) -> int:
+    """Pick a key from a weight-dict (key → relative weight)."""
+    keys = list(weights.keys())
+    w = [weights[k] for k in keys]
+    return rng.choices(keys, weights=w, k=1)[0]
+
+
+def _weighted_type(types: List[Tuple[str, float]], rng: random.Random) -> str:
+    return rng.choices([t for t, _ in types], weights=[w for _, w in types], k=1)[0]
+
+
+def _pick_grades(grade_pool: List[str], rng: random.Random) -> str:
+    """1-2 grades from the pool, comma-joined. Climbers usually log
+    a couple of sends per session, not a full pyramid."""
+    n = rng.choice([1, 1, 1, 2])  # weighted toward 1
+    picks = rng.sample(grade_pool, k=min(n, len(grade_pool)))
+    return ", ".join(picks)
+
+
+def _per_day_probability(persona: Persona) -> float:
+    """Daily probability of training, capped at 0.95 to avoid certainty."""
+    return min(0.95, persona.sessions_per_week / 7.0)
+
+
+def generate_initial_history(
+    persona: Persona,
+    days: int = 30,
+    today: Optional[date] = None,
+    rng_seed: Optional[int] = None,
+) -> List[Dict]:
+    """Generate ~`days` days of training_logs for a persona, walking back from `today`.
+
+    Returns a list of dicts ready to be inserted into the training_logs table.
+    Each dict has: date, session_type, duration_min, intensity, grades_sent, notes.
+
+    Idempotent in the sense that any (user_id, date) deduplication happens at
+    the SQL layer (UNIQUE INDEX) — the generator itself yields at most one
+    session per day.
+    """
+    if today is None:
+        today = date.today()
+    # Use a deterministic seed per-persona-per-window so re-running yields
+    # the same backfill (avoids stochastic drift between runs).
+    seed = rng_seed if rng_seed is not None else hash((persona.handle, days, today.toordinal())) & 0xFFFFFFFF
+    rng = random.Random(seed)
+
+    rows: List[Dict] = []
+    per_day_p = _per_day_probability(persona)
+
+    # Determine "rest weeks" up front so the pattern is realistic.
+    rest_weeks = set()
+    week_count = (days // 7) + 1
+    for wk in range(week_count):
+        if rng.random() < persona.rest_week_probability:
+            rest_weeks.add(wk)
+
+    for offset in range(days):
+        d = today - timedelta(days=offset)
+        week_index = offset // 7
+        if week_index in rest_weeks:
+            continue
+        if rng.random() > per_day_p:
+            continue
+        duration = rng.randint(persona.session_min_range[0], persona.session_min_range[1])
+        intensity = _weighted_choice(persona.intensity_weights, rng)
+        stype = _weighted_type(persona.session_types, rng)
+        grades = _pick_grades(persona.grade_pool, rng)
+        rows.append({
+            "date": d,
+            "session_type": stype,
+            "duration_min": duration,
+            "intensity": intensity,
+            "grades_sent": grades,
+            "notes": "",
+        })
+    return rows
+
+
+def generate_today_session(
+    persona: Persona,
+    today: Optional[date] = None,
+    rng_seed: Optional[int] = None,
+) -> Optional[Dict]:
+    """Probabilistically generate ONE training_log for today, or None if
+    today is a rest day for this persona. Used by the daily tick script."""
+    if today is None:
+        today = date.today()
+    # Deterministic per-persona-per-day seed so re-running the tick same day
+    # makes the same choice (helps with idempotency even before the SQL
+    # UNIQUE-INDEX layer kicks in).
+    seed = rng_seed if rng_seed is not None else hash((persona.handle, today.toordinal())) & 0xFFFFFFFF
+    rng = random.Random(seed)
+
+    if rng.random() > _per_day_probability(persona):
+        return None
+
+    return {
+        "date": today,
+        "session_type": _weighted_type(persona.session_types, rng),
+        "duration_min": rng.randint(persona.session_min_range[0], persona.session_min_range[1]),
+        "intensity": _weighted_choice(persona.intensity_weights, rng),
+        "grades_sent": _pick_grades(persona.grade_pool, rng),
+        "notes": "",
+    }

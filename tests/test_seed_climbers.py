@@ -120,3 +120,70 @@ class PersonaDefinitionTests(unittest.TestCase):
                 for g in p.grade_pool:
                     if g.startswith("V"):
                         self.assertGreaterEqual(int(g[1:]), 7, f"elite {p.handle} has easy grade {g}")
+
+
+class ActivityGeneratorTests(unittest.TestCase):
+    def test_generate_initial_history_returns_dated_rows(self):
+        from src.seed_climbers import SEED_PERSONAS, generate_initial_history
+        from datetime import date, timedelta
+        persona = SEED_PERSONAS[0]
+        rows = generate_initial_history(persona, days=30, today=date(2026, 5, 13))
+        # Returns a list of dicts with the expected keys
+        self.assertIsInstance(rows, list)
+        self.assertGreater(len(rows), 0)
+        for row in rows:
+            self.assertIn("date", row)
+            self.assertIn("session_type", row)
+            self.assertIn("duration_min", row)
+            self.assertIn("intensity", row)
+            self.assertIn("grades_sent", row)
+            # All dates within the last 30 days, not in the future
+            self.assertLessEqual(row["date"], date(2026, 5, 13))
+            self.assertGreaterEqual(row["date"], date(2026, 5, 13) - timedelta(days=30))
+
+    def test_generate_initial_history_respects_session_min_range(self):
+        from src.seed_climbers import SEED_PERSONAS, generate_initial_history
+        from datetime import date
+        for persona in SEED_PERSONAS:
+            rows = generate_initial_history(persona, days=30, today=date(2026, 5, 13))
+            for row in rows:
+                self.assertGreaterEqual(row["duration_min"], persona.session_min_range[0])
+                self.assertLessEqual(row["duration_min"], persona.session_min_range[1])
+
+    def test_generate_initial_history_respects_grade_pool(self):
+        from src.seed_climbers import SEED_PERSONAS, generate_initial_history
+        from datetime import date
+        for persona in SEED_PERSONAS:
+            rows = generate_initial_history(persona, days=30, today=date(2026, 5, 13))
+            pool_set = set(persona.grade_pool)
+            for row in rows:
+                # grades_sent is a comma-separated string; every grade must be in the pool
+                for grade in row["grades_sent"].split(","):
+                    g = grade.strip()
+                    if g:
+                        self.assertIn(g, pool_set, f"{persona.handle} sent {g} outside pool {persona.grade_pool}")
+
+    def test_generate_initial_history_unique_dates(self):
+        """One session per day max (matches the UNIQUE index)."""
+        from src.seed_climbers import SEED_PERSONAS, generate_initial_history
+        from datetime import date
+        for persona in SEED_PERSONAS:
+            rows = generate_initial_history(persona, days=30, today=date(2026, 5, 13))
+            dates = [r["date"] for r in rows]
+            self.assertEqual(len(dates), len(set(dates)),
+                             f"{persona.handle} has duplicate dates in initial history")
+
+    def test_generate_today_session_returns_dict_or_none(self):
+        from src.seed_climbers import SEED_PERSONAS, generate_today_session
+        from datetime import date
+        # Deterministic: with seed=42 and persona.sessions_per_week>=2 the
+        # probability that *every* call returns None across 10 personas is tiny,
+        # but the function may return None for any single one.
+        for persona in SEED_PERSONAS:
+            session = generate_today_session(persona, today=date(2026, 5, 13), rng_seed=42)
+            self.assertTrue(session is None or isinstance(session, dict),
+                            f"{persona.handle} returned wrong shape: {session!r}")
+            if session is not None:
+                self.assertIn("date", session)
+                self.assertIn("duration_min", session)
+                self.assertEqual(session["date"], date(2026, 5, 13))
