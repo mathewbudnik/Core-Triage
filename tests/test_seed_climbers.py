@@ -269,3 +269,65 @@ class InitScriptTests(unittest.TestCase):
         # but the underlying password is random bytes nobody knows.
         self.assertIsNotNone(pw_hash)
         self.assertTrue(pw_hash.startswith("$2"), f"not a bcrypt hash: {pw_hash[:10]}...")
+
+
+class TickScriptTests(unittest.TestCase):
+    """Daily tick: probabilistically inserts at most one session per
+    seed climber per day. Idempotent on re-run same day."""
+
+    def setUp(self):
+        # Start with a clean seed set, then init.
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM users WHERE is_seed = TRUE;")
+                conn.commit()
+        from scripts.seed_climbers_init import main as init_main
+        init_main()
+
+    def tearDown(self):
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM users WHERE is_seed = TRUE;")
+                conn.commit()
+
+    def _count_today_seed_logs(self):
+        from datetime import date
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """SELECT COUNT(*) FROM training_logs tl
+                       JOIN users u ON u.id = tl.user_id
+                       WHERE u.is_seed = TRUE AND tl.date = %s;""",
+                    (date.today(),),
+                )
+                return cur.fetchone()[0]
+
+    def test_tick_inserts_some_sessions_today(self):
+        from scripts.seed_climbers_tick import main as tick_main
+        # First clear any "today" rows that the init backfill happened to insert
+        # for date.today() so we measure the tick's effect cleanly.
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                from datetime import date
+                cur.execute(
+                    """DELETE FROM training_logs WHERE user_id IN
+                       (SELECT id FROM users WHERE is_seed = TRUE) AND date = %s;""",
+                    (date.today(),),
+                )
+                conn.commit()
+        tick_main()
+        # Probabilistic — expect at least 1 of 10 climbers trained today
+        # (deterministic per persona+today seed, so this is repeatable).
+        count = self._count_today_seed_logs()
+        self.assertGreaterEqual(count, 1,
+                                f"expected at least 1 seed log today, got {count}")
+        self.assertLessEqual(count, 10,
+                             f"expected at most 10 seed logs today, got {count}")
+
+    def test_tick_is_idempotent_same_day(self):
+        from scripts.seed_climbers_tick import main as tick_main
+        tick_main()
+        first = self._count_today_seed_logs()
+        tick_main()
+        self.assertEqual(self._count_today_seed_logs(), first,
+                         "tick is not idempotent on re-run same day")
