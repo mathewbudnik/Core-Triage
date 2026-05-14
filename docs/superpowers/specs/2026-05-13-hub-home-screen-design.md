@@ -168,6 +168,16 @@ Implementation:
 - App.jsx top-level guard: if `user && location.pathname === '/'`, `<Navigate to="/hub" replace />`
 - Unknown-path fallback in `<Routes>` becomes `<Navigate to="/hub" replace />` (was `/triage`)
 
+### Sidebar logo as a hub link
+
+The CoreTriage logo + brand name block in the sidebar header (currently a static `<div>` in [App.jsx](frontend/src/App.jsx) around the `<Logo size={32} dark />` element) becomes a clickable link to `/hub`. Standard "home" affordance — users expect the brand mark to return them to the landing surface.
+
+- Wrap the logo + brand-name span in a `<NavLink to="/hub">` (or plain anchor if NavLink's active styling isn't wanted)
+- On mobile, the click also closes the sidebar drawer (call `setSidebarOpen(false)`)
+- The "Training, rehab & coaching for climbers" tagline stays outside the link — only the logo + brand are interactive
+- Visual treatment: no hover underline; subtle opacity transition (`hover:opacity-90`) so it doesn't feel like text content
+- Accessibility: `aria-label="Go to hub"` on the link
+
 ## API surface
 
 **Reuses existing endpoints** — no new backend work required for v1.
