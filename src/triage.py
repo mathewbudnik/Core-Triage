@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
@@ -1048,17 +1049,24 @@ def bucket_possibilities(i: Intake) -> List[Bucket]:
             out.append(Bucket.from_id("hamate_hook_fracture", qualifier="consider evaluation"))
 
         # ── TRIGGER FINGER — chronic catching ────────────────────────────
-        if i.onset == "Gradual" and (
-            "catch" in text_l
-            or "lock" in text_l
-            or "stuck" in text_l
-            or "trigger" in text_l
+        # Use word-boundary regex so 'lockoff', 'caught a hold', 'stuck on V5'
+        # don't spuriously match. Also gate on palm_base location — clinical
+        # trigger finger is at the A1 pulley near the base of the finger.
+        if i.onset == "Gradual" and loc in {"palm_base", ""} and re.search(
+            r"\b(catches?|catching|locks?|locking|trigger(ing)?)\b", text_l
         ):
             out.append(Bucket.from_id("trigger_finger", qualifier="possible"))
 
         # ── PIP SYNOVITIS — chronic mid-joint swelling ───────────────────
         if i.onset == "Gradual" and loc == "palm_mid" and i.swelling == "Yes":
             out.append(Bucket.from_id("pip_synovitis", qualifier="common"))
+
+        # ── WHOLE-FINGER GRADUAL — classic flexor tenosynovitis pattern ──
+        # Diffuse pain along the whole finger with chronic onset is the
+        # tenosynovitis signature. Surface it specifically (instead of falling
+        # through to the tail catch-all) so the qualifier reads "common".
+        if loc == "whole" and i.onset == "Gradual":
+            out.append(Bucket.from_id("flexor_tenosynovitis", qualifier="common"))
 
         # ── LEGACY FALLBACK — when ALL new finger fields are blank ──────
         # Pre-Phase-6 clients and users who skipped the drill-down still get

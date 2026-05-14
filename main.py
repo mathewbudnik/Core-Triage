@@ -32,7 +32,7 @@ if _sentry_dsn:
     )
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 import bcrypt
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -363,9 +363,9 @@ class IntakeRequest(BaseModel):
     k: int = 4
     # Finger-specific drill-down (Phase 6). Optional with safe defaults so
     # pre-Phase-6 clients continue to work.
-    which_finger: str = ""
-    finger_location: str = ""
-    grip_mode: str = ""
+    which_finger: Literal["", "Index", "Middle", "Ring", "Pinky", "Thumb", "Multiple", "Not sure"] = ""
+    finger_location: Literal["", "palm_base", "palm_mid", "palm_tip", "side", "dorsal", "whole"] = ""
+    grip_mode: Literal["", "full_crimp", "half_crimp", "open_hand", "pocket_1", "pocket_2", "pinch", "sloper", "jam", "not_climbing"] = ""
 
 
 class ChatMessage(BaseModel):

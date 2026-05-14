@@ -166,3 +166,78 @@ class FingerFallbackTests(unittest.TestCase):
         ids = [b.id for b in bucket_possibilities(i)]
         self.assertIn("flexor_tenosynovitis", ids,
                       "tail catch-all should surface generic bucket when no pattern matches")
+
+
+class FingerFollowupTests(unittest.TestCase):
+    """Tightening passes from the final code review."""
+
+    # ── Fix 1: tightened trigger_finger ────────────────────────────────────
+    def test_trigger_finger_fires_on_word_boundary_match(self):
+        i = _intake(onset="Gradual", finger_location="palm_base",
+                    free_text="finger catches when I close my hand")
+        ids = [b.id for b in bucket_possibilities(i)]
+        self.assertIn("trigger_finger", ids)
+
+    def test_trigger_finger_does_not_fire_on_lockoff_or_stuck_on_v5(self):
+        # Common climbing phrasings that previously caused false positives
+        for phrase in (
+            "lockoff move was hard",
+            "I was stuck on this V5 problem",
+            "I caught the hold and felt fine",
+        ):
+            i = _intake(onset="Gradual", finger_location="palm_base", free_text=phrase)
+            ids = [b.id for b in bucket_possibilities(i)]
+            self.assertNotIn("trigger_finger", ids,
+                             f"false positive on phrase: {phrase!r}")
+
+    def test_trigger_finger_skipped_when_location_is_palm_tip(self):
+        # Clinically wrong location for trigger finger — should not surface
+        # even if the keyword matches.
+        i = _intake(onset="Gradual", finger_location="palm_tip",
+                    free_text="my finger keeps catching")
+        ids = [b.id for b in bucket_possibilities(i)]
+        self.assertNotIn("trigger_finger", ids)
+
+    # ── Fix 2: whole-finger gradual rule ───────────────────────────────────
+    def test_whole_finger_gradual_surfaces_flexor_tenosynovitis_common(self):
+        i = _intake(onset="Gradual", finger_location="whole")
+        buckets = bucket_possibilities(i)
+        ids = [b.id for b in buckets]
+        self.assertIn("flexor_tenosynovitis", ids)
+        # Confirm qualifier is "common" specifically (not "possible")
+        ft = next(b for b in buckets if b.id == "flexor_tenosynovitis")
+        self.assertIn("common", ft.title.lower(),
+                      f"expected 'common' qualifier, got: {ft.title}")
+
+    # ── Fix 3: Pydantic Literal validation ─────────────────────────────────
+    def test_intake_request_rejects_garbage_grip_mode(self):
+        from main import IntakeRequest
+        from pydantic import ValidationError
+        with self.assertRaises(ValidationError):
+            IntakeRequest(
+                region="Finger", onset="Sudden", pain_type="Sharp", severity=5,
+                swelling="No", bruising="No", numbness="No", weakness="None",
+                instability="No", mechanism="Hard crimp", free_text="",
+                grip_mode="garbage_value",
+            )
+
+    def test_intake_request_accepts_known_finger_location(self):
+        from main import IntakeRequest
+        # Should NOT raise
+        req = IntakeRequest(
+            region="Finger", onset="Sudden", pain_type="Sharp", severity=5,
+            swelling="No", bruising="No", numbness="No", weakness="None",
+            instability="No", mechanism="Hard crimp",
+            finger_location="palm_mid",
+        )
+        self.assertEqual(req.finger_location, "palm_mid")
+
+    def test_intake_request_accepts_not_sure_for_backwards_compat(self):
+        from main import IntakeRequest
+        req = IntakeRequest(
+            region="Finger", onset="Sudden", pain_type="Sharp", severity=5,
+            swelling="No", bruising="No", numbness="No", weakness="None",
+            instability="No", mechanism="Hard crimp",
+            which_finger="Not sure",
+        )
+        self.assertEqual(req.which_finger, "Not sure")
