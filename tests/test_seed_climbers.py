@@ -187,3 +187,85 @@ class ActivityGeneratorTests(unittest.TestCase):
                 self.assertIn("date", session)
                 self.assertIn("duration_min", session)
                 self.assertEqual(session["date"], date(2026, 5, 13))
+
+
+class InitScriptTests(unittest.TestCase):
+    """End-to-end: running the init script inserts 10 users + history,
+    is idempotent on re-run, and seed users have un-loginable hashes."""
+
+    def setUp(self):
+        # Clean any prior seed state
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM users WHERE is_seed = TRUE;")
+                conn.commit()
+
+    def tearDown(self):
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM users WHERE is_seed = TRUE;")
+                conn.commit()
+
+    def _count_seed_users(self) -> int:
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT COUNT(*) FROM users WHERE is_seed = TRUE;")
+                return cur.fetchone()[0]
+
+    def _count_seed_training_logs(self) -> int:
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """SELECT COUNT(*) FROM training_logs tl
+                       JOIN users u ON u.id = tl.user_id
+                       WHERE u.is_seed = TRUE;"""
+                )
+                return cur.fetchone()[0]
+
+    def test_init_creates_10_seed_users(self):
+        from scripts.seed_climbers_init import main
+        main()
+        self.assertEqual(self._count_seed_users(), 10)
+
+    def test_init_creates_training_logs(self):
+        from scripts.seed_climbers_init import main
+        main()
+        # ~30 days × 10 personas with varying probability. Should be > 50.
+        count = self._count_seed_training_logs()
+        self.assertGreater(count, 50, f"only {count} training logs generated")
+
+    def test_init_is_idempotent(self):
+        """Re-running init does not duplicate users or training_logs."""
+        from scripts.seed_climbers_init import main
+        main()
+        first_users = self._count_seed_users()
+        first_logs = self._count_seed_training_logs()
+        main()
+        self.assertEqual(self._count_seed_users(), first_users)
+        self.assertEqual(self._count_seed_training_logs(), first_logs)
+
+    def test_init_creates_athlete_profiles(self):
+        from scripts.seed_climbers_init import main
+        main()
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """SELECT COUNT(*) FROM athlete_profiles ap
+                       JOIN users u ON u.id = ap.user_id
+                       WHERE u.is_seed = TRUE;"""
+                )
+                self.assertEqual(cur.fetchone()[0], 10)
+
+    def test_seed_users_have_unloginable_password_hash(self):
+        from scripts.seed_climbers_init import main
+        main()
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT password_hash FROM users WHERE is_seed = TRUE LIMIT 1;"
+                )
+                pw_hash = cur.fetchone()[0]
+        # Hash is a real bcrypt hash (not NULL — schema requires NOT NULL),
+        # but the underlying password is random bytes nobody knows.
+        self.assertIsNotNone(pw_hash)
+        self.assertTrue(pw_hash.startswith("$2"), f"not a bcrypt hash: {pw_hash[:10]}...")
