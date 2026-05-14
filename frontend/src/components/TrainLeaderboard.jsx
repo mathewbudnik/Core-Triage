@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Loader2, Trophy } from 'lucide-react'
+import { Loader2, Trophy, ArrowUp } from 'lucide-react'
 import { getLeaderboard } from '../api'
+import AvatarChip from './AvatarChip'
 
 const WINDOWS = [
   { key: 'week',  label: 'This week'  },
@@ -9,90 +10,98 @@ const WINDOWS = [
   { key: 'all',   label: 'All time'   },
 ]
 
-// Pretty cohort label for the section header. Defaults to "global" when null.
 function prettyCohort(cohort) {
   if (!cohort || cohort === 'global') return 'global'
   return cohort
 }
 
-// 2-letter avatar initials from a display name. "ProjectRagger" → "PR".
-function avatarInitials(name) {
-  if (!name) return '??'
-  const tokens = name.replace(/[_-]/g, ' ').split(/\s+/).filter(Boolean)
-  if (tokens.length === 1) {
-    const t = tokens[0]
-    // Camel-case split: "ProjectRagger" → "PR"
-    const upper = t.match(/[A-Z]/g)
-    if (upper && upper.length >= 2) return upper.slice(0, 2).join('')
-    return t.slice(0, 2).toUpperCase()
-  }
-  return (tokens[0][0] + tokens[1][0]).toUpperCase()
-}
-
-// Podium themes per rank (1=gold, 2=silver, 3=bronze). Everything else is
-// the default style.
-function podiumClass(rank, isMe) {
-  if (isMe) return 'me'
-  if (rank === 1) return 'p1'
-  if (rank === 2) return 'p2'
-  if (rank === 3) return 'p3'
-  return ''
-}
-
-// Per-rank inline styles — Tailwind arbitrary-value strings get
-// awkward for the gradient + border + text combos so we hand-roll them.
-const ROW_THEMES = {
-  '':   {},
-  p1:   { background: 'linear-gradient(90deg, rgba(247,187,81,0.16), rgba(247,187,81,0.04))', borderColor: 'rgba(247,187,81,0.35)' },
-  p2:   { background: 'linear-gradient(90deg, rgba(200,200,210,0.10), rgba(200,200,210,0.02))', borderColor: 'rgba(200,200,210,0.25)' },
-  p3:   { background: 'linear-gradient(90deg, rgba(205,127,50,0.16), rgba(205,127,50,0.04))', borderColor: 'rgba(205,127,50,0.35)' },
-  me:   { background: 'linear-gradient(90deg, rgba(125,211,192,0.14), rgba(125,211,192,0.04))', borderColor: 'rgba(125,211,192,0.4)' },
-}
-const RANK_THEMES = {
-  '':   { color: '#8a93a6' },
-  p1:   { color: '#f7bb51' },
-  p2:   { color: '#c4cbd6' },
-  p3:   { color: '#cd7f32' },
-  me:   { color: '#7dd3c0' },
-}
-const AVATAR_THEMES = {
-  '':   { background: 'rgba(125,211,192,0.18)', borderColor: 'rgba(125,211,192,0.35)', color: '#7dd3c0' },
-  p1:   { background: 'rgba(247,187,81,0.2)',   borderColor: 'rgba(247,187,81,0.4)',   color: '#f7bb51' },
-  p2:   { background: 'rgba(200,200,210,0.12)', borderColor: 'rgba(200,200,210,0.3)',  color: '#c4cbd6' },
-  p3:   { background: 'rgba(205,127,50,0.18)',  borderColor: 'rgba(205,127,50,0.35)',  color: '#cd7f32' },
-  me:   { background: 'rgba(125,211,192,0.18)', borderColor: 'rgba(125,211,192,0.35)', color: '#7dd3c0' },
-}
-
 const RANK_GLYPH = { 1: '🥇', 2: '🥈', 3: '🥉' }
 
-function Row({ entry, isMe }) {
-  const theme = podiumClass(entry.rank, isMe)
-  const showGlyph = !isMe && (entry.rank === 1 || entry.rank === 2 || entry.rank === 3)
+// Distinct row themes — podium top-3 each get their own gold/silver/bronze
+// treatment so the podium reads at a glance. "me" is teal regardless of rank.
+const ROW_THEMES = {
+  default: { bg: 'transparent', border: 'rgba(232,238,252,0.06)', rankColor: '#8a93a6', valueColor: '#e7eaf0' },
+  p1:      { bg: 'linear-gradient(90deg, rgba(247,187,81,0.18), rgba(247,187,81,0.04))', border: 'rgba(247,187,81,0.40)', rankColor: '#f7bb51', valueColor: '#f7bb51' },
+  p2:      { bg: 'linear-gradient(90deg, rgba(200,200,210,0.14), rgba(200,200,210,0.02))', border: 'rgba(200,200,210,0.32)', rankColor: '#c4cbd6', valueColor: '#c4cbd6' },
+  p3:      { bg: 'linear-gradient(90deg, rgba(205,127,50,0.18), rgba(205,127,50,0.04))', border: 'rgba(205,127,50,0.38)', rankColor: '#cd7f32', valueColor: '#cd7f32' },
+  me:      { bg: 'linear-gradient(90deg, rgba(125,211,192,0.16), rgba(125,211,192,0.04))', border: 'rgba(125,211,192,0.45)', rankColor: '#7dd3c0', valueColor: '#7dd3c0' },
+}
+
+function themeFor(rank, isMe) {
+  if (isMe) return ROW_THEMES.me
+  if (rank === 1) return ROW_THEMES.p1
+  if (rank === 2) return ROW_THEMES.p2
+  if (rank === 3) return ROW_THEMES.p3
+  return ROW_THEMES.default
+}
+
+function Row({ entry, isMe, podium }) {
+  const theme = themeFor(entry.rank, isMe)
+  // Podium rows get extra height + bigger avatar; everything else stays compact.
+  const padY = podium ? 'py-3' : 'py-2'
+  const avatarSize = podium ? 36 : 28
   return (
     <div
-      className="flex items-center gap-2.5 rounded-lg border px-2.5 py-2"
-      style={ROW_THEMES[theme]}
+      className={`flex items-center gap-3 rounded-xl border px-3 ${padY}`}
+      style={{ background: theme.bg, borderColor: theme.border }}
     >
       <span
-        className="w-6 text-center font-extrabold text-[12px]"
-        style={RANK_THEMES[theme]}
+        className={`text-center font-extrabold ${podium ? 'text-base w-8' : 'text-xs w-6'}`}
+        style={{ color: theme.rankColor }}
       >
-        {showGlyph ? RANK_GLYPH[entry.rank] : entry.rank}
+        {!isMe && RANK_GLYPH[entry.rank] ? RANK_GLYPH[entry.rank] : entry.rank}
       </span>
+      <AvatarChip
+        icon={entry.avatar_icon}
+        color={entry.avatar_color}
+        name={entry.display_name}
+        anonymous={entry.is_private}
+        size={avatarSize}
+      />
+      <div className="flex-1 min-w-0">
+        <p className={`font-semibold truncate ${podium ? 'text-sm' : 'text-[13px]'} ${isMe ? 'text-accent' : 'text-text'}`}>
+          {isMe ? `You · ${entry.display_name}` : entry.display_name}
+        </p>
+        {podium && entry.rank === 1 && (
+          <p className="text-[10px] text-accent3 font-bold uppercase tracking-wider mt-0.5">
+            Leading the pack
+          </p>
+        )}
+      </div>
       <span
-        className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-extrabold border flex-shrink-0"
-        style={AVATAR_THEMES[theme]}
-      >
-        {avatarInitials(entry.display_name)}
-      </span>
-      <span className={`flex-1 text-[12px] font-semibold truncate ${isMe ? 'text-accent' : 'text-text'}`}>
-        {isMe ? `You · ${entry.display_name}` : entry.display_name}
-      </span>
-      <span
-        className="text-[12px] font-extrabold tabular-nums"
-        style={{ color: isMe ? '#7dd3c0' : '#e7eaf0' }}
+        className={`font-extrabold tabular-nums ${podium ? 'text-base' : 'text-[13px]'}`}
+        style={{ color: theme.valueColor }}
       >
         {entry.hours.toFixed(1)}h
+      </span>
+    </div>
+  )
+}
+
+// "X.Xh to climb past NextPerson" — the fun-and-fair carrot. Only renders
+// when we can actually compute it from the data we have.
+function NextRankCarrot({ data }) {
+  if (!data?.me?.rank || data.me.rank === 1) {
+    if (data?.me?.rank === 1) {
+      return (
+        <div className="flex items-center justify-center gap-2 mt-3 py-2 px-3 rounded-lg bg-[rgba(247,187,81,0.08)] border border-[rgba(247,187,81,0.25)]">
+          <Trophy size={12} className="text-accent3" />
+          <span className="text-[11px] text-accent3 font-bold">You're #1 this {data.window === 'all' ? 'time' : data.window}. Hold the throne.</span>
+        </div>
+      )
+    }
+    return null
+  }
+  const aboveRank = data.me.rank - 1
+  const above = data.top.find((t) => t.rank === aboveRank)
+  if (!above) return null
+  const gap = above.hours - data.me.hours
+  if (gap <= 0) return null
+  return (
+    <div className="flex items-center justify-center gap-2 mt-3 py-2 px-3 rounded-lg bg-accent/8 border border-accent/25">
+      <ArrowUp size={12} className="text-accent" strokeWidth={2.6} />
+      <span className="text-[11px] text-text font-medium">
+        <b className="text-accent">{gap.toFixed(1)}h</b> to climb past {above.display_name}
       </span>
     </div>
   )
@@ -111,7 +120,9 @@ export default function TrainLeaderboard({ cohort: defaultCohort }) {
     let cancelled = false
     setLoading(true)
     setError(null)
-    getLeaderboard({ window: windowKey, cohort, limit: 5 })
+    // Pull more rows so the user's row has a chance to appear inline rather
+    // than always dangling at the bottom.
+    getLeaderboard({ window: windowKey, cohort, limit: 10 })
       .then((d) => { if (!cancelled) setData(d) })
       .catch((e) => { if (!cancelled) setError(e.message || 'Could not load leaderboard.') })
       .finally(() => { if (!cancelled) setLoading(false) })
@@ -119,12 +130,15 @@ export default function TrainLeaderboard({ cohort: defaultCohort }) {
   }, [windowKey, cohort])
 
   const meInTopN = data?.me && data.top?.some((t) => t.user_id === data.me.user_id)
+  // Show top 3 as podium; rest as compact rows.
+  const podiumRows = (data?.top || []).slice(0, 3)
+  const rest       = (data?.top || []).slice(3)
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
-          <Trophy size={11} className="text-accent3" />
+        <p className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-accent3 flex items-center gap-1.5">
+          <Trophy size={13} />
           Leaderboard · {prettyCohort(cohort)}
         </p>
         {defaultCohort && defaultCohort !== 'global' && (
@@ -147,7 +161,7 @@ export default function TrainLeaderboard({ cohort: defaultCohort }) {
               key={w.key}
               type="button"
               onClick={() => setWindowKey(w.key)}
-              className={`text-[10px] font-bold py-1.5 rounded-md transition-all ${
+              className={`text-[10px] font-bold py-2.5 min-h-[40px] rounded-md transition-all ${
                 active
                   ? 'bg-[rgba(125,211,192,0.12)] text-accent border border-[rgba(125,211,192,0.3)]'
                   : 'text-muted hover:text-text'
@@ -184,16 +198,44 @@ export default function TrainLeaderboard({ cohort: defaultCohort }) {
                   No one's logged sessions in this window yet. Be the first.
                 </p>
               )}
-              {data.top.map((entry) => (
-                <Row
-                  key={`${entry.user_id}-${entry.rank}`}
-                  entry={entry}
-                  isMe={data.me && entry.user_id === data.me.user_id}
-                />
-              ))}
-              {data.me && !meInTopN && data.me.rank != null && (
-                <Row entry={data.me} isMe />
+
+              {/* Podium */}
+              {podiumRows.length > 0 && (
+                <div className="space-y-2">
+                  {podiumRows.map((entry) => (
+                    <Row
+                      key={`${entry.user_id}-${entry.rank}`}
+                      entry={entry}
+                      isMe={data.me && entry.user_id === data.me.user_id}
+                      podium
+                    />
+                  ))}
+                </div>
               )}
+
+              {/* Rest of the top N */}
+              {rest.length > 0 && (
+                <div className="space-y-1 pt-1.5">
+                  {rest.map((entry) => (
+                    <Row
+                      key={`${entry.user_id}-${entry.rank}`}
+                      entry={entry}
+                      isMe={data.me && entry.user_id === data.me.user_id}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Your row pinned at the bottom if you didn't make the visible list */}
+              {data.me && !meInTopN && data.me.rank != null && (
+                <>
+                  <p className="text-[9px] text-muted/60 uppercase tracking-wider text-center pt-2">···</p>
+                  <Row entry={data.me} isMe />
+                </>
+              )}
+
+              {/* Fun-and-fair carrot */}
+              <NextRankCarrot data={data} />
             </>
           )}
         </motion.div>

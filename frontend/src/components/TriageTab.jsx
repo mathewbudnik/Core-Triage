@@ -791,7 +791,7 @@ function ResultsTabs({ result, form }) {
               role="tab"
               aria-selected={isActive}
               onClick={() => setActive(t.key)}
-              className={`text-xs font-semibold py-2 rounded-lg transition-colors ${
+              className={`text-xs font-semibold py-3 min-h-[44px] rounded-lg transition-colors ${
                 isActive
                   ? 'bg-panel2 text-accent shadow'
                   : 'text-muted hover:text-text'

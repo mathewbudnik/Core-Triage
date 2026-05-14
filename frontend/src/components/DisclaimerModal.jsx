@@ -32,7 +32,7 @@ export default function DisclaimerModal({ onAccept, onExit, readOnly = false }) 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.08 }}
-        className="w-full max-w-lg bg-panel2 border border-outline rounded-2xl shadow-2xl overflow-hidden"
+        className="w-full max-w-lg max-h-[calc(100dvh-2rem)] bg-panel2 border border-outline rounded-2xl shadow-2xl overflow-hidden flex flex-col"
       >
         {/* Header */}
         <div className="bg-accent3/10 border-b border-accent3/20 px-6 py-5 flex items-start gap-3">
@@ -45,8 +45,10 @@ export default function DisclaimerModal({ onAccept, onExit, readOnly = false }) 
           </div>
         </div>
 
-        {/* Body */}
-        <div className="px-6 py-5 space-y-5 max-h-[60vh] overflow-y-auto">
+        {/* Body — flex-1 + overflow-y-auto lets the body scroll while the
+            header and footer (accept/exit buttons) stay visible on short
+            viewports like iPhone SE portrait. */}
+        <div className="px-6 py-5 space-y-5 overflow-y-auto flex-1">
           <p className="text-sm text-muted leading-relaxed">
             CoreTriage provides general injury guidance for informational purposes only.
           </p>

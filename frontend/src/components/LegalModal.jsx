@@ -29,8 +29,7 @@ export default function LegalModal({ document, onClose }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.08 }}
-        className="w-full max-w-2xl bg-panel2 border border-outline rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-        style={{ maxHeight: '85vh' }}
+        className="w-full max-w-2xl max-h-[calc(100dvh-2rem)] bg-panel2 border border-outline rounded-2xl shadow-2xl overflow-hidden flex flex-col"
       >
         {/* Header */}
         <div className="px-6 py-4 border-b border-outline flex items-center justify-between bg-panel">

@@ -81,7 +81,7 @@ export default function UpgradeModal({ onClose, trigger = 'feature', user, onSig
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 backdrop-blur-sm"
+      className="fixed inset-0 z-[110] flex items-center justify-center bg-bg/80 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <motion.div
