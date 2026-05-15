@@ -70,6 +70,14 @@ export const getActivePlan = () => request('GET', '/api/plans/active')
 export const logTraining = (payload) => request('POST', '/api/training', payload)
 export const getTrainingLogs = (limit = 30) => request('GET', `/api/training?limit=${limit}`)
 
+// Rehab progress (daily checkoff)
+export const getRehabProgress = (date) =>
+  request('GET', `/api/rehab/progress?date=${encodeURIComponent(date)}`)
+export const checkRehabExercise = ({ exercise_key, region, phase, date }) =>
+  request('POST', '/api/rehab/progress/check', { exercise_key, region, phase, date })
+export const uncheckRehabExercise = ({ exercise_key, date }) =>
+  request('DELETE', '/api/rehab/progress/check', { exercise_key, date })
+
 // Train stats + leaderboard
 export const getTrainingStats = () => request('GET', '/api/training/stats')
 export const getLeaderboard = ({ window = 'week', cohort, limit = 10 } = {}) => {
