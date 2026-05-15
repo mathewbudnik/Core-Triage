@@ -311,6 +311,28 @@ def init_db() -> None:
                 """
             )
 
+            # ── Rehab progress (daily checkoff) ────────────────────────────
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS rehab_progress (
+                    id             SERIAL PRIMARY KEY,
+                    user_id        INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    exercise_key   TEXT NOT NULL,
+                    region         TEXT NOT NULL,
+                    phase          INT NOT NULL,
+                    completed_date DATE NOT NULL,
+                    completed_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    UNIQUE (user_id, exercise_key, completed_date)
+                );
+                """
+            )
+            cur.execute(
+                """
+                CREATE INDEX IF NOT EXISTS rehab_progress_user_date_idx
+                ON rehab_progress (user_id, completed_date);
+                """
+            )
+
             # ── Stripe webhook idempotency ─────────────────────────────────
             # Stripe retries failed deliveries. We dedupe by event_id so we
             # never apply the same subscription state change twice.
