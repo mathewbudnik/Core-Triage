@@ -16,24 +16,14 @@ const FEATURES = [
     cta: 'Build my plan',
   },
   {
-    icon: Shield,
+    icon: Stethoscope,
     color: 'text-accent2',
     bg: 'bg-accent2/10 border-accent2/20',
     glow: 'hover:border-accent2/50 hover:bg-accent2/15',
-    title: 'Injury Triage',
-    desc: 'Hurt yourself? Answer a few questions and get red flag screening, likely injury patterns, and a return-to-climb plan — designed for climbing-specific mechanics.',
-    tab: 'triage',
-    cta: 'Start triage',
-  },
-  {
-    icon: Stethoscope,
-    color: 'text-accent',
-    bg: 'bg-accent/10 border-accent/20',
-    glow: 'hover:border-accent/50 hover:bg-accent/15',
-    title: 'Rehab Library',
-    desc: 'Week-by-week exercise protocols for every injury area — gentle Phase 1 exercises free for everyone, full periodised rehab for Pro.',
-    tab: 'rehab',
-    cta: 'Browse exercises',
+    title: 'Body',
+    desc: 'Quick injury screen and phase-based rehab in one place. Daily-reset checkoffs so the plan stays alive between sessions — open the app, see today\'s exercises, tick them off.',
+    tab: 'body',
+    cta: 'Run a screen',
   },
   {
     icon: MessageSquare,
@@ -218,7 +208,7 @@ export default function Landing({ onEnter }) {
           ].map((area) => (
             <button
               key={area}
-              onClick={() => onEnter('triage')}
+              onClick={() => onEnter('body')}
               className="text-xs bg-panel border border-outline rounded-full px-3 py-1.5 text-muted hover:text-accent hover:border-accent/40 transition-colors"
             >
               {area}
