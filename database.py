@@ -1399,6 +1399,90 @@ def get_avatar(user_id: int) -> Tuple[Optional[str], Optional[str]]:
 
 
 # ---------------------------------------------------------------------------
+# Rehab progress helpers (daily checkoff)
+# ---------------------------------------------------------------------------
+
+
+def get_rehab_progress(user_id: int, date: str) -> List[Dict[str, Any]]:
+    """Return rows checked off for the user on a given local date (YYYY-MM-DD)."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT exercise_key, region, phase, completed_at
+                FROM rehab_progress
+                WHERE user_id = %s AND completed_date = %s
+                ORDER BY completed_at ASC;
+                """,
+                (int(user_id), date),
+            )
+            rows = cur.fetchall()
+    return [
+        {
+            "exercise_key": r[0],
+            "region":       r[1],
+            "phase":        int(r[2]),
+            "completed_at": str(r[3]),
+        }
+        for r in rows
+    ]
+
+
+def check_rehab_exercise(
+    user_id: int,
+    exercise_key: str,
+    region: str,
+    phase: int,
+    date: str,
+) -> Dict[str, Any]:
+    """Insert a checkoff event. Idempotent via UNIQUE (user_id, exercise_key,
+    completed_date). Returns {id, already_existed}."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO rehab_progress
+                    (user_id, exercise_key, region, phase, completed_date)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (user_id, exercise_key, completed_date) DO NOTHING
+                RETURNING id;
+                """,
+                (int(user_id), exercise_key, region, int(phase), date),
+            )
+            row = cur.fetchone()
+            already_existed = row is None
+            if already_existed:
+                # Re-fetch to return the existing row's id.
+                cur.execute(
+                    """
+                    SELECT id FROM rehab_progress
+                    WHERE user_id = %s AND exercise_key = %s AND completed_date = %s;
+                    """,
+                    (int(user_id), exercise_key, date),
+                )
+                row = cur.fetchone()
+        conn.commit()
+    return {"id": int(row[0]) if row else None, "already_existed": already_existed}
+
+
+def uncheck_rehab_exercise(user_id: int, exercise_key: str, date: str) -> bool:
+    """Delete the user's checkoff row for an exercise on a given date.
+    Returns True if a row was deleted, False if nothing matched."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                DELETE FROM rehab_progress
+                WHERE user_id = %s AND exercise_key = %s AND completed_date = %s;
+                """,
+                (int(user_id), exercise_key, date),
+            )
+            deleted = cur.rowcount > 0
+        conn.commit()
+    return deleted
+
+
+# ---------------------------------------------------------------------------
 # Coach messaging helpers
 # ---------------------------------------------------------------------------
 
