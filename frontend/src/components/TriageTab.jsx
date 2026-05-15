@@ -1082,7 +1082,7 @@ export default function TriageTab({ k, user }) {
         k,
       })
       setResult(data)
-      navigate(stepToPath('results'))
+      navigate('/body')
     } catch (err) {
       setError(err.message)
     } finally {
