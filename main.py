@@ -49,12 +49,14 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from database import (
     accept_disclaimer,
+    check_rehab_exercise,
     create_user,
     delete_session,
     get_active_plan,
     get_chat_used,
     get_or_create_thread,
     get_profile,
+    get_rehab_progress,
     get_session,
     get_session_count,
     get_thread_by_user,
@@ -78,6 +80,7 @@ from database import (
     set_email_verification_token,
     set_stripe_customer_id,
     set_user_role_by_email,
+    uncheck_rehab_exercise,
     update_subscription_state,
     verify_email_with_token,
     increment_chat_used,
@@ -425,6 +428,22 @@ class TrainingLogRequest(BaseModel):
     intensity: int
     grades_sent: str = ""
     notes: str = ""
+
+
+# Body / rehab progress
+_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+class RehabCheckRequest(BaseModel):
+    exercise_key: str
+    region: str
+    phase: int
+    date: str
+
+
+class RehabUncheckRequest(BaseModel):
+    exercise_key: str
+    date: str
 
 
 class CoachMessageRequest(BaseModel):
@@ -1052,6 +1071,64 @@ def log_session(request: Request, req: TrainingLogRequest, user: Dict = Depends(
 @limiter.limit("60/minute")
 def fetch_training_logs(request: Request, limit: int = 30, user: Dict = Depends(get_current_user)):
     return get_training_logs(user["id"], limit)
+
+
+# ---------------------------------------------------------------------------
+# Rehab progress endpoints (daily checkoff)
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/rehab/progress")
+@limiter.limit("60/minute")
+def fetch_rehab_progress(
+    request: Request,
+    date: str,
+    user: Dict = Depends(get_current_user),
+):
+    """Return today's checked exercises for the current user. `date` must be
+    the user's local ISO date (YYYY-MM-DD)."""
+    if not _DATE_RE.match(date or ""):
+        raise HTTPException(status_code=400, detail="date must be YYYY-MM-DD")
+    rows = get_rehab_progress(user["id"], date)
+    return {"date": date, "checked": rows}
+
+
+@app.post("/api/rehab/progress/check")
+@limiter.limit("60/minute")
+def post_rehab_check(
+    request: Request,
+    req: RehabCheckRequest,
+    user: Dict = Depends(get_current_user),
+):
+    """Mark an exercise complete for the user on the given local date.
+    Idempotent — re-checking returns the existing row."""
+    if not _DATE_RE.match(req.date or ""):
+        raise HTTPException(status_code=400, detail="date must be YYYY-MM-DD")
+    if req.phase not in (1, 2, 3):
+        raise HTTPException(status_code=400, detail="phase must be 1, 2, or 3")
+    if not req.exercise_key or len(req.exercise_key) > 200:
+        raise HTTPException(status_code=400, detail="exercise_key invalid")
+    if not req.region or len(req.region) > 50:
+        raise HTTPException(status_code=400, detail="region invalid")
+    result = check_rehab_exercise(
+        user["id"], req.exercise_key, req.region, req.phase, req.date,
+    )
+    return result
+
+
+@app.delete("/api/rehab/progress/check")
+@limiter.limit("60/minute")
+def delete_rehab_check(
+    request: Request,
+    req: RehabUncheckRequest,
+    user: Dict = Depends(get_current_user),
+):
+    """Remove an exercise checkoff. Idempotent — returns {deleted: false} if
+    nothing matched."""
+    if not _DATE_RE.match(req.date or ""):
+        raise HTTPException(status_code=400, detail="date must be YYYY-MM-DD")
+    deleted = uncheck_rehab_exercise(user["id"], req.exercise_key, req.date)
+    return {"deleted": deleted}
 
 
 # ---------------------------------------------------------------------------
