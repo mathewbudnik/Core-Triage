@@ -19,16 +19,18 @@ import UpgradeModal from './components/UpgradeModal'
 // Lazy-loaded routes — each tab + the standalone pages download only when
 // the user navigates to them. First-paint bundle drops dramatically because
 // users don't pay for tabs they may never visit.
-const HubTab            = lazy(() => import('./components/HubTab'))
-const TriageTab         = lazy(() => import('./components/TriageTab'))
-const RehabTab          = lazy(() => import('./components/RehabTab'))
-const TrainTab          = lazy(() => import('./components/TrainTab'))
-const ProgressTab       = lazy(() => import('./components/ProgressTab'))
-const ChatTab           = lazy(() => import('./components/ChatTab'))
-const HistoryTab        = lazy(() => import('./components/HistoryTab'))
-const AboutTab          = lazy(() => import('./components/AboutTab'))
-const VerifyEmailPage   = lazy(() => import('./components/VerifyEmailPage'))
-const BillingReturnPage = lazy(() => import('./components/BillingReturnPage'))
+const HubTab               = lazy(() => import('./components/HubTab'))
+const BodyTab              = lazy(() => import('./components/BodyTab'))
+const RehabRegionRedirect  = lazy(() => import('./components/RehabRegionRedirect'))
+const TriageTab            = lazy(() => import('./components/TriageTab'))
+const RehabTab             = lazy(() => import('./components/RehabTab'))
+const TrainTab             = lazy(() => import('./components/TrainTab'))
+const ProgressTab          = lazy(() => import('./components/ProgressTab'))
+const ChatTab              = lazy(() => import('./components/ChatTab'))
+const HistoryTab           = lazy(() => import('./components/HistoryTab'))
+const AboutTab             = lazy(() => import('./components/AboutTab'))
+const VerifyEmailPage      = lazy(() => import('./components/VerifyEmailPage'))
+const BillingReturnPage    = lazy(() => import('./components/BillingReturnPage'))
 
 // Tiny full-screen loader used as the Suspense fallback while a route chunk
 // is fetched. Sized to match the visual weight of a real tab so the layout
@@ -41,16 +43,26 @@ function RouteLoading() {
   )
 }
 
+// Single source of truth for every tab's metadata (label, icon, subtitle for
+// the global header). Routes still exist for every entry in this list — the
+// nav arrays below decide which tabs surface in which navigation chrome.
 const TABS = [
-  { id: 'hub',      label: 'Hub',      icon: Home,          subtitle: 'Your climbing health dashboard' },
-  { id: 'triage',   label: 'Triage',   icon: Activity,      subtitle: 'Symptom-based guidance — educational only, always seek a pro for serious injuries' },
-  { id: 'rehab',    label: 'Rehab',    icon: Stethoscope,   subtitle: 'Stage-based protocols built around climbing-specific demands' },
-  { id: 'train',    label: 'Train',    icon: Dumbbell,      subtitle: 'Personalised training plans tuned to your goals and history' },
-  { id: 'progress', label: 'Progress', icon: Trophy,        subtitle: 'Your training stats, streaks, and how you stack up' },
-  { id: 'chat',     label: 'Chat',     icon: MessageSquare, subtitle: 'Ask the climbing-trained AI about training, rehab, or beta' },
-  { id: 'history',  label: 'History',  icon: Clock,         subtitle: 'Your past triage and rehab sessions' },
-  { id: 'about',    label: 'About',    icon: Info,          subtitle: 'What CoreTriage is, who built it, and how it works' },
+  { id: 'hub',   label: 'Hub',   icon: Home,          subtitle: 'Your climbing dashboard' },
+  { id: 'train', label: 'Train', icon: Dumbbell,      subtitle: 'Plans, stats, and how you stack up' },
+  { id: 'body',  label: 'Body',  icon: Stethoscope,   subtitle: 'Screen issues + work through rehab' },
+  { id: 'chat',  label: 'Chat',  icon: MessageSquare, subtitle: 'Ask the climbing-trained assistant' },
 ]
+
+// Mobile bottom nav + top of desktop sidebar — all 4 core tabs.
+const PRIMARY_TAB_IDS = ['hub', 'train', 'body', 'chat']
+// No secondary tabs needed with the 4-tab structure.
+const SECONDARY_TAB_IDS = []
+// Triage / History → still accessible via direct links / internal navigation.
+// About            → reachable from the sidebar footer next to Privacy / Terms.
+// Routes still exist for all of these; they just don't take up nav real estate.
+
+const PRIMARY_TABS   = TABS.filter((t) => PRIMARY_TAB_IDS.includes(t.id))
+const SECONDARY_TABS = TABS.filter((t) => SECONDARY_TAB_IDS.includes(t.id))
 
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
 
@@ -370,9 +382,10 @@ export default function App() {
 
         {/* Scrollable middle — nav + coaching CTA + tip card */}
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col">
-        {/* Nav */}
+        {/* Nav — primary climbing surfaces on top, secondary (Chat) below
+            a thin divider so the hierarchy reads at a glance. */}
         <nav className="px-3 py-4 space-y-1">
-          {TABS.map(({ id, label, icon: Icon }) => (
+          {PRIMARY_TABS.map(({ id, label, icon: Icon }) => (
             <NavLink
               key={id}
               to={`/${id}`}
@@ -398,6 +411,37 @@ export default function App() {
               )}
             </NavLink>
           ))}
+          {SECONDARY_TABS.length > 0 && (
+            <>
+              <div className="h-px bg-outline/60 mx-3 my-3" />
+              {SECONDARY_TABS.map(({ id, label, icon: Icon }) => (
+                <NavLink
+                  key={id}
+                  to={`/${id}`}
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) => `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-100
+                    ${isActive
+                      ? 'bg-accent/15 text-accent border border-accent/25 shadow-glow'
+                      : 'text-muted hover:text-text hover:bg-panel'
+                    }`}
+                >
+                  {({ isActive }) => (
+                    <>
+                      <Icon size={16} />
+                      {label}
+                      {isActive && (
+                        <motion.div
+                          layoutId="nav-indicator"
+                          transition={{ duration: 0.12, ease: 'easeOut' }}
+                          className="ml-auto w-1.5 h-1.5 rounded-full bg-accent"
+                        />
+                      )}
+                    </>
+                  )}
+                </NavLink>
+              ))}
+            </>
+          )}
         </nav>
 
         {/* Coaching CTA */}
@@ -456,6 +500,13 @@ export default function App() {
               View plans &amp; pricing
             </button>
           )}
+          <button
+            onClick={() => navigate('/about')}
+            className="flex items-center gap-1 text-[10px] text-muted/50 hover:text-muted transition-colors"
+          >
+            <Info size={9} />
+            About CoreTriage
+          </button>
           <button
             onClick={() => setShowTerms(true)}
             className="flex items-center gap-1 text-[10px] text-muted/50 hover:text-muted transition-colors"
@@ -553,16 +604,18 @@ export default function App() {
         <div className="flex-1 overflow-auto">
           <Suspense fallback={<RouteLoading />}>
             <Routes>
-              <Route path="/hub/*"     element={<HubTab user={user} />} />
-              <Route path="/triage/*"  element={<TriageTab k={k} user={user} />} />
-              <Route path="/rehab/*"   element={<RehabTab user={user} onLoginClick={() => setShowAuth(true)} />} />
-              <Route path="/train"     element={<TrainTab user={user} dbReady={dbReady} onLoginClick={() => setShowAuth(true)} />} />
-              <Route path="/progress"  element={<ProgressTab user={user} onLoginClick={() => setShowAuth(true)} />} />
-              <Route path="/chat"      element={<ChatTab k={k} user={user} onLoginClick={() => setShowAuth(true)} />} />
-              <Route path="/history/*" element={<HistoryTab dbReady={dbReady} user={user} onLoginClick={() => setShowAuth(true)} />} />
-              <Route path="/about"     element={<AboutTab />} />
+              <Route path="/hub/*"         element={<HubTab user={user} />} />
+              <Route path="/body/*"        element={<BodyTab user={user} />} />
+              <Route path="/triage/*"      element={<TriageTab k={k} user={user} />} />
+              <Route path="/rehab"         element={<Navigate to="/body" replace />} />
+              <Route path="/rehab/:region" element={<RehabRegionRedirect />} />
+              <Route path="/train"         element={<TrainTab user={user} dbReady={dbReady} onLoginClick={() => setShowAuth(true)} />} />
+              <Route path="/progress"      element={<Navigate to="/train" replace />} />
+              <Route path="/chat"          element={<ChatTab k={k} user={user} onLoginClick={() => setShowAuth(true)} />} />
+              <Route path="/history/*"     element={<HistoryTab dbReady={dbReady} user={user} onLoginClick={() => setShowAuth(true)} />} />
+              <Route path="/about"         element={<AboutTab />} />
               {/* Any unknown path lands the user on Hub. */}
-              <Route path="*"          element={<Navigate to="/hub" replace />} />
+              <Route path="*"              element={<Navigate to="/hub" replace />} />
             </Routes>
           </Suspense>
         </div>
@@ -572,7 +625,10 @@ export default function App() {
           tap targets above the iPhone home-indicator strip. */}
       <nav className="fixed bottom-0 left-0 right-0 z-20 md:hidden bg-panel2/95 backdrop-blur-sm border-t border-outline pb-[env(safe-area-inset-bottom)]">
         <div className="flex">
-          {TABS.map(({ id, label, icon: Icon }) => (
+          {/* Mobile bottom nav: primary 5 only — Chat / History / About are
+              reachable via the sidebar drawer (hamburger), Account menu, and
+              sidebar footer respectively. Cuts clutter at typical phone widths. */}
+          {PRIMARY_TABS.map(({ id, label, icon: Icon }) => (
             <NavLink
               key={id}
               to={`/${id}`}
