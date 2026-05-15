@@ -66,6 +66,8 @@ from database import (
     get_leaderboard_private,
     set_display_name,
     set_leaderboard_private,
+    set_avatar,
+    get_avatar,
     get_stripe_customer_id,
     get_user_by_email,
     get_user_by_id,
@@ -442,6 +444,24 @@ class LeaderboardPrivacyRequest(BaseModel):
     private: bool
 
 
+class AvatarRequest(BaseModel):
+    icon: Optional[str] = None
+    color: Optional[str] = None
+
+
+# Allowed avatar preset keys + color overrides. Keep in sync with the
+# AVATAR_PRESETS / AVATAR_COLORS constants on the frontend so the picker
+# UI never offers something the server will reject.
+_ALLOWED_AVATAR_ICONS = {
+    "flame", "snowflake", "mountain", "zap", "crown", "star",
+    "compass", "anchor", "triangle", "sparkles", "sun", "moon",
+}
+_ALLOWED_AVATAR_COLORS = {
+    "teal", "amber", "coral", "purple", "blue", "slate",
+    "sunset", "ice", "aurora", "ember", "lime", "midnight",
+}
+
+
 # ---------------------------------------------------------------------------
 # Auth endpoints  (rate limited: 5/minute)
 # ---------------------------------------------------------------------------
@@ -559,6 +579,8 @@ def login(request: Request, req: LoginRequest):
             "email_verified": is_email_verified(user[0]),
             "display_name": get_display_name(user[0]),
             "leaderboard_private": get_leaderboard_private(user[0]),
+            "avatar_icon": get_avatar(user[0])[0],
+            "avatar_color": get_avatar(user[0])[1],
         },
     }
 
@@ -579,6 +601,11 @@ def me(request: Request, user: Dict = Depends(get_current_user)):
         "display_name": get_display_name(user["id"]),
         # leaderboard_private — current state of the user's privacy toggle.
         "leaderboard_private": get_leaderboard_private(user["id"]),
+        # avatar_icon / avatar_color drive the AvatarChip across the app
+        # (header pill, account menu, leaderboard rows). Either may be NULL
+        # — frontend falls back to a generated initial chip.
+        "avatar_icon": get_avatar(user["id"])[0],
+        "avatar_color": get_avatar(user["id"])[1],
     }
 
 
@@ -1115,6 +1142,21 @@ def update_leaderboard_privacy(request: Request, req: LeaderboardPrivacyRequest,
     still aggregate into percentiles."""
     set_leaderboard_private(user["id"], req.private)
     return {"private": bool(req.private)}
+
+
+@app.patch("/api/auth/me/avatar")
+@limiter.limit("20/minute")
+def update_avatar(request: Request, req: AvatarRequest, user: Dict = Depends(get_current_user)):
+    """Save the user's avatar preset + optional color override. Pass {icon: null,
+    color: null} to clear and revert to the generated initial chip."""
+    icon = req.icon
+    color = req.color
+    if icon is not None and icon not in _ALLOWED_AVATAR_ICONS:
+        raise HTTPException(status_code=400, detail="Unknown avatar icon.")
+    if color is not None and color not in _ALLOWED_AVATAR_COLORS:
+        raise HTTPException(status_code=400, detail="Unknown avatar color.")
+    set_avatar(user["id"], icon, color)
+    return {"icon": icon, "color": color}
 
 
 # ---------------------------------------------------------------------------

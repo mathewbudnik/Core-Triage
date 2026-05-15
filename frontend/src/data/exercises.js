@@ -3364,6 +3364,13 @@ export const EXERCISE_REGIONS = Object.keys(EXERCISES)
  */
 export function buildExerciseVideoUrl(exercise) {
   if (exercise?.video_url) return exercise.video_url
-  const query = `${exercise?.name ?? ''} exercise demonstration`.trim()
+  // Rehab exercises use `name`; training-plan exercises use `exercise` as the
+  // canonical name field — accept either so this helper works across both.
+  const name = exercise?.name ?? exercise?.exercise ?? ''
+  // "training for climbing" anchors results to the climbing-training corpus
+  // (Eric Hörst's channel is named this; Hooper's Beta and similar channels
+  // use the phrase in titles), so YouTube biases away from generic gym/yoga
+  // content the previous "exercise demonstration" suffix kept surfacing.
+  const query = `${name} training for climbing`.trim()
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`
 }

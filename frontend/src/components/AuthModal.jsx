@@ -1,8 +1,12 @@
 import { useState, useCallback, useRef, memo } from 'react'
 import { motion } from 'framer-motion'
 import { X, Loader2, AlertTriangle } from 'lucide-react'
-import { authLogin, authRegister } from '../api'
+import { authLogin, authRegister, setDisplayName } from '../api'
 import Logo from './Logo'
+
+// Same validation rules as the server / DisplayNamePromptModal — kept in sync
+// by convention.
+const DISPLAY_NAME_RE = /^[A-Za-z0-9_-]{3,20}$/
 
 function AuthModal({ onClose, onAuth }) {
   const [mode, setMode] = useState('login')
@@ -10,8 +14,9 @@ function AuthModal({ onClose, onAuth }) {
   const [error, setError] = useState(null)
 
   // Uncontrolled inputs — no state updates on each keystroke
-  const emailRef    = useRef(null)
-  const passwordRef = useRef(null)
+  const emailRef       = useRef(null)
+  const passwordRef    = useRef(null)
+  const displayNameRef = useRef(null)
 
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault()
@@ -26,7 +31,24 @@ function AuthModal({ onClose, onAuth }) {
       // Store in sessionStorage only — clears when tab closes
       sessionStorage.setItem('ct_token', data.token)
       localStorage.removeItem('ct_token')
-      onAuth(data.token, data.user)
+
+      // For new registrations, if the user picked a display name in the
+      // signup form, persist it now. Failures are non-fatal — the user just
+      // gets the migration prompt on the Train tab instead.
+      let userOut = data.user
+      if (mode === 'register' && displayNameRef.current) {
+        const name = (displayNameRef.current.value || '').trim()
+        if (name) {
+          try {
+            const res = await setDisplayName(name)
+            userOut = { ...userOut, display_name: res.display_name }
+          } catch (_) {
+            // Swallow — they'll see the migration modal on Train.
+          }
+        }
+      }
+
+      onAuth(data.token, userOut)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -38,8 +60,9 @@ function AuthModal({ onClose, onAuth }) {
     setMode(m)
     setError(null)
     // Clear fields when switching tabs
-    if (emailRef.current)    emailRef.current.value    = ''
-    if (passwordRef.current) passwordRef.current.value = ''
+    if (emailRef.current)       emailRef.current.value       = ''
+    if (passwordRef.current)    passwordRef.current.value    = ''
+    if (displayNameRef.current) displayNameRef.current.value = ''
   }, [])
 
   const handleOverlayClick = useCallback((e) => {
@@ -120,6 +143,25 @@ function AuthModal({ onClose, onAuth }) {
               <p className="text-xs text-muted mt-1">Minimum 8 characters, include at least one symbol</p>
             )}
           </div>
+
+          {mode === 'register' && (
+            <div>
+              <label className="label">Display name <span className="text-muted/60 font-normal">(optional)</span></label>
+              <input
+                ref={displayNameRef}
+                type="text"
+                defaultValue=""
+                className="input-base"
+                placeholder="e.g. SnowyCrimper42"
+                maxLength={20}
+                pattern={DISPLAY_NAME_RE.source}
+                title="3-20 characters, letters, digits, underscore, dash."
+              />
+              <p className="text-xs text-muted mt-1">
+                Shown on the climbing-hours leaderboard. You can pick or change it later.
+              </p>
+            </div>
+          )}
 
           {error && (
             <div className="flex items-center gap-2 text-accent2 text-sm bg-accent2/10 border border-accent2/30 rounded-lg px-3 py-2">

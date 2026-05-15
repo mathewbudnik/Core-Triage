@@ -78,9 +78,11 @@ export const getLeaderboard = ({ window = 'week', cohort, limit = 10 } = {}) => 
   return request('GET', `/api/training/leaderboard?${params}`)
 }
 
-// Display name + leaderboard privacy
+// Display name + leaderboard privacy + avatar customization
 export const setDisplayName       = (name)   => request('PATCH', '/api/auth/me/display-name',       { display_name: name })
 export const setLeaderboardPrivate = (priv)  => request('PATCH', '/api/auth/me/leaderboard-private', { private: !!priv })
+export const setAvatar             = ({ icon = null, color = null } = {}) =>
+  request('PATCH', '/api/auth/me/avatar', { icon, color })
 
 // Billing (Stripe)
 export const createCheckoutSession = (product) => request('POST', '/api/billing/checkout-session', { product })

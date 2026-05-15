@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Loader2, Trophy, ArrowUp } from 'lucide-react'
+import { Loader2, Trophy, ArrowUp, Crown } from 'lucide-react'
 import { getLeaderboard } from '../api'
 import AvatarChip from './AvatarChip'
 
@@ -40,6 +40,7 @@ function Row({ entry, isMe, podium }) {
   // Podium rows get extra height + bigger avatar; everything else stays compact.
   const padY = podium ? 'py-3' : 'py-2'
   const avatarSize = podium ? 36 : 28
+  const isLeader = entry.rank === 1
   return (
     <div
       className={`flex items-center gap-3 rounded-xl border px-3 ${padY}`}
@@ -58,14 +59,20 @@ function Row({ entry, isMe, podium }) {
         anonymous={entry.is_private}
         size={avatarSize}
       />
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 flex items-center gap-1.5">
         <p className={`font-semibold truncate ${podium ? 'text-sm' : 'text-[13px]'} ${isMe ? 'text-accent' : 'text-text'}`}>
           {isMe ? `You · ${entry.display_name}` : entry.display_name}
         </p>
-        {podium && entry.rank === 1 && (
-          <p className="text-[10px] text-accent3 font-bold uppercase tracking-wider mt-0.5">
-            Leading the pack
-          </p>
+        {/* Crown sits inline next to the name when you're #1 — replaces the
+            old "Leading the pack" subtext + the standalone throne callout
+            so the moment exists in exactly one place. */}
+        {isLeader && isMe && (
+          <Crown
+            size={13}
+            strokeWidth={2.4}
+            style={{ color: '#f7bb51', filter: 'drop-shadow(0 0 4px rgba(247,187,81,0.5))' }}
+            aria-label="Leading"
+          />
         )}
       </div>
       <span
@@ -78,20 +85,12 @@ function Row({ entry, isMe, podium }) {
   )
 }
 
-// "X.Xh to climb past NextPerson" — the fun-and-fair carrot. Only renders
-// when we can actually compute it from the data we have.
+// "X.Xh to climb past NextPerson" — the fun-and-fair carrot. Only shown
+// when the user has someone above them to chase. When the user is already
+// #1, the inline crown on the row carries that moment — no duplicate
+// callout here.
 function NextRankCarrot({ data }) {
-  if (!data?.me?.rank || data.me.rank === 1) {
-    if (data?.me?.rank === 1) {
-      return (
-        <div className="flex items-center justify-center gap-2 mt-3 py-2 px-3 rounded-lg bg-[rgba(247,187,81,0.08)] border border-[rgba(247,187,81,0.25)]">
-          <Trophy size={12} className="text-accent3" />
-          <span className="text-[11px] text-accent3 font-bold">You're #1 this {data.window === 'all' ? 'time' : data.window}. Hold the throne.</span>
-        </div>
-      )
-    }
-    return null
-  }
+  if (!data?.me?.rank || data.me.rank === 1) return null
   const aboveRank = data.me.rank - 1
   const above = data.top.find((t) => t.rank === aboveRank)
   if (!above) return null

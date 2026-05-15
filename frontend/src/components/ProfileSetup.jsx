@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, ChevronLeft, Check } from 'lucide-react'
-import { saveProfile } from '../api'
+import { ChevronRight, ChevronLeft, Check, EyeOff } from 'lucide-react'
+import { saveProfile, setLeaderboardPrivate } from '../api'
 
 const EXPERIENCE_LEVELS = [
   { value: 'beginner', label: 'Beginner', sub: '< 2 years', desc: 'Learning movement fundamentals, building base fitness', years: 1 },
@@ -109,7 +109,7 @@ function MultiSelectChip({ label, selected, onClick }) {
   )
 }
 
-export default function ProfileSetup({ onComplete }) {
+export default function ProfileSetup({ onComplete, user }) {
   const [step, setStep] = useState(0)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
@@ -126,6 +126,12 @@ export default function ProfileSetup({ onComplete }) {
     primary_goal: '',
     goal_grade: '',
   })
+
+  // Leaderboard privacy is stored on the user row, not the profile. We
+  // initialize from the current user state and PATCH it separately on
+  // finish if it changed. Defaults to public (false) for first-time setup.
+  const initialPrivate = !!user?.leaderboard_private
+  const [leaderboardPrivate, setLeaderboardPrivateState] = useState(initialPrivate)
 
   function set(key, val) {
     setForm((f) => ({ ...f, [key]: val }))
@@ -151,6 +157,13 @@ export default function ProfileSetup({ onComplete }) {
       const years_climbing = EXPERIENCE_LEVELS.find((l) => l.value === form.experience_level)?.years ?? 3
       const payload = { ...form, years_climbing }
       await saveProfile(payload)
+      // Persist privacy only when it changed — avoids an unnecessary PATCH.
+      if (leaderboardPrivate !== initialPrivate) {
+        try { await setLeaderboardPrivate(leaderboardPrivate) } catch (_) {
+          // Non-fatal — profile is already saved. The toggle will look
+          // out-of-sync until the next /me refresh; acceptable.
+        }
+      }
       onComplete(payload)
     } catch (err) {
       setError(err.message)
@@ -326,6 +339,29 @@ export default function ProfileSetup({ onComplete }) {
           />
         </motion.div>
       )}
+
+      {/* Leaderboard privacy — saved to user row on Finish, not part of the
+          profile payload. Stats still aggregate into the cohort either way; the
+          toggle only hides the display name on public leaderboards. */}
+      <label
+        className="flex items-start gap-3 px-4 py-3 rounded-xl border border-outline bg-panel hover:border-accent/30 transition-colors cursor-pointer"
+      >
+        <input
+          type="checkbox"
+          checked={leaderboardPrivate}
+          onChange={(e) => setLeaderboardPrivateState(e.target.checked)}
+          className="mt-0.5 accent-teal-400 shrink-0"
+        />
+        <div className="flex-1">
+          <div className="flex items-center gap-1.5">
+            <EyeOff size={12} className="text-muted" />
+            <p className="text-sm font-medium text-text">Hide my name on leaderboards</p>
+          </div>
+          <p className="text-xs text-muted mt-0.5 leading-relaxed">
+            Your stats still count toward the cohort comparison — your row just shows as <span className="text-text">Private climber</span> instead of your display name.
+          </p>
+        </div>
+      </label>
     </div>,
   ]
 

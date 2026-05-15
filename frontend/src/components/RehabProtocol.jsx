@@ -71,9 +71,9 @@ function ExerciseCard({ exercise, index }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-accent hover:text-accent/80 transition-colors"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/30 text-accent text-xs font-semibold hover:bg-accent/20 hover:border-accent/50 transition-colors"
               >
-                <PlayCircle size={13} />
+                <PlayCircle size={14} />
                 Watch demo
               </a>
 

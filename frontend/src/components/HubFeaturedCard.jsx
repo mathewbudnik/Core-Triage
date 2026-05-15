@@ -26,9 +26,16 @@ export default function HubFeaturedCard({
   const Icon = tool.icon
 
   return (
+    // Plain fade/scale-in on remount. We previously used `layoutId` to FLIP
+    // between the small + featured slots, but the two components have very
+    // different internal layouts and Framer Motion couldn't morph them
+    // cleanly — the featured slot rendered empty after a swap. Caller
+    // passes `key={toolKey}` so React remounts on tool change and this
+    // animation runs every time.
     <motion.div
-      layoutId={`hub-card-${toolKey}`}
-      transition={{ duration: 0.18, ease: 'easeInOut' }}
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.18, ease: 'easeOut' }}
       className={`relative overflow-hidden rounded-2xl border ${c.border} ${c.bgGradient}
                   p-5 md:p-6 flex flex-col min-h-[280px]
                   ${c.outerGlowShadow}`}

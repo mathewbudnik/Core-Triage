@@ -166,7 +166,12 @@ export default function HubTab({ user }) {
       <HubGreeting user={user} data={data} />
 
       <div className="grid grid-cols-1 md:grid-cols-[1.55fr_1fr] gap-3 mb-5">
+        {/* `key` forces a remount when the featured tool changes — that's
+            what triggers the fade-in animation and (more importantly)
+            guarantees the card always mounts with fresh state. The previous
+            shared-layoutId approach was leaving this slot empty after swaps. */}
         <HubFeaturedCard
+          key={featuredKey}
           toolKey={featuredKey}
           eyebrow={fc.eyebrow}
           title={fc.title}

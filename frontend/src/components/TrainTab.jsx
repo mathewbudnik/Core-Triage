@@ -1,11 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Dumbbell, LogIn, Loader2, Sparkles, RefreshCw } from 'lucide-react'
-import { getProfile, getActivePlan, generatePlan, getMe } from '../api'
+import { getProfile, getActivePlan, generatePlan } from '../api'
 import ProfileSetup from './ProfileSetup'
 import PlanView from './PlanView'
-import TrainStatsPanel from './TrainStatsPanel'
-import DisplayNamePromptModal from './DisplayNamePromptModal'
 
 function friendlyPlanError(msg) {
   if (!msg) return 'Could not generate your plan.'
@@ -39,16 +37,6 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
   const [plan, setPlan] = useState(null)
   const [error, setError] = useState(null)
   const [generating, setGenerating] = useState(false)
-  // displayName mirrors user.display_name so we can detect when an existing
-  // user hasn't picked one yet and surface the migration modal.
-  const [displayName, setDisplayName] = useState(user?.display_name ?? null)
-  // refreshKey bumps after a session is logged so TrainStatsPanel re-fetches.
-  const [statsRefreshKey, setStatsRefreshKey] = useState(0)
-
-  // Keep displayName in sync if user prop changes (login / me-refresh).
-  useEffect(() => {
-    setDisplayName(user?.display_name ?? null)
-  }, [user?.display_name])
 
   const load = useCallback(async () => {
     if (!user) { setState('no-auth'); return }
@@ -145,7 +133,7 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
           animate={{ opacity: 1, y: 0 }}
           className="h-full overflow-auto"
         >
-          <ProfileSetup onComplete={handleProfileComplete} />
+          <ProfileSetup user={user} onComplete={handleProfileComplete} />
         </motion.div>
       </AnimatePresence>
     )
@@ -216,11 +204,7 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
       <AnimatePresence mode="wait">
         {plan ? (
           <motion.div key="plan" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <PlanView
-              plan={plan}
-              onRefresh={load}
-              onSessionLogged={() => setStatsRefreshKey((k) => k + 1)}
-            />
+            <PlanView plan={plan} onRefresh={load} />
           </motion.div>
         ) : (
           <motion.div
@@ -251,27 +235,6 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Stats + leaderboard — only after profile is set up and display
-          name is picked. Gating on displayName here means existing users
-          see the migration modal instead of the panel until they choose. */}
-      {profile && displayName && (
-        <TrainStatsPanel refreshKey={statsRefreshKey} />
-      )}
-
-      {/* Display-name migration prompt for existing users who haven't picked
-          one yet. New signups have already chosen during registration so
-          this only fires for the pre-leaderboard accounts. */}
-      {profile && !displayName && (
-        <DisplayNamePromptModal
-          onDone={async (name) => {
-            setDisplayName(name)
-            // Refresh /me so the App.jsx user object reflects the new name
-            // (so we don't re-trigger the modal on next mount). Best-effort.
-            try { await getMe() } catch {}
-          }}
-        />
-      )}
     </div>
   )
 }

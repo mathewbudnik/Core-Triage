@@ -1,54 +1,86 @@
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
+
 /**
- * Personal stats hero card — top of TrainStatsPanel. Big gradient hours
- * number for this week + percentile bar + percentile blurb.
+ * Strava-flavored week summary. The single hero stat (this week's hours)
+ * is paired with a week-over-week delta and the user's cohort percentile.
  *
- * Props:
- *   - hours: number (this week's training hours)
- *   - percentile: number 0-100 (where the user sits in their cohort)
- *   - cohort: string label ("intermediate", "advanced", etc.) or null
+ * Color roles (kept disciplined to avoid the teal-everywhere problem):
+ *   - Teal       → identity / "you" (just the gradient number's left edge)
+ *   - Gold/amber → achievement (positive delta, percentile callout)
+ *   - Coral      → regression (negative delta only)
+ *   - Neutral    → flat delta and the surface itself
  */
-export default function TrainStatsHero({ hours, percentile, cohort }) {
+export default function TrainStatsHero({ hours, lastWeekHours = 0, percentile, cohort, sessions = 0 }) {
   const top = percentile != null ? 100 - percentile : null
   const cohortLabel = cohort ? `${cohort} climbers` : 'climbers'
+  const delta = hours - lastWeekHours
+  const deltaAbs = Math.abs(delta)
+  const deltaSign = deltaAbs < 0.05 ? 'flat' : (delta > 0 ? 'up' : 'down')
+  const DeltaIcon = deltaSign === 'up' ? TrendingUp : deltaSign === 'down' ? TrendingDown : Minus
+  // Direction-driven color: gold for positive (an achievement), coral for
+  // negative (a regression), gray for flat. Teal is reserved for "you"
+  // identity treatment elsewhere — keeping it out here is what makes the
+  // page feel less monochromatic.
+  const deltaColor =
+    deltaSign === 'up'   ? '#f7bb51' :
+    deltaSign === 'down' ? '#f47272' :
+                           '#8a93a6'
+  const deltaLabel =
+    deltaSign === 'flat' ? 'Same as last week' :
+    deltaSign === 'up'   ? `+${deltaAbs.toFixed(1)}h vs last week` :
+                           `−${deltaAbs.toFixed(1)}h vs last week`
+
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-[rgba(125,211,192,0.3)] bg-[linear-gradient(135deg,rgba(125,211,192,0.18),rgba(247,187,81,0.08))] p-4 sm:p-5">
-      {/* Decorative glow blob */}
-      <div className="pointer-events-none absolute -top-5 -right-5 w-32 h-32 rounded-full bg-[radial-gradient(circle,rgba(125,211,192,0.15),transparent_70%)]" />
+    <div className="relative overflow-hidden rounded-2xl border border-outline bg-panel p-5 sm:p-6">
+      {/* Subtle warm glow in the corner — gold-leaning instead of teal so
+          the surface reads as "achievement" not "more teal". */}
+      <div
+        className="pointer-events-none absolute -top-12 -right-12 w-36 h-36 rounded-full blur-[44px]"
+        style={{ background: 'rgba(247,187,81,0.10)' }}
+      />
 
       <div className="relative">
-        <span className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[rgba(125,211,192,0.2)] text-accent border border-[rgba(125,211,192,0.3)] mb-2">
+        <span className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-muted/80">
           This week
         </span>
 
-        <div className="leading-none">
+        <div className="leading-none mt-2 flex items-baseline gap-2">
           <span
-            className="text-4xl sm:text-5xl font-extrabold bg-clip-text text-transparent"
-            style={{ backgroundImage: 'linear-gradient(90deg, #7dd3c0, #e7eaf0, #f7bb51)' }}
+            className="text-5xl sm:text-6xl font-extrabold bg-clip-text text-transparent tracking-tight"
+            style={{
+              backgroundImage: 'linear-gradient(90deg, #7dd3c0, #e7eaf0, #f7bb51)',
+            }}
           >
             {hours.toFixed(1)}
           </span>
-          <span className="ml-1.5 text-sm text-muted font-medium">hrs</span>
+          <span className="text-base text-muted font-medium">hrs</span>
+          <span className="text-xs text-muted/70 ml-2">
+            · {sessions} session{sessions === 1 ? '' : 's'}
+          </span>
         </div>
 
-        {/* Percentile bar */}
-        {percentile > 0 && (
-          <>
-            <div className="mt-3 h-1.5 rounded-full bg-white/10 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-[linear-gradient(90deg,#7dd3c0,#f7bb51)]"
-                style={{ width: `${Math.max(2, percentile)}%` }}
-              />
-            </div>
-            <p className="text-xs text-text/85 mt-2">
-              Top <b className="text-accent3 font-bold">{top}%</b> of {cohortLabel} · {percentile}th percentile
-            </p>
-          </>
-        )}
-        {(!percentile || percentile === 0) && (
-          <p className="text-xs text-muted mt-3">
-            Log a few sessions to see where you rank.
-          </p>
-        )}
+        {/* Delta + percentile row */}
+        <div className="mt-4 flex items-center gap-3 flex-wrap">
+          <span
+            className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full"
+            style={{
+              background: `${deltaColor}1a`,
+              color: deltaColor,
+              border: `1px solid ${deltaColor}55`,
+            }}
+          >
+            <DeltaIcon size={12} strokeWidth={2.6} />
+            {deltaLabel}
+          </span>
+          {percentile > 0 && (
+            <span className="text-xs text-text/85">
+              Top <b className="text-accent3 font-bold">{top}%</b> of {cohortLabel}
+            </span>
+          )}
+          {(!percentile || percentile === 0) && (
+            <span className="text-xs text-muted">Log a few sessions to see where you rank.</span>
+          )}
+        </div>
       </div>
     </div>
   )

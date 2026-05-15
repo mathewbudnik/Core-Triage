@@ -86,9 +86,12 @@ export default function AvatarPickerModal({ user, onClose, onUserChange, onToast
           <X size={16} />
         </button>
 
-        {/* Live preview */}
+        {/* Live preview — keyed on (icon,color) so any state change forces a
+            clean re-mount of the chip. Fixes a stale-render case where the
+            preview wasn't reflecting the picked shape after rapid cycling. */}
         <div className="flex items-center gap-3 pb-4 border-b border-outline">
           <AvatarChip
+            key={`preview-${icon || 'none'}-${color || 'none'}`}
             icon={icon}
             color={color}
             name={previewName}
@@ -103,10 +106,12 @@ export default function AvatarPickerModal({ user, onClose, onUserChange, onToast
         </div>
 
         {/* Icon grid — 4 columns × 3 rows so each cell can be larger and
-            the icons inside read at a glance. */}
+            the icons inside read at a glance. The grid wrapper gets extra
+            padding so the selection ring + check badge never clip against
+            the modal's overflow boundary. */}
         <div>
           <p className="text-[10px] font-bold uppercase tracking-wider text-muted/80 mb-2">Shape</p>
-          <div className="grid grid-cols-4 gap-2.5">
+          <div className="grid grid-cols-4 gap-3 px-0.5 py-0.5">
             {AVATAR_PRESETS.map((preset) => {
               const selected = icon === preset.key
               const styled = resolveAvatar(preset.key, color)
@@ -114,10 +119,10 @@ export default function AvatarPickerModal({ user, onClose, onUserChange, onToast
                 <button
                   key={preset.key}
                   onClick={() => setIcon(preset.key)}
-                  className={`relative aspect-square rounded-xl flex items-center justify-center transition-all duration-100 ${
+                  className={`relative aspect-square rounded-xl flex items-center justify-center transition-shadow duration-100 ${
                     selected
-                      ? 'ring-2 ring-accent ring-offset-2 ring-offset-panel2 scale-105'
-                      : 'hover:scale-105 opacity-95 hover:opacity-100'
+                      ? 'ring-2 ring-accent ring-offset-2 ring-offset-panel2'
+                      : 'hover:brightness-110'
                   }`}
                   style={{
                     background: styled.bg,
@@ -126,11 +131,15 @@ export default function AvatarPickerModal({ user, onClose, onUserChange, onToast
                   }}
                   title={preset.label}
                   aria-label={preset.label}
+                  aria-pressed={selected}
                 >
                   <styled.Icon size={34} color={styled.iconColor} strokeWidth={2.5} />
+                  {/* Check badge sits INSIDE the chip — outside-positioning
+                      was getting clipped by the modal's overflow boundary
+                      on edge cells. */}
                   {selected && (
-                    <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-accent border-2 border-panel2 flex items-center justify-center">
-                      <Check size={11} color="#0d1117" strokeWidth={3} />
+                    <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-accent border border-panel2 flex items-center justify-center shadow">
+                      <Check size={9} color="#0d1117" strokeWidth={3} />
                     </span>
                   )}
                 </button>
@@ -153,17 +162,20 @@ export default function AvatarPickerModal({ user, onClose, onUserChange, onToast
               </button>
             )}
           </div>
-          <div className="grid grid-cols-5 gap-2.5">
+          {/* 6-col grid (matches the 12 swatches at 2 rows). Removed
+              min-w/min-h to stop swatch sizing from fighting the grid;
+              aspect-square + the natural cell width give consistent rows. */}
+          <div className="grid grid-cols-6 gap-2.5 px-0.5 py-0.5">
             {AVATAR_COLORS.map((swatch) => {
               const selected = color === swatch.key
               return (
                 <button
                   key={swatch.key}
                   onClick={() => setColor(swatch.key)}
-                  className={`relative aspect-square min-h-[44px] min-w-[44px] rounded-lg transition-all duration-100 ${
+                  className={`relative aspect-square rounded-lg transition-shadow duration-100 ${
                     selected
-                      ? 'ring-2 ring-accent ring-offset-2 ring-offset-panel2 scale-105'
-                      : 'hover:scale-105 opacity-95 hover:opacity-100'
+                      ? 'ring-2 ring-accent ring-offset-2 ring-offset-panel2'
+                      : 'hover:brightness-110'
                   }`}
                   style={{
                     background: swatch.bg,
@@ -171,11 +183,12 @@ export default function AvatarPickerModal({ user, onClose, onUserChange, onToast
                     boxShadow: `0 2px 4px rgba(0,0,0,0.25), ${swatch.boxShadow}`,
                   }}
                   aria-label={`${swatch.key} color`}
+                  aria-pressed={selected}
                   title={swatch.key}
                 >
                   {selected && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-accent border-2 border-panel2 flex items-center justify-center">
-                      <Check size={9} color="#0d1117" strokeWidth={3} />
+                    <span className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-accent border border-panel2 flex items-center justify-center shadow">
+                      <Check size={8} color="#0d1117" strokeWidth={3} />
                     </span>
                   )}
                 </button>

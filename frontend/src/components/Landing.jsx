@@ -127,9 +127,10 @@ export default function Landing({ onEnter }) {
           Personalised training plans, injury triage and rehab, and 1:1 coaching from an outdoor V13 boulderer — three tools every climber needs, in one app.
         </motion.p>
 
-        {/* Disclaimer pill */}
+        {/* Tagline pill — full medical disclaimer lives in the modal users
+            accept on entry and in the dedicated section lower on this page. */}
         <motion.p variants={item} className="text-xs text-muted/60 mb-10">
-          Educational only · Not a medical diagnosis · Always seek professional evaluation if unsure
+          Plans · Triage · Rehab · Coaching · Built by an outdoor V13 boulderer
         </motion.p>
 
         {/* CTA */}

@@ -67,7 +67,7 @@ export default function AboutTab() {
         </p>
         <div className="flex items-center gap-2 text-xs text-muted/60">
           <Mountain size={12} />
-          <span>Educational only · Not a medical diagnosis · Always seek professional evaluation if unsure</span>
+          <span>Built by an outdoor V13 boulderer · Climbing-specific from the ground up</span>
         </div>
       </motion.div>
 

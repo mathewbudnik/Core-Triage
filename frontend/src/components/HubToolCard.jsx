@@ -19,11 +19,11 @@ export default function HubToolCard({ toolKey, status, isLive = false, progress 
   const c = ACCENT_CLASSES[tool.accent]
   const Icon = tool.icon
 
-  // Uses motion.div (not motion.button) so layoutId animation pairs cleanly
-  // with HubFeaturedCard's motion.div on swap — Framer Motion's FLIP gets
-  // confused when shared layoutIds span different DOM element types and can
-  // leave the featured slot empty after a cycle. role + tabIndex + keyboard
-  // handler keep accessibility.
+  // Plain fade-in on remount. `layoutId` was originally used here to FLIP
+  // between this slot and the featured slot, but Framer couldn't morph
+  // the two layouts (compact-horizontal vs. tall-multi-section) and the
+  // featured card ended up blank after a swap. Caller passes `key={toolKey}`
+  // so the rendered set remounts cleanly when the user promotes a card.
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
@@ -37,8 +37,9 @@ export default function HubToolCard({ toolKey, status, isLive = false, progress 
       tabIndex={0}
       onClick={onTap}
       onKeyDown={handleKeyDown}
-      layoutId={`hub-card-${toolKey}`}
-      transition={{ duration: 0.18, ease: 'easeInOut' }}
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.16, ease: 'easeOut' }}
       className={`relative overflow-hidden rounded-2xl border ${c.borderSoft} ${c.bgGradient}
                   flex items-center gap-3 px-4 py-3.5 min-h-[86px] text-left cursor-pointer
                   hover:-translate-y-0.5 transition-transform group w-full

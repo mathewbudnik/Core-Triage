@@ -36,8 +36,8 @@ export default function TrainTrendChart({ trend }) {
   const lastY = yFor(last.hours || 0)
 
   return (
-    <div className="bg-panel border border-outline rounded-xl px-3 pt-3 pb-1.5">
-      <div className="flex items-center justify-between mb-1.5">
+    <div className="h-full rounded-xl border border-outline bg-panel px-3 pt-3 pb-1.5">
+      <div className="flex items-center justify-between mb-2">
         <span className="text-[10px] font-bold uppercase tracking-wider text-text/85">
           Last 8 weeks
         </span>
@@ -53,9 +53,16 @@ export default function TrainTrendChart({ trend }) {
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none">
         <defs>
           <linearGradient id="tt-grad" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%"  stopColor="#7dd3c0" stopOpacity="0.35" />
+            <stop offset="0%"  stopColor="#7dd3c0" stopOpacity="0.45" />
             <stop offset="100%" stopColor="#7dd3c0" stopOpacity="0" />
           </linearGradient>
+          <filter id="tt-glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="1.4" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
         {/* Peer dashed line */}
         <polyline
@@ -75,6 +82,7 @@ export default function TrainTrendChart({ trend }) {
           strokeLinecap="round"
           strokeLinejoin="round"
           points={userPts}
+          filter="url(#tt-glow)"
         />
         {/* Latest data point */}
         <circle cx={lastX} cy={lastY} r="3.5" fill="#7dd3c0" stroke="#0b1220" strokeWidth="2" />
