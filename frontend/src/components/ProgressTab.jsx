@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Trophy, LogIn, Loader2, Dumbbell } from 'lucide-react'
 import { getProfile, getMe } from '../api'
 import TrainStatsPanel from './TrainStatsPanel'
+import GradePyramidCard from './GradePyramidCard'
 import DisplayNamePromptModal from './DisplayNamePromptModal'
 
 function EmptyState({ icon: Icon, title, body, action }) {
@@ -126,6 +127,9 @@ export default function ProgressTab({ user, onLoginClick }) {
       className="max-w-2xl mx-auto px-4 py-8"
     >
       <TrainStatsPanel user={user} />
+      <div className="mt-6">
+        <GradePyramidCard />
+      </div>
     </motion.div>
   )
 }
