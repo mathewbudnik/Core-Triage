@@ -1045,6 +1045,60 @@ def get_user_hardest(user_id: int, window: str = "all") -> Dict[str, Optional[st
     return best
 
 
+def get_pyramid(user_id: int, window: str = "month") -> Dict[str, Any]:
+    """Aggregate the user's climbs JSONB into a discipline-keyed pyramid.
+
+    `window` ∈ {'month', 'all'}. Output shape:
+      {"window": str,
+       "boulder": {"hardest_send": str|None, "hardest_flash": str|None,
+                   "grades": [{"grade": str, "s": int, "f": int, "p": int}, ...]},
+       "route": ... }
+    `grades` is sorted ascending; only grades with non-zero counters are returned.
+    """
+    from src.climb_grades import grade_order  # local import
+
+    if window not in ("month", "all"):
+        raise ValueError("window must be 'month' or 'all'")
+    where_window = "" if window == "all" else "AND created_at >= NOW() - INTERVAL '30 days'"
+
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT climbs FROM training_logs
+                WHERE user_id = %s AND climbs <> '{{}}'::jsonb {where_window};
+                """,
+                (int(user_id),),
+            )
+            rows = cur.fetchall()
+
+    out: Dict[str, Any] = {"window": window}
+    for discipline in ("boulder", "route"):
+        # accumulate counters per grade
+        agg: Dict[str, Dict[str, int]] = {}
+        for (climbs,) in rows:
+            grades = (climbs or {}).get(discipline, {})
+            for g, c in grades.items():
+                slot = agg.setdefault(g, {"s": 0, "f": 0, "p": 0})
+                slot["s"] += int(c.get("s", 0))
+                slot["f"] += int(c.get("f", 0))
+                slot["p"] += int(c.get("p", 0))
+        # drop fully-zero rows
+        nonzero = {g: c for g, c in agg.items() if c["s"] or c["f"] or c["p"]}
+        sorted_grades = sorted(nonzero.keys(), key=grade_order)
+
+        sends_only  = [g for g in sorted_grades if nonzero[g]["s"] > 0]
+        flashes_only = [g for g in sorted_grades if nonzero[g]["f"] > 0]
+        out[discipline] = {
+            "hardest_send":  sends_only[-1]  if sends_only  else None,
+            "hardest_flash": flashes_only[-1] if flashes_only else None,
+            "grades": [
+                {"grade": g, **nonzero[g]} for g in sorted_grades
+            ],
+        }
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Train stats + leaderboard helpers
 # ---------------------------------------------------------------------------

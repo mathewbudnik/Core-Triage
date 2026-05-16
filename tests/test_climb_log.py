@@ -249,3 +249,49 @@ class HardestSendTests(unittest.TestCase):
     def test_invalid_window_raises(self):
         with self.assertRaises(ValueError):
             get_user_hardest(self.uid, window="week")
+
+
+from database import get_pyramid  # noqa: E402
+
+
+class PyramidTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        init_db()
+        cls.uid = _make_seed_user(email="pyramid_test@coretriage.local")
+
+    def tearDown(self):
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM training_logs WHERE user_id = %s;", (self.uid,))
+            conn.commit()
+
+    def test_empty_user(self):
+        out = get_pyramid(self.uid, window="all")
+        self.assertEqual(out, {
+            "window": "all",
+            "boulder": {"hardest_send": None, "hardest_flash": None, "grades": []},
+            "route":   {"hardest_send": None, "hardest_flash": None, "grades": []},
+        })
+
+    def test_sums_across_logs_and_sorts(self):
+        log_training(self.uid, {
+            "date": "2026-05-10", "session_type": "bouldering",
+            "duration_min": 60, "intensity": 7,
+            "climbs": {"boulder": {"V5": {"s": 2, "f": 1, "p": 0}, "V6": {"s": 0, "f": 0, "p": 2}}},
+        })
+        log_training(self.uid, {
+            "date": "2026-05-12", "session_type": "bouldering",
+            "duration_min": 60, "intensity": 7,
+            "climbs": {"boulder": {"V5": {"s": 1, "f": 0, "p": 0}, "V7": {"s": 1, "f": 0, "p": 0}}},
+        })
+        out = get_pyramid(self.uid, window="all")
+        self.assertEqual(out["boulder"]["hardest_send"], "V7")
+        self.assertEqual(out["boulder"]["hardest_flash"], "V5")
+        # Grades sorted ascending; counters summed.
+        grades = out["boulder"]["grades"]
+        self.assertEqual(grades, [
+            {"grade": "V5", "s": 3, "f": 1, "p": 0},
+            {"grade": "V6", "s": 0, "f": 0, "p": 2},
+            {"grade": "V7", "s": 1, "f": 0, "p": 0},
+        ])
