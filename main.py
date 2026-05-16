@@ -58,7 +58,6 @@ from database import (
     get_profile,
     get_rehab_progress,
     get_session,
-    get_session_count,
     get_thread_by_user,
     get_thread_messages,
     get_training_logs,
@@ -76,6 +75,7 @@ from database import (
     get_user_email,
     get_user_role,
     get_user_tier,
+    get_subscription_state,
     is_email_verified,
     set_email_verification_token,
     set_stripe_customer_id,
@@ -247,7 +247,6 @@ def _optional_user(request: Request) -> Optional[Dict[str, Any]]:
 
 
 FREE_CHAT_LIMIT = 5
-FREE_SESSION_LIMIT = 1
 
 
 def _get_client_ip(request: Request) -> str:
@@ -520,19 +519,22 @@ def register(request: Request, req: RegisterRequest):
     # Role is set during DB seed (COACH_EMAIL → coach) or via admin tool;
     # at the moment of registration the user is always a regular 'user'.
     is_coach = get_user_role(user_id) == "coach"
+    # New users get a 14-day Pro-equivalent trial — get_user_tier returns
+    # 'pro' until trial expires, so all tier-gated features unlock immediately.
     return {
         "token": token,
         "user": {
             "id": user_id,
             "email": req.email,
             "disclaimer_accepted": False,
-            "tier": "free",
+            "tier": get_user_tier(user_id),
             "is_coach": is_coach,
             "email_verified": False,
             # New users haven't picked a display name; frontend uses this to
             # prompt them. leaderboard_private defaults to False in the DB.
             "display_name": None,
             "leaderboard_private": False,
+            "subscription_state": get_subscription_state(user_id),
         },
     }
 
@@ -600,6 +602,7 @@ def login(request: Request, req: LoginRequest):
             "leaderboard_private": get_leaderboard_private(user[0]),
             "avatar_icon": get_avatar(user[0])[0],
             "avatar_color": get_avatar(user[0])[1],
+            "subscription_state": get_subscription_state(user[0]),
         },
     }
 
@@ -612,7 +615,11 @@ def me(request: Request, user: Dict = Depends(get_current_user)):
         "id": user["id"],
         "email": user["email"],
         "disclaimer_accepted": bool(db_user[2]) if db_user else False,
-        "tier": db_user[3] if db_user else "free",
+        # Trial-aware tier: returns 'pro' during the 14-day trial window so
+        # existing tier-gated features (plans, AI chat, Phase 2/3 rehab)
+        # unlock immediately for new accounts and lock back to 'free' when
+        # the trial expires without a subscription.
+        "tier": get_user_tier(user["id"]),
         "is_coach": get_user_role(user["id"]) == "coach",
         "email_verified": is_email_verified(user["id"]),
         # display_name is NULL until set — frontend uses this to decide
@@ -625,6 +632,9 @@ def me(request: Request, user: Dict = Depends(get_current_user)):
         # — frontend falls back to a generated initial chip.
         "avatar_icon": get_avatar(user["id"])[0],
         "avatar_color": get_avatar(user["id"])[1],
+        # Rich trial / subscription state — drives the trial countdown
+        # badge in the header and the post-trial paywall banner.
+        "subscription_state": get_subscription_state(user["id"]),
     }
 
 
@@ -888,15 +898,9 @@ def get_sessions(request: Request, limit: int = 50, user: Dict = Depends(get_cur
 def create_session(request: Request, req: SaveSessionRequest, user: Dict = Depends(get_current_user)):
     if not db_ready:
         raise HTTPException(status_code=503, detail=db_error or "Database not ready")
-    is_coach = get_user_role(user["id"]) == "coach"
-    tier = get_user_tier(user["id"])
-    if not is_coach and tier == "free":
-        count = get_session_count(user["id"])
-        if count >= FREE_SESSION_LIMIT:
-            raise HTTPException(
-                status_code=402,
-                detail=f"session_limit_reached:{count}",
-            )
+    # No tier gating — saved sessions are now how Body remembers a triage,
+    # not a premium feature. Premium gating lives on real cost centers
+    # (PDF reports, AI chat beyond FREE_CHAT_LIMIT, Phase 2/3 rehab, coaching).
     sid = save_session(
         {
             "user_id": user["id"],
