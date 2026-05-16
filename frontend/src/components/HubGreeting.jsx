@@ -10,16 +10,25 @@ function formatToday() {
 
 function subtitleFor(data) {
   const rp = rehabProgress(data.lastTriage?.created_at)
+  const pr = data.hardestSends?.boulder
+    || data.hardestSends?.route
+    || null
+  const prFragment = pr
+    ? (data.hardestSends?.boulder ? `${pr} boulder` : `${pr} route`)
+    : null
+
+  const segments = [formatToday()]
+  if (prFragment) segments.push(prFragment)
+
   if (rp && data.lastTriage) {
-    return `${formatToday()} · Day ${rp.dayInPhase} of ${data.lastTriage.injury_area.toLowerCase()} rehab`
+    segments.push(`Day ${rp.dayInPhase} of ${data.lastTriage.injury_area.toLowerCase()} rehab`)
+  } else if (data.todaySession && !data.todayLogged) {
+    segments.push("Today's session is ready")
+  } else if (data.todayLogged) {
+    segments.push('Logged today — nice work')
   }
-  if (data.todaySession && !data.todayLogged) {
-    return `${formatToday()} · Today's session is ready`
-  }
-  if (data.todayLogged) {
-    return `${formatToday()} · Logged today — nice work`
-  }
-  return formatToday()
+
+  return segments.join(' · ')
 }
 
 export default function HubGreeting({ user, data }) {
