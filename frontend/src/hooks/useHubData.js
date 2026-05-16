@@ -5,6 +5,7 @@ import {
   getTrainingStats,
   getTrainingLogs,
   getLeaderboard,
+  getPyramid,
 } from '../api'
 
 const todayIsoDate = () => new Date().toISOString().slice(0, 10)
@@ -32,7 +33,7 @@ function planSessionForToday(activePlan) {
  * NOT surfaced as an error.
  *
  * Returns: { loading, lastTriage, activePlan, todaySession, todayLogged,
- *           stats, rank }
+ *           stats, rank, hardestSends, pyramidPreview }
  */
 export function useHubData(user) {
   const [data, setData] = useState({
@@ -43,6 +44,8 @@ export function useHubData(user) {
     todayLogged: false,
     stats: null,
     rank: null,
+    hardestSends:   { boulder: null, route: null },
+    pyramidPreview: [],
   })
 
   useEffect(() => {
@@ -58,7 +61,8 @@ export function useHubData(user) {
       getTrainingStats(),
       getTrainingLogs(5),
       getLeaderboard({ window: 'week', limit: 1 }),
-    ]).then(([sessionsR, planR, statsR, logsR, lbR]) => {
+      getPyramid({ window: 'month' }),
+    ]).then(([sessionsR, planR, statsR, logsR, lbR, pyrR]) => {
       if (cancelled) return
 
       const sessions   = sessionsR.status === 'fulfilled' ? (sessionsR.value || []) : []
@@ -66,10 +70,23 @@ export function useHubData(user) {
       const stats      = statsR.status    === 'fulfilled' ? statsR.value            : null
       const logs       = logsR.status     === 'fulfilled' ? (logsR.value || [])     : []
       const lb         = lbR.status       === 'fulfilled' ? lbR.value               : null
+      const pyramid    = pyrR.status      === 'fulfilled' ? pyrR.value              : null
 
       const today = todayIsoDate()
       const todayLogged = logs.some((l) => l.date === today)
       const todaySession = planSessionForToday(activePlan)
+
+      const hardestSends = {
+        boulder: pyramid?.boulder?.hardest_send || null,
+        route:   pyramid?.route?.hardest_send   || null,
+      }
+      // Boulder pyramid preview takes precedence (matches HubGreeting + spec).
+      // Fall back to route if no boulder data. Top 3 grades, descending so
+      // hardest shows first.
+      const primaryColumn = pyramid?.boulder?.grades?.length
+        ? pyramid.boulder.grades
+        : (pyramid?.route?.grades || [])
+      const pyramidPreview = [...primaryColumn].reverse().slice(0, 3)
 
       setData({
         loading: false,
@@ -79,6 +96,8 @@ export function useHubData(user) {
         todayLogged,
         stats,
         rank: lb?.me || null,
+        hardestSends,
+        pyramidPreview,
       })
     })
 
