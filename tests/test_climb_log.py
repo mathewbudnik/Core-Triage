@@ -245,3 +245,7 @@ class HardestSendTests(unittest.TestCase):
         })
         out = get_user_hardest(self.uid, window="all")
         self.assertIsNone(out["boulder"])
+
+    def test_invalid_window_raises(self):
+        with self.assertRaises(ValueError):
+            get_user_hardest(self.uid, window="week")
