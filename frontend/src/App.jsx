@@ -142,10 +142,30 @@ export default function App() {
     return () => window.removeEventListener('ct:auth-expired', handler)
   }, [])
 
-  // Auto-dismiss toast after 5s
+  // Climb log celebration: PR toast on new hardest send. Dispatched by
+  // TrainingLogEntry after a successful log when new_prs has a value.
+  useEffect(() => {
+    const handler = (ev) => {
+      const { boulder, route } = ev.detail || {}
+      const parts = []
+      if (boulder) parts.push(`${boulder} boulder`)
+      if (route)   parts.push(`${route} route`)
+      if (parts.length === 0) return
+      setToast({
+        kind: 'celebration',
+        message: `New PR — ${parts.join(' + ')}!`,
+        link: '/progress',
+      })
+    }
+    window.addEventListener('ct:new-pr', handler)
+    return () => window.removeEventListener('ct:new-pr', handler)
+  }, [])
+
+  // Auto-dismiss toast — 4s for celebration, 5s for others
   useEffect(() => {
     if (!toast) return
-    const t = setTimeout(() => setToast(null), 5000)
+    const ms = toast.kind === 'celebration' ? 4000 : 5000
+    const t = setTimeout(() => setToast(null), ms)
     return () => clearTimeout(t)
   }, [toast])
 
@@ -307,12 +327,24 @@ export default function App() {
               className={`rounded-lg border px-4 py-3 text-sm shadow-lg backdrop-blur-sm flex items-start gap-3 ${
                 toast.kind === 'error'
                   ? 'bg-accent3/10 border-accent3/30 text-accent3'
-                  : 'bg-panel2 border-outline text-text'
+                  : toast.kind === 'celebration'
+                    ? 'bg-gradient-to-r from-accent/20 to-accent2/15 border-accent/50 text-text cursor-pointer'
+                    : 'bg-panel2 border-outline text-text'
               }`}
+              onClick={() => {
+                if (toast.link) {
+                  navigate(toast.link)
+                  setToast(null)
+                }
+              }}
             >
-              <span className="flex-1 leading-snug">{toast.message}</span>
+              <span className="flex-1 leading-snug">
+                {toast.kind === 'celebration' && '🎉 '}
+                {toast.message}
+                {toast.link && <span className="ml-2 text-accent font-bold">Tap to view ›</span>}
+              </span>
               <button
-                onClick={() => setToast(null)}
+                onClick={(e) => { e.stopPropagation(); setToast(null) }}
                 className="text-muted hover:text-text shrink-0"
                 aria-label="Dismiss"
               >
