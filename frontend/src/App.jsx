@@ -48,14 +48,15 @@ function RouteLoading() {
 // the global header). Routes still exist for every entry in this list — the
 // nav arrays below decide which tabs surface in which navigation chrome.
 const TABS = [
-  { id: 'hub',   label: 'Hub',   icon: Home,          subtitle: 'Your climbing dashboard' },
-  { id: 'train', label: 'Train', icon: Dumbbell,      subtitle: 'Plans, stats, and how you stack up' },
-  { id: 'body',  label: 'Body',  icon: Stethoscope,   subtitle: 'Screen issues + work through rehab' },
-  { id: 'chat',  label: 'Chat',  icon: MessageSquare, subtitle: 'Ask the climbing-trained assistant' },
+  { id: 'hub',      label: 'Hub',      icon: Home,          subtitle: 'Your climbing dashboard' },
+  { id: 'train',    label: 'Train',    icon: Dumbbell,      subtitle: 'Plans, stats, and how you stack up' },
+  { id: 'progress', label: 'Progress', icon: Trophy,        subtitle: 'Leaderboard, grade pyramid, and your stats' },
+  { id: 'body',     label: 'Body',     icon: Stethoscope,   subtitle: 'Screen issues + work through rehab' },
+  { id: 'chat',     label: 'Chat',     icon: MessageSquare, subtitle: 'Ask the climbing-trained assistant' },
 ]
 
-// Mobile bottom nav + top of desktop sidebar — all 4 core tabs.
-const PRIMARY_TAB_IDS = ['hub', 'train', 'body', 'chat']
+// Mobile bottom nav + top of desktop sidebar — 5 core tabs.
+const PRIMARY_TAB_IDS = ['hub', 'train', 'progress', 'body', 'chat']
 // No secondary tabs needed with the 4-tab structure.
 const SECONDARY_TAB_IDS = []
 // Triage / History → still accessible via direct links / internal navigation.
