@@ -69,6 +69,8 @@ export const getActivePlan = () => request('GET', '/api/plans/active')
 // Training log
 export const logTraining = (payload) => request('POST', '/api/training', payload)
 export const getTrainingLogs = (limit = 30) => request('GET', `/api/training?limit=${limit}`)
+export const getPyramid = ({ window = 'month' } = {}) =>
+  request('GET', `/api/training/pyramid?window=${encodeURIComponent(window)}`)
 
 // Rehab progress (daily checkoff)
 export const getRehabProgress = (date) =>
