@@ -295,3 +295,85 @@ class PyramidTests(unittest.TestCase):
             {"grade": "V6", "s": 0, "f": 0, "p": 2},
             {"grade": "V7", "s": 1, "f": 0, "p": 0},
         ])
+
+
+from fastapi.testclient import TestClient  # noqa: E402
+from main import app  # noqa: E402
+
+
+def _auth_token_for(email: str) -> str:
+    """Register or log in a user, return bearer token."""
+    client = TestClient(app)
+    payload = {"email": email, "password": "ClimbTest!1pw"}
+    r = client.post("/api/auth/register", json=payload)
+    if r.status_code == 400:
+        r = client.post("/api/auth/login", json=payload)
+    return r.json()["token"]
+
+
+class LogSessionEndpointTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        init_db()
+        cls.email = "endpoint_climb@coretriage.local"
+        cls.token = _auth_token_for(cls.email)
+        cls.client = TestClient(app)
+
+    def tearDown(self):
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "DELETE FROM training_logs WHERE user_id IN "
+                    "(SELECT id FROM users WHERE email = %s);", (self.email,))
+            conn.commit()
+
+    def _post(self, body):
+        return self.client.post(
+            "/api/training", json=body,
+            headers={"Authorization": f"Bearer {self.token}"},
+        )
+
+    def test_no_climbs_returns_no_prs(self):
+        r = self._post({
+            "session_type": "hangboard", "duration_min": 30, "intensity": 6,
+        })
+        self.assertEqual(r.status_code, 200)
+        body = r.json()
+        self.assertIn("id", body)
+        self.assertEqual(body.get("new_prs"), {"boulder": None, "route": None})
+
+    def test_first_boulder_send_sets_pr(self):
+        r = self._post({
+            "session_type": "bouldering", "duration_min": 60, "intensity": 7,
+            "climbs": {"boulder": {"V5": {"s": 1, "f": 0, "p": 0}}},
+        })
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["new_prs"], {"boulder": "V5", "route": None})
+
+    def test_lower_grade_does_not_set_pr(self):
+        # First, set a V7 PR
+        self._post({
+            "session_type": "bouldering", "duration_min": 60, "intensity": 7,
+            "climbs": {"boulder": {"V7": {"s": 1, "f": 0, "p": 0}}},
+        })
+        # Now send a V5 — not a PR
+        r = self._post({
+            "session_type": "bouldering", "duration_min": 60, "intensity": 7,
+            "climbs": {"boulder": {"V5": {"s": 2, "f": 0, "p": 0}}},
+        })
+        self.assertEqual(r.json()["new_prs"], {"boulder": None, "route": None})
+
+    def test_invalid_grade_returns_400(self):
+        r = self._post({
+            "session_type": "bouldering", "duration_min": 60, "intensity": 7,
+            "climbs": {"boulder": {"V99": {"s": 1, "f": 0, "p": 0}}},
+        })
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("V99", r.json()["detail"])
+
+    def test_flashes_exceed_sends_returns_400(self):
+        r = self._post({
+            "session_type": "bouldering", "duration_min": 60, "intensity": 7,
+            "climbs": {"boulder": {"V5": {"s": 1, "f": 2, "p": 0}}},
+        })
+        self.assertEqual(r.status_code, 400)

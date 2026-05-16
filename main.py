@@ -427,6 +427,7 @@ class TrainingLogRequest(BaseModel):
     intensity: int
     grades_sent: str = ""
     notes: str = ""
+    climbs: Dict[str, Dict[str, Dict[str, int]]] = {}
 
 
 # Body / rehab progress
@@ -1057,6 +1058,21 @@ def log_session(request: Request, req: TrainingLogRequest, user: Dict = Depends(
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
 
+    # Validate climbs shape + grades + invariants. 400 on any failure.
+    from src.climb_grades import validate_climbs, compute_hardest
+    try:
+        validate_climbs(req.climbs)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # PR detection: snapshot the user's hardest BEFORE insert, then compare to
+    # this session's hardest. A new PR is one where this session's grade is
+    # strictly harder than the prior best (or there was no prior best).
+    from database import get_user_hardest
+    from src.climb_grades import grade_order
+    before = get_user_hardest(user["id"], window="all")
+    session_hardest = compute_hardest(req.climbs)
+
     log_id = log_training(
         user["id"],
         {
@@ -1066,9 +1082,20 @@ def log_session(request: Request, req: TrainingLogRequest, user: Dict = Depends(
             "intensity": req.intensity,
             "grades_sent": req.grades_sent,
             "notes": req.notes,
+            "climbs": req.climbs,
         },
     )
-    return {"id": log_id}
+
+    new_prs = {"boulder": None, "route": None}
+    for discipline in ("boulder", "route"):
+        sh = session_hardest[discipline]
+        if not sh:
+            continue
+        prev = before[discipline]
+        if prev is None or grade_order(sh) > grade_order(prev):
+            new_prs[discipline] = sh
+
+    return {"id": log_id, "new_prs": new_prs}
 
 
 @app.get("/api/training")
