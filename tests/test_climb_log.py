@@ -377,3 +377,64 @@ class LogSessionEndpointTests(unittest.TestCase):
             "climbs": {"boulder": {"V5": {"s": 1, "f": 2, "p": 0}}},
         })
         self.assertEqual(r.status_code, 400)
+
+
+class PyramidEndpointTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        init_db()
+        cls.email = "pyr_endpoint@coretriage.local"
+        cls.token = _auth_token_for(cls.email)
+        cls.client = TestClient(app)
+
+    def tearDown(self):
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "DELETE FROM training_logs WHERE user_id IN "
+                    "(SELECT id FROM users WHERE email = %s);", (self.email,))
+            conn.commit()
+
+    def test_empty_user(self):
+        r = self.client.get(
+            "/api/training/pyramid?window=all",
+            headers={"Authorization": f"Bearer {self.token}"},
+        )
+        self.assertEqual(r.status_code, 200)
+        body = r.json()
+        self.assertEqual(body["window"], "all")
+        self.assertEqual(body["boulder"]["grades"], [])
+
+    def test_aggregates_sends(self):
+        self.client.post(
+            "/api/training", json={
+                "session_type": "bouldering", "duration_min": 60, "intensity": 7,
+                "climbs": {"boulder": {"V5": {"s": 2, "f": 1, "p": 0}}},
+            },
+            headers={"Authorization": f"Bearer {self.token}"},
+        )
+        self.client.post(
+            "/api/training", json={
+                "session_type": "bouldering", "duration_min": 60, "intensity": 7,
+                "climbs": {"boulder": {"V5": {"s": 1, "f": 0, "p": 0}, "V6": {"s": 0, "f": 0, "p": 2}}},
+            },
+            headers={"Authorization": f"Bearer {self.token}"},
+        )
+        r = self.client.get(
+            "/api/training/pyramid?window=all",
+            headers={"Authorization": f"Bearer {self.token}"},
+        )
+        self.assertEqual(r.status_code, 200)
+        body = r.json()
+        self.assertEqual(body["boulder"]["hardest_send"], "V5")
+        self.assertEqual(body["boulder"]["grades"], [
+            {"grade": "V5", "s": 3, "f": 1, "p": 0},
+            {"grade": "V6", "s": 0, "f": 0, "p": 2},
+        ])
+
+    def test_invalid_window(self):
+        r = self.client.get(
+            "/api/training/pyramid?window=year",
+            headers={"Authorization": f"Bearer {self.token}"},
+        )
+        self.assertEqual(r.status_code, 400)

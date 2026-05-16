@@ -1202,6 +1202,19 @@ def fetch_leaderboard(
     )
 
 
+@app.get("/api/training/pyramid")
+@limiter.limit("60/minute")
+def fetch_pyramid(
+    request: Request,
+    window: str = "month",
+    user: Dict = Depends(get_current_user),
+):
+    if window not in ("month", "all"):
+        raise HTTPException(status_code=400, detail="window must be 'month' or 'all'")
+    from database import get_pyramid
+    return get_pyramid(user["id"], window=window)
+
+
 # ---------------------------------------------------------------------------
 # User profile — display name + leaderboard privacy
 # ---------------------------------------------------------------------------
