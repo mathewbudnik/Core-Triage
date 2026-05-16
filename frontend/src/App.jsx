@@ -11,6 +11,7 @@ import TipCard from './components/TipCard'
 import DisclaimerModal from './components/DisclaimerModal'
 import LegalModal from './components/LegalModal'
 import EmailVerificationBanner from './components/EmailVerificationBanner'
+import TrialStatusBanner from './components/TrialStatusBanner'
 import AccountMenu from './components/AccountMenu'
 import { PRIVACY_POLICY, TERMS_OF_SERVICE } from './data/legal'
 import { openBillingPortal } from './api'
@@ -464,8 +465,11 @@ export default function App() {
           </button>
         </div>
 
-        {/* Tip card */}
-        <TipCard />
+        {/* Tip card — desktop sidebar only. On mobile the drawer is a
+            transient nav surface, not a place for ambient content. */}
+        <div className="hidden md:block">
+          <TipCard />
+        </div>
 
         </div>
         {/* Sidebar footer */}
@@ -552,6 +556,14 @@ export default function App() {
         {user && user.email_verified === false && !bannerDismissed && (
           <EmailVerificationBanner user={user} onDismiss={() => setBannerDismissed(true)} />
         )}
+        {/* Trial countdown / post-trial paywall banner — only renders in the
+            last 5 days of trial or after expiry, otherwise null. */}
+        {user && (
+          <TrialStatusBanner
+            user={user}
+            onUpgradeClick={() => { setUpgradeTrigger('feature'); setShowUpgrade(true) }}
+          />
+        )}
 
         {/* Top bar */}
         <header className="border-b border-outline px-4 md:px-8 py-4 flex items-center justify-between bg-panel2/40 backdrop-blur-sm sticky top-0 z-20">
@@ -605,7 +617,7 @@ export default function App() {
           <Suspense fallback={<RouteLoading />}>
             <Routes>
               <Route path="/hub/*"         element={<HubTab user={user} />} />
-              <Route path="/body/*"        element={<BodyTab user={user} />} />
+              <Route path="/body/*"        element={<BodyTab user={user} onLoginClick={() => setShowAuth(true)} />} />
               <Route path="/triage/*"      element={<TriageTab k={k} user={user} />} />
               <Route path="/rehab"         element={<Navigate to="/body" replace />} />
               <Route path="/rehab/:region" element={<RehabRegionRedirect />} />
