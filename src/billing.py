@@ -6,7 +6,7 @@ self-service subscription management, and webhook event handling.
 Configuration via env vars:
     STRIPE_SECRET_KEY        e.g. sk_test_...
     STRIPE_WEBHOOK_SECRET    whsec_... (set after creating webhook endpoint in dashboard)
-    STRIPE_PRICE_ID_PRO      price_... for $10/mo Pro tier
+    STRIPE_PRICE_ID_PRO      price_... for $7.99/mo Pro tier (14-day free trial)
     STRIPE_PRICE_ID_COACHING price_... for $89/mo Coaching tier
 
 If STRIPE_SECRET_KEY is unset, the module loads but all create-session calls

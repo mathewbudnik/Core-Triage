@@ -487,16 +487,104 @@ def log_security_event(event_type: str, ip_address: str, email_attempted: str) -
         pass  # security logging must never crash the request
 
 
+# Length of the free trial granted to every new account, in days. Kept here
+# so backend gates and the /me serializer share one source of truth.
+TRIAL_DAYS = 14
+
+
 def get_user_tier(user_id: int) -> str:
-    """Return 'free' | 'core' | 'pro' for the given user."""
+    """Return the user's *effective* tier — trial-aware.
+
+    Resolution order:
+      1. If a paid subscription is active (`subscription_status` == 'active'
+         or 'trialing' as Stripe defines it), use the stored tier.
+      2. Otherwise, if the account is within its TRIAL_DAYS window from
+         `created_at`, treat them as 'pro' so all existing tier gates
+         (plan generation, unlimited AI chat, Phase 2/3 rehab, etc.)
+         pass during the trial.
+      3. Otherwise, return the stored tier (typically 'free' for trial-
+         expired accounts).
+
+    All existing `tier == 'pro'` checks throughout the codebase keep
+    working without modification — the trial just makes new accounts
+    look like paid Pro accounts for 14 days.
+    """
     with _connect() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT COALESCE(tier, 'free') FROM users WHERE id = %s;",
+                """
+                SELECT
+                    COALESCE(tier, 'free'),
+                    subscription_status,
+                    created_at
+                FROM users WHERE id = %s;
+                """,
                 (int(user_id),),
             )
             row = cur.fetchone()
-    return str(row[0]) if row else "free"
+    if not row:
+        return "free"
+    stored_tier, sub_status, created_at = row
+    # Active paying subscriber (or Stripe's "trialing" mid-checkout state) —
+    # honor the stored tier directly.
+    if sub_status in ("active", "trialing"):
+        return str(stored_tier)
+    # Free trial window — treat them as Pro so gates pass.
+    if created_at is not None:
+        from datetime import datetime, timezone, timedelta
+        now = datetime.now(timezone.utc)
+        if now - created_at < timedelta(days=TRIAL_DAYS):
+            return "pro"
+    return str(stored_tier)
+
+
+def get_subscription_state(user_id: int) -> Dict[str, Any]:
+    """Return the user-facing subscription state for the /me payload.
+
+    Shape:
+      { state: 'trial' | 'active' | 'expired' | 'coaching',
+        days_remaining: int | None,   # only set during trial
+        trial_ends_at:  iso str | None }
+
+    Frontend uses this for trial-countdown badges, post-trial banners, and
+    upgrade-CTA copy. The numeric tier field stays for backwards-compat with
+    existing gating code.
+    """
+    from datetime import datetime, timezone, timedelta
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT
+                    subscription_status,
+                    subscription_product,
+                    created_at
+                FROM users WHERE id = %s;
+                """,
+                (int(user_id),),
+            )
+            row = cur.fetchone()
+    if not row:
+        return {"state": "expired", "days_remaining": None, "trial_ends_at": None}
+    sub_status, sub_product, created_at = row
+    # Coach-tier subscribers always read as 'coaching' regardless of trial.
+    if sub_status in ("active", "trialing") and sub_product == "coaching":
+        return {"state": "coaching", "days_remaining": None, "trial_ends_at": None}
+    if sub_status in ("active", "trialing"):
+        return {"state": "active",   "days_remaining": None, "trial_ends_at": None}
+    # No paid subscription — figure out trial vs expired.
+    if created_at is None:
+        return {"state": "expired", "days_remaining": None, "trial_ends_at": None}
+    trial_end = created_at + timedelta(days=TRIAL_DAYS)
+    now = datetime.now(timezone.utc)
+    if now < trial_end:
+        delta = trial_end - now
+        return {
+            "state": "trial",
+            "days_remaining": max(1, delta.days + (1 if delta.seconds > 0 else 0)),
+            "trial_ends_at": trial_end.isoformat(),
+        }
+    return {"state": "expired", "days_remaining": 0, "trial_ends_at": trial_end.isoformat()}
 
 
 def set_user_tier(user_id: int, tier: str) -> None:
