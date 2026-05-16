@@ -85,7 +85,7 @@ Request body adds one optional field:
 ```json
 {
   "date": "2026-05-15",
-  "session_type": "project",
+  "session_type": "bouldering",
   "duration_min": 90,
   "intensity": 7,
   "notes": "Felt strong on slab",
@@ -162,7 +162,7 @@ frontend/src/components/
 | `database.py` | `_add_column_if_missing(climbs, JSONB, '{}')`. Add `insert_training_log` overload accepting `climbs`. Add `get_pyramid(user_id, window)` helper. Add grade-ordering helper module-local. |
 | `main.py` | `TrainingLogRequest` Pydantic model gains optional `climbs: dict`. Validate against rules above. PR detection in same transaction. Add `GET /api/training/pyramid`. |
 | `frontend/src/api.js` | Add `getPyramid({ window })`. `logTraining` request type already accepts arbitrary fields; document `climbs` shape inline. |
-| `frontend/src/components/TrainingLogEntry.jsx` | Append `<ClimbLogSection />` controlled by component state, conditioned on `session_type ∈ {project, power, technique}`. Wire its value into the `logTraining()` payload as `climbs`. On submit success, if `new_prs.boulder` or `new_prs.route` is set, fire `<PRCelebrationToast />` via the existing App-level toast slot. |
+| `frontend/src/components/TrainingLogEntry.jsx` | Append `<ClimbLogSection />` controlled by component state, conditioned on `session_type ∈ {bouldering, routes, outdoor, other}`. Wire its value into the `logTraining()` payload as `climbs`. On submit success, if `new_prs.boulder` or `new_prs.route` is set, fire `<PRCelebrationToast />` via the existing App-level toast slot. |
 | `frontend/src/components/ProgressTab.jsx` | Insert `<GradePyramidCard />` between the existing leaderboard section and the 8-week trend chart. |
 | `frontend/src/components/HubTab.jsx` | Replace `<HubSocialStrip rank={data.rank} />` with `<HubProgressCard rank={data.rank} hardestSends={data.hardestSends} pyramidPreview={data.pyramidPreview} />`. |
 | `frontend/src/components/HubGreeting.jsx` | Add PR pill rendering when `data.hardestSends?.boulder` or `data.hardestSends?.route` is set. Falls back to existing copy when no PRs. |
@@ -321,7 +321,7 @@ Every loop iteration the pyramid grows. Hub on next open reflects the new state,
 
 ## Mobile-specific patterns
 
-- ClimbLogSection collapsed by default — climbing-irrelevant session types (hangboard / strength / endurance / rest) never see it.
+- ClimbLogSection collapsed by default — climbing-irrelevant session types (hangboard / strength / rest) never see it.
 - All `−` `+` buttons are 44×44px minimum tap targets.
 - `+ harder` button avoids the 18-row scroll wall for a beginner who only climbs V3–V5.
 - GradePyramidCard stacks disciplines vertically below 640px.
