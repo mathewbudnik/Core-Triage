@@ -3,8 +3,13 @@ import { motion } from 'framer-motion'
 import { Check, X } from 'lucide-react'
 import { logTraining } from '../api'
 import DatePicker from './DatePicker'
+import ClimbLogSection from './ClimbLogSection'
 
 const SESSION_TYPES = ['bouldering', 'routes', 'hangboard', 'strength', 'outdoor', 'rest', 'other']
+
+// Session types where logging individual climbs makes sense. Hangboard /
+// strength / rest hide the climb section entirely — no climbs to log.
+const CLIMB_SESSION_TYPES = new Set(['bouldering', 'routes', 'outdoor', 'other'])
 
 const INTENSITY_LABELS = {
   1: 'Very easy', 2: 'Easy', 3: 'Easy-moderate',
@@ -28,6 +33,7 @@ export default function TrainingLogEntry({ sessionType: prefillType, onSave, onC
     intensity: 7,
     grades_sent: '',
     notes: '',
+    climbs: {},
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
@@ -40,13 +46,22 @@ export default function TrainingLogEntry({ sessionType: prefillType, onSave, onC
     setSaving(true)
     setError(null)
     try {
-      await logTraining(form)
+      const res = await logTraining(form)
+      // If the server detected a new PR, broadcast a window event so App.jsx
+      // can show the celebration toast. We can't import the toast directly
+      // because TrainingLogEntry isn't a child of the toast slot.
+      if (res?.new_prs && (res.new_prs.boulder || res.new_prs.route)) {
+        window.dispatchEvent(new CustomEvent('ct:new-pr', { detail: res.new_prs }))
+      }
       onSave?.()
     } catch (err) {
       setError(err.message)
       setSaving(false)
     }
   }
+
+  const showClimbSection = CLIMB_SESSION_TYPES.has(form.session_type)
+  const defaultTab = form.session_type === 'routes' ? 'route' : 'boulder'
 
   return (
     <motion.div
@@ -118,9 +133,9 @@ export default function TrainingLogEntry({ sessionType: prefillType, onSave, onC
         />
       </div>
 
-      {/* Grades sent */}
+      {/* Free-text grades_sent — kept as a fallback for users who prefer typing */}
       <div>
-        <p className="text-xs text-muted mb-1">Grades sent (optional)</p>
+        <p className="text-xs text-muted mb-1">Grades sent (free-form, optional)</p>
         <input
           type="text"
           placeholder="e.g. V5×3, V6×1, V7 attempt"
@@ -129,6 +144,15 @@ export default function TrainingLogEntry({ sessionType: prefillType, onSave, onC
           className="w-full bg-panel border border-outline rounded-lg px-3 py-1.5 text-sm text-text placeholder:text-muted/50 outline-none focus:border-accent"
         />
       </div>
+
+      {/* Structured climb log — only for climbing-relevant session types */}
+      {showClimbSection && (
+        <ClimbLogSection
+          value={form.climbs}
+          onChange={(v) => set('climbs', v)}
+          defaultTab={defaultTab}
+        />
+      )}
 
       {/* Notes */}
       <div>
