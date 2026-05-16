@@ -102,8 +102,12 @@ export default function BodyActiveView({ triage, checked, onToggle }) {
         )}
       </div>
 
-      {/* Sticky off-ramp at the bottom */}
-      <div className="fixed bottom-16 left-0 right-0 z-20 px-4
+      {/* Sticky off-ramp at the bottom. Offsets:
+            - mobile (<md): bottom-16 clears the mobile bottom-nav (h-16)
+            - desktop (md+): bottom-3 — no bottom-nav, sit close to the edge
+            - md:left-64 accounts for the w-64 sidebar so the bar centers in
+              the main-content column, not the full viewport */}
+      <div className="fixed bottom-16 md:bottom-3 left-0 md:left-64 right-0 z-20 px-4
                       pb-[calc(0.5rem+env(safe-area-inset-bottom))] pointer-events-none">
         <div className="max-w-2xl mx-auto pointer-events-auto">
           <button
