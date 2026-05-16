@@ -943,13 +943,25 @@ def get_active_plan(user_id: int) -> Optional[Dict[str, Any]]:
 
 
 def log_training(user_id: int, data: Dict[str, Any]) -> int:
-    """Insert a training log entry and return its id."""
+    """Insert a training log entry and return its id.
+
+    If `data['climbs']` is a non-empty dict, it's persisted to the JSONB
+    column and an auto-generated human-readable summary overrides any
+    `grades_sent` value the caller passed (so the two stay in sync).
+    """
+    from src.climb_grades import format_climbs_summary  # local import to avoid circular
+
+    climbs = data.get("climbs") or {}
+    grades_sent = data.get("grades_sent") or ""
+    if climbs:
+        grades_sent = format_climbs_summary(climbs)
+
     with _connect() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                INSERT INTO training_logs (user_id, date, session_type, duration_min, intensity, grades_sent, notes)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO training_logs (user_id, date, session_type, duration_min, intensity, grades_sent, notes, climbs)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb)
                 RETURNING id;
                 """,
                 (
@@ -958,8 +970,9 @@ def log_training(user_id: int, data: Dict[str, Any]) -> int:
                     data.get("session_type"),
                     data.get("duration_min"),
                     data.get("intensity"),
-                    data.get("grades_sent"),
+                    grades_sent,
                     data.get("notes"),
+                    json.dumps(climbs),
                 ),
             )
             new_id = cur.fetchone()[0]

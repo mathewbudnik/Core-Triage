@@ -134,3 +134,66 @@ class SchemaMigrationTests(unittest.TestCase):
         self.assertEqual(data_type, "jsonb")
         self.assertIn("'{}'", default or "")
         self.assertEqual(nullable, "NO")
+
+
+from database import log_training, get_training_logs  # noqa: E402
+
+
+def _make_seed_user(email: str = "climb_test@coretriage.local") -> int:
+    """Create (or reuse) a test user, return its id. Cleans up rows."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO users (email, password_hash) VALUES (%s, %s) "
+                "ON CONFLICT (email) DO UPDATE SET email = EXCLUDED.email RETURNING id;",
+                (email, "x"),
+            )
+            uid = cur.fetchone()[0]
+            cur.execute("DELETE FROM training_logs WHERE user_id = %s;", (uid,))
+        conn.commit()
+    return uid
+
+
+class LogTrainingClimbsTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        init_db()
+        cls.uid = _make_seed_user()
+
+    def tearDown(self):
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM training_logs WHERE user_id = %s;", (self.uid,))
+            conn.commit()
+
+    def test_insert_with_climbs_writes_jsonb(self):
+        log_training(self.uid, {
+            "date": "2026-05-15",
+            "session_type": "bouldering",
+            "duration_min": 90,
+            "intensity": 7,
+            "climbs": {"boulder": {"V5": {"s": 3, "f": 1, "p": 0}}},
+            "notes": "",
+        })
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT climbs, grades_sent FROM training_logs WHERE user_id = %s;",
+                    (self.uid,),
+                )
+                row = cur.fetchone()
+        climbs, grades_sent = row
+        self.assertEqual(climbs, {"boulder": {"V5": {"s": 3, "f": 1, "p": 0}}})
+        self.assertEqual(grades_sent, "Boulder: V5×3 (1 flash)")
+
+    def test_insert_without_climbs_is_unchanged(self):
+        log_training(self.uid, {
+            "date": "2026-05-15",
+            "session_type": "hangboard",
+            "duration_min": 30,
+            "intensity": 6,
+            "grades_sent": "manual text",
+            "notes": "",
+        })
+        rows = get_training_logs(self.uid)
+        self.assertEqual(rows[0]["grades_sent"], "manual text")
