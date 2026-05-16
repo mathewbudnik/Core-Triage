@@ -654,7 +654,7 @@ export default function App() {
               <Route path="/rehab"         element={<Navigate to="/body" replace />} />
               <Route path="/rehab/:region" element={<RehabRegionRedirect />} />
               <Route path="/train"         element={<TrainTab user={user} dbReady={dbReady} onLoginClick={() => setShowAuth(true)} />} />
-              <Route path="/progress"      element={<Navigate to="/train" replace />} />
+              <Route path="/progress"      element={<ProgressTab user={user} onLoginClick={() => setShowAuth(true)} />} />
               <Route path="/chat"          element={<ChatTab k={k} user={user} onLoginClick={() => setShowAuth(true)} />} />
               <Route path="/history/*"     element={<HistoryTab dbReady={dbReady} user={user} onLoginClick={() => setShowAuth(true)} />} />
               <Route path="/about"         element={<AboutTab />} />

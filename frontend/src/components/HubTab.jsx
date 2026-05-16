@@ -7,7 +7,7 @@ import { rehabProgress } from '../lib/rehabHeuristic'
 import HubGreeting from './HubGreeting'
 import HubFeaturedCard from './HubFeaturedCard'
 import HubToolCard from './HubToolCard'
-import HubSocialStrip from './HubSocialStrip'
+import HubProgressCard from './HubProgressCard'
 
 // Map a plan session's `type` field to the human label used on Train tab.
 // (Mirrors TYPE_LABEL in PlanView.jsx — kept inline to avoid a cross-file
@@ -196,7 +196,11 @@ export default function HubTab({ user }) {
         </div>
       </div>
 
-      <HubSocialStrip rank={data.rank} />
+      <HubProgressCard
+        rank={data.rank}
+        hardestSends={data.hardestSends}
+        pyramidPreview={data.pyramidPreview}
+      />
     </div>
   )
 }
