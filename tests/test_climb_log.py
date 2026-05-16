@@ -197,3 +197,51 @@ class LogTrainingClimbsTests(unittest.TestCase):
         })
         rows = get_training_logs(self.uid)
         self.assertEqual(rows[0]["grades_sent"], "manual text")
+
+
+from database import get_user_hardest  # noqa: E402
+
+
+class HardestSendTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        init_db()
+        cls.uid = _make_seed_user(email="hardest_test@coretriage.local")
+
+    def tearDown(self):
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM training_logs WHERE user_id = %s;", (self.uid,))
+            conn.commit()
+
+    def test_no_logs_returns_none(self):
+        out = get_user_hardest(self.uid, window="all")
+        self.assertEqual(out, {"boulder": None, "route": None})
+
+    def test_picks_max_send_across_logs(self):
+        log_training(self.uid, {
+            "date": "2026-05-10", "session_type": "bouldering",
+            "duration_min": 60, "intensity": 7,
+            "climbs": {"boulder": {"V5": {"s": 2, "f": 0, "p": 0}}},
+        })
+        log_training(self.uid, {
+            "date": "2026-05-12", "session_type": "bouldering",
+            "duration_min": 60, "intensity": 7,
+            "climbs": {"boulder": {"V7": {"s": 1, "f": 0, "p": 0}}},
+        })
+        log_training(self.uid, {
+            "date": "2026-05-14", "session_type": "routes",
+            "duration_min": 60, "intensity": 7,
+            "climbs": {"route": {"5.11c": {"s": 1, "f": 0, "p": 0}}},
+        })
+        out = get_user_hardest(self.uid, window="all")
+        self.assertEqual(out, {"boulder": "V7", "route": "5.11c"})
+
+    def test_projects_dont_count(self):
+        log_training(self.uid, {
+            "date": "2026-05-10", "session_type": "bouldering",
+            "duration_min": 60, "intensity": 7,
+            "climbs": {"boulder": {"V7": {"s": 0, "f": 0, "p": 5}}},
+        })
+        out = get_user_hardest(self.uid, window="all")
+        self.assertIsNone(out["boulder"])

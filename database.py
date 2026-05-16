@@ -1010,6 +1010,41 @@ def get_training_logs(user_id: int, limit: int = 30) -> List[Dict[str, Any]]:
     ]
 
 
+def get_user_hardest(user_id: int, window: str = "all") -> Dict[str, Optional[str]]:
+    """Return the user's hardest *sent* grade per discipline.
+
+    `window` ∈ {'month', 'all'}. 'month' = last 30 days rolling.
+    Sends-only (counters where s > 0); projects (p) don't qualify.
+    """
+    from src.climb_grades import grade_order  # local import
+
+    if window not in ("month", "all"):
+        raise ValueError("window must be 'month' or 'all'")
+    where_window = "" if window == "all" else "AND created_at >= NOW() - INTERVAL '30 days'"
+
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT climbs FROM training_logs
+                WHERE user_id = %s AND climbs <> '{{}}'::jsonb {where_window};
+                """,
+                (int(user_id),),
+            )
+            rows = cur.fetchall()
+
+    best: Dict[str, Optional[str]] = {"boulder": None, "route": None}
+    for (climbs,) in rows:
+        for discipline in ("boulder", "route"):
+            grades = (climbs or {}).get(discipline, {})
+            for g, c in grades.items():
+                if c.get("s", 0) <= 0:
+                    continue
+                if best[discipline] is None or grade_order(g) > grade_order(best[discipline]):
+                    best[discipline] = g
+    return best
+
+
 # ---------------------------------------------------------------------------
 # Train stats + leaderboard helpers
 # ---------------------------------------------------------------------------
