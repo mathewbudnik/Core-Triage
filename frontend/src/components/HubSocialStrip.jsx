@@ -29,7 +29,7 @@ export default function HubSocialStrip({ rank }) {
       </span>
       <button
         type="button"
-        onClick={() => navigate('/train')}
+        onClick={() => navigate('/progress')}
         className="text-accent text-[11px] font-bold hover:underline"
       >
         See leaderboard ›

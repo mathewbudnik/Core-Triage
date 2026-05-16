@@ -8,7 +8,7 @@ import HubPattern from './HubPatterns'
  * `onTap(toolKey)` so the parent can promote it to the featured slot.
  *
  * Props:
- *   toolKey:  'triage' | 'rehab' | 'train' | 'chat'
+ *   toolKey:  'body' | 'train' | 'chat'
  *   status:   string          — status line under the label
  *   isLive:   boolean         — show the pulsing dot before the status
  *   progress: number | null   — 0..1, renders a mini progress bar under status

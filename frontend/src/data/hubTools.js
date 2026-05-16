@@ -1,30 +1,23 @@
-import { Activity, Stethoscope, Dumbbell, MessageSquare } from 'lucide-react'
+import { Stethoscope, Dumbbell, MessageSquare } from 'lucide-react'
 
-// Single source of truth for the four hub tools. Other Hub components import
-// from here so a colour/icon/route change happens in one place.
+// Single source of truth for the three hub tools. Other Hub components import
+// from here so a colour/icon/route change happens in one place. Mirrors the
+// four-tab IA (Hub / Train / Body / Chat) — Hub itself doesn't appear as a
+// tool card, the other three do.
 export const TOOLS = {
-  triage: {
-    key: 'triage',
-    label: 'Triage',
-    accent: 'coral',       // maps to Tailwind accent2 in ACCENT_CLASSES below
-    icon: Activity,
-    route: '/triage',
-    pattern: 'pulse',
-    emptyStatus: 'No active triage',
-  },
-  rehab: {
-    key: 'rehab',
-    label: 'Rehab',
+  body: {
+    key: 'body',
+    label: 'Body',
     accent: 'teal',        // maps to Tailwind accent
     icon: Stethoscope,
-    route: '/rehab',
+    route: '/body',
     pattern: 'dots',
-    emptyStatus: 'No active rehab',
+    emptyStatus: 'Screen an injury',
   },
   train: {
     key: 'train',
     label: 'Train',
-    accent: 'violet',      // distinct from Rehab so we're not running two teals
+    accent: 'violet',      // distinct from Body so we're not running two teals
     icon: Dumbbell,
     route: '/train',
     pattern: 'stripes',
@@ -41,7 +34,7 @@ export const TOOLS = {
   },
 }
 
-export const TOOL_KEYS = ['triage', 'rehab', 'train', 'chat']
+export const TOOL_KEYS = ['body', 'train', 'chat']
 
 // Accent → Tailwind class lookup. Use these instead of inlining bg-accent/10
 // everywhere, so we can swap a colour mapping in one place.

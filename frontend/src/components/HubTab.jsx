@@ -20,23 +20,22 @@ const SESSION_TYPE_LABEL = {
 
 // ── Derive each tool's status + (for the featured slot) its rich content ──
 
-function statusForTriage(data) {
-  if (data.lastTriage) {
-    return { status: data.lastTriage.injury_area, isLive: true }
-  }
-  return { status: 'No active triage', isLive: false }
-}
-
-function statusForRehab(data) {
+// Body covers the merged triage + rehab surface. We surface phase/day progress
+// if there's an active rehab plan, otherwise the injury area itself, otherwise
+// the empty-state CTA.
+function statusForBody(data) {
   const rp = rehabProgress(data.lastTriage?.created_at)
-  if (!rp || !data.lastTriage || !hasTriageWithin(data, 90)) {
-    return { status: 'No active rehab', isLive: false, progress: null }
+  if (rp && data.lastTriage && hasTriageWithin(data, 90)) {
+    return {
+      status: `Phase ${rp.phase} · Day ${rp.dayInPhase} · ${data.lastTriage.injury_area}`,
+      isLive: true,
+      progress: rp.progress,
+    }
   }
-  return {
-    status: `Phase ${rp.phase} · Day ${rp.dayInPhase}`,
-    isLive: false,
-    progress: rp.progress,
+  if (data.lastTriage) {
+    return { status: `Last screen: ${data.lastTriage.injury_area}`, isLive: false, progress: null }
   }
+  return { status: 'Screen an injury', isLive: false, progress: null }
 }
 
 function statusForTrain(data) {
@@ -60,10 +59,9 @@ function statusForChat(data) {
 }
 
 const STATUS_FNS = {
-  triage: statusForTriage,
-  rehab:  statusForRehab,
-  train:  statusForTrain,
-  chat:   statusForChat,
+  body:  statusForBody,
+  train: statusForTrain,
+  chat:  statusForChat,
 }
 
 // ── Rich content for the featured slot ───────────────────────────────────
@@ -97,26 +95,26 @@ function featuredContent(toolKey, data) {
       onCta:     (nav) => nav('/train'),
     }
   }
-  if (toolKey === 'rehab' && data.lastTriage) {
+  if (toolKey === 'body' && data.lastTriage && hasTriageWithin(data, 90)) {
     const rp = rehabProgress(data.lastTriage.created_at)
     return {
-      eyebrow:   'Today · Rehab',
+      eyebrow:   'Today · Body',
       title:     `Phase ${rp.phase} · ${data.lastTriage.injury_area}`,
       detail:    `Day ${rp.dayInPhase} of ${rp.phaseLength} — week ${Math.ceil(rp.dayInPhase/7)} of ${Math.ceil(rp.phaseLength/7)}.`,
       subDetail: 'Follow your phase exercises — keep pain at or below 3/10.',
       progress:  { value: rp.progress, label: `Phase ${rp.phase} · ${Math.round(rp.progress*100)}% complete` },
       ctaLabel:  'Continue rehab',
-      onCta:     (nav) => nav(`/rehab/${data.lastTriage.injury_area.toLowerCase().replace(/\s+/g, '-')}`),
+      onCta:     (nav) => nav('/body'),
     }
   }
-  if (toolKey === 'triage') {
+  if (toolKey === 'body') {
     return {
       eyebrow:   'Start here',
-      title:     'Where does it hurt?',
-      detail:    'Answer a few quick questions and get red-flag screening plus likely injury patterns.',
+      title:     'Something hurts?',
+      detail:    'Answer a few quick questions for a red-flag screen plus likely injury patterns and a phase-based rehab plan.',
       subDetail: 'Educational only — not a medical diagnosis.',
       progress:  null,
-      ctaLabel:  'Start triage',
+      ctaLabel:  'Run a screen',
       onCta:     (nav) => nav('/triage'),
     }
   }
@@ -152,7 +150,7 @@ export default function HubTab({ user }) {
     )
   }
 
-  const smallKeys = ['triage', 'rehab', 'train', 'chat'].filter((k) => k !== featuredKey)
+  const smallKeys = ['body', 'train', 'chat'].filter((k) => k !== featuredKey)
   const fc = featuredContent(featuredKey, data)
 
   return (

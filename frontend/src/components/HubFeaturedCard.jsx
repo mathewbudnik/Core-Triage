@@ -8,7 +8,7 @@ import HubPattern from './HubPatterns'
  * for rich content: eyebrow, title, detail, subDetail, progress, ctaLabel.
  *
  * Props:
- *   toolKey:    'triage' | 'rehab' | 'train' | 'chat'
+ *   toolKey:    'body' | 'train' | 'chat'
  *   eyebrow:    string                 — small label above title (e.g. "Today · Train")
  *   title:      string                 — primary headline (e.g. "Hangboard · 60 min")
  *   detail:     string                 — first paragraph
