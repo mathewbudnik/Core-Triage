@@ -1082,13 +1082,33 @@ export default function TriageTab({ k, user }) {
         k,
       })
       setResult(data)
+
+      // Auto-save the session for signed-in users so Body picks it up as
+      // the active triage. Without this, Body queries /api/sessions, gets
+      // nothing (or stale older sessions), and shows the empty state — or
+      // worse, surfaces a previous triage as "current."
+      // Best-effort: if the save fails (e.g. free-tier session limit hit),
+      // we still navigate to /body. Body's empty state is the fallback.
+      if (user) {
+        try {
+          await saveSession({
+            injury_area: form.region,
+            pain_level:  Number(form.severity),
+            pain_type:   form.pain_type,
+            onset:       form.onset,
+          })
+        } catch (_) {
+          // swallowed — non-fatal
+        }
+      }
+
       navigate('/body')
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
     }
-  }, [form, k, navigate])
+  }, [form, k, navigate, user])
 
   const handleSave = useCallback(async () => {
     if (!result) return
