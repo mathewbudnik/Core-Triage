@@ -110,3 +110,27 @@ class ComputeHardestTests(unittest.TestCase):
         # Hardest SEND, not hardest attempted.
         c = {"boulder": {"V5": {"s": 1, "f": 0, "p": 0}, "V7": {"s": 0, "f": 0, "p": 3}}}
         self.assertEqual(compute_hardest(c)["boulder"], "V5")
+
+
+from database import _connect, init_db  # noqa: E402
+
+
+class SchemaMigrationTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        init_db()
+
+    def test_training_logs_has_climbs_jsonb(self):
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """SELECT data_type, column_default, is_nullable
+                       FROM information_schema.columns
+                       WHERE table_name = 'training_logs' AND column_name = 'climbs';"""
+                )
+                row = cur.fetchone()
+        self.assertIsNotNone(row, "climbs column missing")
+        data_type, default, nullable = row
+        self.assertEqual(data_type, "jsonb")
+        self.assertIn("'{}'", default or "")
+        self.assertEqual(nullable, "NO")

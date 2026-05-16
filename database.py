@@ -273,6 +273,15 @@ def init_db() -> None:
                     e,
                 )
 
+            # Climb-log feature: structured sends/flashes/projects per grade,
+            # stored as JSONB keyed by discipline → grade → counters.
+            _add_column_if_missing(
+                cur,
+                "training_logs",
+                "climbs",
+                "JSONB NOT NULL DEFAULT '{}'::jsonb",
+            )
+
             # Seed-climber progression side table — stores per-seed nudges
             # (intensity bump, extra grades) that accumulate over time so
             # the activity generator can produce gradual improvement.
