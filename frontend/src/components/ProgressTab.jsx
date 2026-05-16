@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { Trophy, LogIn, Loader2, Dumbbell } from 'lucide-react'
+import { Trophy, LogIn, Loader2, Dumbbell, Plus } from 'lucide-react'
 import { getProfile, getMe } from '../api'
 import TrainStatsPanel from './TrainStatsPanel'
 import GradePyramidCard from './GradePyramidCard'
+import TrainingLogEntry from './TrainingLogEntry'
 import DisplayNamePromptModal from './DisplayNamePromptModal'
 
 function EmptyState({ icon: Icon, title, body, action }) {
@@ -27,6 +28,10 @@ export default function ProgressTab({ user, onLoginClick }) {
   const [state, setState] = useState('loading') // loading | no-auth | no-profile | needs-name | ready | error
   const [error, setError] = useState(null)
   const [displayName, setDisplayName] = useState(user?.display_name ?? null)
+  const [logOpen, setLogOpen] = useState(false)
+  // Bumping this triggers TrainStatsPanel + GradePyramidCard to refetch
+  // after the user logs a session so the new climbs show up immediately.
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     setDisplayName(user?.display_name ?? null)
@@ -124,11 +129,38 @@ export default function ProgressTab({ user, onLoginClick }) {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.15 }}
-      className="max-w-2xl mx-auto px-4 py-8"
+      className="max-w-2xl mx-auto px-4 py-8 space-y-6"
     >
-      <TrainStatsPanel user={user} />
-      <div className="mt-6">
-        <GradePyramidCard />
+      {/* Log-a-session entry point — Progress is where users come to SEE
+          climb data, so they should also be able to LOG it here. Inline form
+          (not a modal) so the save flow stays predictable. */}
+      <AnimatePresence mode="wait">
+        {logOpen ? (
+          <motion.div key="log-form" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}>
+            <TrainingLogEntry
+              onSave={() => { setLogOpen(false); setRefreshKey(k => k + 1) }}
+              onCancel={() => setLogOpen(false)}
+            />
+          </motion.div>
+        ) : (
+          <motion.button
+            key="log-button"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            onClick={() => setLogOpen(true)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl
+                       border border-accent/30 bg-accent/5 text-sm font-bold text-accent
+                       hover:bg-accent/10 hover:border-accent/50 transition-colors"
+          >
+            <Plus size={15} />
+            Log a session
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      <TrainStatsPanel user={user} refreshKey={refreshKey} />
+      <div>
+        <GradePyramidCard key={refreshKey} />
       </div>
     </motion.div>
   )

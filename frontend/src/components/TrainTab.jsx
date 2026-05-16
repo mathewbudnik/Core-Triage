@@ -1,14 +1,15 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Dumbbell, LogIn, Loader2, Sparkles, RefreshCw } from 'lucide-react'
+import { Dumbbell, LogIn, Loader2, Sparkles, RefreshCw, Plus } from 'lucide-react'
 import { getProfile, getActivePlan, generatePlan } from '../api'
 import ProfileSetup from './ProfileSetup'
 import PlanView from './PlanView'
+import TrainingLogEntry from './TrainingLogEntry'
 
 function friendlyPlanError(msg) {
   if (!msg) return 'Could not generate your plan.'
   if (msg.includes('plan_tier_required')) {
-    return 'AI training plans are a Pro feature ($10/mo). Tap "View plans & pricing" in the sidebar to upgrade.'
+    return 'AI training plans unlock during your 14-day trial and stay unlocked with a $7.99/mo subscription. Tap "View plans & pricing" in the sidebar to subscribe.'
   }
   if (msg.includes('plan_limit_reached')) {
     return 'You already have an active plan. Generate a new one only when you\'re ready to start fresh.'
@@ -37,6 +38,7 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
   const [plan, setPlan] = useState(null)
   const [error, setError] = useState(null)
   const [generating, setGenerating] = useState(false)
+  const [logOpen, setLogOpen] = useState(false)
 
   const load = useCallback(async () => {
     if (!user) { setState('no-auth'); return }
@@ -199,6 +201,33 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
           </button>
         </motion.div>
       )}
+
+      {/* Log-a-session entry point — independent of plan adherence. Tap to
+          open the form inline; the form posts to /api/training and emits a
+          ct:new-pr event when the user sets a new hardest send. */}
+      <AnimatePresence mode="wait">
+        {logOpen ? (
+          <motion.div key="log-form" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}>
+            <TrainingLogEntry
+              onSave={() => { setLogOpen(false); load() }}
+              onCancel={() => setLogOpen(false)}
+            />
+          </motion.div>
+        ) : (
+          <motion.button
+            key="log-button"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            onClick={() => setLogOpen(true)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl
+                       border border-accent/30 bg-accent/5 text-sm font-bold text-accent
+                       hover:bg-accent/10 hover:border-accent/50 transition-colors"
+          >
+            <Plus size={15} />
+            Log a session
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* Plan or CTA to generate */}
       <AnimatePresence mode="wait">
