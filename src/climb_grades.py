@@ -109,3 +109,87 @@ def compute_hardest(climbs: Dict[str, Dict[str, Dict[str, int]]]) -> Dict[str, O
         if sent:
             out[discipline] = max(sent, key=grade_order)
     return out
+
+
+# ── Tier system (V0–V9 unique + V10+ Coral) ───────────────────────────
+
+V_TIERS = ["v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10"]
+
+TIER_NAMES = {
+    "v0":  "Ivory",
+    "v1":  "Honey",
+    "v2":  "Apricot",
+    "v3":  "Acid Lime",
+    "v4":  "Jade",
+    "v5":  "Teal",
+    "v6":  "Electric Sky",
+    "v7":  "Cobalt",
+    "v8":  "Iris",
+    "v9":  "Magenta",
+    "v10": "Coral",
+}
+
+
+def v_grade_to_tier(grade: str) -> str:
+    """Map a V-grade ('V0'..'V17') to a tier id.
+    V10 and harder all collapse to 'v10' (Coral)."""
+    m = BOULDER_RE.match(grade)
+    if not m:
+        raise ValueError(f"invalid V-grade: {grade}")
+    n = int(m.group(1))
+    return f"v{min(n, 10)}"
+
+
+# YDS -> tier per the chart in the design spec
+_YDS_TIER_MAP = {
+    "5.6": "v0", "5.7": "v0", "5.8": "v0", "5.9": "v0",
+    "5.10a": "v0", "5.10b": "v0", "5.10c": "v0", "5.10d": "v0",
+    "5.11a": "v1",
+    "5.11b": "v2", "5.11c": "v2",
+    "5.11d": "v3",
+    "5.12a": "v4", "5.12b": "v4",
+    "5.12c": "v5", "5.12d": "v5",
+    "5.13a": "v6",
+    "5.13b": "v7",
+    "5.13c": "v8",
+    "5.13d": "v9",
+    # 5.14a..5.15d all coral
+    "5.14a": "v10", "5.14b": "v10", "5.14c": "v10", "5.14d": "v10",
+    "5.15a": "v10", "5.15b": "v10", "5.15c": "v10", "5.15d": "v10",
+}
+
+
+def yds_to_tier(grade: str) -> str:
+    """Map a YDS grade ('5.6'..'5.15d') to a tier id."""
+    if grade not in _YDS_TIER_MAP:
+        if ROUTE_RE.match(grade):
+            # Valid YDS we forgot to map — default to v10 if 5.14+, else v0
+            return "v10"
+        raise ValueError(f"invalid YDS grade: {grade}")
+    return _YDS_TIER_MAP[grade]
+
+
+def _tier_index(tier: str) -> int:
+    """Return the position of a tier id in V_TIERS; used for max() comparison."""
+    try:
+        return V_TIERS.index(tier)
+    except ValueError:
+        return -1
+
+
+def working_tier_from_hardest(hardest: Dict[str, Optional[str]]) -> str:
+    """Return the user's working tier from a `get_user_hardest()` result.
+
+    Picks the higher of the boulder and route tier mappings. Defaults
+    to 'v0' if both are None.
+    """
+    boulder = hardest.get("boulder")
+    route   = hardest.get("route")
+    tiers = []
+    if boulder:
+        tiers.append(v_grade_to_tier(boulder))
+    if route:
+        tiers.append(yds_to_tier(route))
+    if not tiers:
+        return "v0"
+    return max(tiers, key=_tier_index)
