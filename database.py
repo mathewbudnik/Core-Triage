@@ -1274,6 +1274,105 @@ def list_awards(user_id: int) -> List[Dict[str, Any]]:
     ]
 
 
+# ── Hub tip card helpers ─────────────────────────────────────────────
+
+
+def get_hub_tip(user_id: int, date_iso: str) -> Optional[Dict[str, Any]]:
+    """Return the user's tip row for a given date (or None)."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, kind, headline, body, cta_label, cta_route, color,
+                       dismissed_at, created_at
+                FROM hub_tips
+                WHERE user_id = %s AND date = %s;
+                """,
+                (int(user_id), date_iso),
+            )
+            r = cur.fetchone()
+    if not r:
+        return None
+    return {
+        "id":           r[0],
+        "kind":         r[1],
+        "headline":     r[2],
+        "body":         r[3],
+        "cta_label":    r[4],
+        "cta_route":    r[5],
+        "color":        r[6],
+        "dismissed_at": str(r[7]) if r[7] else None,
+        "created_at":   str(r[8]),
+    }
+
+
+def insert_hub_tip(
+    user_id: int,
+    date_iso: str,
+    *,
+    kind: str,
+    headline: str,
+    body: str,
+    cta_label: Optional[str],
+    cta_route: Optional[str],
+    color: str,
+) -> Optional[int]:
+    """Idempotent insert via ON CONFLICT (user_id, date) DO NOTHING.
+
+    Returns the new row id if inserted, None if a row already existed.
+    """
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO hub_tips
+                  (user_id, date, kind, headline, body, cta_label, cta_route, color)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (user_id, date) DO NOTHING
+                RETURNING id;
+                """,
+                (int(user_id), date_iso, kind, headline, body,
+                 cta_label, cta_route, color),
+            )
+            row = cur.fetchone()
+        conn.commit()
+    return int(row[0]) if row else None
+
+
+def dismiss_hub_tip(user_id: int, date_iso: str) -> bool:
+    """Mark today's tip as dismissed. If no row exists for today, insert
+    a sentinel 'dismissed' row so future loads short-circuit.
+
+    Returns True if a row was inserted or updated.
+    """
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            # UPSERT: try to update; if zero rows affected, insert sentinel
+            cur.execute(
+                """
+                UPDATE hub_tips SET dismissed_at = NOW()
+                WHERE user_id = %s AND date = %s
+                RETURNING id;
+                """,
+                (int(user_id), date_iso),
+            )
+            updated = cur.fetchone() is not None
+            if not updated:
+                cur.execute(
+                    """
+                    INSERT INTO hub_tips
+                      (user_id, date, kind, headline, body, color, dismissed_at)
+                    VALUES (%s, %s, 'dismissed', '', '', '#94949f', NOW())
+                    ON CONFLICT (user_id, date) DO UPDATE SET dismissed_at = NOW()
+                    RETURNING id;
+                    """,
+                    (int(user_id), date_iso),
+                )
+                updated = cur.fetchone() is not None
+        conn.commit()
+    return updated
+
+
 def count_sends(user_id: int) -> int:
     """Total count of sends across all `training_logs.climbs` rows for a user.
     Sums `s` across every grade across both disciplines."""
