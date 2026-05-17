@@ -303,3 +303,56 @@ class OrchestrationTests(unittest.TestCase):
         dismiss_tip(self.uid, "2026-05-17")
         tip = get_or_create_tip(self.uid, "2026-05-17", client)
         self.assertIsNone(tip)
+
+
+from fastapi.testclient import TestClient  # noqa: E402
+from main import app  # noqa: E402
+
+
+def _auth_token(email: str) -> str:
+    c = TestClient(app)
+    pw = "HubTipsTest!1pw"
+    r = c.post("/api/auth/register", json={"email": email, "password": pw})
+    if r.status_code == 400:
+        r = c.post("/api/auth/login", json={"email": email, "password": pw})
+    return r.json()["token"]
+
+
+class EndpointTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        init_db()
+        cls.email = "hub_tip_endpoint@coretriage.local"
+        cls.token = _auth_token(cls.email)
+        cls.client = TestClient(app)
+
+    def tearDown(self):
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "DELETE FROM hub_tips WHERE user_id IN "
+                    "(SELECT id FROM users WHERE email = %s);", (self.email,))
+                cur.execute(
+                    "DELETE FROM training_logs WHERE user_id IN "
+                    "(SELECT id FROM users WHERE email = %s);", (self.email,))
+                cur.execute(
+                    "DELETE FROM sessions WHERE user_id IN "
+                    "(SELECT id FROM users WHERE email = %s);", (self.email,))
+            conn.commit()
+
+    def _h(self):
+        return {"Authorization": f"Bearer {self.token}"}
+
+    def test_get_returns_null_when_no_pattern_matches(self):
+        r = self.client.get("/api/hub/tip?date=2026-05-17", headers=self._h())
+        self.assertEqual(r.status_code, 200)
+        self.assertIsNone(r.json()["tip"])
+
+    def test_get_missing_date_param_returns_400(self):
+        r = self.client.get("/api/hub/tip", headers=self._h())
+        self.assertEqual(r.status_code, 400)
+
+    def test_dismiss_then_get_returns_null(self):
+        self.client.post("/api/hub/tip/dismiss?date=2026-05-17", headers=self._h())
+        r = self.client.get("/api/hub/tip?date=2026-05-17", headers=self._h())
+        self.assertIsNone(r.json()["tip"])

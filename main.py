@@ -1252,6 +1252,34 @@ def fetch_awards(request: Request, user: Dict = Depends(get_current_user)):
     return {"earned": earned, "locked": locked}
 
 
+@app.get("/api/hub/tip")
+@limiter.limit("30/minute")
+def fetch_hub_tip(
+    request: Request,
+    date: Optional[str] = None,
+    user: Dict = Depends(get_current_user),
+):
+    if not date or not _DATE_RE.match(date):
+        raise HTTPException(status_code=400, detail="date param required as YYYY-MM-DD")
+    from src.hub_tips import get_or_create_tip
+    tip = get_or_create_tip(user["id"], date, _openai_client)
+    return {"tip": tip}
+
+
+@app.post("/api/hub/tip/dismiss")
+@limiter.limit("30/minute")
+def dismiss_hub_tip_endpoint(
+    request: Request,
+    date: Optional[str] = None,
+    user: Dict = Depends(get_current_user),
+):
+    if not date or not _DATE_RE.match(date):
+        raise HTTPException(status_code=400, detail="date param required as YYYY-MM-DD")
+    from src.hub_tips import dismiss_tip
+    dismiss_tip(user["id"], date)
+    return {"ok": True}
+
+
 # ---------------------------------------------------------------------------
 # User profile — display name + leaderboard privacy
 # ---------------------------------------------------------------------------
