@@ -211,3 +211,80 @@ class AwardEngineTests(unittest.TestCase):
         for required in ("first_send_v3", "first_send_v10", "streak_3d", "streak_100d",
                          "volume_10", "volume_500", "first_flash"):
             self.assertIn(required, kinds, f"catalog missing {required}")
+
+
+from fastapi.testclient import TestClient  # noqa: E402
+from main import app  # noqa: E402
+
+
+def _auth_token(email: str) -> str:
+    c = TestClient(app)
+    pw = "ClimbTest!1pw"
+    r = c.post("/api/auth/register", json={"email": email, "password": pw})
+    if r.status_code == 400:
+        r = c.post("/api/auth/login", json={"email": email, "password": pw})
+    return r.json()["token"]
+
+
+class LogSessionAwardsTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        init_db()
+        cls.email = "log_awards@coretriage.local"
+        cls.token = _auth_token(cls.email)
+        cls.client = TestClient(app)
+
+    def tearDown(self):
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "DELETE FROM training_logs WHERE user_id IN "
+                    "(SELECT id FROM users WHERE email = %s);", (self.email,))
+                cur.execute(
+                    "DELETE FROM awards WHERE user_id IN "
+                    "(SELECT id FROM users WHERE email = %s);", (self.email,))
+            conn.commit()
+
+    def _post(self, body):
+        return self.client.post(
+            "/api/training", json=body,
+            headers={"Authorization": f"Bearer {self.token}"},
+        )
+
+    def test_response_includes_tier_change_and_new_awards(self):
+        r = self._post({
+            "session_type": "bouldering", "duration_min": 60, "intensity": 7,
+            "climbs": {"boulder": {"V5": {"s": 1, "f": 0, "p": 0}}},
+        })
+        self.assertEqual(r.status_code, 200)
+        body = r.json()
+        self.assertIn("tier_change", body)
+        self.assertIn("new_awards", body)
+
+    def test_first_send_v5_promotes_v0_to_v5(self):
+        r = self._post({
+            "session_type": "bouldering", "duration_min": 60, "intensity": 7,
+            "climbs": {"boulder": {"V5": {"s": 1, "f": 0, "p": 0}}},
+        })
+        body = r.json()
+        self.assertEqual(body["tier_change"], {"from": "v0", "to": "v5"})
+
+    def test_no_tier_change_returns_none(self):
+        self._post({
+            "session_type": "bouldering", "duration_min": 60, "intensity": 7,
+            "climbs": {"boulder": {"V5": {"s": 1, "f": 0, "p": 0}}},
+        })
+        r = self._post({
+            "session_type": "bouldering", "duration_min": 60, "intensity": 7,
+            "climbs": {"boulder": {"V5": {"s": 1, "f": 0, "p": 0}}},
+        })
+        self.assertIsNone(r.json()["tier_change"])
+
+    def test_first_send_v5_returns_award_in_response(self):
+        r = self._post({
+            "session_type": "bouldering", "duration_min": 60, "intensity": 7,
+            "climbs": {"boulder": {"V5": {"s": 1, "f": 0, "p": 0}}},
+        })
+        body = r.json()
+        kinds = [a["kind"] for a in body["new_awards"]]
+        self.assertIn("first_send_v5", kinds)

@@ -1059,19 +1059,21 @@ def log_session(request: Request, req: TrainingLogRequest, user: Dict = Depends(
             raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
 
     # Validate climbs shape + grades + invariants. 400 on any failure.
-    from src.climb_grades import validate_climbs, compute_hardest
+    from src.climb_grades import validate_climbs, compute_hardest, working_tier_from_hardest, grade_order
     try:
         validate_climbs(req.climbs)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    # PR detection: snapshot the user's hardest BEFORE insert, then compare to
-    # this session's hardest. A new PR is one where this session's grade is
-    # strictly harder than the prior best (or there was no prior best).
+    # PR detection: snapshot the user's hardest BEFORE insert
     from database import get_user_hardest
-    from src.climb_grades import grade_order
     before = get_user_hardest(user["id"], window="all")
     session_hardest = compute_hardest(req.climbs)
+
+    # Working-tier snapshot BEFORE insert (uses 30-day window)
+    tier_before = working_tier_from_hardest(
+        get_user_hardest(user["id"], window="month")
+    )
 
     log_id = log_training(
         user["id"],
@@ -1095,7 +1097,25 @@ def log_session(request: Request, req: TrainingLogRequest, user: Dict = Depends(
         if prev is None or grade_order(sh) > grade_order(prev):
             new_prs[discipline] = sh
 
-    return {"id": log_id, "new_prs": new_prs}
+    # Tier change detection
+    tier_after = working_tier_from_hardest(
+        get_user_hardest(user["id"], window="month")
+    )
+    tier_change = None
+    if tier_after != tier_before:
+        tier_change = {"from": tier_before, "to": tier_after}
+
+    # Award engine
+    from src.awards_catalog import detect_new_awards
+    today_iso = req.date or datetime.now(timezone.utc).date().isoformat()
+    new_awards = detect_new_awards(user["id"], today_iso)
+
+    return {
+        "id": log_id,
+        "new_prs": new_prs,
+        "tier_change": tier_change,
+        "new_awards": new_awards,
+    }
 
 
 @app.get("/api/training")
