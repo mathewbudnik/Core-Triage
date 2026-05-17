@@ -288,3 +288,49 @@ class LogSessionAwardsTests(unittest.TestCase):
         body = r.json()
         kinds = [a["kind"] for a in body["new_awards"]]
         self.assertIn("first_send_v5", kinds)
+
+
+class AwardsEndpointTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        init_db()
+        cls.email = "awards_endpoint@coretriage.local"
+        cls.token = _auth_token(cls.email)
+        cls.client = TestClient(app)
+
+    def tearDown(self):
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "DELETE FROM training_logs WHERE user_id IN "
+                    "(SELECT id FROM users WHERE email = %s);", (self.email,))
+                cur.execute(
+                    "DELETE FROM awards WHERE user_id IN "
+                    "(SELECT id FROM users WHERE email = %s);", (self.email,))
+            conn.commit()
+
+    def test_empty_user_no_awards(self):
+        r = self.client.get(
+            "/api/awards",
+            headers={"Authorization": f"Bearer {self.token}"},
+        )
+        self.assertEqual(r.status_code, 200)
+        body = r.json()
+        self.assertEqual(body["earned"], [])
+        self.assertIsInstance(body["locked"], list)
+
+    def test_after_first_v5_earned_includes_it(self):
+        self.client.post(
+            "/api/training", json={
+                "session_type": "bouldering", "duration_min": 60, "intensity": 7,
+                "climbs": {"boulder": {"V5": {"s": 1, "f": 0, "p": 0}}},
+            },
+            headers={"Authorization": f"Bearer {self.token}"},
+        )
+        r = self.client.get(
+            "/api/awards",
+            headers={"Authorization": f"Bearer {self.token}"},
+        )
+        body = r.json()
+        kinds = [a["kind"] for a in body["earned"]]
+        self.assertIn("first_send_v5", kinds)

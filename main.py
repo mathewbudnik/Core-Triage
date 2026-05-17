@@ -1235,6 +1235,23 @@ def fetch_pyramid(
     return get_pyramid(user["id"], window=window)
 
 
+@app.get("/api/awards")
+@limiter.limit("60/minute")
+def fetch_awards(request: Request, user: Dict = Depends(get_current_user)):
+    from database import list_awards
+    from src.awards_catalog import AWARD_CATALOG
+    earned = list_awards(user["id"])
+    earned_kinds = {a["kind"] for a in earned}
+    # Locked = catalog minus earned. Caller (frontend) filters down to
+    # "next milestone per category" — backend returns all for flexibility.
+    locked = [
+        {"kind": entry["kind"], "label": entry["label"], "category": entry["category"]}
+        for entry in AWARD_CATALOG
+        if entry["kind"] not in earned_kinds
+    ]
+    return {"earned": earned, "locked": locked}
+
+
 # ---------------------------------------------------------------------------
 # User profile — display name + leaderboard privacy
 # ---------------------------------------------------------------------------
