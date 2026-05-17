@@ -9,7 +9,6 @@ import TrainingLogEntry from './TrainingLogEntry'
 import ProgressTierHero from './ProgressTierHero'
 import GradePyramidCard from './GradePyramidCard'
 import AwardsStrip from './AwardsStrip'
-import TrainLeaderboard from './TrainLeaderboard'
 import ProgressTrendGraph from './ProgressTrendGraph'
 import DisplayNamePromptModal from './DisplayNamePromptModal'
 
@@ -155,7 +154,6 @@ export default function ProgressTab({ user, onLoginClick }) {
         />
         <GradePyramidCard key={refreshKey} />
         <AwardsStrip user={user} />
-        <TrainLeaderboard cohort={null} />
         <ProgressTrendGraph />
       </motion.div>
     </TierThemeRoot>

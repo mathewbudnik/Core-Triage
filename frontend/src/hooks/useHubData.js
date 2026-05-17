@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   getSessions, getActivePlan, getTrainingStats, getTrainingLogs,
-  getLeaderboard, getPyramid,
+  getPyramid,
 } from '../api'
 
 const todayIsoDate = () => new Date().toISOString().slice(0, 10)
@@ -133,7 +133,7 @@ export function useHubData(user) {
   const [data, setData] = useState({
     loading: true,
     lastTriage: null, activePlan: null, todaySession: null, todayLogged: false,
-    stats: null, rank: null,
+    stats: null,
     hardestSends: { boulder: null, route: null },
     pyramidPreview: [],
     streakDays: 0,
@@ -157,16 +157,14 @@ export function useHubData(user) {
       getActivePlan(),
       getTrainingStats(),
       getTrainingLogs(30),
-      getLeaderboard({ window: 'week', limit: 1 }),
       getPyramid({ window: 'month' }),
-    ]).then(([sessionsR, planR, statsR, logsR, lbR, pyrR]) => {
+    ]).then(([sessionsR, planR, statsR, logsR, pyrR]) => {
       if (cancelled) return
 
       const sessions   = sessionsR.status === 'fulfilled' ? (sessionsR.value || []) : []
       const activePlan = planR.status     === 'fulfilled' ? planR.value             : null
       const stats      = statsR.status    === 'fulfilled' ? statsR.value            : null
       const logs       = logsR.status     === 'fulfilled' ? (logsR.value || [])     : []
-      const lb         = lbR.status       === 'fulfilled' ? lbR.value               : null
       const pyramid    = pyrR.status      === 'fulfilled' ? pyrR.value              : null
 
       const today = todayIsoDate()
@@ -200,7 +198,7 @@ export function useHubData(user) {
         loading: false,
         lastTriage: sessions[0] || null,
         activePlan, todaySession, todayLogged,
-        stats, rank: lb?.me || null,
+        stats,
         hardestSends, pyramidPreview,
         streakDays, weekLoggedDates, isFirstLogOfWeek, isPlanRestDay,
         feedItems, currentProject, recentLogs: logs,
