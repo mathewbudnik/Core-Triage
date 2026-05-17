@@ -72,6 +72,9 @@ export const getTrainingLogs = (limit = 30) => request('GET', `/api/training?lim
 export const getPyramid = ({ window = 'month' } = {}) =>
   request('GET', `/api/training/pyramid?window=${encodeURIComponent(window)}`)
 
+// Awards (earned + locked milestone catalog)
+export const getAwards = () => request('GET', '/api/awards')
+
 // Rehab progress (daily checkoff)
 export const getRehabProgress = (date) =>
   request('GET', `/api/rehab/progress?date=${encodeURIComponent(date)}`)
