@@ -190,7 +190,7 @@ export default function TriageTab({ k, user }) {
         form: { region: form.region, severity: form.severity, onset: form.onset },
       })
       // NOTE: we deliberately do NOT navigate here. The diagnosis reveals
-      // inline on the SmartTriageCard. The "Open my rehab plan" CTA below
+      // inline in the TriageWizard. The "Open my rehab plan" CTA below
       // is what navigates to /body.
     } catch (err) {
       setError(err.message)
