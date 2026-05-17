@@ -112,3 +112,87 @@ class HubTipsHelpersTests(unittest.TestCase):
         row = get_hub_tip(self.uid, "2026-05-17")
         self.assertIsNotNone(row, "dismiss should insert a sentinel row")
         self.assertIsNotNone(row["dismissed_at"])
+
+
+from datetime import date, timedelta  # noqa: E402
+from database import log_training, _connect  # noqa: E402
+from src.hub_tips import detect_pattern  # noqa: E402
+
+
+def _seed_training_log(uid: int, d: str, *, intensity: int = 7, climbs: dict = None):
+    log_training(uid, {
+        "date": d,
+        "session_type": "bouldering",
+        "duration_min": 60,
+        "intensity": intensity,
+        "climbs": climbs or {},
+    })
+
+
+def _clear_user_state(uid: int):
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM training_logs WHERE user_id = %s;", (uid,))
+            cur.execute("DELETE FROM hub_tips WHERE user_id = %s;", (uid,))
+            cur.execute("DELETE FROM sessions WHERE user_id = %s;", (uid,))
+        conn.commit()
+
+
+class PatternDetectionTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        init_db()
+        cls.uid = _make_user(email="pattern_test@coretriage.local")
+
+    def tearDown(self):
+        _clear_user_state(self.uid)
+
+    def test_no_match_returns_none(self):
+        kind, ctx = detect_pattern(self.uid, "2026-05-17")
+        self.assertIsNone(kind)
+        self.assertIsNone(ctx)
+
+    def test_overtraining_fires_at_5_day_streak(self):
+        start = date(2026, 5, 13)
+        for i in range(5):
+            _seed_training_log(self.uid, (start + timedelta(days=i)).isoformat())
+        kind, ctx = detect_pattern(self.uid, "2026-05-17")
+        self.assertEqual(kind, "overtraining")
+        self.assertEqual(ctx["streak"], 5)
+
+    def test_overtraining_does_not_fire_at_4_day_streak(self):
+        start = date(2026, 5, 14)
+        for i in range(4):
+            _seed_training_log(self.uid, (start + timedelta(days=i)).isoformat())
+        kind, _ = detect_pattern(self.uid, "2026-05-17")
+        # 4 days isn't enough; plateau/return won't fire here either
+        self.assertNotEqual(kind, "overtraining")
+
+    def test_return_break_7d_fires_at_7_days_inactive(self):
+        _seed_training_log(self.uid, "2026-05-10")  # 7 days ago from May 17
+        kind, ctx = detect_pattern(self.uid, "2026-05-17")
+        self.assertEqual(kind, "return_break_7d")
+        self.assertEqual(ctx["days"], 7)
+
+    def test_return_break_30d_fires_at_30_days_inactive(self):
+        _seed_training_log(self.uid, "2026-04-17")  # 30 days ago
+        kind, ctx = detect_pattern(self.uid, "2026-05-17")
+        self.assertEqual(kind, "return_break_30d")
+
+    def test_active_rehab_outranks_overtraining(self):
+        """Rehab is priority 1; even with a 5-day streak, rehab tip wins."""
+        # Insert an active triage row for a rehab region (Finger)
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """INSERT INTO sessions (user_id, injury_area, pain_level, created_at)
+                       VALUES (%s, 'Finger', 5, NOW() - INTERVAL '2 days');""",
+                    (self.uid,),
+                )
+            conn.commit()
+        # And log a 5-day streak
+        start = date(2026, 5, 13)
+        for i in range(5):
+            _seed_training_log(self.uid, (start + timedelta(days=i)).isoformat())
+        kind, _ = detect_pattern(self.uid, "2026-05-17")
+        self.assertEqual(kind, "active_rehab")
