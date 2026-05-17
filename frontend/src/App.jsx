@@ -501,11 +501,15 @@ export default function App() {
               key={id}
               to={`/${id}`}
               onClick={() => setSidebarOpen(false)}
-              className={({ isActive }) => `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-100
-                ${isActive
-                  ? 'bg-accent/15 text-accent border border-accent/25 shadow-glow'
-                  : 'text-muted hover:text-text hover:bg-panel'
-                }`}
+              className={({ isActive }) => `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-100 border ${
+                isActive ? '' : 'text-muted hover:text-text hover:bg-panel border-transparent'
+              }`}
+              style={({ isActive }) => isActive ? {
+                background: 'color-mix(in srgb, var(--tier-c, #14b8a6) 18%, transparent)',
+                color: 'var(--tier-light, #5eead4)',
+                borderColor: 'color-mix(in srgb, var(--tier-c, #14b8a6) 28%, transparent)',
+                boxShadow: '0 0 12px var(--tier-glow, rgba(20,184,166,0.18))',
+              } : undefined}
             >
               {({ isActive }) => (
                 <>
@@ -515,7 +519,8 @@ export default function App() {
                     <motion.div
                       layoutId="nav-indicator"
                       transition={{ duration: 0.12, ease: 'easeOut' }}
-                      className="ml-auto w-1.5 h-1.5 rounded-full bg-accent"
+                      className="ml-auto w-1.5 h-1.5 rounded-full"
+                      style={{ background: 'var(--tier-c, #14b8a6)' }}
                     />
                   )}
                 </>
@@ -530,11 +535,15 @@ export default function App() {
                   key={id}
                   to={`/${id}`}
                   onClick={() => setSidebarOpen(false)}
-                  className={({ isActive }) => `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-100
-                    ${isActive
-                      ? 'bg-accent/15 text-accent border border-accent/25 shadow-glow'
-                      : 'text-muted hover:text-text hover:bg-panel'
-                    }`}
+                  className={({ isActive }) => `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-100 border ${
+                    isActive ? '' : 'text-muted hover:text-text hover:bg-panel border-transparent'
+                  }`}
+                  style={({ isActive }) => isActive ? {
+                    background: 'color-mix(in srgb, var(--tier-c, #14b8a6) 18%, transparent)',
+                    color: 'var(--tier-light, #5eead4)',
+                    borderColor: 'color-mix(in srgb, var(--tier-c, #14b8a6) 28%, transparent)',
+                    boxShadow: '0 0 12px var(--tier-glow, rgba(20,184,166,0.18))',
+                  } : undefined}
                 >
                   {({ isActive }) => (
                     <>
@@ -544,7 +553,8 @@ export default function App() {
                         <motion.div
                           layoutId="nav-indicator"
                           transition={{ duration: 0.12, ease: 'easeOut' }}
-                          className="ml-auto w-1.5 h-1.5 rounded-full bg-accent"
+                          className="ml-auto w-1.5 h-1.5 rounded-full"
+                          style={{ background: 'var(--tier-c, #14b8a6)' }}
                         />
                       )}
                     </>
@@ -755,8 +765,9 @@ export default function App() {
               key={id}
               to={`/${id}`}
               className={({ isActive }) => `flex-1 min-w-0 flex flex-col items-center gap-1 py-3 text-[10px] sm:text-xs font-medium leading-tight transition-colors duration-100 ${
-                isActive ? 'text-accent' : 'text-muted'
+                isActive ? '' : 'text-muted'
               }`}
+              style={({ isActive }) => isActive ? { color: 'var(--tier-light, #5eead4)' } : undefined}
             >
               {({ isActive }) => (
                 <>
@@ -766,7 +777,8 @@ export default function App() {
                     <motion.div
                       layoutId="bottom-nav-indicator"
                       transition={{ duration: 0.12, ease: 'easeOut' }}
-                      className="absolute bottom-0 w-8 h-0.5 bg-accent rounded-full"
+                      className="absolute bottom-0 w-8 h-0.5 rounded-full"
+                      style={{ background: 'var(--tier-c, #14b8a6)' }}
                     />
                   )}
                 </>
