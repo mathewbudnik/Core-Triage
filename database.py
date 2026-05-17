@@ -296,6 +296,23 @@ def init_db() -> None:
                 """
             )
 
+            # Awards — milestones earned by the user (first V5, 10-day streak,
+            # ×30 sends, etc.). The award engine in main.py runs at log commit
+            # and inserts new rows here when predicates unlock.
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS awards (
+                    id         SERIAL PRIMARY KEY,
+                    user_id    INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    kind       TEXT NOT NULL,
+                    payload    JSONB NOT NULL DEFAULT '{}'::jsonb,
+                    earned_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    UNIQUE (user_id, kind)
+                );
+                """
+            )
+            cur.execute("CREATE INDEX IF NOT EXISTS awards_user_idx ON awards (user_id);")
+
             # ── Coach messaging ────────────────────────────────────────────
             cur.execute(
                 """
