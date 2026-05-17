@@ -1204,6 +1204,108 @@ def get_pyramid(user_id: int, window: str = "month") -> Dict[str, Any]:
     return out
 
 
+# ── Awards helpers ────────────────────────────────────────────────────
+
+
+def insert_award(user_id: int, kind: str, payload: Dict[str, Any]) -> Optional[int]:
+    """Insert a new award row, idempotent via UNIQUE (user_id, kind).
+
+    Returns the new row id if inserted, None if it already existed.
+    """
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO awards (user_id, kind, payload)
+                VALUES (%s, %s, %s::jsonb)
+                ON CONFLICT (user_id, kind) DO NOTHING
+                RETURNING id;
+                """,
+                (int(user_id), kind, json.dumps(payload or {})),
+            )
+            row = cur.fetchone()
+        conn.commit()
+    return int(row[0]) if row else None
+
+
+def list_awards(user_id: int) -> List[Dict[str, Any]]:
+    """Return the user's earned awards, newest first."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, kind, payload, earned_at
+                FROM awards WHERE user_id = %s
+                ORDER BY earned_at DESC;
+                """,
+                (int(user_id),),
+            )
+            rows = cur.fetchall()
+    return [
+        {
+            "id": r[0],
+            "kind": r[1],
+            "payload": r[2] or {},
+            "earned_at": str(r[3]),
+        }
+        for r in rows
+    ]
+
+
+def count_sends(user_id: int) -> int:
+    """Total count of sends across all `training_logs.climbs` rows for a user.
+    Sums `s` across every grade across both disciplines."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT climbs FROM training_logs
+                WHERE user_id = %s AND climbs <> '{}'::jsonb;
+                """,
+                (int(user_id),),
+            )
+            rows = cur.fetchall()
+    total = 0
+    for (climbs,) in rows:
+        for discipline in ("boulder", "route"):
+            grades = (climbs or {}).get(discipline, {})
+            for c in grades.values():
+                total += int(c.get("s", 0) or 0)
+    return total
+
+
+def compute_streak(user_id: int, today: str) -> int:
+    """Return the user's current consecutive-day streak ending at `today`.
+
+    `today` is a YYYY-MM-DD string in the user's local timezone (matches the
+    `training_logs.date` column convention). A streak is the number of
+    consecutive calendar days ending at today with at least one training_logs
+    row. Zero if today has no log.
+    """
+    from datetime import date, timedelta
+
+    def parse(s: str) -> date:
+        y, m, d = s.split("-")
+        return date(int(y), int(m), int(d))
+
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT DISTINCT date FROM training_logs WHERE user_id = %s;
+                """,
+                (int(user_id),),
+            )
+            dates_set = {r[0] for r in cur.fetchall()}
+
+    cursor_date = parse(today)
+    streak = 0
+    while cursor_date in dates_set:
+        streak += 1
+        cursor_date = cursor_date - timedelta(days=1)
+    return streak
+
+
 # ---------------------------------------------------------------------------
 # Train stats + leaderboard helpers
 # ---------------------------------------------------------------------------
