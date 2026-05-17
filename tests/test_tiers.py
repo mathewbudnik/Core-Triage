@@ -65,6 +65,14 @@ class YDSTierTests(unittest.TestCase):
         self.assertEqual(yds_to_tier("5.14a"), "v10")
         self.assertEqual(yds_to_tier("5.15d"), "v10")
 
+    def test_invalid_yds_raises(self):
+        with self.assertRaises(ValueError):
+            yds_to_tier("5.0")
+        with self.assertRaises(ValueError):
+            yds_to_tier("5.16a")
+        with self.assertRaises(ValueError):
+            yds_to_tier("V5")
+
 
 class WorkingTierTests(unittest.TestCase):
     def test_no_sends_defaults_to_v0(self):

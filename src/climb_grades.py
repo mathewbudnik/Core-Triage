@@ -160,11 +160,12 @@ _YDS_TIER_MAP = {
 
 
 def yds_to_tier(grade: str) -> str:
-    """Map a YDS grade ('5.6'..'5.15d') to a tier id."""
+    """Map a YDS grade ('5.6'..'5.15d') to a tier id.
+
+    Strictly enumerated — any grade outside the chart raises ValueError.
+    If the chart ever grows (e.g. 5.16a), add it to `_YDS_TIER_MAP`.
+    """
     if grade not in _YDS_TIER_MAP:
-        if ROUTE_RE.match(grade):
-            # Valid YDS we forgot to map — default to v10 if 5.14+, else v0
-            return "v10"
         raise ValueError(f"invalid YDS grade: {grade}")
     return _YDS_TIER_MAP[grade]
 
