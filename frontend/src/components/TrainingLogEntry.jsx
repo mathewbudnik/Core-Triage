@@ -5,11 +5,13 @@ import { logTraining } from '../api'
 import DatePicker from './DatePicker'
 import ClimbLogSection from './ClimbLogSection'
 
-const SESSION_TYPES = ['bouldering', 'routes', 'hangboard', 'strength', 'outdoor', 'rest', 'other']
+const SESSION_TYPES = ['bouldering', 'routes', 'outdoor', 'hangboard', 'strength', 'rest']
 
 // Session types where logging individual climbs makes sense. Hangboard /
-// strength / rest hide the climb section entirely — no climbs to log.
-const CLIMB_SESSION_TYPES = new Set(['bouldering', 'routes', 'outdoor', 'other'])
+// strength / rest are training sessions — they hide the climb section AND
+// the "grades sent" free-text field, leaving only date/duration/intensity/notes.
+const CLIMB_SESSION_TYPES = new Set(['bouldering', 'routes', 'outdoor'])
+const TRAINING_SESSION_TYPES = new Set(['hangboard', 'strength', 'rest'])
 
 const INTENSITY_LABELS = {
   1: 'Very easy', 2: 'Easy', 3: 'Easy-moderate',
@@ -139,25 +141,26 @@ export default function TrainingLogEntry({ sessionType: prefillType, onSave, onC
         />
       </div>
 
-      {/* Free-text grades_sent — kept as a fallback for users who prefer typing */}
-      <div>
-        <p className="text-xs text-muted mb-1">Grades sent (free-form, optional)</p>
-        <input
-          type="text"
-          placeholder="e.g. V5×3, V6×1, V7 attempt"
-          value={form.grades_sent}
-          onChange={(e) => set('grades_sent', e.target.value)}
-          className="w-full bg-panel border border-outline rounded-lg px-3 py-1.5 text-sm text-text placeholder:text-muted/50 outline-none focus:border-accent"
-        />
-      </div>
-
-      {/* Structured climb log — only for climbing-relevant session types */}
+      {/* Climbing-only fields: free-text grades + structured climb counters.
+          Hidden entirely for training sessions (hangboard/strength/rest). */}
       {showClimbSection && (
-        <ClimbLogSection
-          value={form.climbs}
-          onChange={(v) => set('climbs', v)}
-          defaultTab={defaultTab}
-        />
+        <>
+          <div>
+            <p className="text-xs text-muted mb-1">Grades sent (free-form, optional)</p>
+            <input
+              type="text"
+              placeholder="e.g. V5×3, V6×1, V7 attempt"
+              value={form.grades_sent}
+              onChange={(e) => set('grades_sent', e.target.value)}
+              className="w-full bg-panel border border-outline rounded-lg px-3 py-1.5 text-sm text-text placeholder:text-muted/50 outline-none focus:border-accent"
+            />
+          </div>
+          <ClimbLogSection
+            value={form.climbs}
+            onChange={(v) => set('climbs', v)}
+            defaultTab={defaultTab}
+          />
+        </>
       )}
 
       {/* Notes */}
