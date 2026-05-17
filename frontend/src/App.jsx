@@ -16,6 +16,8 @@ import AccountMenu from './components/AccountMenu'
 import { PRIVACY_POLICY, TERMS_OF_SERVICE } from './data/legal'
 import { openBillingPortal } from './api'
 import UpgradeModal from './components/UpgradeModal'
+import AwardUnlockToast from './components/AwardUnlockToast'
+import TierPromotionTakeover from './components/TierPromotionTakeover'
 
 // Lazy-loaded routes — each tab + the standalone pages download only when
 // the user navigates to them. First-paint bundle drops dramatically because
@@ -85,7 +87,9 @@ export default function App() {
   const [bannerDismissed, setBannerDismissed] = useState(false)
   const [showUpgrade, setShowUpgrade] = useState(false)
   const [upgradeTrigger, setUpgradeTrigger] = useState('coaching')
-  const [toast, setToast] = useState(null) // { kind: 'error'|'info', message: string }
+  const [toast, setToast] = useState(null) // { kind: 'error'|'info'|'celebration', message: string, link?: string }
+  const [awardQueue, setAwardQueue] = useState([])      // Array of unlocked-award payloads, queued FIFO
+  const [promotion, setPromotion] = useState(null)      // { from, to } | null — tier promotion takeover
 
   // Derive "is on landing?" and "is on a special standalone page?" from URL
   // — landing has its own full-bleed layout; verify-email + billing/* are
@@ -161,6 +165,33 @@ export default function App() {
     window.addEventListener('ct:new-pr', handler)
     return () => window.removeEventListener('ct:new-pr', handler)
   }, [])
+
+  // Award unlock queue — multiple may unlock in one log
+  useEffect(() => {
+    const handler = (ev) => {
+      const list = ev.detail?.awards || []
+      if (list.length) setAwardQueue((q) => [...q, ...list])
+    }
+    window.addEventListener('ct:award-unlocked', handler)
+    return () => window.removeEventListener('ct:award-unlocked', handler)
+  }, [])
+
+  // Tier promotion — show full-screen takeover
+  useEffect(() => {
+    const handler = (ev) => {
+      const { from, to } = ev.detail || {}
+      if (from && to) setPromotion({ from, to })
+    }
+    window.addEventListener('ct:tier-promotion', handler)
+    return () => window.removeEventListener('ct:tier-promotion', handler)
+  }, [])
+
+  // Pop the head of the award queue every 5 seconds
+  useEffect(() => {
+    if (!awardQueue.length) return
+    const t = setTimeout(() => setAwardQueue((q) => q.slice(1)), 5000)
+    return () => clearTimeout(t)
+  }, [awardQueue])
 
   // Auto-dismiss toast — 4s for celebration, 5s for others
   useEffect(() => {
@@ -313,7 +344,31 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Toast (errors, session-expired notices) */}
+      {/* Award unlock toasts — queue, show first */}
+      <AnimatePresence>
+        {awardQueue.length > 0 && (
+          <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[210] max-w-sm w-[calc(100%-2rem)]">
+            <AwardUnlockToast
+              award={awardQueue[0]}
+              onTap={() => { navigate('/progress'); setAwardQueue((q) => q.slice(1)) }}
+              onClose={() => setAwardQueue((q) => q.slice(1))}
+            />
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Tier promotion takeover */}
+      <AnimatePresence>
+        {promotion && (
+          <TierPromotionTakeover
+            from={promotion.from}
+            to={promotion.to}
+            onClose={() => setPromotion(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Toast (errors, session-expired notices, PR celebration) */}
       <AnimatePresence>
         {toast && (
           <motion.div
@@ -329,9 +384,14 @@ export default function App() {
                 toast.kind === 'error'
                   ? 'bg-accent3/10 border-accent3/30 text-accent3'
                   : toast.kind === 'celebration'
-                    ? 'bg-gradient-to-r from-accent/20 to-accent2/15 border-accent/50 text-text cursor-pointer'
+                    ? 'cursor-pointer text-text'
                     : 'bg-panel2 border-outline text-text'
               }`}
+              style={toast.kind === 'celebration' ? {
+                background: 'linear-gradient(135deg, color-mix(in srgb, var(--tier-c) 25%, transparent), rgba(251,113,133,0.15))',
+                border: '0.5px solid color-mix(in srgb, var(--tier-c) 45%, transparent)',
+                boxShadow: '0 8px 24px color-mix(in srgb, var(--tier-c) 30%, transparent)',
+              } : undefined}
               onClick={() => {
                 if (toast.link) {
                   navigate(toast.link)
@@ -339,11 +399,28 @@ export default function App() {
                 }
               }}
             >
-              <span className="flex-1 leading-snug">
-                {toast.kind === 'celebration' && '🎉 '}
-                {toast.message}
-                {toast.link && <span className="ml-2 text-accent font-bold">Tap to view ›</span>}
-              </span>
+              {toast.kind === 'celebration' ? (
+                <>
+                  <span
+                    className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                    style={{
+                      background: 'color-mix(in srgb, var(--tier-c) 28%, transparent)',
+                      color: 'var(--tier-light)',
+                    }}
+                  >
+                    <Trophy size={14} />
+                  </span>
+                  <span className="flex-1 leading-snug">
+                    {toast.message}
+                    {toast.link && <span className="ml-2 text-accent font-semibold">Tap to view ›</span>}
+                  </span>
+                </>
+              ) : (
+                <span className="flex-1 leading-snug">
+                  {toast.message}
+                  {toast.link && <span className="ml-2 text-accent font-bold">Tap to view ›</span>}
+                </span>
+              )}
               <button
                 onClick={(e) => { e.stopPropagation(); setToast(null) }}
                 className="text-muted hover:text-text shrink-0"
