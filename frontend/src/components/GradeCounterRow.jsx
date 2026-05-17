@@ -2,7 +2,9 @@ import { Minus, Plus } from 'lucide-react'
 
 /**
  * One grade's three counters: Sends · Flashes · Projects.
- * Tap targets are 44×44px to meet the Apple HIG minimum on mobile.
+ * Buttons are 36×36px on mobile, 44×44px on larger screens.
+ * The grid uses minmax(0, 1fr) so cells can shrink below their content
+ * width — prevents horizontal overflow on narrow phones.
  *
  * Props:
  *   grade:    string                                — e.g. "V5" or "5.11a"
@@ -23,29 +25,29 @@ export default function GradeCounterRow({ grade, counters, onChange }) {
   }
 
   return (
-    <div className="grid grid-cols-[3rem_1fr_1fr_1fr] items-center gap-2 py-1.5">
+    <div className="grid grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1 sm:gap-2 py-1.5">
       <span className="text-sm font-bold text-text">{grade}</span>
       {[['s', s, 'sends'], ['f', f, 'flashes'], ['p', p, 'projects']].map(([k, val, label]) => (
-        <div key={k} className="flex items-center justify-between gap-1">
+        <div key={k} className="flex items-center justify-center gap-0.5 sm:gap-1 min-w-0">
           <button
             type="button"
             onClick={() => bump(k, -1)}
             disabled={val === 0}
             aria-label={`decrement ${label} for ${grade}`}
-            className="w-11 h-11 inline-flex items-center justify-center rounded-lg
+            className="w-9 h-9 sm:w-11 sm:h-11 shrink-0 inline-flex items-center justify-center rounded-lg
                        border border-outline text-muted hover:text-text
                        disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <Minus size={14} />
           </button>
-          <span className="text-sm font-bold text-text tabular-nums min-w-[1.5rem] text-center">
+          <span className="text-sm font-bold text-text tabular-nums w-5 sm:w-6 text-center">
             {val}
           </span>
           <button
             type="button"
             onClick={() => bump(k, +1)}
             aria-label={`increment ${label} for ${grade}`}
-            className="w-11 h-11 inline-flex items-center justify-center rounded-lg
+            className="w-9 h-9 sm:w-11 sm:h-11 shrink-0 inline-flex items-center justify-center rounded-lg
                        border border-outline text-muted hover:text-text"
           >
             <Plus size={14} />

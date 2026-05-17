@@ -100,7 +100,7 @@ export default function ClimbLogSection({ value, onChange, defaultTab = 'boulder
               </div>
 
               {/* Header */}
-              <div className="grid grid-cols-[3rem_1fr_1fr_1fr] items-center gap-2 px-1">
+              <div className="grid grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1 sm:gap-2 px-1">
                 <span />
                 <span className="text-[10px] uppercase tracking-wide text-muted text-center">Sends</span>
                 <span className="text-[10px] uppercase tracking-wide text-muted text-center">Flashes</span>
