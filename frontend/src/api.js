@@ -75,6 +75,12 @@ export const getPyramid = ({ window = 'month' } = {}) =>
 // Awards (earned + locked milestone catalog)
 export const getAwards = () => request('GET', '/api/awards')
 
+// Hub contextual tip card
+export const getHubTip = (date) =>
+  request('GET', `/api/hub/tip?date=${encodeURIComponent(date)}`)
+export const dismissHubTip = (date) =>
+  request('POST', `/api/hub/tip/dismiss?date=${encodeURIComponent(date)}`)
+
 // Rehab progress (daily checkoff)
 export const getRehabProgress = (date) =>
   request('GET', `/api/rehab/progress?date=${encodeURIComponent(date)}`)
