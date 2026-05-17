@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useTriageAutoscroll } from '../../hooks/useTriageAutoscroll'
+import { chipsForRegion } from '../../data/signalChips'
 import ChipGroup from './ChipGroup'
 import PainSlider from './PainSlider'
 import TriageRegionPill from './TriageRegionPill'
@@ -19,15 +20,6 @@ const ORDER = ['onset', 'mechanism', 'pain', 'anythingElse']
 const ONSET_OPTIONS = [
   { value: 'Gradual', label: 'Gradual' },
   { value: 'Sudden',  label: 'Sudden'  },
-]
-
-const SIGNAL_CHIPS = [
-  { value: 'swelling',     label: 'Swelling' },
-  { value: 'pop_snap',     label: 'Pop / snap' },
-  { value: 'numbness',     label: 'Numb / tingling' },
-  { value: 'weak_grip',    label: 'Weak grip' },
-  { value: 'bruising',     label: 'Bruising' },
-  { value: 'worse_morning', label: 'Worse in morning' },
 ]
 
 function painTone(v) {
@@ -57,6 +49,14 @@ export default function TriageWizard({
   loading, result, error, mechanisms,
 }) {
   const { refFor, scrollTo } = useTriageAutoscroll()
+
+  // Region-aware signal chips. Read from the canonical signalChips.js list
+  // so the `value` is the chip id the classifier expects — avoids a silent
+  // signal-loss regression where a wizard-local label diverges from the id.
+  const signalOptions = useMemo(
+    () => chipsForRegion(form.region).map((c) => ({ value: c.id, label: c.label })),
+    [form.region]
+  )
 
   // Section state map. Initial: onset focused, rest dim.
   const [states, setStates] = useState(() => ({
@@ -208,7 +208,7 @@ export default function TriageWizard({
         >
           <p className="text-sm font-bold mb-2">Any of these apply?</p>
           <ChipGroup
-            options={SIGNAL_CHIPS}
+            options={signalOptions}
             value={form.signal_chips || []}
             multi
             onChange={onPickSignals}
