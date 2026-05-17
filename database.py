@@ -1545,6 +1545,46 @@ def get_training_stats(user_id: int) -> Dict[str, Any]:
     }
 
 
+# Send goals per leaderboard window (Apple-Fitness-style: leaderboard ranks
+# by % of send goal closed, capped at 200%). Equalizing — a casual climber
+# closing 100% beats an athlete closing 95%. Future iteration: per-user
+# customizable goals on athlete_profiles.
+WEEKLY_SEND_GOAL  = 10
+MONTHLY_SEND_GOAL = 40
+PCT_CAP = 200
+
+
+def _sends_sql_expr(alias: str = "tl") -> str:
+    """Return a SQL expression summing total sends + flashes across both
+    disciplines for a single training_logs row. Works on JSONB column
+    `{alias}.climbs` shaped as {boulder: {V5: {s,f,p}, ...}, route: {...}}."""
+    return f"""(
+        COALESCE((
+            SELECT SUM(COALESCE((value ->> 's')::int, 0) + COALESCE((value ->> 'f')::int, 0))
+            FROM jsonb_each({alias}.climbs -> 'boulder')
+        ), 0)
+        +
+        COALESCE((
+            SELECT SUM(COALESCE((value ->> 's')::int, 0) + COALESCE((value ->> 'f')::int, 0))
+            FROM jsonb_each({alias}.climbs -> 'route')
+        ), 0)
+    )"""
+
+
+def _goal_for_window(window: str) -> Optional[int]:
+    """Send goal for the given leaderboard window. None for 'all' — no cap."""
+    if window == "week":  return WEEKLY_SEND_GOAL
+    if window == "month": return MONTHLY_SEND_GOAL
+    return None
+
+
+def _pct_closed(sends: int, goal: Optional[int]) -> Optional[int]:
+    """Pct of goal closed, capped at PCT_CAP. None when no goal (all-time)."""
+    if goal is None or goal <= 0:
+        return None
+    return min(int(round(sends * 100 / goal)), PCT_CAP)
+
+
 def get_leaderboard(
     *,
     viewer_user_id: int,
@@ -1553,31 +1593,47 @@ def get_leaderboard(
     limit: int = 10,
 ) -> Dict[str, Any]:
     """Top N + the viewer's own row. cohort=None defaults to viewer's
-    own experience_level. Pass cohort='global' to skip the cohort filter."""
+    own experience_level. Pass cohort='global' to skip the cohort filter.
+
+    Metric is total CLIMB SENDS (s+f across both disciplines, summed across
+    all training_logs in the window). Frontend renders pct = sends / goal,
+    capped at 200%.
+    """
     where_time = _WINDOW_SQL.get(window, _WINDOW_SQL["week"])
     is_global = cohort == "global"
     effective_cohort = cohort if cohort is not None else get_user_cohort(viewer_user_id)
+    sends_expr = _sends_sql_expr("tl")
+    goal = _goal_for_window(window)
 
     cohort_join   = "JOIN athlete_profiles p ON p.user_id = u.id" if not is_global else "LEFT JOIN athlete_profiles p ON p.user_id = u.id"
     cohort_filter = "" if is_global else "AND p.experience_level = %(cohort)s"
 
+    # CTE: per-user total sends in the window
+    user_sends_cte = f"""
+        user_sends AS (
+            SELECT tl.user_id, COALESCE(SUM({sends_expr}), 0) AS sends
+            FROM training_logs tl
+            WHERE {where_time}
+            GROUP BY tl.user_id
+        )
+    """
+
     base = f"""
+        WITH {user_sends_cte}
         SELECT
             u.id,
             u.display_name,
             u.leaderboard_private,
-            COALESCE(SUM(tl.duration_min), 0) / 60.0 AS hours,
+            COALESCE(us.sends, 0) AS sends,
             u.avatar_icon,
             u.avatar_color
         FROM users u
         {cohort_join}
-        LEFT JOIN training_logs tl
-          ON tl.user_id = u.id AND {where_time}
+        LEFT JOIN user_sends us ON us.user_id = u.id
         WHERE u.display_name IS NOT NULL
           {cohort_filter}
-        GROUP BY u.id, u.display_name, u.leaderboard_private, u.avatar_icon, u.avatar_color
-        HAVING COALESCE(SUM(tl.duration_min), 0) > 0
-        ORDER BY hours DESC
+          AND COALESCE(us.sends, 0) > 0
+        ORDER BY sends DESC
     """
 
     params = {"cohort": effective_cohort}
@@ -1586,15 +1642,15 @@ def get_leaderboard(
         with conn.cursor() as cur:
             cur.execute(base + " LIMIT %(limit)s;", {**params, "limit": int(limit)})
             top_rows = cur.fetchall()
-            # For private users, suppress both name and chosen avatar — they
-            # render as a generic anonymous chip on the frontend.
             top = [
                 {
                     "rank":         i + 1,
                     "user_id":      int(r[0]),
                     "display_name": "Private climber" if r[2] else r[1],
                     "is_private":   bool(r[2]),
-                    "hours":        round(float(r[3]), 1),
+                    "sends":        int(r[3]),
+                    "goal":         goal,
+                    "pct":          _pct_closed(int(r[3]), goal),
                     "avatar_icon":  None if r[2] else r[4],
                     "avatar_color": None if r[2] else r[5],
                 }
@@ -1603,24 +1659,23 @@ def get_leaderboard(
 
             cur.execute(
                 f"""
-                WITH ranked AS (
+                WITH {user_sends_cte},
+                ranked AS (
                     SELECT
                         u.id,
                         u.display_name,
                         u.leaderboard_private,
                         u.avatar_icon,
                         u.avatar_color,
-                        COALESCE(SUM(tl.duration_min), 0) / 60.0 AS hours,
-                        RANK() OVER (ORDER BY COALESCE(SUM(tl.duration_min), 0) DESC) AS r
+                        COALESCE(us.sends, 0) AS sends,
+                        RANK() OVER (ORDER BY COALESCE(us.sends, 0) DESC) AS r
                     FROM users u
                     {cohort_join}
-                    LEFT JOIN training_logs tl
-                      ON tl.user_id = u.id AND {where_time}
+                    LEFT JOIN user_sends us ON us.user_id = u.id
                     WHERE u.display_name IS NOT NULL
                       {cohort_filter}
-                    GROUP BY u.id, u.display_name, u.leaderboard_private, u.avatar_icon, u.avatar_color
                 )
-                SELECT id, display_name, leaderboard_private, hours, r, avatar_icon, avatar_color
+                SELECT id, display_name, leaderboard_private, sends, r, avatar_icon, avatar_color
                 FROM ranked
                 WHERE id = %(viewer)s;
                 """,
@@ -1630,19 +1685,20 @@ def get_leaderboard(
 
     me = None
     if mr:
+        my_sends = int(mr[3])
         me = {
-            "rank":         int(mr[4]) if mr[3] and mr[3] > 0 else None,
+            "rank":         int(mr[4]) if my_sends > 0 else None,
             "user_id":      int(mr[0]),
             "display_name": "Private climber" if mr[2] else mr[1],
             "is_private":   bool(mr[2]),
-            "hours":        round(float(mr[3]), 1),
-            # Viewer sees their own avatar even when private — it's only
-            # other viewers who see the anonymous version.
+            "sends":        my_sends,
+            "goal":         goal,
+            "pct":          _pct_closed(my_sends, goal),
             "avatar_icon":  mr[5],
             "avatar_color": mr[6],
         }
 
-    return {"window": window, "cohort": effective_cohort or "global", "top": top, "me": me}
+    return {"window": window, "cohort": effective_cohort or "global", "top": top, "me": me, "goal": goal}
 
 
 def set_display_name(user_id: int, display_name: str) -> bool:

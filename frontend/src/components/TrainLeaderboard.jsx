@@ -75,32 +75,49 @@ function Row({ entry, isMe, podium }) {
           />
         )}
       </div>
-      <span
-        className={`font-extrabold tabular-nums ${podium ? 'text-base' : 'text-[13px]'}`}
-        style={{ color: theme.valueColor }}
-      >
-        {entry.hours.toFixed(1)}h
-      </span>
+      <div className="text-right shrink-0">
+        {entry.pct != null ? (
+          <>
+            <div
+              className={`font-extrabold tabular-nums ${podium ? 'text-base' : 'text-[13px]'}`}
+              style={{ color: theme.valueColor }}
+            >
+              {entry.pct}%
+            </div>
+            <div className="text-[9px] text-muted/60 tabular-nums leading-tight">
+              {entry.sends}/{entry.goal}
+            </div>
+          </>
+        ) : (
+          // All-time window: no goal → show raw sends
+          <div
+            className={`font-extrabold tabular-nums ${podium ? 'text-base' : 'text-[13px]'}`}
+            style={{ color: theme.valueColor }}
+          >
+            {entry.sends} <span className="text-[10px] font-medium text-muted">sends</span>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
 
-// "X.Xh to climb past NextPerson" — the fun-and-fair carrot. Only shown
-// when the user has someone above them to chase. When the user is already
-// #1, the inline crown on the row carries that moment — no duplicate
-// callout here.
+// "N more sends to overtake NextPerson" — the fun-and-fair carrot. Only
+// shown when the user has someone above them to chase. When the user is
+// already #1, the inline crown on the row carries that moment — no
+// duplicate callout here.
 function NextRankCarrot({ data }) {
   if (!data?.me?.rank || data.me.rank === 1) return null
   const aboveRank = data.me.rank - 1
   const above = data.top.find((t) => t.rank === aboveRank)
   if (!above) return null
-  const gap = above.hours - data.me.hours
+  const gap = above.sends - data.me.sends
   if (gap <= 0) return null
   return (
     <div className="flex items-center justify-center gap-2 mt-3 py-2 px-3 rounded-lg bg-accent/8 border border-accent/25">
       <ArrowUp size={12} className="text-accent" strokeWidth={2.6} />
       <span className="text-[11px] text-text font-medium">
-        <b className="text-accent">{gap.toFixed(1)}h</b> to climb past {above.display_name}
+        <b className="text-accent">{gap} {gap === 1 ? 'send' : 'sends'}</b> to overtake {above.display_name}
       </span>
     </div>
   )
