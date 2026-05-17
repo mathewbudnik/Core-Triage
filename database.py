@@ -313,6 +313,28 @@ def init_db() -> None:
             )
             cur.execute("CREATE INDEX IF NOT EXISTS awards_user_idx ON awards (user_id);")
 
+            # Hub tip card — one row per user per day; cached AI-personalized
+            # coaching tip. See docs/superpowers/specs/2026-05-17-hub-tip-card-design.md.
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS hub_tips (
+                    id           SERIAL PRIMARY KEY,
+                    user_id      INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    date         DATE NOT NULL,
+                    kind         TEXT NOT NULL,
+                    headline     TEXT NOT NULL DEFAULT '',
+                    body         TEXT NOT NULL DEFAULT '',
+                    cta_label    TEXT,
+                    cta_route    TEXT,
+                    color        TEXT NOT NULL DEFAULT '#94949f',
+                    dismissed_at TIMESTAMPTZ NULL,
+                    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    UNIQUE (user_id, date)
+                );
+                """
+            )
+            cur.execute("CREATE INDEX IF NOT EXISTS hub_tips_user_date_idx ON hub_tips (user_id, date);")
+
             # ── Coach messaging ────────────────────────────────────────────
             cur.execute(
                 """
