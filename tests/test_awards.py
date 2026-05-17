@@ -127,3 +127,87 @@ class AwardHelpersTests(unittest.TestCase):
 
     def test_compute_streak_no_logs(self):
         self.assertEqual(compute_streak(self.uid, today="2026-05-16"), 0)
+
+
+from src.awards_catalog import (  # noqa: E402
+    AWARD_CATALOG,
+    detect_new_awards,
+)
+
+
+class AwardEngineTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        init_db()
+        cls.uid = _make_user(email="award_engine@coretriage.local")
+
+    def tearDown(self):
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM awards WHERE user_id = %s;", (self.uid,))
+                cur.execute("DELETE FROM training_logs WHERE user_id = %s;", (self.uid,))
+            conn.commit()
+
+    def test_first_send_v3_fires_when_logged(self):
+        log_training(self.uid, {
+            "date": "2026-05-15", "session_type": "bouldering",
+            "duration_min": 60, "intensity": 7,
+            "climbs": {"boulder": {"V3": {"s": 1, "f": 0, "p": 0}}},
+        })
+        new = detect_new_awards(self.uid, "2026-05-15")
+        kinds = {a["kind"] for a in new}
+        self.assertIn("first_send_v3", kinds)
+
+    def test_first_send_v3_idempotent(self):
+        log_training(self.uid, {
+            "date": "2026-05-15", "session_type": "bouldering",
+            "duration_min": 60, "intensity": 7,
+            "climbs": {"boulder": {"V3": {"s": 1, "f": 0, "p": 0}}},
+        })
+        detect_new_awards(self.uid, "2026-05-15")
+        # Log another V3 — should NOT re-fire first_send_v3
+        log_training(self.uid, {
+            "date": "2026-05-16", "session_type": "bouldering",
+            "duration_min": 60, "intensity": 7,
+            "climbs": {"boulder": {"V3": {"s": 2, "f": 0, "p": 0}}},
+        })
+        new = detect_new_awards(self.uid, "2026-05-16")
+        kinds = {a["kind"] for a in new}
+        self.assertNotIn("first_send_v3", kinds)
+
+    def test_first_flash_fires(self):
+        log_training(self.uid, {
+            "date": "2026-05-15", "session_type": "bouldering",
+            "duration_min": 60, "intensity": 7,
+            "climbs": {"boulder": {"V4": {"s": 1, "f": 1, "p": 0}}},
+        })
+        new = detect_new_awards(self.uid, "2026-05-15")
+        self.assertIn("first_flash", {a["kind"] for a in new})
+
+    def test_streak_10d_fires_at_day_10(self):
+        from datetime import date, timedelta
+        start = date(2026, 5, 6)
+        for i in range(10):
+            d = (start + timedelta(days=i)).isoformat()
+            log_training(self.uid, {
+                "date": d, "session_type": "bouldering",
+                "duration_min": 60, "intensity": 7,
+            })
+        new = detect_new_awards(self.uid, "2026-05-15")
+        self.assertIn("streak_10d", {a["kind"] for a in new})
+
+    def test_volume_10_fires(self):
+        log_training(self.uid, {
+            "date": "2026-05-15", "session_type": "bouldering",
+            "duration_min": 60, "intensity": 7,
+            "climbs": {"boulder": {"V3": {"s": 10, "f": 0, "p": 0}}},
+        })
+        new = detect_new_awards(self.uid, "2026-05-15")
+        self.assertIn("volume_10", {a["kind"] for a in new})
+
+    def test_catalog_complete(self):
+        # Sanity: catalog covers grade/streak/volume/style milestones
+        kinds = {entry["kind"] for entry in AWARD_CATALOG}
+        for required in ("first_send_v3", "first_send_v10", "streak_3d", "streak_100d",
+                         "volume_10", "volume_500", "first_flash"):
+            self.assertIn(required, kinds, f"catalog missing {required}")
