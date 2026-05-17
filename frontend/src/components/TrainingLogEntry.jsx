@@ -19,10 +19,14 @@ const INTENSITY_LABELS = {
   7: 'Hard', 8: 'Very hard', 9: 'Maximal', 10: 'Absolute max',
 }
 
-const INTENSITY_COLOR = (val) => {
-  if (val <= 3) return 'text-accent'
-  if (val <= 6) return 'text-accent3'
-  return 'text-accent2'
+// Triage-style severity ramp: green (1-3) → yellow (4-5) → orange (6-7) → red (8-10).
+// Used for both the slider's accent-color and the value label color so they
+// shift together as the user drags the thumb.
+const INTENSITY_HEX = (val) => {
+  if (val <= 3) return '#22c55e'  // green
+  if (val <= 5) return '#fbbf24'  // yellow
+  if (val <= 7) return '#fb923c'  // orange
+  return '#ef4444'                 // red
 }
 
 export default function TrainingLogEntry({ sessionType: prefillType, onSave, onCancel }) {
@@ -123,11 +127,12 @@ export default function TrainingLogEntry({ sessionType: prefillType, onSave, onC
         />
       </div>
 
-      {/* Intensity */}
+      {/* Intensity — color steps green→red as severity rises */}
       <div>
         <div className="flex items-center justify-between mb-1">
           <p className="text-xs text-muted">Intensity (RPE)</p>
-          <span className={`text-xs font-bold ${INTENSITY_COLOR(form.intensity)}`}>
+          <span className="text-xs font-bold"
+                style={{ color: INTENSITY_HEX(form.intensity) }}>
             {form.intensity}/10 — {INTENSITY_LABELS[form.intensity]}
           </span>
         </div>
@@ -137,7 +142,8 @@ export default function TrainingLogEntry({ sessionType: prefillType, onSave, onC
           max={10}
           value={form.intensity}
           onChange={(e) => set('intensity', +e.target.value)}
-          className="w-full accent-teal-400"
+          className="w-full"
+          style={{ accentColor: INTENSITY_HEX(form.intensity) }}
         />
       </div>
 
