@@ -250,3 +250,56 @@ class GenerateTipTests(unittest.TestCase):
     def test_generate_with_none_client_uses_fallback(self):
         tip = generate_tip("overtraining", {"streak": 5, "hardest_send": "V5"}, None)
         self.assertEqual(tip["headline"], FALLBACK_COPY["overtraining"]["headline"])
+
+
+from src.hub_tips import get_or_create_tip, dismiss_tip  # noqa: E402
+
+
+class OrchestrationTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        init_db()
+        cls.uid = _make_user(email="orchestration_test@coretriage.local")
+
+    def tearDown(self):
+        _clear_user_state(self.uid)
+
+    def test_no_match_returns_none_and_inserts_sentinel(self):
+        client = _FakeOpenAIClient(response_json='{"headline":"x","body":"y"}')
+        tip = get_or_create_tip(self.uid, "2026-05-17", client)
+        self.assertIsNone(tip)
+        row = get_hub_tip(self.uid, "2026-05-17")
+        self.assertIsNotNone(row, "sentinel row should be inserted on no-match")
+        self.assertEqual(row["kind"], "none")
+
+    def test_overtraining_match_returns_personalized_tip(self):
+        start = date(2026, 5, 13)
+        for i in range(5):
+            _seed_training_log(self.uid, (start + timedelta(days=i)).isoformat())
+        client = _FakeOpenAIClient(response_json='{"headline":"Rest up.","body":"Your fingers need it."}')
+        tip = get_or_create_tip(self.uid, "2026-05-17", client)
+        self.assertIsNotNone(tip)
+        self.assertEqual(tip["kind"], "overtraining")
+        self.assertEqual(tip["headline"], "Rest up.")
+        self.assertEqual(tip["color"], "#f7b03a")
+
+    def test_subsequent_calls_return_cached_tip_without_calling_openai(self):
+        start = date(2026, 5, 13)
+        for i in range(5):
+            _seed_training_log(self.uid, (start + timedelta(days=i)).isoformat())
+        client = _FakeOpenAIClient(response_json='{"headline":"First.","body":"Body."}')
+        first = get_or_create_tip(self.uid, "2026-05-17", client)
+        # Swap client to one that would raise — proves we didn't hit it
+        broken = _FakeOpenAIClient(raise_exc=RuntimeError("must not call"))
+        second = get_or_create_tip(self.uid, "2026-05-17", broken)
+        self.assertEqual(second["headline"], first["headline"])
+
+    def test_dismissed_tip_returns_none_on_subsequent_load(self):
+        start = date(2026, 5, 13)
+        for i in range(5):
+            _seed_training_log(self.uid, (start + timedelta(days=i)).isoformat())
+        client = _FakeOpenAIClient(response_json='{"headline":"x","body":"y"}')
+        get_or_create_tip(self.uid, "2026-05-17", client)
+        dismiss_tip(self.uid, "2026-05-17")
+        tip = get_or_create_tip(self.uid, "2026-05-17", client)
+        self.assertIsNone(tip)

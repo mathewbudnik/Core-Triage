@@ -316,3 +316,67 @@ def generate_tip(kind: str, context: Dict[str, Any], openai_client: Optional[Any
         # Keep fallback copy already in `out`
 
     return out
+
+
+def get_or_create_tip(
+    user_id: int,
+    today_iso: str,
+    openai_client: Optional[Any],
+) -> Optional[Dict[str, Any]]:
+    """Cache-aware entry point. Returns the tip dict or None.
+
+    1. If `hub_tips` has today's row and it's dismissed → return None.
+    2. If `hub_tips` has today's row and kind='none' → return None (sentinel).
+    3. If `hub_tips` has today's row with content → return it (cached).
+    4. Otherwise: run pattern detection.
+       - No match → insert sentinel kind='none' row, return None.
+       - Match → call generate_tip + insert row + return tip.
+    """
+    existing = get_hub_tip(user_id, today_iso)
+    if existing:
+        if existing["dismissed_at"] or existing["kind"] in ("none", "dismissed"):
+            return None
+        return {
+            "id":        existing["id"],
+            "kind":      existing["kind"],
+            "headline":  existing["headline"],
+            "body":      existing["body"],
+            "cta_label": existing["cta_label"],
+            "cta_route": existing["cta_route"],
+            "color":     existing["color"],
+        }
+
+    kind, context = detect_pattern(user_id, today_iso)
+    if not kind:
+        # Insert sentinel so we don't re-detect for the rest of today
+        insert_hub_tip(
+            user_id, today_iso,
+            kind="none", headline="", body="",
+            cta_label=None, cta_route=None, color="#94949f",
+        )
+        return None
+
+    tip = generate_tip(kind, context, openai_client)
+    new_id = insert_hub_tip(
+        user_id, today_iso,
+        kind=kind,
+        headline=tip["headline"],
+        body=tip["body"],
+        cta_label=tip["cta_label"],
+        cta_route=tip["cta_route"],
+        color=tip["color"],
+    )
+    return {
+        "id":        new_id,
+        "kind":      kind,
+        "headline":  tip["headline"],
+        "body":      tip["body"],
+        "cta_label": tip["cta_label"],
+        "cta_route": tip["cta_route"],
+        "color":     tip["color"],
+    }
+
+
+def dismiss_tip(user_id: int, today_iso: str) -> bool:
+    """Mark today's tip as dismissed. Idempotent."""
+    return dismiss_hub_tip(user_id, today_iso)
