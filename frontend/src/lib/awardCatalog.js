@@ -20,14 +20,14 @@ function gradeMedal(tierId) {
 
 export const AWARD_META = {
   // Grade milestones
-  first_send_v3:  { name: 'First V3',  sub: 'Acid Lime',    ...gradeMedal('v3') },
-  first_send_v4:  { name: 'First V4',  sub: 'Jade',         ...gradeMedal('v4') },
-  first_send_v5:  { name: 'First V5',  sub: 'Teal',         ...gradeMedal('v5') },
-  first_send_v6:  { name: 'First V6',  sub: 'Electric Sky', ...gradeMedal('v6') },
-  first_send_v7:  { name: 'First V7',  sub: 'Cobalt',       ...gradeMedal('v7') },
-  first_send_v8:  { name: 'First V8',  sub: 'Iris',         ...gradeMedal('v8') },
-  first_send_v9:  { name: 'First V9',  sub: 'Magenta',      ...gradeMedal('v9') },
-  first_send_v10: { name: 'First V10+',sub: 'Coral',        ...gradeMedal('v10') },
+  first_send_v3:  { name: 'First V3',  sub: 'Bramble', ...gradeMedal('v3') },
+  first_send_v4:  { name: 'First V4',  sub: 'Reef',    ...gradeMedal('v4') },
+  first_send_v5:  { name: 'First V5',  sub: 'Cove',    ...gradeMedal('v5') },
+  first_send_v6:  { name: 'First V6',  sub: 'Atlas',   ...gradeMedal('v6') },
+  first_send_v7:  { name: 'First V7',  sub: 'Vault',   ...gradeMedal('v7') },
+  first_send_v8:  { name: 'First V8',  sub: 'Veil',    ...gradeMedal('v8') },
+  first_send_v9:  { name: 'First V9',  sub: 'Vivid',   ...gradeMedal('v9') },
+  first_send_v10: { name: 'First V10+',sub: 'Phoenix', ...gradeMedal('v10') },
   // Streak milestones
   streak_3d:   { name: '3-day streak',   sub: 'Consistency starts', ...HONEY, icon: Flame, label: '3d' },
   streak_10d:  { name: '10-day streak',  sub: "You're showing up",  ...HONEY, icon: Flame, label: '10d' },

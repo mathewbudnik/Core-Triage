@@ -113,6 +113,6 @@ class TierConstantsTests(unittest.TestCase):
         for tier in V_TIERS:
             self.assertIn(tier, TIER_NAMES)
         # Spot check names
-        self.assertEqual(TIER_NAMES["v0"], "Ivory")
-        self.assertEqual(TIER_NAMES["v7"], "Cobalt")
-        self.assertEqual(TIER_NAMES["v10"], "Coral")
+        self.assertEqual(TIER_NAMES["v0"], "Frost")
+        self.assertEqual(TIER_NAMES["v7"], "Vault")
+        self.assertEqual(TIER_NAMES["v10"], "Phoenix")

@@ -9,17 +9,17 @@
 export const V_TIERS = ['v0','v1','v2','v3','v4','v5','v6','v7','v8','v9','v10']
 
 export const TIER_NAMES = {
-  v0:  'Ivory',
-  v1:  'Honey',
-  v2:  'Apricot',
-  v3:  'Acid Lime',
-  v4:  'Jade',
-  v5:  'Teal',
-  v6:  'Electric Sky',
-  v7:  'Cobalt',
-  v8:  'Iris',
-  v9:  'Magenta',
-  v10: 'Coral',
+  v0:  'Frost',
+  v1:  'Halo',
+  v2:  'Ember',
+  v3:  'Bramble',
+  v4:  'Reef',
+  v5:  'Cove',
+  v6:  'Atlas',
+  v7:  'Vault',
+  v8:  'Veil',
+  v9:  'Vivid',
+  v10: 'Phoenix',
 }
 
 export const TIER_TOKENS = {
