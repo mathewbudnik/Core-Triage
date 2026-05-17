@@ -47,11 +47,17 @@ export default function TrainingLogEntry({ sessionType: prefillType, onSave, onC
     setError(null)
     try {
       const res = await logTraining(form)
-      // If the server detected a new PR, broadcast a window event so App.jsx
-      // can show the celebration toast. We can't import the toast directly
-      // because TrainingLogEntry isn't a child of the toast slot.
+      // PR toast — existing.
       if (res?.new_prs && (res.new_prs.boulder || res.new_prs.route)) {
         window.dispatchEvent(new CustomEvent('ct:new-pr', { detail: res.new_prs }))
+      }
+      // Award unlock toasts — App.jsx queues them.
+      if (Array.isArray(res?.new_awards) && res.new_awards.length) {
+        window.dispatchEvent(new CustomEvent('ct:award-unlocked', { detail: { awards: res.new_awards } }))
+      }
+      // Tier promotion takeover.
+      if (res?.tier_change && res.tier_change.from !== res.tier_change.to) {
+        window.dispatchEvent(new CustomEvent('ct:tier-promotion', { detail: res.tier_change }))
       }
       onSave?.()
     } catch (err) {
