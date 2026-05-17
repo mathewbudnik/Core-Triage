@@ -10,6 +10,8 @@ Pattern priority (first match wins): active_rehab → overtraining → plateau �
 """
 from __future__ import annotations
 
+import json
+import logging
 from datetime import date, timedelta
 from typing import Any, Dict, Optional, Tuple
 
@@ -161,3 +163,156 @@ def detect_pattern(user_id: int, today_iso: str) -> Tuple[Optional[str], Optiona
                 kind = f"return_break_{ctx['band']}"
             return kind, ctx
     return None, None
+
+
+logger = logging.getLogger(__name__)
+
+
+# Per-kind static metadata: CTA + color. Frontend uses `color` for the
+# card gradient and border.
+TIP_META: Dict[str, Dict[str, Any]] = {
+    "active_rehab": {
+        "cta_label": "Open Body",
+        "cta_route": "/body",
+        "color":     "#fb7185",
+    },
+    "overtraining": {
+        "cta_label": "Open in Chat",
+        "cta_route": "/chat?topic=overtraining",
+        "color":     "#f7b03a",
+    },
+    "plateau_4w": {
+        "cta_label": "Get a drill",
+        "cta_route": "/chat?topic=plateau",
+        "color":     "#14b8a6",
+    },
+    "plateau_8w": {
+        "cta_label": "Get a drill",
+        "cta_route": "/chat?topic=plateau",
+        "color":     "#14b8a6",
+    },
+    "return_break_7d":  {"cta_label": None, "cta_route": None, "color": "#fb7185"},
+    "return_break_14d": {"cta_label": None, "cta_route": None, "color": "#fb7185"},
+    "return_break_30d": {"cta_label": None, "cta_route": None, "color": "#fb7185"},
+}
+
+
+# Static fallback copy when OpenAI is unavailable. Quality is lower than
+# the personalized version but the Hub never blank-renders.
+FALLBACK_COPY: Dict[str, Dict[str, str]] = {
+    "active_rehab": {
+        "headline": "Today's rehab focus",
+        "body":     "Open the Body tab for today's exercises. Keep pain at or below 3/10 and skip anything that aggravates the area.",
+    },
+    "overtraining": {
+        "headline": "Take tomorrow off.",
+        "body":     "Several climbing days in a row stack fatigue on fingers and tendons faster than you feel it. One rest day now beats a forced one later.",
+    },
+    "plateau_4w": {
+        "headline": "Plateau detected.",
+        "body":     "You've been at the same grade for a month. Mix terrain (slab vs steep), try a deload week, or pick a specific weakness drill.",
+    },
+    "plateau_8w": {
+        "headline": "Two months at the same grade.",
+        "body":     "Time to break the loop — try a structured deload, switch projecting tactics, or target one weakness for two weeks.",
+    },
+    "return_break_7d": {
+        "headline": "Welcome back.",
+        "body":     "Start easy: mobility warmup, two grades below your max, low volume. The first session always feels harder than it is.",
+    },
+    "return_break_14d": {
+        "headline": "It's been a couple weeks.",
+        "body":     "Warm up extra long today — mobility, easy traverses, then a few V0–V2s. Treat the first session as recalibration, not a benchmark.",
+    },
+    "return_break_30d": {
+        "headline": "Long absence — ease back in.",
+        "body":     "A month off means your skin, tendons, and head are all rusty. Plan two sessions a week below 80% effort before pushing.",
+    },
+}
+
+
+def _build_prompt(kind: str, context: Dict[str, Any]) -> str:
+    """Build the user message describing the situation for OpenAI."""
+    if kind == "active_rehab":
+        return (
+            f"Climber has an active {context['injury_area']} triage from "
+            f"{context['days_since']} days ago. Write a 2-sentence tip: (1) "
+            f"today's rehab focus, (2) what to avoid in their next climbing "
+            f"session. Direct, warm, brief."
+        )
+    if kind == "overtraining":
+        return (
+            f"Climber has logged {context['streak']} consecutive days. "
+            f"Hardest send is {context['hardest_send']}. Write a 2-sentence "
+            f"tip: (1) recommend rest tomorrow, (2) briefly remind why "
+            f"(finger pulley fatigue, CNS recovery). Friendly, no preaching."
+        )
+    if kind in ("plateau_4w", "plateau_8w"):
+        weeks = 4 if kind == "plateau_4w" else 8
+        return (
+            f"Climber has been stuck at {context['hardest_v']} for {weeks} weeks. "
+            f"Write a 2-sentence tip: (1) name a likely bottleneck (power, "
+            f"technique, finger strength, projecting tactics), (2) give one "
+            f"concrete action for next session. Specific, no platitudes."
+        )
+    if kind.startswith("return_break_"):
+        return (
+            f"Climber hasn't logged a session in {context['days']} days. "
+            f"Hardest send lifetime: {context['hardest_lifetime']}. Write a "
+            f"2-sentence tip: (1) suggest an easy re-entry session "
+            f"(mobility, V0–V2 warmup, low volume), (2) tell them the first "
+            f"session back feels hard and that's normal. Warm, no shame."
+        )
+    return f"Write a brief climbing coaching tip for situation: {kind}."
+
+
+_SYSTEM_PROMPT = (
+    "You are a climbing coach writing a single brief coaching tip for the user's "
+    "Hub dashboard. Respond with strict JSON: "
+    '{"headline": "...", "body": "..."}. '
+    "Headline is one short imperative sentence (≤8 words). Body is exactly 2 sentences. "
+    "Tone: climber-to-climber, warm, specific, no platitudes, no emojis."
+)
+
+
+def generate_tip(kind: str, context: Dict[str, Any], openai_client: Optional[Any]) -> Dict[str, Any]:
+    """Personalize a tip via OpenAI; fall back to static copy on any error.
+
+    Returns: { headline, body, cta_label, cta_route, color }
+    """
+    meta = TIP_META.get(kind, {"cta_label": None, "cta_route": None, "color": "#94949f"})
+    fb   = FALLBACK_COPY.get(kind, {"headline": "Today's focus", "body": ""})
+    out  = {
+        "headline":  fb["headline"],
+        "body":      fb["body"],
+        "cta_label": meta["cta_label"],
+        "cta_route": meta["cta_route"],
+        "color":     meta["color"],
+    }
+
+    if openai_client is None:
+        return out
+
+    try:
+        resp = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": _SYSTEM_PROMPT},
+                {"role": "user",   "content": _build_prompt(kind, context)},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.7,
+            max_tokens=200,
+        )
+        content = resp.choices[0].message.content
+        parsed = json.loads(content)
+        headline = (parsed.get("headline") or "").strip()
+        body     = (parsed.get("body") or "").strip()
+        if headline and body:
+            out["headline"] = headline
+            out["body"]     = body
+    except Exception as e:
+        logger.warning("Hub tip OpenAI generation failed for kind=%s: %s", kind, e)
+        # Keep fallback copy already in `out`
+
+    return out

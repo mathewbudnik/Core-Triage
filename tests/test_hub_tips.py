@@ -196,3 +196,57 @@ class PatternDetectionTests(unittest.TestCase):
             _seed_training_log(self.uid, (start + timedelta(days=i)).isoformat())
         kind, _ = detect_pattern(self.uid, "2026-05-17")
         self.assertEqual(kind, "active_rehab")
+
+
+from src.hub_tips import generate_tip, TIP_META, FALLBACK_COPY  # noqa: E402
+
+
+class _FakeOpenAIClient:
+    """Stub openai client. Returns canned JSON or raises on demand."""
+    def __init__(self, response_json: str = None, raise_exc: Exception = None):
+        self._json = response_json
+        self._raise = raise_exc
+        self.chat = self
+        self.completions = self
+    def create(self, **kwargs):
+        if self._raise:
+            raise self._raise
+        class _Choice:
+            def __init__(self, content):
+                self.message = type("M", (), {"content": content})()
+        class _R:
+            def __init__(self, content):
+                self.choices = [_Choice(content)]
+        return _R(self._json)
+
+
+class GenerateTipTests(unittest.TestCase):
+    def test_each_kind_has_metadata_and_fallback(self):
+        for kind in ("active_rehab", "overtraining", "plateau_4w", "plateau_8w",
+                     "return_break_7d", "return_break_14d", "return_break_30d"):
+            self.assertIn(kind, TIP_META, f"TIP_META missing {kind}")
+            self.assertIn(kind, FALLBACK_COPY, f"FALLBACK_COPY missing {kind}")
+            self.assertIn("color", TIP_META[kind])
+
+    def test_generate_returns_openai_content_when_json_valid(self):
+        client = _FakeOpenAIClient(response_json='{"headline":"Take it easy.","body":"Rest tomorrow."}')
+        tip = generate_tip("overtraining", {"streak": 5, "hardest_send": "V5"}, client)
+        self.assertEqual(tip["headline"], "Take it easy.")
+        self.assertEqual(tip["body"], "Rest tomorrow.")
+        self.assertEqual(tip["cta_label"], TIP_META["overtraining"]["cta_label"])
+        self.assertEqual(tip["color"], TIP_META["overtraining"]["color"])
+
+    def test_generate_falls_back_when_openai_raises(self):
+        client = _FakeOpenAIClient(raise_exc=RuntimeError("network down"))
+        tip = generate_tip("overtraining", {"streak": 5, "hardest_send": "V5"}, client)
+        self.assertEqual(tip["headline"], FALLBACK_COPY["overtraining"]["headline"])
+        self.assertEqual(tip["body"], FALLBACK_COPY["overtraining"]["body"])
+
+    def test_generate_falls_back_when_openai_returns_invalid_json(self):
+        client = _FakeOpenAIClient(response_json="not json at all")
+        tip = generate_tip("overtraining", {"streak": 5, "hardest_send": "V5"}, client)
+        self.assertEqual(tip["headline"], FALLBACK_COPY["overtraining"]["headline"])
+
+    def test_generate_with_none_client_uses_fallback(self):
+        tip = generate_tip("overtraining", {"streak": 5, "hardest_send": "V5"}, None)
+        self.assertEqual(tip["headline"], FALLBACK_COPY["overtraining"]["headline"])
