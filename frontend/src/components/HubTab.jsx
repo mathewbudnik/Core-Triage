@@ -1,10 +1,12 @@
 import { useNavigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { useHubData } from '../hooks/useHubData'
+import { useHubTip } from '../hooks/useHubTip'
 import { workingTierFromHardest } from '../lib/tier'
 import TierThemeRoot from './TierThemeRoot'
 import HubGreeting from './HubGreeting'
 import HubRingsCard from './HubRingsCard'
+import HubTipCard from './HubTipCard'
 import HubProjectCard from './HubProjectCard'
 import HubWeekStrip from './HubWeekStrip'
 import HubFeedCard from './HubFeedCard'
@@ -12,6 +14,7 @@ import HubFeedCard from './HubFeedCard'
 export default function HubTab({ user }) {
   const navigate = useNavigate()
   const data = useHubData(user)
+  const { tip, dismiss } = useHubTip(user)
   const tierId = workingTierFromHardest(data.hardestSends)
   const today = new Date().toISOString().slice(0,10)
 
@@ -39,6 +42,7 @@ export default function HubTab({ user }) {
             pushAttempts={data.ringPushAttempts}
             streakDays={data.streakDays}
           />
+          <HubTipCard tip={tip} onDismiss={dismiss} />
           {data.currentProject && (
             <HubProjectCard
               project={data.currentProject}
