@@ -176,6 +176,27 @@ def _pick_grades(grade_pool: List[str], rng: random.Random) -> str:
     return ", ".join(picks)
 
 
+def _pick_climbs(grade_pool: List[str], rng: random.Random) -> Dict:
+    """Structured climbs payload matching the persona's grade pool.
+    Mirrors the shape produced by the climb log frontend: per-discipline
+    grade buckets with {s, f, p} counters. Each session logs 1-2 grades
+    with 1-3 sends each. Drives the sends-based leaderboard."""
+    n = rng.choice([1, 1, 2])
+    picks = rng.sample(grade_pool, k=min(n, len(grade_pool)))
+    out: Dict[str, Dict[str, Dict[str, int]]] = {}
+    for g in picks:
+        if g.startswith("V"):
+            bucket = out.setdefault("boulder", {})
+        else:
+            bucket = out.setdefault("route", {})
+        sends = rng.randint(1, 3)
+        flashes = 1 if rng.random() < 0.15 else 0
+        if flashes > sends:
+            flashes = sends
+        bucket[g] = {"s": sends, "f": flashes, "p": 0}
+    return out
+
+
 def _per_day_probability(persona: Persona) -> float:
     """Daily probability of training, capped at 0.95 to avoid certainty."""
     return min(0.95, persona.sessions_per_week / 7.0)
@@ -236,12 +257,14 @@ def generate_initial_history(
         intensity = _weighted_choice(persona.intensity_weights, rng)
         stype = _weighted_type(persona.session_types, rng)
         grades = _pick_grades(persona.grade_pool, rng)
+        climbs = _pick_climbs(persona.grade_pool, rng)
         rows.append({
             "date": d,
             "session_type": stype,
             "duration_min": duration,
             "intensity": intensity,
             "grades_sent": grades,
+            "climbs": climbs,
             "notes": "",
         })
     return rows
@@ -271,5 +294,6 @@ def generate_today_session(
         "duration_min": rng.randint(persona.session_min_range[0], persona.session_min_range[1]),
         "intensity": _weighted_choice(persona.intensity_weights, rng),
         "grades_sent": _pick_grades(persona.grade_pool, rng),
+        "climbs": _pick_climbs(persona.grade_pool, rng),
         "notes": "",
     }

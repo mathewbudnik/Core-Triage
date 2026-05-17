@@ -13,6 +13,7 @@ See docs/superpowers/specs/2026-05-13-leaderboard-seed-climbers-design.md
 """
 from __future__ import annotations
 
+import json
 import sys
 import os
 from datetime import date
@@ -50,13 +51,14 @@ def main() -> None:
                 cur.execute(
                     """
                     INSERT INTO training_logs
-                        (user_id, date, session_type, duration_min, intensity, grades_sent, notes)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                        (user_id, date, session_type, duration_min, intensity, grades_sent, notes, climbs)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb)
                     ON CONFLICT (user_id, date) DO NOTHING;
                     """,
                     (user_id, session["date"], session["session_type"],
                      session["duration_min"], session["intensity"],
-                     session["grades_sent"], session["notes"]),
+                     session["grades_sent"], session["notes"],
+                     json.dumps(session.get("climbs") or {})),
                 )
                 if cur.rowcount > 0:
                     inserted += 1

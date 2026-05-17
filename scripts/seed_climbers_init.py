@@ -10,6 +10,7 @@ See docs/superpowers/specs/2026-05-13-leaderboard-seed-climbers-design.md
 """
 from __future__ import annotations
 
+import json
 import secrets
 import sys
 import os
@@ -80,18 +81,21 @@ def main() -> None:
                 )
 
                 # 3. Backfill training_logs (ON CONFLICT user_id+date DO NOTHING)
+                #    Includes structured `climbs` JSONB so seed climbers
+                #    register on the sends-based leaderboard.
                 history = generate_initial_history(persona, days=30)
                 for row in history:
                     cur.execute(
                         """
                         INSERT INTO training_logs
-                            (user_id, date, session_type, duration_min, intensity, grades_sent, notes)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                            (user_id, date, session_type, duration_min, intensity, grades_sent, notes, climbs)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb)
                         ON CONFLICT (user_id, date) DO NOTHING;
                         """,
                         (user_id, row["date"], row["session_type"],
                          row["duration_min"], row["intensity"],
-                         row["grades_sent"], row["notes"]),
+                         row["grades_sent"], row["notes"],
+                         json.dumps(row.get("climbs") or {})),
                     )
                     if cur.rowcount > 0:
                         inserted_logs += 1

@@ -397,7 +397,13 @@ class SeedLoginBlockedTests(unittest.TestCase):
 
     def test_login_with_seed_email_returns_401(self):
         from fastapi.testclient import TestClient
-        from main import app
+        from main import app, limiter
+        # Reset slowapi storage so prior auth tests in the suite don't
+        # exhaust the 5/min per-IP budget and surface a 429 here.
+        try:
+            limiter.reset()
+        except Exception:
+            pass
         client = TestClient(app)
         resp = client.post(
             "/api/auth/login",
