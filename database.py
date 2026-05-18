@@ -1083,12 +1083,22 @@ def log_training(user_id: int, data: Dict[str, Any]) -> int:
     if climbs:
         grades_sent = format_climbs_summary(climbs)
 
+    # Upsert by (user_id, date). The frontend's counter logger sends the
+    # day's full current state on every save, so a re-save should overwrite
+    # — not 500 with a UniqueViolation on training_logs_user_date_idx.
     with _connect() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
                 INSERT INTO training_logs (user_id, date, session_type, duration_min, intensity, grades_sent, notes, climbs)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                ON CONFLICT (user_id, date) DO UPDATE SET
+                    session_type = EXCLUDED.session_type,
+                    duration_min = EXCLUDED.duration_min,
+                    intensity    = EXCLUDED.intensity,
+                    grades_sent  = EXCLUDED.grades_sent,
+                    notes        = EXCLUDED.notes,
+                    climbs       = EXCLUDED.climbs
                 RETURNING id;
                 """,
                 (
