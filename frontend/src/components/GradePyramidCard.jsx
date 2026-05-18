@@ -41,7 +41,8 @@ function PyramidRow({ grade, s, f, p, maxRowTotal }) {
             style={{ boxShadow: `0 0 12px ${token.c}66` }}
             initial={{ width: 0 }}
             animate={{ width: `${barPct}%` }}
-            transition={{ duration: 0.32, ease: 'easeOut' }}
+            whileHover={{ boxShadow: `0 0 16px ${token.c}99` }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
           >
             {f > 0 && (
               <span
