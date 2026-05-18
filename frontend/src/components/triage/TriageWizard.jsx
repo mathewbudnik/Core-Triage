@@ -7,15 +7,18 @@ import PainSlider from './PainSlider'
 import TriageRegionPill from './TriageRegionPill'
 import TriageSummaryPill from './TriageSummaryPill'
 import TriageSectionCard from './TriageSectionCard'
+import TriageFingerDetails from './TriageFingerDetails'
 import TriageHero from './TriageHero'
 import TriageDifferentials from './TriageDifferentials'
 import TriageAnswersStrip from './TriageAnswersStrip'
 import TriageActionsBar from './TriageActionsBar'
 import DiagnosisSkeleton from './DiagnosisSkeleton'
 
-// Section order is fixed. Anything else is optional (multi-pick) so it
-// never blocks submit.
-const ORDER = ['onset', 'mechanism', 'pain', 'anythingElse']
+// Section order. Finger gets an extra `fingerDetails` step between mechanism
+// and pain — captures which finger, palm-side location (A2 vs A4), and grip
+// mode at injury so the classifier can grade pulleys.
+const BASE_ORDER       = ['onset', 'mechanism', 'pain', 'anythingElse']
+const FINGER_ORDER     = ['onset', 'mechanism', 'fingerDetails', 'pain', 'anythingElse']
 
 const ONSET_OPTIONS = [
   { value: 'Gradual', label: 'Gradual' },
@@ -26,6 +29,15 @@ function painTone(v) {
   if (v <= 3) return '#14b8a6'
   if (v <= 6) return '#fbbf24'
   return '#fb7185'
+}
+
+// Build the initial state map for a given section order — first section
+// focused, the rest dim. Used at mount and on region change.
+function initialStatesFor(order) {
+  return order.reduce((acc, key, idx) => {
+    acc[key] = idx === 0 ? 'focused' : 'dim'
+    return acc
+  }, {})
 }
 
 /**
@@ -46,9 +58,22 @@ function painTone(v) {
  */
 export default function TriageWizard({
   form, onChange, onChangeRegion, onSubmit, onOpenRehabPlan,
-  loading, result, error, mechanisms,
+  loading, result, error, mechanisms, fingerOptions,
 }) {
   const { refFor, scrollTo } = useTriageAutoscroll()
+  const isFinger = form.region === 'Finger'
+
+  // Region-aware section order. Finger inserts a fingerDetails step before
+  // pain so we collect A2/A4 + grip mode signals.
+  const sectionOrder = useMemo(
+    () => (isFinger ? FINGER_ORDER : BASE_ORDER),
+    [isFinger]
+  )
+  // Compact label used in eyebrows ("1 of 4" / "1 of 5"). anythingElse
+  // never appears in the count — it's "optional".
+  const numbered = sectionOrder.filter((k) => k !== 'anythingElse')
+  const stepNum = (key) => numbered.indexOf(key) + 1
+  const stepTotal = numbered.length
 
   // Region-aware signal chips. Read from the canonical signalChips.js list
   // so the `value` is the chip id the classifier expects — avoids a silent
@@ -58,16 +83,14 @@ export default function TriageWizard({
     [form.region]
   )
 
-  // Section state map. Initial: onset focused, rest dim.
-  const [states, setStates] = useState(() => ({
-    onset: 'focused', mechanism: 'dim', pain: 'dim', anythingElse: 'dim',
-  }))
+  // Section state map. Re-initialized when section order changes (region swap).
+  const [states, setStates] = useState(() => initialStatesFor(sectionOrder))
 
   // Move a section to 'passed' and the next one to 'focused', then scroll.
   const advance = useCallback((from) => {
-    const idx = ORDER.indexOf(from)
+    const idx = sectionOrder.indexOf(from)
     if (idx < 0) return
-    const next = ORDER[idx + 1]
+    const next = sectionOrder[idx + 1]
     setStates((s) => {
       const updated = { ...s, [from]: 'passed' }
       if (next && (s[next] === 'dim' || s[next] === 'visited')) {
@@ -80,20 +103,52 @@ export default function TriageWizard({
       // before we scroll — the destination is then in the right place.
       requestAnimationFrame(() => scrollTo(next))
     }
-  }, [scrollTo])
+  }, [scrollTo, sectionOrder])
 
   // Re-expand a passed section. Other sections' states are preserved.
   const editSection = useCallback((key) => {
     setStates((s) => ({ ...s, [key]: 'focused' }))
   }, [])
 
+  // Skip the finger details section without compressing — just unblock pain.
+  const skipFingerDetails = useCallback(() => {
+    advance('fingerDetails')
+  }, [advance])
+
   // Submit enabled when the three required sections have a value.
   const canSubmit = !!(form.onset && form.mechanism && form.severity != null)
 
-  // Reset states whenever the region changes — fresh wizard for a new injury.
+  // Reset states whenever the region (and therefore section order) changes —
+  // fresh wizard for a new injury.
   useEffect(() => {
-    setStates({ onset: 'focused', mechanism: 'dim', pain: 'dim', anythingElse: 'dim' })
-  }, [form.region])
+    setStates(initialStatesFor(sectionOrder))
+  }, [sectionOrder])
+
+  // Auto-advance from fingerDetails once all three structured fields are set.
+  // This matches the rest of the wizard's "complete = compress" rhythm.
+  useEffect(() => {
+    if (!isFinger) return
+    if (states.fingerDetails !== 'focused') return
+    if (form.which_finger && form.finger_location && form.grip_mode) {
+      advance('fingerDetails')
+    }
+  }, [
+    isFinger, states.fingerDetails,
+    form.which_finger, form.finger_location, form.grip_mode,
+    advance,
+  ])
+
+  // Compose the compressed pill value: "Ring · Palm-side middle (A2) · Full crimp".
+  const fingerSummaryValue = useMemo(() => {
+    if (!isFinger) return ''
+    const wf = form.which_finger
+    const fl = fingerOptions?.fingerLocation?.find((o) => o.key === form.finger_location)?.label
+    const gm = fingerOptions?.gripMode?.find((o) => o.key === form.grip_mode)?.label
+    return [wf, fl, gm].filter(Boolean).join(' · ')
+  }, [
+    isFinger, fingerOptions,
+    form.which_finger, form.finger_location, form.grip_mode,
+  ])
 
   // ── Section handlers ────────────────────────────────────────────────────
   const onPickOnset = (v) => { onChange('onset', v); advance('onset') }
@@ -141,7 +196,7 @@ export default function TriageWizard({
           <TriageSectionCard
             key="onset-card"
             state={states.onset}
-            eyebrow="Essentials · 1 of 4"
+            eyebrow={`Essentials · ${stepNum('onset')} of ${stepTotal}`}
             innerRef={refFor('onset')}
           >
             <p className="text-sm font-bold mb-2">When did it start?</p>
@@ -164,12 +219,46 @@ export default function TriageWizard({
           <TriageSectionCard
             key="mech-card"
             state={states.mechanism}
-            eyebrow="Mechanism · 2 of 4"
+            eyebrow={`Mechanism · ${stepNum('mechanism')} of ${stepTotal}`}
             innerRef={refFor('mechanism')}
           >
             <p className="text-sm font-bold mb-2">What were you doing?</p>
             <ChipGroup options={mechanisms} value={form.mechanism} onChange={onPickMech} />
           </TriageSectionCard>
+        )}
+
+        {/* Finger details — only renders when region is Finger.
+            Adds A2/A4 + grip-mode signal for pulley grading. */}
+        {isFinger && (
+          states.fingerDetails === 'passed' ? (
+            <motion.div key="fd-summary" layout
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        transition={{ duration: 0.18 }}>
+              <TriageSummaryPill
+                label="Finger details"
+                value={fingerSummaryValue || 'Skipped'}
+                onEdit={() => editSection('fingerDetails')}
+              />
+            </motion.div>
+          ) : (
+            <TriageSectionCard
+              key="fd-card"
+              state={states.fingerDetails}
+              eyebrow={`Finger details · ${stepNum('fingerDetails')} of ${stepTotal}`}
+              innerRef={refFor('fingerDetails')}
+            >
+              <TriageFingerDetails
+                whichFingerOptions={fingerOptions?.whichFinger || []}
+                fingerLocationOptions={fingerOptions?.fingerLocation || []}
+                gripModeOptions={fingerOptions?.gripMode || []}
+                whichFinger={form.which_finger}
+                fingerLocation={form.finger_location}
+                gripMode={form.grip_mode}
+                onChange={onChange}
+                onSkip={skipFingerDetails}
+              />
+            </TriageSectionCard>
+          )
         )}
 
         {/* Pain */}
@@ -188,7 +277,7 @@ export default function TriageWizard({
           <TriageSectionCard
             key="pain-card"
             state={states.pain}
-            eyebrow="Pain · 3 of 4"
+            eyebrow={`Pain · ${stepNum('pain')} of ${stepTotal}`}
             innerRef={refFor('pain')}
           >
             <PainSlider
@@ -259,10 +348,129 @@ function DiagnosisView({ form, result, onEdit, onOpenRehabPlan }) {
         enabled={true}
         onPrimary={onOpenRehabPlan}
         showOverflow
-        onOverflow={() => { /* PDF/share flow — out of scope for v1 */ }}
+        onOverflow={() => downloadGuidance(form, result)}
       />
     </div>
   )
+}
+
+// ── Guidance download ─────────────────────────────────────────────────────
+// Bundles the diagnosis view as a plain-text file the user can save / share.
+// Mobile Safari treats Blob downloads as files in the Files app.
+
+function buildGuidanceText(form, result) {
+  const sev = result?.severity || {}
+  const top = result?.buckets?.[0]
+  const diffs = (result?.buckets || []).slice(1, 4)
+  const plan = result?.plan || {}
+  const flags = result?.red_flags || []
+  const protocol = result?.return_protocol || []
+  const mods = result?.training_modifications || []
+  const citations = result?.citations || []
+
+  const L = []
+  const stamp = new Date().toLocaleString()
+  L.push(`CoreTriage — Guidance summary`)
+  L.push(`Generated: ${stamp}`)
+  L.push('')
+  L.push(`Region: ${form.region || '—'}`)
+  L.push(`Onset: ${form.onset || '—'}`)
+  L.push(`Mechanism: ${form.mechanism || '—'}`)
+  L.push(`Pain: ${form.severity ?? '—'}/10`)
+  if (form.signal_chips?.length) L.push(`Signals: ${form.signal_chips.join(', ')}`)
+  if (form.free_text) L.push(`Notes: ${form.free_text}`)
+  L.push('')
+  L.push(`Severity: ${sev.label || sev.level || '—'}`)
+  if (sev.action) L.push(`Action: ${sev.action}`)
+  L.push('')
+
+  if (flags.length) {
+    L.push('Red flags')
+    flags.forEach((f) => L.push(`  • ${f}`))
+    L.push('')
+  }
+
+  if (top) {
+    L.push('Most likely')
+    L.push(`  ${top.title || ''}`)
+    if (top.why) L.push(`  ${top.why}`)
+    L.push('')
+  }
+
+  if (diffs.length) {
+    L.push('Other possibilities')
+    diffs.forEach((b, i) => {
+      L.push(`  ${i + 2}. ${b.title || ''}`)
+      if (b.why) L.push(`     ${b.why}`)
+      if (b.matches_if?.length) {
+        L.push(`     Looks like this if:`)
+        b.matches_if.forEach((line) => L.push(`       • ${line}`))
+      }
+      if (b.not_likely_if?.length) {
+        L.push(`     Less likely if:`)
+        b.not_likely_if.forEach((line) => L.push(`       • ${line}`))
+      }
+      if (b.quick_test) L.push(`     Quick self-check: ${b.quick_test}`)
+    })
+    L.push('')
+  }
+
+  const planEntries = Object.entries(plan)
+  if (planEntries.length) {
+    L.push('Plan')
+    planEntries.forEach(([section, lines]) => {
+      L.push(`  ${section}`)
+      ;(Array.isArray(lines) ? lines : [String(lines)]).forEach((line) => {
+        L.push(`    • ${line}`)
+      })
+    })
+    L.push('')
+  }
+
+  if (mods.length) {
+    L.push('Training modifications')
+    mods.forEach((m) => L.push(`  • ${m}`))
+    L.push('')
+  }
+
+  if (protocol.length) {
+    L.push('Return-to-climbing protocol')
+    protocol.forEach((p) => L.push(`  • ${typeof p === 'string' ? p : (p.text || JSON.stringify(p))}`))
+    L.push('')
+  }
+
+  if (citations.length) {
+    L.push('Citations')
+    citations.forEach((c) => {
+      const txt = typeof c === 'string' ? c : (c.title || c.source || JSON.stringify(c))
+      L.push(`  • ${txt}`)
+    })
+    L.push('')
+  }
+
+  L.push('—')
+  L.push('CoreTriage guidance is informational and not a substitute for in-person medical care.')
+  return L.join('\n')
+}
+
+function downloadGuidance(form, result) {
+  try {
+    const text = buildGuidanceText(form, result)
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const dateStr = new Date().toISOString().slice(0, 10)
+    const region = (form.region || 'guidance').toLowerCase().replace(/[^a-z0-9]+/g, '-')
+    const filename = `coretriage-${region}-${dateStr}.txt`
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  } catch (err) {
+    console.error('downloadGuidance failed', err)
+  }
 }
 
 // ── Result → view-model adapters ──────────────────────────────────────────
@@ -308,17 +516,27 @@ function deriveActionChips(result) {
 function buildAnswersStrip(form, result) {
   const sev = Number(form.severity) || 0
   const signals = (form.signal_chips || []).slice(0, 2).join(', ')
-  return [
+  const rows = [
     { label: 'Onset',     value: form.onset || '—' },
     { label: 'Pain',      value: `${sev}/10`, tone: painTone(sev) },
     { label: 'Mechanism', value: form.mechanism || '—' },
     { label: 'Signals',   value: signals || 'none' },
   ]
+  // For finger triages, surface the structured fields the classifier used so
+  // the user can see the picks that informed the diagnosis (A2 vs A4 hinge).
+  if (form.region === 'Finger' && (form.which_finger || form.finger_location)) {
+    const finger = [form.which_finger, form.finger_location].filter(Boolean).join(' · ')
+    rows.push({ label: 'Finger', value: finger || '—' })
+  }
+  return rows
 }
 
 function buildDifferentials(result) {
   return (result?.buckets || []).slice(1, 4).map((b) => ({
     title: b.title || '',
     subtitle: b.why || '',
+    matches_if: b.matches_if || [],
+    not_likely_if: b.not_likely_if || [],
+    quick_test: b.quick_test || '',
   }))
 }

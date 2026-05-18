@@ -17,6 +17,11 @@ import { buildSignalsFreeText, chipStructuredFields } from '../data/signalChips'
 
 const LOWER_BODY = ['Knee', 'Hip', 'Lower Back']
 
+// Mechanism chip labels are tuned for the body region, but the `value`
+// strings must match what triage.py's rules engine recognizes
+// (Hard crimp, Dynamic catch, Pocket, Asymmetric hold, Hard lock-off, etc.) —
+// the classifier branches on these strings, so changing them would silently
+// disable finger / shoulder / knee rules.
 const MECHANISMS = {
   upper: [
     { value: 'Hard crimp',           label: 'Gripping a small hold',  Icon: Grip       },
@@ -25,6 +30,21 @@ const MECHANISMS = {
     { value: 'High volume pulling',  label: 'Lots of climbing',       Icon: TrendingUp },
     { value: 'Steep climbing/board', label: 'Steep or overhang',      Icon: Mountain   },
     { value: 'Campusing',            label: 'No-feet moves',          Icon: ChevronsUp },
+    { value: 'Unknown/other',        label: 'Not sure',               Icon: HelpCircle },
+  ],
+  // Finger gets its own list: labels emphasize grip mode + load type so the
+  // user maps mechanism to how the injury actually happened on a hold.
+  // Hard crimp → A2/A4 pulley load. Asymmetric hold → collateral ligament.
+  // Dyno → sudden tendon load. Hard lock-off → flexor tendon overload.
+  // Fall → jam / sprain.
+  finger: [
+    { value: 'Hard crimp',           label: 'Full crimp on an edge',  Icon: Grip       },
+    { value: 'Asymmetric hold',      label: 'Twisted / asymmetric',   Icon: RotateCw   },
+    { value: 'Pocket',               label: 'Deep pocket',            Icon: Target     },
+    { value: 'Dynamic catch',        label: 'Dyno / catch',           Icon: Zap        },
+    { value: 'Hard lock-off',        label: 'Hard lock-off',          Icon: ChevronsUp },
+    { value: 'High volume pulling',  label: 'Lots of climbing',       Icon: TrendingUp },
+    { value: 'Fall',                 label: 'Caught a hold awkwardly',Icon: AlertCircle},
     { value: 'Unknown/other',        label: 'Not sure',               Icon: HelpCircle },
   ],
   lower: [
@@ -107,7 +127,11 @@ export default function TriageTab({ k, user }) {
   // Stable setter — only depends on setForm which is stable from useState.
   const set = useCallback((key, value) => setForm((f) => ({ ...f, [key]: value })), [])
 
-  const mechanisms = LOWER_BODY.includes(form.region) ? MECHANISMS.lower : MECHANISMS.upper
+  const mechanisms = form.region === 'Finger'
+    ? MECHANISMS.finger
+    : LOWER_BODY.includes(form.region)
+      ? MECHANISMS.lower
+      : MECHANISMS.upper
 
   // Legacy /triage/results path no longer renders a results page — bounce
   // to the start so the URL doesn't strand users on a dead route.
@@ -241,6 +265,11 @@ export default function TriageTab({ k, user }) {
           result={result}
           error={error}
           mechanisms={mechanisms}
+          fingerOptions={{
+            whichFinger:    WHICH_FINGER_OPTIONS,
+            fingerLocation: FINGER_LOCATION_OPTIONS,
+            gripMode:       GRIP_MODE_OPTIONS,
+          }}
         />
       )}
 
