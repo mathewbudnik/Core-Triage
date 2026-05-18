@@ -85,3 +85,13 @@ export function nextTier(tierId) {
   if (idx < 0 || idx >= V_TIERS.length - 1) return null
   return V_TIERS[idx + 1]
 }
+
+/**
+ * Resolve any climbing grade (V-grade or YDS) to its tier-token entry.
+ * Falls back to v0 (Frost) for unrecognised inputs so callers can always
+ * read `.c` / `.light` / `.deep` without guarding.
+ */
+export function tokenForGrade(grade) {
+  const tierId = vGradeToTier(grade) ?? ydsToTier(grade) ?? 'v0'
+  return TIER_TOKENS[tierId]
+}
