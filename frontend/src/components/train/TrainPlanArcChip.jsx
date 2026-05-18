@@ -13,11 +13,12 @@ import { ChevronRight } from 'lucide-react'
 export default function TrainPlanArcChip({ currentWeek, totalWeeks, phase, onOpen }) {
   if (!totalWeeks) return null
   const phaseLabel = phase ? `${phase[0].toUpperCase()}${phase.slice(1)} phase` : null
+  const ariaLabel = `Week ${currentWeek} of ${totalWeeks}${phaseLabel ? `, ${phaseLabel}` : ''}. Open plan`
   return (
     <button
       type="button"
       onClick={onOpen}
-      tabIndex={0}
+      aria-label={ariaLabel}
       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
                  text-[10.5px] font-bold uppercase tracking-[0.10em] tabular-nums
                  bg-white/[0.04] border-[0.5px] border-white/[0.08]
