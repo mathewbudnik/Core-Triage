@@ -71,9 +71,9 @@ function PyramidRow({ grade, s, f, p, maxRowTotal }) {
 }
 
 /**
- * Full grade pyramid for ProgressTab. Two columns (Boulder · Route),
- * each row a horizontal stacked bar (flashes · sends · projects).
- * Time window pill: Month | All.
+ * One discipline's pyramid (boulder OR route). Sorts grades hardest→easiest
+ * so the hardest sits at the apex of the visible pyramid. The header line
+ * doubles as the legend: "hardest V6" with V6 painted its own tier color.
  */
 function PyramidColumn({ label, data }) {
   if (!data || (!data.grades?.length && !data.hardest_send && !data.hardest_flash)) {
@@ -86,82 +86,62 @@ function PyramidColumn({ label, data }) {
       </div>
     )
   }
-  // For bar width: scale to the max counter SUM across the column's rows so
-  // the heaviest row is fullest. We don't want columns scaled to each other —
-  // boulder and route are independent.
-  const maxRowTotal = Math.max(
-    1, ...data.grades.map(g => g.s + g.f + g.p),
-  )
+
+  // Sort hardest first. grade_order from the backend is implicit in the
+  // returned order (ascending V0→V10+, 5.6→5.15d). Reverse to put hardest
+  // at the top of the rendered pyramid.
+  const rowsTopDown = [...data.grades].reverse()
+
+  // Bar width is normalised against the largest send-count in the column.
+  // Projects (`p`) intentionally do not contribute — the bar represents
+  // completed climbs only.
+  const maxRowTotal = Math.max(1, ...data.grades.map((g) => g.s))
+
+  const hardestSendToken  = data.hardest_send  ? tokenForGrade(data.hardest_send)  : null
+  const hardestFlashToken = data.hardest_flash ? tokenForGrade(data.hardest_flash) : null
 
   return (
-    <div className="flex-1 min-w-0 space-y-2">
-      <div className="flex items-baseline justify-between">
+    <div className="flex-1 min-w-0">
+      <div className="flex items-baseline justify-between mb-2">
         <p className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-muted">
           {label}
         </p>
-        {/* Legend doubles as hardest-grade summary. Colors mirror the bar
-            segments so the user can decode the rows without a separate key:
-            gold = flash, teal/green = send, coral/muted = project. */}
         <p className="text-[11px] text-muted">
-          {data.hardest_send  && (
+          {data.hardest_send && (
             <>
-              <span className="text-accent">send </span>
-              <span className="text-accent font-bold">{data.hardest_send}</span>
+              hardest{' '}
+              <span className="font-extrabold" style={{ color: hardestSendToken?.c }}>
+                {data.hardest_send}
+              </span>
             </>
           )}
-          {data.hardest_send && data.hardest_flash && <span className="text-muted/40"> · </span>}
-          {data.hardest_flash && (
+          {data.hardest_send && data.hardest_flash && data.hardest_flash !== data.hardest_send && (
             <>
-              <span className="text-accent3">flash </span>
-              <span className="text-accent3 font-bold">{data.hardest_flash}</span>
+              <span className="text-muted/40"> · </span>
+              flash{' '}
+              <span className="font-extrabold" style={{ color: hardestFlashToken?.c }}>
+                {data.hardest_flash}
+              </span>
             </>
           )}
         </p>
       </div>
-      {data.grades.map(({ grade, s, f, p }) => {
-        const w = (n) => `${Math.round((n / maxRowTotal) * 100)}%`
-        // Non-flash sends = total sends minus flashes (don't double-count).
-        const regularSends = Math.max(0, s - f)
-        return (
-          <div key={grade} className="space-y-1">
-            <div className="flex items-baseline justify-between text-[11px]">
-              <span className="text-text font-bold tabular-nums">{grade}</span>
-              {/* Single muted line — the bar below is the visual key.
-                  Tiny colored dots act as the legend without flooding the
-                  text with three competing colors. */}
-              <span className="text-muted flex items-center gap-1.5">
-                {f > 0 && (
-                  <span className="inline-flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-accent3" />
-                    {f} flash{f === 1 ? '' : 'es'}
-                  </span>
-                )}
-                {regularSends > 0 && (
-                  <span className="inline-flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                    {regularSends} send{regularSends === 1 ? '' : 's'}
-                  </span>
-                )}
-                {p > 0 && (
-                  <span className="inline-flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-text/30" />
-                    {p} project{p === 1 ? '' : 's'}
-                  </span>
-                )}
-              </span>
-            </div>
-            {/* 8a.nu-aligned palette:
-                  flash   = gold/amber  (highest distinction — first try clean)
-                  send    = teal/green  (solid achievement)
-                  project = muted gray  (in progress, no warning connotation) */}
-            <div className="flex h-1.5 rounded-full bg-bg/40 overflow-hidden">
-              {f > 0           && <span className="h-full bg-accent3" style={{ width: w(f) }} />}
-              {regularSends > 0 && <span className="h-full bg-accent"  style={{ width: w(regularSends) }} />}
-              {p > 0           && <span className="h-full bg-text/25"  style={{ width: w(p) }} />}
-            </div>
-          </div>
-        )
-      })}
+      <div>
+        {rowsTopDown.map((g) => (
+          <PyramidRow
+            key={g.grade}
+            grade={g.grade}
+            s={g.s}
+            f={g.f}
+            p={g.p}
+            maxRowTotal={maxRowTotal}
+          />
+        ))}
+      </div>
+      <p className="text-[10px] text-muted/60 mt-3 pt-2 border-t border-white/[0.06]">
+        <span className="inline-block w-2 h-2 bg-accent3 rounded-sm mr-1.5 align-middle" />
+        flash · row color reflects grade tier
+      </p>
     </div>
   )
 }
