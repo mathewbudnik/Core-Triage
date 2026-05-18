@@ -1,6 +1,74 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Loader2 } from 'lucide-react'
 import { getPyramid } from '../api'
+import { tokenForGrade } from '../lib/tier'
+
+/**
+ * One row in the pyramid: tier-colored bar + grade label + count.
+ *
+ * Bar segmentation:
+ *   - flash portion (gold)        — width = (f / s) of the bar
+ *   - send  portion (tier color)  — width = ((s - f) / s) of the bar
+ * The bar's overall width is `(s / maxRowTotal) * 100%`. Projects (p) do NOT
+ * contribute to bar width — they only render as the footer chip.
+ */
+function PyramidRow({ grade, s, f, p, maxRowTotal }) {
+  const token = tokenForGrade(grade)
+  const total = Math.max(0, s)
+  const flashPct = total > 0 ? (f / total) * 100 : 0
+  const sendPct  = total > 0 ? ((total - f) / total) * 100 : 0
+  const barPct   = maxRowTotal > 0 ? (total / maxRowTotal) * 100 : 0
+  const hasBar   = barPct > 0
+  return (
+    <div className="flex items-center gap-2.5 my-1">
+      <span
+        className="w-9 text-[12px] font-extrabold text-right tabular-nums tracking-tight"
+        style={{ color: hasBar ? token.c : 'rgba(232,238,252,0.45)' }}
+      >
+        {grade}
+      </span>
+      <div className="flex-1 flex justify-center">
+        {hasBar && (
+          <div
+            className="h-[18px] rounded-[5px] flex overflow-hidden"
+            style={{
+              width: `${barPct}%`,
+              boxShadow: `0 0 12px ${token.c}66`,
+            }}
+          >
+            {f > 0 && (
+              <span
+                className="h-full"
+                style={{ width: `${flashPct}%`, background: '#fbbf24' }}
+                aria-label={`${f} flash${f === 1 ? '' : 'es'}`}
+              />
+            )}
+            <span
+              className="h-full"
+              style={{ width: `${sendPct}%`, background: token.c }}
+              aria-label={`${total - f} send${total - f === 1 ? '' : 's'}`}
+            />
+          </div>
+        )}
+      </div>
+      <span className="text-[11px] text-muted tabular-nums whitespace-nowrap min-w-[64px] text-left">
+        {hasBar ? (
+          <>
+            {total}
+            {f > 0 && <span className="text-accent3"> · ✦{f}</span>}
+          </>
+        ) : (
+          <span className="text-muted/60">—</span>
+        )}
+        {p > 0 && (
+          <span className="ml-1.5 inline-flex items-center text-[10px] text-muted/80 bg-white/[0.06] border border-white/10 px-1.5 py-[1px] rounded-full">
+            +{p} proj
+          </span>
+        )}
+      </span>
+    </div>
+  )
+}
 
 /**
  * Full grade pyramid for ProgressTab. Two columns (Boulder · Route),
@@ -31,28 +99,65 @@ function PyramidColumn({ label, data }) {
         <p className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-muted">
           {label}
         </p>
+        {/* Legend doubles as hardest-grade summary. Colors mirror the bar
+            segments so the user can decode the rows without a separate key:
+            gold = flash, teal/green = send, coral/muted = project. */}
         <p className="text-[11px] text-muted">
-          {data.hardest_send  && <>send <span className="text-text font-bold">{data.hardest_send}</span></>}
-          {data.hardest_send && data.hardest_flash && ' · '}
-          {data.hardest_flash && <>flash <span className="text-text font-bold">{data.hardest_flash}</span></>}
+          {data.hardest_send  && (
+            <>
+              <span className="text-accent">send </span>
+              <span className="text-accent font-bold">{data.hardest_send}</span>
+            </>
+          )}
+          {data.hardest_send && data.hardest_flash && <span className="text-muted/40"> · </span>}
+          {data.hardest_flash && (
+            <>
+              <span className="text-accent3">flash </span>
+              <span className="text-accent3 font-bold">{data.hardest_flash}</span>
+            </>
+          )}
         </p>
       </div>
       {data.grades.map(({ grade, s, f, p }) => {
         const w = (n) => `${Math.round((n / maxRowTotal) * 100)}%`
+        // Non-flash sends = total sends minus flashes (don't double-count).
+        const regularSends = Math.max(0, s - f)
         return (
           <div key={grade} className="space-y-1">
             <div className="flex items-baseline justify-between text-[11px]">
               <span className="text-text font-bold tabular-nums">{grade}</span>
-              <span className="text-muted">
-                {s > 0 && <>{s} send{s === 1 ? '' : 's'}</>}
-                {f > 0 && <> · {f} flash{f === 1 ? '' : 'es'}</>}
-                {p > 0 && <> · {p} project{p === 1 ? '' : 's'}</>}
+              {/* Single muted line — the bar below is the visual key.
+                  Tiny colored dots act as the legend without flooding the
+                  text with three competing colors. */}
+              <span className="text-muted flex items-center gap-1.5">
+                {f > 0 && (
+                  <span className="inline-flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent3" />
+                    {f} flash{f === 1 ? '' : 'es'}
+                  </span>
+                )}
+                {regularSends > 0 && (
+                  <span className="inline-flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                    {regularSends} send{regularSends === 1 ? '' : 's'}
+                  </span>
+                )}
+                {p > 0 && (
+                  <span className="inline-flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-text/30" />
+                    {p} project{p === 1 ? '' : 's'}
+                  </span>
+                )}
               </span>
             </div>
+            {/* 8a.nu-aligned palette:
+                  flash   = gold/amber  (highest distinction — first try clean)
+                  send    = teal/green  (solid achievement)
+                  project = muted gray  (in progress, no warning connotation) */}
             <div className="flex h-1.5 rounded-full bg-bg/40 overflow-hidden">
-              {f > 0 && <span className="h-full bg-accent" style={{ width: w(f) }} />}
-              {s - f > 0 && <span className="h-full bg-accent/60" style={{ width: w(s - f) }} />}
-              {p > 0 && <span className="h-full bg-accent3" style={{ width: w(p) }} />}
+              {f > 0           && <span className="h-full bg-accent3" style={{ width: w(f) }} />}
+              {regularSends > 0 && <span className="h-full bg-accent"  style={{ width: w(regularSends) }} />}
+              {p > 0           && <span className="h-full bg-text/25"  style={{ width: w(p) }} />}
             </div>
           </div>
         )
