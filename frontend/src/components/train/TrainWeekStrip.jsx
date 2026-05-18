@@ -1,6 +1,14 @@
 import { sessionForDay } from '../../lib/trainSessions'
 
 const DAY_LETTER = ['M','T','W','T','F','S','S']
+const DAY_LONG = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
+
+function formatLongDate(iso) {
+  // 'Wednesday May 14' — friendly to screen readers
+  const d = new Date(iso + 'T00:00:00')
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December']
+  return `${DAY_LONG[((d.getDay() + 6) % 7)]} ${months[d.getMonth()]} ${d.getDate()}`
+}
 
 function isToday(iso) {
   return iso === new Date().toISOString().slice(0, 10)
@@ -40,6 +48,9 @@ export default function TrainWeekStrip({ weekDates, plan, loggedDates, selectedD
         const dotStyle = (() => {
           if (active) return { background: 'var(--tier-light)', boxShadow: '0 0 0 3px color-mix(in srgb, var(--tier-light) 20%, transparent)' }
           if (logged) return { background: 'var(--tier-c)' }
+          // Past rest day reads as a quiet "you were off" — keep a visible
+          // 14% dot. Only future rest days hide the dot entirely.
+          if (past && isRest) return { background: 'rgba(255,255,255,0.14)' }
           if (isRest) return { background: 'transparent' }
           return { background: 'rgba(255,255,255,0.14)' }
         })()
@@ -61,12 +72,19 @@ export default function TrainWeekStrip({ weekDates, plan, loggedDates, selectedD
           ? { color: 'var(--tier-light)' }
           : { color: 'rgba(255,255,255,0.35)' }
 
+        const session = sessionForDay(plan, iso)
+        const ariaLabel = [
+          formatLongDate(iso),
+          today ? 'today' : null,
+          session?.session_type ? `${session.session_type} session` : (isRest ? 'rest day' : null),
+        ].filter(Boolean).join(', ')
+
         return (
           <button
             key={iso}
             type="button"
             onClick={() => onSelectDay(iso)}
-            aria-label={`${DAY_LETTER[i]} ${iso}${today ? ' today' : ''}`}
+            aria-label={ariaLabel}
             className={tileClass}
             style={tileBg}
           >

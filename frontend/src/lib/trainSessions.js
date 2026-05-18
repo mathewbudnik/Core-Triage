@@ -37,13 +37,18 @@ export function sessionForDay(plan, isoDate) {
  * Classify a date relative to today and the plan. Returns 'past' | 'today' |
  * 'future' | 'rest'. `today` parameter is overridable for testing; defaults to
  * the actual current ISO date.
+ *
+ * 'rest' wins over the calendar position when no session is scheduled — a
+ * past day with no session reads as a past rest day, not as a stale "past
+ * session" hero. The week-strip handles past-vs-future-rest dot styling
+ * independently using its own isPast() check.
  */
 export function dayStatusFor(isoDate, plan, today = todayIso()) {
   if (!isoDate) return 'rest'
-  if (isoDate < today) return 'past'
-  if (isoDate === today) return 'today'
-  // future: only call it 'future' if a session exists; otherwise it's a rest day
-  return sessionForDay(plan, isoDate) ? 'future' : 'rest'
+  const hasSession = !!sessionForDay(plan, isoDate)
+  if (isoDate === today) return hasSession ? 'today' : 'rest'
+  if (!hasSession) return 'rest'
+  return isoDate < today ? 'past' : 'future'
 }
 
 /**
