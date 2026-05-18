@@ -1,9 +1,29 @@
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Send, Loader2, Bot, User, Search, Sparkles, AlertTriangle, Lock, ArrowLeft } from 'lucide-react'
+import { Send, Loader2, Bot, User, Search, Sparkles, AlertTriangle, Lock, ArrowLeft, Sparkle } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
-import { sendChat } from '../api'
+import { sendChat, getChatContext } from '../api'
 import UpgradeModal from './UpgradeModal'
+
+// Format the structured context dict from /api/chat/context into a single
+// short summary line for the transparency chip. Returns '' when the user
+// has no usable data yet (brand-new account).
+function summarizeContext(ctx) {
+  if (!ctx) return ''
+  const parts = []
+  const hardest = ctx.recent_hardest || ctx.alltime_hardest || {}
+  if (hardest.boulder) parts.push(`${hardest.boulder} climber`)
+  else if (hardest.route) parts.push(`${hardest.route} climber`)
+  if (ctx.active_rehab) {
+    const { injury_area, days_since } = ctx.active_rehab
+    const when = days_since === 0 ? 'today' : `day ${days_since + 1}`
+    parts.push(`${injury_area.toLowerCase()} rehab · ${when}`)
+  }
+  if (ctx.streak_days && !ctx.active_rehab) {
+    parts.push(`${ctx.streak_days}-day streak`)
+  }
+  return parts.join(' · ')
+}
 
 const FREE_GPT_LIMIT = 5
 const MODE_KEY = 'coretriage_chat_mode'
@@ -19,7 +39,7 @@ function incrementLocalChatUsed() {
 
 const MODE_META = {
   kb:  { label: 'Lookup',    icon: Search,    color: 'text-accent',  desc: 'Climbing-injury knowledge base · free for all' },
-  gpt: { label: 'AI answer', icon: Sparkles,  color: 'text-accent3', desc: 'GPT-synthesized answer · 5 free / unlimited Pro' },
+  gpt: { label: 'AI answer', icon: Sparkles,  color: 'text-accent3', desc: 'GPT-synthesized answer · unlimited during trial / subscription' },
 }
 
 // ── Memoized message item — skips re-render on every input keystroke ──────────
@@ -70,7 +90,22 @@ export default function AIChatView({ k, user, onBack }) {
   const [loading, setLoading] = useState(false)
   const [chatUsed, setChatUsed] = useState(() => getLocalChatUsed())
   const [showUpgrade, setShowUpgrade] = useState(false)
+  const [userCtx, setUserCtx] = useState(null)
   const bottomRef = useRef(null)
+
+  // Fetch the user's chat context on mount (and whenever the auth user
+  // changes) so the transparency chip can show what's being personalized.
+  // Anonymous users get null — chip stays hidden.
+  useEffect(() => {
+    if (!user) { setUserCtx(null); return }
+    let cancelled = false
+    getChatContext()
+      .then((r) => { if (!cancelled) setUserCtx(r?.context || null) })
+      .catch(() => { if (!cancelled) setUserCtx(null) })
+    return () => { cancelled = true }
+  }, [user])
+
+  const ctxSummary = useMemo(() => summarizeContext(userCtx), [userCtx])
 
   const tier = user?.tier ?? 'free'
   const isCoachRole = user?.is_coach === true
@@ -202,6 +237,23 @@ export default function AIChatView({ k, user, onBack }) {
         )}
       </div>
 
+      {/* Transparency chip — surfaces the personalization context the
+          assistant is using. Hidden for anonymous users and accounts
+          with no usable data yet. */}
+      {ctxSummary && (
+        <div className="px-4 md:px-6 pt-3">
+          <div
+            className="inline-flex items-center gap-1.5 text-[11px] font-semibold
+                       bg-[var(--tier-c,#14b8a6)]/12 border-[0.5px] border-[var(--tier-c,#14b8a6)]/30
+                       rounded-full px-2.5 py-1 text-[var(--tier-light,#5eead4)]"
+            title="The assistant is personalizing answers using this context."
+          >
+            <Sparkle size={10} strokeWidth={2.4} />
+            Answering as your {ctxSummary}
+          </div>
+        </div>
+      )}
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 space-y-4">
         {messages.length === 0 && (
@@ -212,14 +264,15 @@ export default function AIChatView({ k, user, onBack }) {
             <div>
               <p className="text-text font-semibold">CoreTriage Assistant</p>
               <p className="text-sm text-muted mt-1 max-w-sm">
-                Ask about symptoms, return-to-climb, training load, or rehab basics. Educational only — not a diagnosis.
+                Ask about technique, training, movement, strategy, or injury. Educational only — not a diagnosis.
               </p>
             </div>
             <div className="flex flex-wrap gap-2 justify-center max-w-md">
               {[
-                'What could cause finger pain after crimping?',
-                'How do I return to climbing after elbow tendinopathy?',
-                'What are the red flags for shoulder injury?',
+                'Why does my foot keep cutting on overhangs?',
+                'How do I get better at slopers?',
+                'What does an A2 pulley injury feel like?',
+                'How should I structure a hangboard session?',
               ].map((q) => (
                 <button
                   key={q}
@@ -276,11 +329,11 @@ export default function AIChatView({ k, user, onBack }) {
               <Lock size={12} className="text-accent shrink-0" />
               {gptUsedExceeded ? (
                 <p className="text-xs text-muted">
-                  You've used all {FREE_GPT_LIMIT} free AI answers. <span className="text-accent">Lookup is still free</span> — switch above.
+                  Your trial AI answers are used up. <span className="text-accent">Lookup is always free</span> — switch above, or subscribe to keep unlimited AI answers.
                 </p>
               ) : (
                 <p className="text-xs text-muted">
-                  {FREE_GPT_LIMIT - chatUsed} free AI answer{FREE_GPT_LIMIT - chatUsed !== 1 ? 's' : ''} remaining.
+                  {FREE_GPT_LIMIT - chatUsed} trial AI answer{FREE_GPT_LIMIT - chatUsed !== 1 ? 's' : ''} remaining.
                 </p>
               )}
             </div>
@@ -288,7 +341,7 @@ export default function AIChatView({ k, user, onBack }) {
               onClick={() => setShowUpgrade(true)}
               className="text-xs btn-secondary shrink-0"
             >
-              Upgrade
+              Subscribe
             </button>
           </div>
         )}

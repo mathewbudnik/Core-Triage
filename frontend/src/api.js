@@ -44,6 +44,7 @@ async function request(method, path, body) {
 export const getHealth = () => request('GET', '/api/health')
 export const triageIntake = (payload) => request('POST', '/api/triage', payload)
 export const sendChat = (payload) => request('POST', '/api/chat', payload)
+export const getChatContext = () => request('GET', '/api/chat/context')
 export const getSessions = (limit = 50) => request('GET', `/api/sessions?limit=${limit}`)
 export const saveSession = (payload) => request('POST', '/api/sessions', payload)
 export const fetchSession = (id) => request('GET', `/api/sessions/${id}`)
