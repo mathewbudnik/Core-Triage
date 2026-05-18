@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Routes, Route, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { MessageSquare, Clock, Info, AlertTriangle, Menu, X, LogIn, Activity, Dumbbell, FileText, Stethoscope, UserCircle2, ChevronRight, Bug, Loader2, Trophy, Home } from 'lucide-react'
 import * as Sentry from '@sentry/react'
-import { getHealth, getMe, acceptDisclaimer } from './api'
+import { getHealth, getMe, getPyramid, acceptDisclaimer } from './api'
+import { workingTierFromHardest, TIER_TOKENS } from './lib/tier'
 import Landing from './components/Landing'
 import Logo from './components/Logo'
 import AuthModal from './components/AuthModal'
@@ -23,7 +24,7 @@ import TierPromotionTakeover from './components/TierPromotionTakeover'
 // the user navigates to them. First-paint bundle drops dramatically because
 // users don't pay for tabs they may never visit.
 const HubTab               = lazy(() => import('./components/HubTab'))
-const BodyTab              = lazy(() => import('./components/BodyTab'))
+const RecoverTab           = lazy(() => import('./components/RecoverTab'))
 const RehabRegionRedirect  = lazy(() => import('./components/RehabRegionRedirect'))
 const TriageTab            = lazy(() => import('./components/TriageTab'))
 const RehabTab             = lazy(() => import('./components/RehabTab'))
@@ -53,12 +54,12 @@ const TABS = [
   { id: 'hub',      label: 'Hub',      icon: Home,          subtitle: 'Your climbing dashboard' },
   { id: 'train',    label: 'Train',    icon: Dumbbell,      subtitle: 'Plans, stats, and how you stack up' },
   { id: 'progress', label: 'Progress', icon: Trophy,        subtitle: 'Leaderboard, grade pyramid, and your stats' },
-  { id: 'body',     label: 'Body',     icon: Stethoscope,   subtitle: 'Screen issues + work through rehab' },
+  { id: 'recover',  label: 'Recover',  icon: Stethoscope,   subtitle: 'Screen issues + work through rehab' },
   { id: 'chat',     label: 'Chat',     icon: MessageSquare, subtitle: 'Ask the climbing-trained assistant' },
 ]
 
 // Mobile bottom nav + top of desktop sidebar — 5 core tabs.
-const PRIMARY_TAB_IDS = ['hub', 'train', 'progress', 'body', 'chat']
+const PRIMARY_TAB_IDS = ['hub', 'train', 'progress', 'recover', 'chat']
 // No secondary tabs needed with the 4-tab structure.
 const SECONDARY_TAB_IDS = []
 // Triage / History → still accessible via direct links / internal navigation.
@@ -90,6 +91,10 @@ export default function App() {
   const [toast, setToast] = useState(null) // { kind: 'error'|'info'|'celebration', message: string, link?: string }
   const [awardQueue, setAwardQueue] = useState([])      // Array of unlocked-award payloads, queued FIFO
   const [promotion, setPromotion] = useState(null)      // { from, to } | null — tier promotion takeover
+  // userTier drives the nav accent color. Computed from the user's hardest
+  // grades on their athlete profile; null until the profile loads (nav falls
+  // back to the default teal accent via the CSS variable fallback values).
+  const [userTier, setUserTier] = useState(null)
 
   // Derive "is on landing?" and "is on a special standalone page?" from URL
   // — landing has its own full-bleed layout; verify-email + billing/* are
@@ -176,15 +181,53 @@ export default function App() {
     return () => window.removeEventListener('ct:award-unlocked', handler)
   }, [])
 
-  // Tier promotion — show full-screen takeover
+  // Tier promotion — show full-screen takeover, and bump the active nav tier
+  // to the new id so the sidebar / bottom-nav colors update immediately
+  // (no need to wait for a profile refetch).
   useEffect(() => {
     const handler = (ev) => {
       const { from, to } = ev.detail || {}
       if (from && to) setPromotion({ from, to })
+      if (to) setUserTier(to)
     }
     window.addEventListener('ct:tier-promotion', handler)
     return () => window.removeEventListener('ct:tier-promotion', handler)
   }, [])
+
+  // Fetch the rolling-30-day grade pyramid once the user is signed in and
+  // derive their working tier from the hardest recent send. This is the
+  // same data source the "Current Tier" widget on the Progress page uses,
+  // so the nav color always matches what the user sees there — not their
+  // lifetime max grade from the profile (which leads to confusing
+  // "I'm V0 Frost on Progress but my nav is V10 coral" mismatches).
+  // No recent sends → workingTierFromHardest falls back to 'v0' (frost).
+  useEffect(() => {
+    if (!user) { setUserTier(null); return }
+    let cancelled = false
+    getPyramid({ window: 'month' })
+      .then((p) => {
+        if (cancelled) return
+        const tier = workingTierFromHardest({
+          boulder: p?.boulder?.hardest_send,
+          route:   p?.route?.hardest_send,
+        })
+        if (tier) setUserTier(tier)
+      })
+      .catch(() => { /* no pyramid data yet — keep default accent */ })
+    return () => { cancelled = true }
+  }, [user])
+
+  // Resolve tier color tokens. Pass these as inline CSS variables on the
+  // app root so every `var(--tier-c)` etc. in the nav resolves to the
+  // user's grade color. Fallbacks (#14b8a6 teal) only show pre-login.
+  const tierTokens = userTier ? TIER_TOKENS[userTier] : null
+  const tierVars = tierTokens ? {
+    '--tier-c':     tierTokens.c,
+    '--tier-light': tierTokens.light,
+    '--tier-deep':  tierTokens.deep,
+    // 22% alpha glow, matches the tier.js doc comment.
+    '--tier-glow':  `${tierTokens.c}38`,
+  } : undefined
 
   // Pop the head of the award queue every 5 seconds
   useEffect(() => {
@@ -319,7 +362,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-bg flex">
+    <div className="min-h-screen bg-bg flex" style={tierVars}>
       {/* Ambient background orbs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
@@ -459,7 +502,8 @@ export default function App() {
 
       {/* Sidebar */}
       <aside className={`
-        fixed md:static inset-y-0 left-0 z-40
+        fixed md:sticky md:top-0 inset-y-0 md:inset-y-auto left-0 z-40
+        md:h-screen
         w-64 shrink-0 flex flex-col border-r border-outline bg-panel2/95 backdrop-blur-sm
         transition-transform duration-150 ease-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
@@ -474,7 +518,10 @@ export default function App() {
               className="flex items-center gap-2 mb-1 hover:opacity-90 transition-opacity"
             >
               <Logo size={32} dark />
-              <span className="text-lg font-bold bg-gradient-to-r from-accent via-text to-accent2 bg-clip-text text-transparent">
+              <span
+                className="text-lg font-bold bg-clip-text text-transparent"
+                style={{ backgroundImage: 'linear-gradient(90deg, var(--tier-c, #7dd3c0), #e7eaf0, #f47272)' }}
+              >
                 CoreTriage
               </span>
             </NavLink>
@@ -737,9 +784,12 @@ export default function App() {
           <Suspense fallback={<RouteLoading />}>
             <Routes>
               <Route path="/hub/*"         element={<HubTab user={user} />} />
-              <Route path="/body/*"        element={<BodyTab user={user} onLoginClick={() => setShowAuth(true)} />} />
+              <Route path="/recover/*"     element={<RecoverTab user={user} onLoginClick={() => setShowAuth(true)} />} />
+              {/* Legacy /body links — bookmarks, old emails, in-app cache —
+                  redirect to /recover so the old path keeps working. */}
+              <Route path="/body/*"        element={<Navigate to="/recover" replace />} />
               <Route path="/triage/*"      element={<TriageTab k={k} user={user} />} />
-              <Route path="/rehab"         element={<Navigate to="/body" replace />} />
+              <Route path="/rehab"         element={<Navigate to="/recover" replace />} />
               <Route path="/rehab/:region" element={<RehabRegionRedirect />} />
               <Route path="/train"         element={<TrainTab user={user} dbReady={dbReady} onLoginClick={() => setShowAuth(true)} />} />
               <Route path="/progress"      element={<ProgressTab user={user} onLoginClick={() => setShowAuth(true)} />} />

@@ -20,9 +20,9 @@ const FEATURES = [
     color: 'text-accent2',
     bg: 'bg-accent2/10 border-accent2/20',
     glow: 'hover:border-accent2/50 hover:bg-accent2/15',
-    title: 'Body',
+    title: 'Recover',
     desc: 'Quick injury screen and phase-based rehab in one place. Daily-reset checkoffs so the plan stays alive between sessions — open the app, see today\'s exercises, tick them off.',
-    tab: 'body',
+    tab: 'recover',
     cta: 'Run a screen',
   },
   {
@@ -38,9 +38,10 @@ const FEATURES = [
 ]
 
 const COACHING_INCLUDES = [
-  'Personal review of your triage results',
-  'Custom return-to-climb timeline',
-  'Direct async messaging — real answers',
+  'Video beta breakdown — send a project, get technique + sequence ideas',
+  'Training plan shaped around your project and weaknesses',
+  'Direct 1:1 async messaging with an outdoor V13 boulderer',
+  'Injury + load-management calls when you need them',
 ]
 
 const container = {
@@ -102,7 +103,10 @@ export default function Landing({ onEnter }) {
           variants={item}
           className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight tracking-tight mb-4"
         >
-          <span className="bg-gradient-to-r from-accent via-text to-accent2 bg-clip-text text-transparent">
+          <span
+            className="bg-clip-text text-transparent"
+            style={{ backgroundImage: 'linear-gradient(90deg, var(--tier-c, #7dd3c0), #e7eaf0, #f47272)' }}
+          >
             Train. Recover. Progress.
           </span>
           <br />
@@ -175,16 +179,16 @@ export default function Landing({ onEnter }) {
                 <span className="text-[11px] text-muted/70">application only</span>
               </div>
               <h2 className="text-lg md:text-xl font-bold text-text mb-2">
-                Work 1:1 with a climbing coach
+                Inside knowledge, climber to climber
               </h2>
               <p className="text-sm text-muted leading-relaxed mb-5 max-w-lg">
-                Not an algorithm. Mathew is an outdoor V13 boulderer, USAC-certified routesetter at Momentum, and coach with over a decade of climbing experience. Get your triage results reviewed, a plan built around your actual schedule, and direct access for the questions an AI can't answer.
+                Send video of your project and get the kind of feedback that only comes from years inside the sport — a <span className="text-text font-medium">beta breakdown</span> with technique fixes and sequence ideas, plus a <span className="text-text font-medium">training plan shaped around your weaknesses</span>. Direct messaging covers everything an AI can't help with. Mathew climbs V13 outdoors, sets at Momentum, and has spent a decade figuring out what actually works on the wall.
               </p>
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-6">
                 {COACHING_INCLUDES.map((point) => (
-                  <div key={point} className="flex items-center gap-2 text-xs text-muted">
-                    <CheckCircle size={12} className="text-accent3 shrink-0" />
-                    {point}
+                  <div key={point} className="flex items-start gap-2 text-xs text-muted">
+                    <CheckCircle size={12} className="text-accent3 shrink-0 mt-0.5" />
+                    <span>{point}</span>
                   </div>
                 ))}
               </div>
@@ -208,7 +212,7 @@ export default function Landing({ onEnter }) {
           ].map((area) => (
             <button
               key={area}
-              onClick={() => onEnter('body')}
+              onClick={() => onEnter('recover')}
               className="text-xs bg-panel border border-outline rounded-full px-3 py-1.5 text-muted hover:text-accent hover:border-accent/40 transition-colors"
             >
               {area}

@@ -196,7 +196,7 @@ export default function TriageTab({ k, user }) {
       setResult(data)
 
       // Best-effort session save for signed-in users (non-fatal on failure —
-      // free-tier limit / network blip; /body's sessionStorage fallback covers it).
+      // free-tier limit / network blip; /recover's sessionStorage fallback covers it).
       if (user) {
         try {
           await saveSession({
@@ -208,14 +208,14 @@ export default function TriageTab({ k, user }) {
         } catch (_) { /* swallowed */ }
       }
 
-      // sessionStorage cache so refreshing /body keeps the diagnosis.
+      // sessionStorage cache so refreshing /recover keeps the diagnosis.
       saveLastTriage({
         result: data,
         form: { region: form.region, severity: form.severity, onset: form.onset },
       })
       // NOTE: we deliberately do NOT navigate here. The diagnosis reveals
       // inline in the TriageWizard. The "Open my rehab plan" CTA below
-      // is what navigates to /body.
+      // is what navigates to /recover.
     } catch (err) {
       setError(err.message)
     } finally {
@@ -225,7 +225,7 @@ export default function TriageTab({ k, user }) {
 
   const openRehabPlan = useCallback(() => {
     if (!result) return
-    navigate('/body', {
+    navigate('/recover', {
       state: {
         triageResult: result,
         triageForm:   { region: form.region, severity: form.severity, onset: form.onset },

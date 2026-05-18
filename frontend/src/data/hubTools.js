@@ -2,15 +2,15 @@ import { Stethoscope, Dumbbell, MessageSquare } from 'lucide-react'
 
 // Single source of truth for the three hub tools. Other Hub components import
 // from here so a colour/icon/route change happens in one place. Mirrors the
-// four-tab IA (Hub / Train / Body / Chat) — Hub itself doesn't appear as a
+// four-tab IA (Hub / Train / Recover / Chat) — Hub itself doesn't appear as a
 // tool card, the other three do.
 export const TOOLS = {
-  body: {
-    key: 'body',
-    label: 'Body',
+  recover: {
+    key: 'recover',
+    label: 'Recover',
     accent: 'teal',        // maps to Tailwind accent
     icon: Stethoscope,
-    route: '/body',
+    route: '/recover',
     pattern: 'dots',
     emptyStatus: 'Screen an injury',
   },
@@ -34,7 +34,7 @@ export const TOOLS = {
   },
 }
 
-export const TOOL_KEYS = ['body', 'train', 'chat']
+export const TOOL_KEYS = ['recover', 'train', 'chat']
 
 // Accent → Tailwind class lookup. Use these instead of inlining bg-accent/10
 // everywhere, so we can swap a colour mapping in one place.

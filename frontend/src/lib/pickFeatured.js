@@ -38,12 +38,12 @@ export function pickFeatured(data) {
   const older  = !recent && hasTriageWithin(data, 90)
   const hasPlan = !!data?.activePlan
 
-  // Body covers the merged triage+rehab surface. We feature Train only when
-  // the user has an active plan AND no active triage — otherwise Body wins,
-  // because either there's a rehab plan in progress or the user has no state
-  // at all and "screen something" is the primary CTA.
-  if (recent) return 'body'
+  // Recover covers the merged triage+rehab surface. We feature Train only
+  // when the user has an active plan AND no active triage — otherwise
+  // Recover wins, because either there's a rehab plan in progress or the
+  // user has no state at all and "screen something" is the primary CTA.
+  if (recent) return 'recover'
   if (hasPlan) return 'train'
-  if (older) return 'body'
-  return 'body'
+  if (older) return 'recover'
+  return 'recover'
 }
