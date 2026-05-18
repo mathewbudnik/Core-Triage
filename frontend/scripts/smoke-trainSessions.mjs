@@ -22,7 +22,7 @@ const plan = {
 // sessionForDay
 const s1 = sessionForDay(plan, '2026-05-11')  // start: Mon week 1 day 1
 assert.equal(s1?.session_type, 'Power', 'Mon w1 -> Power')
-const s2 = sessionForDay(plan, '2026-05-13')  // Wed: maps to day_in_week 2 (Tue-Wed-Fri pattern compressed)
+const s2 = sessionForDay(plan, '2026-05-13')  // Wed w1 -> day_in_week 2 (Mon-Wed-Sat pattern at dpw=3)
 assert.ok(s2, 'mid-week resolves to a session')
 const sNo = sessionForDay(plan, '2026-05-15')  // Fri w1 — outside the 3 logged sessions
 assert.equal(sNo, null, 'rest day returns null')
