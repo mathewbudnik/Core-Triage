@@ -44,11 +44,12 @@ export default function PlanArcSheet({ open, plan, onClose, onSelectWeek }) {
   const totalWeeks = plan?.duration_weeks || 0
   const todayIso = new Date().toISOString().slice(0, 10)
 
-  // Mobile = bottom-anchored sheet that slides up. Desktop = centered modal
-  // card that scales in.
+  // Mobile = bottom-anchored sheet that slides up. Desktop = top-aligned
+  // modal card (sits ~6vh from top so it lands in the natural reading area
+  // instead of dead-centering with empty space above).
   const sheetClass = isDesktop
-    ? `fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50
-       w-full max-w-md max-h-[80vh] overflow-auto overscroll-contain
+    ? `fixed top-[6vh] left-1/2 -translate-x-1/2 z-50
+       w-full max-w-md max-h-[88vh] overflow-auto overscroll-contain
        bg-[#0a0a0c] border-[0.5px] border-white/[0.10]
        rounded-3xl px-4 pt-3 pb-5`
     : `fixed bottom-0 inset-x-0 z-50

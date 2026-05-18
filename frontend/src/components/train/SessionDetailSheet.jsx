@@ -58,12 +58,15 @@ export default function SessionDetailSheet({ open, session, onClose, onLogged })
   const exercises = session?.exercises || []
   const dur = session?.duration_minutes || session?.duration_min
   const rpe = session?.rpe
+  // Match the hero card's fallback so the sheet never reads "Session session".
+  const sessionType = session?.session_type || 'Endurance'
 
-  // Mobile = bottom-anchored sheet that slides up. Desktop = centered modal
-  // card that scales in.
+  // Mobile = bottom-anchored sheet that slides up. Desktop = top-aligned
+  // modal card (sits ~6vh from top so it lands in the natural reading area
+  // instead of dead-centering with empty space above).
   const sheetClass = isDesktop
-    ? `fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50
-       w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden
+    ? `fixed top-[6vh] left-1/2 -translate-x-1/2 z-50
+       w-full max-w-md max-h-[88vh] flex flex-col overflow-hidden
        bg-[#0a0a0c] border-[0.5px] border-white/[0.10]
        rounded-3xl px-4 pt-3`
     : `fixed bottom-0 inset-x-0 z-50
@@ -107,10 +110,10 @@ export default function SessionDetailSheet({ open, session, onClose, onLogged })
             <div className="flex items-start justify-between gap-3 mb-3 px-1">
               <div>
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--tier-light)]">
-                  {session?.session_type || 'Session'}
+                  {sessionType}
                 </p>
                 <h3 className="text-[19px] font-extrabold -tracking-[0.02em] mt-0.5">
-                  {session?.session_type || 'Session'} session
+                  {sessionType} session
                 </h3>
                 <p className="text-[11.5px] font-bold text-muted mt-1 tabular-nums">
                   {[dur ? `${dur} min` : null, rpe ? `RPE ${rpe}` : null].filter(Boolean).join(' · ')}
@@ -122,7 +125,11 @@ export default function SessionDetailSheet({ open, session, onClose, onLogged })
               </button>
             </div>
 
-            <div className="flex-1 overflow-auto pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
+            <div className={`flex-1 overflow-auto ${
+              logging
+                ? 'pb-[env(safe-area-inset-bottom)]'
+                : 'pb-[calc(5.5rem+env(safe-area-inset-bottom))]'
+            }`}>
               {!logging && (
                 <>
                   {exercises.length === 0 ? (
