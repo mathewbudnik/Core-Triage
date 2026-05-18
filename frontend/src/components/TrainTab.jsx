@@ -1,9 +1,30 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Dumbbell, LogIn, Loader2, Sparkles, RefreshCw } from 'lucide-react'
+import { Dumbbell, LogIn, Loader2, RefreshCw } from 'lucide-react'
 import { getProfile, getActivePlan, generatePlan } from '../api'
+import { useHubData } from '../hooks/useHubData'
+import { workingTierFromHardest } from '../lib/tier'
+import { currentWeekDates, dayStatusFor, sessionForDay } from '../lib/trainSessions'
+import TierThemeRoot from './TierThemeRoot'
 import ProfileSetup from './ProfileSetup'
-import PlanView from './PlanView'
+import TrainHeader from './train/TrainHeader'
+import TrainPlanArcChip from './train/TrainPlanArcChip'
+import TrainWeekStrip from './train/TrainWeekStrip'
+import TrainHeroCard from './train/TrainHeroCard'
+import TrainNextUpRow from './train/TrainNextUpRow'
+import PlanArcSheet from './train/PlanArcSheet'
+import SessionDetailSheet from './train/SessionDetailSheet'
+
+function todayIso() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function currentWeekNumber(plan, todayDate = new Date()) {
+  if (!plan?.start_date || !plan?.duration_weeks) return 1
+  const start = new Date(plan.start_date + 'T00:00:00')
+  const diff = Math.floor((todayDate - start) / 86400000)
+  return Math.max(1, Math.min(plan.duration_weeks, Math.floor(diff / 7) + 1))
+}
 
 function friendlyPlanError(msg) {
   if (!msg) return 'Could not generate your plan.'
@@ -18,13 +39,17 @@ function friendlyPlanError(msg) {
 
 function EmptyState({ icon: Icon, title, body, action }) {
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center px-8 py-16 space-y-5">
-      <div className="w-14 h-14 rounded-2xl bg-accent/10 border border-accent/25 flex items-center justify-center">
-        <Icon size={24} className="text-accent" />
+    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-8 py-16 space-y-5">
+      <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
+           style={{
+             background: 'color-mix(in srgb, var(--tier-c) 12%, transparent)',
+             border: '0.5px solid color-mix(in srgb, var(--tier-c) 32%, transparent)',
+           }}>
+        <Icon size={22} className="text-[var(--tier-light)]" />
       </div>
       <div>
-        <p className="font-semibold text-text">{title}</p>
-        <p className="text-sm text-muted mt-1 max-w-xs">{body}</p>
+        <p className="text-[15px] font-extrabold text-text -tracking-[0.01em]">{title}</p>
+        <p className="text-[12.5px] font-semibold text-muted mt-1 max-w-xs leading-snug">{body}</p>
       </div>
       {action}
     </div>
@@ -37,6 +62,13 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
   const [plan, setPlan] = useState(null)
   const [error, setError] = useState(null)
   const [generating, setGenerating] = useState(false)
+
+  const [selectedDay, setSelectedDay] = useState(() => todayIso())
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [planSheetOpen, setPlanSheetOpen] = useState(false)
+
+  const hub = useHubData(user)
+  const tierId = workingTierFromHardest(hub.hardestSends)
 
   const load = useCallback(async () => {
     if (!user) { setState('no-auth'); return }
@@ -69,15 +101,13 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
     setGenerating(true)
     setError(null)
     try {
-      const result = await generatePlan({ use_injury_data: true })
-      setPlan(result.plan ? { ...result.plan, id: result.id, plan_data: result.plan.plan_data } : null)
-      // Reload from server for proper format
+      await generatePlan({ use_injury_data: true })
       const activePlan = await getActivePlan()
       setPlan(activePlan)
       setState('ready')
     } catch (err) {
       setError(friendlyPlanError(err.message))
-      setState('ready') // fall through to plan-less ready state
+      setState('ready')
     } finally {
       setGenerating(false)
     }
@@ -90,7 +120,6 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
       await generatePlan({ use_injury_data: true })
       const activePlan = await getActivePlan()
       setPlan(activePlan)
-      setState('ready')
     } catch (err) {
       setError(friendlyPlanError(err.message))
     } finally {
@@ -98,143 +127,173 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
     }
   }
 
-  // ---- Render states ----
+  const weekDates = useMemo(() => currentWeekDates(selectedDay), [selectedDay])
+  const session   = useMemo(() => sessionForDay(plan, selectedDay), [plan, selectedDay])
+  const dayStatus = useMemo(() => dayStatusFor(selectedDay, plan), [plan, selectedDay])
+  const curWeek   = useMemo(() => currentWeekNumber(plan), [plan])
+
+  // ── Render branches ──────────────────────────────────────────────────────
 
   if (state === 'no-auth') {
     return (
-      <EmptyState
-        icon={Dumbbell}
-        title="Sign in to access training"
-        body="Your training plan and progress are private. Create a free account to get started."
-        action={
-          <button onClick={onLoginClick} className="btn-primary flex items-center gap-2">
-            <LogIn size={15} />
-            Log in or create account
-          </button>
-        }
-      />
+      <TierThemeRoot hardest={hub.hardestSends} global>
+        <div className="max-w-2xl mx-auto px-4 py-8">
+          <EmptyState
+            icon={Dumbbell}
+            title="Sign in to access training"
+            body="Your training plan and progress are private. Create a free account to get started."
+            action={
+              <button onClick={onLoginClick}
+                      className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-extrabold text-[12.5px]"
+                      style={{ background: 'var(--tier-c)', color: 'var(--bg, #06120f)' }}>
+                <LogIn size={14} />
+                Log in or create account
+              </button>
+            }
+          />
+        </div>
+      </TierThemeRoot>
     )
   }
 
   if (state === 'loading') {
     return (
-      <div className="flex items-center justify-center h-full py-24">
-        <Loader2 size={24} className="text-accent animate-spin" />
-      </div>
+      <TierThemeRoot hardest={hub.hardestSends} global>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 size={22} className="text-[var(--tier-light)] animate-spin" />
+        </div>
+      </TierThemeRoot>
     )
   }
 
   if (state === 'setup') {
     return (
-      <AnimatePresence>
-        <motion.div
-          key="setup"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="h-full overflow-auto"
-        >
-          <ProfileSetup user={user} onComplete={handleProfileComplete} />
-        </motion.div>
-      </AnimatePresence>
+      <TierThemeRoot hardest={hub.hardestSends} global>
+        <AnimatePresence>
+          <motion.div key="setup" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+            <ProfileSetup user={user} onComplete={handleProfileComplete} />
+          </motion.div>
+        </AnimatePresence>
+      </TierThemeRoot>
     )
   }
 
   if (state === 'generating') {
     return (
-      <div className="flex flex-col items-center justify-center h-full py-24 space-y-4 text-center px-8">
-        <Loader2 size={28} className="text-accent animate-spin" />
-        <div>
-          <p className="font-semibold text-text">Building your plan…</p>
-          <p className="text-sm text-muted mt-1">Personalising sessions based on your profile and injury history.</p>
+      <TierThemeRoot hardest={hub.hardestSends} global>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 text-center px-8">
+          <Loader2 size={28} className="text-[var(--tier-light)] animate-spin" />
+          <div>
+            <p className="text-[15px] font-extrabold text-text -tracking-[0.01em]">Building your plan…</p>
+            <p className="text-[12.5px] font-semibold text-muted mt-1">
+              Personalising sessions based on your profile and injury history.
+            </p>
+          </div>
         </div>
-      </div>
+      </TierThemeRoot>
     )
   }
 
   if (state === 'error') {
     return (
-      <EmptyState
-        icon={Dumbbell}
-        title="Something went wrong"
-        body={error || 'Could not load your training data.'}
-        action={
-          <button onClick={load} className="btn-secondary flex items-center gap-2">
-            <RefreshCw size={14} />
-            Retry
-          </button>
-        }
-      />
+      <TierThemeRoot hardest={hub.hardestSends} global>
+        <div className="max-w-2xl mx-auto px-4 py-8">
+          <EmptyState
+            icon={Dumbbell}
+            title="Something went wrong"
+            body={error || 'Could not load your training data.'}
+            action={
+              <button onClick={load}
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl
+                                 text-[12px] font-bold text-text
+                                 bg-white/[0.04] border-[0.5px] border-white/[0.10]
+                                 hover:bg-white/[0.06]">
+                <RefreshCw size={13} />
+                Retry
+              </button>
+            }
+          />
+        </div>
+      </TierThemeRoot>
     )
   }
 
   // state === 'ready'
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-      {/* Profile summary strip */}
-      {profile && (
-        <motion.div
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-xl border border-outline bg-panel px-4 py-3 flex items-center justify-between gap-4"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-accent/15 border border-accent/30 flex items-center justify-center">
-              <Dumbbell size={16} className="text-accent" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-text capitalize">
-                {profile.experience_level} · {profile.primary_discipline}
-              </p>
-              <p className="text-xs text-muted">
-                {profile.days_per_week}×/wk · goal: {profile.primary_goal?.replace(/_/g, ' ')}
-                {profile.max_grade_boulder ? ` · max ${profile.max_grade_boulder}` : ''}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => setState('setup')}
-            className="text-xs text-muted hover:text-text border border-outline px-2.5 py-1 rounded-lg hover:border-accent/40 transition-colors"
-          >
-            Edit
-          </button>
-        </motion.div>
-      )}
+    <TierThemeRoot hardest={hub.hardestSends} global>
+      <div className="relative max-w-2xl mx-auto px-4 py-6 md:py-8"
+           style={{
+             background:
+               'radial-gradient(circle at 50% -10%, color-mix(in srgb, var(--tier-c) 22%, transparent) 0%, transparent 55%)',
+           }}>
 
-      {/* Plan or CTA to generate */}
-      <AnimatePresence mode="wait">
-        {plan ? (
-          <motion.div key="plan" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <PlanView plan={plan} onRefresh={load} />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="no-plan"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl border border-accent/25 bg-accent/5 px-6 py-10 flex flex-col items-center text-center space-y-5"
-          >
-            <div className="w-14 h-14 rounded-2xl bg-accent/15 border border-accent/30 flex items-center justify-center">
-              <Sparkles size={22} className="text-accent" />
-            </div>
-            <div>
-              <p className="font-bold text-text text-lg">Ready to build your plan</p>
-              <p className="text-sm text-muted mt-1 max-w-sm">
-                We'll generate a 4-week personalised training plan based on your profile
-                and adapt it around any injuries in your history.
-              </p>
-            </div>
-            {error && <p className="text-xs text-accent2">{error}</p>}
-            <button
-              onClick={handleGeneratePlan}
-              disabled={generating}
-              className="btn-primary flex items-center gap-2 disabled:opacity-50"
-            >
-              {generating ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
-              {generating ? 'Generating…' : 'Generate my plan'}
-            </button>
-          </motion.div>
+        {plan && (
+          <div className="px-1 mb-1">
+            <TrainPlanArcChip
+              currentWeek={curWeek}
+              totalWeeks={plan.duration_weeks}
+              phase={plan.phase}
+              onOpen={() => setPlanSheetOpen(true)}
+            />
+          </div>
         )}
-      </AnimatePresence>
-    </div>
+
+        <TrainHeader tierId={tierId} plan={plan} streakDays={hub.streakDays} />
+
+        <TrainWeekStrip
+          weekDates={weekDates}
+          plan={plan}
+          loggedDates={hub.weekLoggedDates}
+          selectedDay={selectedDay}
+          onSelectDay={setSelectedDay}
+        />
+
+        {plan ? (
+          <TrainHeroCard
+            session={session}
+            dayStatus={dayStatus}
+            isoDate={selectedDay}
+            onStart={() => setSheetOpen(true)}
+          />
+        ) : (
+          <TrainHeroCard
+            noPlan
+            onGenerate={handleGeneratePlan}
+            generating={generating}
+            planError={error}
+          />
+        )}
+
+        {plan && (
+          <TrainNextUpRow
+            weekDates={weekDates}
+            plan={plan}
+            fromDay={selectedDay}
+            onSelectDay={setSelectedDay}
+          />
+        )}
+
+        <button
+          onClick={() => setState('setup')}
+          className="mt-6 px-1 text-[11px] font-bold text-muted hover:text-text transition-colors"
+        >
+          Edit profile ›
+        </button>
+
+        <PlanArcSheet
+          open={planSheetOpen}
+          plan={plan}
+          onClose={() => setPlanSheetOpen(false)}
+          onSelectWeek={(mondayIso) => setSelectedDay(mondayIso)}
+        />
+
+        <SessionDetailSheet
+          open={sheetOpen}
+          session={session}
+          onClose={() => setSheetOpen(false)}
+          onLogged={load}
+        />
+      </div>
+    </TierThemeRoot>
   )
 }
