@@ -1,0 +1,32 @@
+import { ChevronRight } from 'lucide-react'
+
+/**
+ * Compact "Week N of M · phase" chip rendered above the Train header.
+ * Tapping it opens the PlanArcSheet so the climber can jump weeks.
+ *
+ * Props:
+ *   currentWeek: number   — 1-based, computed from today vs plan.start_date
+ *   totalWeeks:  number   — plan.duration_weeks
+ *   phase:       string   — plan.phase (e.g. 'Power')
+ *   onOpen:      () => void
+ */
+export default function TrainPlanArcChip({ currentWeek, totalWeeks, phase, onOpen }) {
+  if (!totalWeeks) return null
+  const phaseLabel = phase ? `${phase[0].toUpperCase()}${phase.slice(1)} phase` : null
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      tabIndex={0}
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
+                 text-[10.5px] font-bold uppercase tracking-[0.10em] tabular-nums
+                 bg-white/[0.04] border-[0.5px] border-white/[0.08]
+                 text-muted hover:text-text transition-colors"
+    >
+      <span>Week {currentWeek} of {totalWeeks}</span>
+      {phaseLabel && <span className="text-white/30">·</span>}
+      {phaseLabel && <span>{phaseLabel}</span>}
+      <ChevronRight size={12} strokeWidth={2.4} className="opacity-70" />
+    </button>
+  )
+}
