@@ -60,7 +60,7 @@ export default function ChatPicker({ user, onSelectCoach, onSelectAI }) {
               </span>
             </div>
             <p className="text-xs text-muted mt-1.5 leading-relaxed">
-              A real climbing coach. Personalised plans, technique advice, return-to-climb decisions.
+              Send video of your project — get a beta breakdown and training feedback from an outdoor V13 boulderer with a decade in the sport. Plus direct messaging for return-to-climb and load-management calls.
             </p>
             <p className="text-[10px] text-muted/70 mt-2">
               Replies in 24–48h
@@ -85,14 +85,11 @@ export default function ChatPicker({ user, onSelectCoach, onSelectAI }) {
             <div className="flex items-center justify-center gap-2 flex-wrap">
               <h3 className="text-sm font-bold text-text">Ask the AI</h3>
               <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[rgba(125,211,192,0.15)] text-accent border border-[rgba(125,211,192,0.3)]">
-                Free
+                Free trial
               </span>
             </div>
             <p className="text-xs text-muted mt-1.5 leading-relaxed">
-              Instant climbing-injury lookups (free), or AI-synthesized answers (5 free / unlimited Pro).
-            </p>
-            <p className="text-[10px] text-muted/70 mt-2">
-              Lookup is unlimited
+              Climbing-trained assistant — technique, training, movement, and injury triage. 5 free answers, then unlimited during your 14-day trial and with a subscription.
             </p>
           </div>
           <span className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-accent/40 text-accent bg-[rgba(125,211,192,0.1)] group-hover:bg-[rgba(125,211,192,0.18)] transition-colors">

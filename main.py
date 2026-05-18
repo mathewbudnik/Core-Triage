@@ -387,7 +387,9 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     history: List[ChatMessage] = []
-    mode: str = "kb"
+    # `mode` is deprecated — every chat is now AI-synthesized with KB context
+    # injected silently. Kept here so older clients that still send it don't 422.
+    mode: Optional[str] = None
     k: int = 4
 
 
@@ -760,58 +762,14 @@ def triage(request: Request, req: IntakeRequest):
     }
 
 
-# ── KB-mode response formatting ─────────────────────────────────────────────
-
-# Special cases where the auto-prettified label reads awkwardly. Anything not
-# in this map falls through to: drop ".md", replace "_" → " ", title-case.
-_PRETTY_SOURCE_OVERRIDES = {
-    "general_load_management": "Load management",
-    "elbow_tendinopathy":      "Elbow tendinopathy",
-    "finger_pulley":           "Finger pulley injuries",
-    "ankle_foot":              "Ankle &amp; foot",
-}
-
-def _pretty_source(filename: str) -> str:
-    base = filename.rsplit(".", 1)[0] if filename.endswith(".md") else filename
-    if base in _PRETTY_SOURCE_OVERRIDES:
-        return _PRETTY_SOURCE_OVERRIDES[base]
-    return base.replace("_", " ").replace("-", " ").title()
-
-# Strip a leading H2 markdown heading from a chunk so we don't render
-# "▸ FINGER PULLEY INJURIES" followed by "## A2 pulley rupture" — the source
-# label already names the section.
-_LEADING_H2_RE = re.compile(r"^\s*##\s+[^\n]+\n+")
-
-def _format_kb_response(hits) -> str:
-    parts = []
-    for chunk, score in hits:
-        if score < 0.05:
-            continue
-        content = _LEADING_H2_RE.sub("", chunk.text.strip())
-        if len(content) > 800:
-            content = content[:800].rsplit(" ", 1)[0] + "…"
-        label = _pretty_source(chunk.source).upper()
-        parts.append(f"▸ {label}\n\n{content}")
-
-    if not parts:
-        return "No relevant content found in the knowledge base for your query."
-
-    text = "\n\n".join(parts)
-    text += (
-        "\n\n*Educational only — not a medical diagnosis. "
-        "Seek professional evaluation if pain is severe, worsening, or "
-        "accompanied by neurological symptoms.*"
-    )
-    return text
-
-
 @app.post("/api/chat")
 @limiter.limit("20/minute;100/hour")
 def chat(request: Request, req: ChatRequest):
-    # Optional auth — enforce per-user GPT limits for free accounts.
-    # KB-mode requests bypass the limit entirely (free for everyone).
+    # Optional auth — enforce per-user chat limits for free accounts.
+    # Every chat is now AI-synthesized (KB chunks still feed it as RAG
+    # context, but there's no longer a separate "Lookup" mode).
     opt_user = _optional_user(request)
-    if req.mode == "gpt" and opt_user:
+    if opt_user:
         is_coach = get_user_role(opt_user["id"]) == "coach"
         tier = get_user_tier(opt_user["id"])
         if not is_coach and tier == "free":
@@ -855,36 +813,30 @@ def chat(request: Request, req: ChatRequest):
     messages = [{"role": m.role, "content": m.content} for m in req.history]
     messages.append({"role": "user", "content": clean})
 
-    text = ""
-    if req.mode == "gpt":
-        if not _openai_client:
-            return {"response": "OPENAI_API_KEY not set.", "citations": citations}
-        try:
-            response = _openai_client.chat.completions.create(
-                model="gpt-4o",
-                messages=[{"role": "system", "content": system_prompt}] + messages,
-                temperature=0.2,
-                # Bumped from 600 → 1500 so the model can actually give specific
-                # week-by-week guidance with sets/reps without being cut off.
-                # Short answers still stay short; this is a ceiling, not a target.
-                # Timeout bumped from 15 → 25s to give the longer generations
-                # time to land (gpt-4o is fast but 1500 tokens can take 8-12s).
-                max_tokens=1500,
-                timeout=25,
-            )
-            text = response.choices[0].message.content
-        except Exception as e:
-            msg = str(e)
-            if "insufficient_quota" in msg or "exceeded your current quota" in msg:
-                text = "OpenAI quota issue: add credits in the OpenAI Platform Billing settings."
-            elif "401" in msg or "invalid_api_key" in msg:
-                text = "OpenAI auth error: the API key is invalid."
-            else:
-                text = f"OpenAI error: {msg}"
-    else:
-        text = _format_kb_response(hits)
+    if not _openai_client:
+        return {"response": "OPENAI_API_KEY not set.", "citations": citations}
+    try:
+        response = _openai_client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "system", "content": system_prompt}] + messages,
+            temperature=0.2,
+            # 1500-token ceiling lets the model give specific week-by-week
+            # guidance with sets/reps without being cut off. Short answers
+            # still stay short. 25s timeout fits the worst-case generation.
+            max_tokens=1500,
+            timeout=25,
+        )
+        text = response.choices[0].message.content
+    except Exception as e:
+        msg = str(e)
+        if "insufficient_quota" in msg or "exceeded your current quota" in msg:
+            text = "OpenAI quota issue: add credits in the OpenAI Platform Billing settings."
+        elif "401" in msg or "invalid_api_key" in msg:
+            text = "OpenAI auth error: the API key is invalid."
+        else:
+            text = f"OpenAI error: {msg}"
 
-    if citations and req.mode == "gpt":
+    if citations:
         text = text.strip() + "\n\nSources used: " + ", ".join([c.split(" (")[0] for c in citations[:5]])
 
     return {"response": text, "citations": citations}

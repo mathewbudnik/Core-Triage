@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Send, Loader2, Bot, User, Search, Sparkles, AlertTriangle, Lock, ArrowLeft, Sparkle } from 'lucide-react'
+import { Send, Loader2, Bot, User, AlertTriangle, Lock, ArrowLeft, Sparkle } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { sendChat, getChatContext } from '../api'
 import UpgradeModal from './UpgradeModal'
@@ -25,8 +25,7 @@ function summarizeContext(ctx) {
   return parts.join(' · ')
 }
 
-const FREE_GPT_LIMIT = 5
-const MODE_KEY = 'coretriage_chat_mode'
+const FREE_CHAT_LIMIT = 5
 
 function getLocalChatUsed() {
   return parseInt(localStorage.getItem('ct_chat_used') || '0', 10)
@@ -35,11 +34,6 @@ function incrementLocalChatUsed() {
   const n = getLocalChatUsed() + 1
   localStorage.setItem('ct_chat_used', String(n))
   return n
-}
-
-const MODE_META = {
-  kb:  { label: 'Lookup',    icon: Search,    color: 'text-accent',  desc: 'Climbing-injury knowledge base · free for all' },
-  gpt: { label: 'AI answer', icon: Sparkles,  color: 'text-accent3', desc: 'GPT-synthesized answer · unlimited during trial / subscription' },
 }
 
 // ── Memoized message item — skips re-render on every input keystroke ──────────
@@ -82,9 +76,6 @@ const MessageItem = memo(function MessageItem({ msg }) {
 // ── Main view ─────────────────────────────────────────────────────────────────
 
 export default function AIChatView({ k, user, onBack }) {
-  // Default to Lookup (kb) so first-time users don't burn a paid GPT message.
-  // Persisted after their first explicit toggle.
-  const [mode, setMode] = useState(() => localStorage.getItem(MODE_KEY) || 'kb')
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -109,8 +100,8 @@ export default function AIChatView({ k, user, onBack }) {
 
   const tier = user?.tier ?? 'free'
   const isCoachRole = user?.is_coach === true
-  const gptUnlimited = isCoachRole || tier === 'pro' || tier === 'coaching'
-  const gptUsedExceeded = !gptUnlimited && chatUsed >= FREE_GPT_LIMIT
+  const chatUnlimited = isCoachRole || tier === 'pro' || tier === 'coaching'
+  const limitExceeded = !chatUnlimited && chatUsed >= FREE_CHAT_LIMIT
 
   const inputRef = useRef('')
   useEffect(() => { inputRef.current = input }, [input])
@@ -119,24 +110,13 @@ export default function AIChatView({ k, user, onBack }) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  // Persist mode on change
-  useEffect(() => { localStorage.setItem(MODE_KEY, mode) }, [mode])
-
-  const setModeWithGuard = useCallback((m) => {
-    if (m === 'gpt' && gptUsedExceeded) {
-      setShowUpgrade(true)
-      return
-    }
-    setMode(m)
-  }, [gptUsedExceeded])
-
   const handleSend = useCallback(async (e) => {
     e.preventDefault()
     const text = inputRef.current.trim()
     if (!text || loading) return
 
-    // GPT mode + limit reached → upsell, don't send
-    if (mode === 'gpt' && gptUsedExceeded) {
+    // Free limit reached → upsell, don't send
+    if (limitExceeded) {
       setShowUpgrade(true)
       return
     }
@@ -149,17 +129,17 @@ export default function AIChatView({ k, user, onBack }) {
 
     try {
       const trimmedHistory = messages.slice(-20)
-      const data = await sendChat({ message: text, history: trimmedHistory, mode, k })
+      const data = await sendChat({ message: text, history: trimmedHistory, k })
       setMessages([...updated, { role: 'assistant', content: data.response }])
-      // Track GPT usage locally for free / anonymous users
-      if (mode === 'gpt' && !gptUnlimited) {
+      // Track usage locally for free / anonymous users
+      if (!chatUnlimited) {
         const n = incrementLocalChatUsed()
         setChatUsed(n)
       }
     } catch (err) {
       if (err.message?.includes('chat_limit_reached')) {
-        setChatUsed(FREE_GPT_LIMIT)
-        localStorage.setItem('ct_chat_used', String(FREE_GPT_LIMIT))
+        setChatUsed(FREE_CHAT_LIMIT)
+        localStorage.setItem('ct_chat_used', String(FREE_CHAT_LIMIT))
         setMessages(updated) // rollback optimistic user message
         setShowUpgrade(true)
       } else {
@@ -175,7 +155,7 @@ export default function AIChatView({ k, user, onBack }) {
     } finally {
       setLoading(false)
     }
-  }, [messages, loading, mode, k, gptUsedExceeded, gptUnlimited]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [messages, loading, k, limitExceeded, chatUnlimited]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleInputChange = useCallback((e) => setInput(e.target.value), [])
 
@@ -184,11 +164,11 @@ export default function AIChatView({ k, user, onBack }) {
   const overLimit = charCount > MAX_CHARS
   const hasInput = useMemo(() => input.trim().length > 0 && !overLimit, [input, overLimit])
 
-  const sendDisabled = loading || !hasInput || (mode === 'gpt' && gptUsedExceeded)
+  const sendDisabled = loading || !hasInput || limitExceeded
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header bar — mode toggle + back-to-picker link */}
+      {/* Header bar — back link + free-tier counter */}
       <div className="border-b border-outline px-4 md:px-6 py-3 flex items-center gap-3 flex-wrap bg-panel2/40">
         <button
           onClick={onBack}
@@ -199,42 +179,16 @@ export default function AIChatView({ k, user, onBack }) {
           Back
         </button>
 
-        <div className="flex items-center gap-1 bg-panel rounded-lg p-1 border border-outline">
-          {(['kb', 'gpt']).map((m) => {
-            const meta = MODE_META[m]
-            const Icon = meta.icon
-            const active = mode === m
-            const isLocked = m === 'gpt' && gptUsedExceeded
-            return (
-              <button
-                key={m}
-                onClick={() => setModeWithGuard(m)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-150 ${
-                  active ? `bg-panel2 ${meta.color} shadow` : 'text-muted hover:text-text'
-                } ${isLocked && !active ? 'opacity-70' : ''}`}
-              >
-                {isLocked ? <Lock size={12} /> : <Icon size={13} />}
-                {meta.label}
-              </button>
-            )
-          })}
+        {/* Right side: counter (free) or "Unlimited" pill (Pro/Coaching) */}
+        <div className="ml-auto text-[11px] font-medium flex items-center gap-1.5">
+          {chatUnlimited ? (
+            <span className="text-accent3">Unlimited</span>
+          ) : (
+            <span className={chatUsed >= FREE_CHAT_LIMIT - 1 ? 'text-accent2' : 'text-muted'}>
+              {Math.min(chatUsed, FREE_CHAT_LIMIT)} / {FREE_CHAT_LIMIT} used
+            </span>
+          )}
         </div>
-
-        {/* Right side: counter (free) or "Unlimited" pill (Pro/Coaching) when on GPT */}
-        {mode === 'gpt' && (
-          <div className="ml-auto text-[11px] font-medium flex items-center gap-1.5">
-            {gptUnlimited ? (
-              <span className="text-accent3">Unlimited</span>
-            ) : (
-              <span className={chatUsed >= FREE_GPT_LIMIT - 1 ? 'text-accent2' : 'text-muted'}>
-                {Math.min(chatUsed, FREE_GPT_LIMIT)} / {FREE_GPT_LIMIT} used
-              </span>
-            )}
-          </div>
-        )}
-        {mode === 'kb' && (
-          <div className="ml-auto text-[11px] font-medium text-accent">Free · unlimited</div>
-        )}
       </div>
 
       {/* Transparency chip — surfaces the personalization context the
@@ -322,18 +276,18 @@ export default function AIChatView({ k, user, onBack }) {
 
       {/* Input */}
       <div className="border-t border-outline p-4 bg-panel2/40 mt-3">
-        {/* GPT-limit banner — only for free users approaching/at limit */}
-        {mode === 'gpt' && !gptUnlimited && chatUsed >= FREE_GPT_LIMIT - 1 && (
+        {/* Free-limit banner — only when approaching/at limit */}
+        {!chatUnlimited && chatUsed >= FREE_CHAT_LIMIT - 1 && (
           <div className="mb-3 flex items-center justify-between bg-panel border border-outline rounded-xl px-3 py-2.5 gap-3">
             <div className="flex items-center gap-2">
               <Lock size={12} className="text-accent shrink-0" />
-              {gptUsedExceeded ? (
+              {limitExceeded ? (
                 <p className="text-xs text-muted">
-                  Your trial AI answers are used up. <span className="text-accent">Lookup is always free</span> — switch above, or subscribe to keep unlimited AI answers.
+                  Your free chat answers are used up. Subscribe to keep going.
                 </p>
               ) : (
                 <p className="text-xs text-muted">
-                  {FREE_GPT_LIMIT - chatUsed} trial AI answer{FREE_GPT_LIMIT - chatUsed !== 1 ? 's' : ''} remaining.
+                  {FREE_CHAT_LIMIT - chatUsed} free answer{FREE_CHAT_LIMIT - chatUsed !== 1 ? 's' : ''} remaining.
                 </p>
               )}
             </div>
@@ -352,12 +306,12 @@ export default function AIChatView({ k, user, onBack }) {
             value={input}
             onChange={handleInputChange}
             placeholder={
-              mode === 'gpt' && gptUsedExceeded
-                ? 'Switch to Lookup or upgrade to keep using AI answers…'
-                : 'Ask about symptoms, training load, return-to-climb, or rehab basics…'
+              limitExceeded
+                ? 'Upgrade to keep asking questions…'
+                : 'Ask about technique, training, movement, or injury…'
             }
             className="input-base flex-1"
-            disabled={loading || (mode === 'gpt' && gptUsedExceeded)}
+            disabled={loading || limitExceeded}
             maxLength={MAX_CHARS + 50}
           />
           <button
