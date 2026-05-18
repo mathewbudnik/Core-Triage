@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Check, Circle, X } from 'lucide-react'
+import { useIsDesktop } from '../../hooks/useIsDesktop'
 
 const REDUCE_MOTION = typeof window !== 'undefined'
   && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
@@ -31,6 +32,7 @@ function weekStatus(plan, weekIndex0, todayIso) {
  *   onSelectWeek:  (mondayIso: string) => void
  */
 export default function PlanArcSheet({ open, plan, onClose, onSelectWeek }) {
+  const isDesktop = useIsDesktop()
   // Escape closes the sheet
   useEffect(() => {
     if (!open) return
@@ -41,6 +43,23 @@ export default function PlanArcSheet({ open, plan, onClose, onSelectWeek }) {
 
   const totalWeeks = plan?.duration_weeks || 0
   const todayIso = new Date().toISOString().slice(0, 10)
+
+  // Mobile = bottom-anchored sheet that slides up. Desktop = centered modal
+  // card that scales in.
+  const sheetClass = isDesktop
+    ? `fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50
+       w-full max-w-md max-h-[80vh] overflow-auto overscroll-contain
+       bg-[#0a0a0c] border-[0.5px] border-white/[0.10]
+       rounded-3xl px-4 pt-3 pb-5`
+    : `fixed bottom-0 inset-x-0 z-50
+       bg-[#0a0a0c] border-t-[0.5px] border-white/[0.10]
+       rounded-t-3xl px-4 pt-3
+       pb-[calc(1.5rem+env(safe-area-inset-bottom))]
+       max-h-[88vh] overflow-auto`
+  const enter = isDesktop ? { opacity: 1, scale: 1 } : { y: 0 }
+  const exit  = isDesktop ? { opacity: 0, scale: 0.96 } : { y: '100%' }
+  const init  = isDesktop ? { opacity: 0, scale: 0.96 } : { y: '100%' }
+  const enableDrag = !isDesktop && !REDUCE_MOTION
 
   return (
     <AnimatePresence>
@@ -55,24 +74,22 @@ export default function PlanArcSheet({ open, plan, onClose, onSelectWeek }) {
           />
           <motion.div
             key="sheet"
-            className="fixed bottom-0 inset-x-0 z-50
-                       bg-[#0a0a0c] border-t-[0.5px] border-white/[0.10]
-                       rounded-t-3xl px-4 pt-3
-                       pb-[calc(1.5rem+env(safe-area-inset-bottom))]
-                       max-h-[88vh] overflow-auto"
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
+            className={sheetClass}
+            initial={init}
+            animate={enter}
+            exit={exit}
             transition={{ duration: REDUCE_MOTION ? 0 : 0.22, ease: 'easeOut' }}
-            drag={REDUCE_MOTION ? false : 'y'}
+            drag={enableDrag ? 'y' : false}
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.4 }}
             onDragEnd={(_, info) => { if (info.offset.y > 80) onClose() }}
             role="dialog" aria-modal="true" aria-label="Plan weeks"
           >
-            <div className="flex justify-center pb-2">
-              <div className="w-10 h-1 rounded-full bg-white/15" />
-            </div>
+            {!isDesktop && (
+              <div className="flex justify-center pb-2">
+                <div className="w-10 h-1 rounded-full bg-white/15" />
+              </div>
+            )}
             <div className="flex items-center justify-between mb-3 px-1">
               <h3 className="text-[15px] font-extrabold -tracking-[0.01em]">Your plan</h3>
               <button onClick={onClose} aria-label="Close" className="p-1.5 -mr-1 rounded-full hover:bg-white/[0.06]">

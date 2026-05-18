@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { X, ArrowRight } from 'lucide-react'
 import TrainingLogEntry from '../TrainingLogEntry'
+import { useIsDesktop } from '../../hooks/useIsDesktop'
 
 const REDUCE_MOTION = typeof window !== 'undefined'
   && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
@@ -40,6 +41,7 @@ function ExerciseRow({ ex }) {
  */
 export default function SessionDetailSheet({ open, session, onClose, onLogged }) {
   const [logging, setLogging] = useState(false)
+  const isDesktop = useIsDesktop()
 
   useEffect(() => {
     if (!open) return
@@ -57,6 +59,22 @@ export default function SessionDetailSheet({ open, session, onClose, onLogged })
   const dur = session?.duration_minutes || session?.duration_min
   const rpe = session?.rpe
 
+  // Mobile = bottom-anchored sheet that slides up. Desktop = centered modal
+  // card that scales in.
+  const sheetClass = isDesktop
+    ? `fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50
+       w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden
+       bg-[#0a0a0c] border-[0.5px] border-white/[0.10]
+       rounded-3xl px-4 pt-3`
+    : `fixed bottom-0 inset-x-0 z-50
+       bg-[#0a0a0c] border-t-[0.5px] border-white/[0.10]
+       rounded-t-3xl px-4 pt-3 flex flex-col
+       max-h-[88vh]`
+  const enter = isDesktop ? { opacity: 1, scale: 1 } : { y: 0 }
+  const exit  = isDesktop ? { opacity: 0, scale: 0.96 } : { y: '100%' }
+  const init  = isDesktop ? { opacity: 0, scale: 0.96 } : { y: '100%' }
+  const enableDrag = !isDesktop && !REDUCE_MOTION
+
   return (
     <AnimatePresence>
       {open && (
@@ -70,21 +88,22 @@ export default function SessionDetailSheet({ open, session, onClose, onLogged })
           />
           <motion.div
             key="sheet"
-            className="fixed bottom-0 inset-x-0 z-50
-                       bg-[#0a0a0c] border-t-[0.5px] border-white/[0.10]
-                       rounded-t-3xl px-4 pt-3 flex flex-col
-                       max-h-[88vh]"
-            initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+            className={sheetClass}
+            initial={init}
+            animate={enter}
+            exit={exit}
             transition={{ duration: REDUCE_MOTION ? 0 : 0.22, ease: 'easeOut' }}
-            drag={REDUCE_MOTION ? false : 'y'}
+            drag={enableDrag ? 'y' : false}
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.4 }}
             onDragEnd={(_, info) => { if (info.offset.y > 80) onClose() }}
             role="dialog" aria-modal="true" aria-label="Session detail"
           >
-            <div className="flex justify-center pb-2">
-              <div className="w-10 h-1 rounded-full bg-white/15" />
-            </div>
+            {!isDesktop && (
+              <div className="flex justify-center pb-2">
+                <div className="w-10 h-1 rounded-full bg-white/15" />
+              </div>
+            )}
             <div className="flex items-start justify-between gap-3 mb-3 px-1">
               <div>
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--tier-light)]">
