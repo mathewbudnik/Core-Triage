@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { motion } from 'framer-motion'
 import { Loader2 } from 'lucide-react'
 import { getPyramid } from '../api'
 import { tokenForGrade } from '../lib/tier'
@@ -20,7 +21,13 @@ function PyramidRow({ grade, s, f, p, maxRowTotal }) {
   const barPct   = maxRowTotal > 0 ? (total / maxRowTotal) * 100 : 0
   const hasBar   = barPct > 0
   return (
-    <div className="flex items-center gap-2.5 my-1">
+    <motion.div
+      className="flex items-center gap-2.5 my-1"
+      variants={{
+        hidden:  { opacity: 0, y: 6 },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.22, ease: [0.2, 0.7, 0.2, 1] } },
+      }}
+    >
       <span
         className="w-9 text-[12px] font-extrabold text-right tabular-nums tracking-tight"
         style={{ color: hasBar ? token.c : 'rgba(232,238,252,0.45)' }}
@@ -29,12 +36,12 @@ function PyramidRow({ grade, s, f, p, maxRowTotal }) {
       </span>
       <div className="flex-1 flex justify-center">
         {hasBar && (
-          <div
+          <motion.div
             className="h-[18px] rounded-[5px] flex overflow-hidden"
-            style={{
-              width: `${barPct}%`,
-              boxShadow: `0 0 12px ${token.c}66`,
-            }}
+            style={{ boxShadow: `0 0 12px ${token.c}66` }}
+            initial={{ width: 0 }}
+            animate={{ width: `${barPct}%` }}
+            transition={{ duration: 0.32, ease: 'easeOut' }}
           >
             {f > 0 && (
               <span
@@ -48,7 +55,7 @@ function PyramidRow({ grade, s, f, p, maxRowTotal }) {
               style={{ width: `${sendPct}%`, background: token.c }}
               aria-label={`${total - f} send${total - f === 1 ? '' : 's'}`}
             />
-          </div>
+          </motion.div>
         )}
       </div>
       <span className="text-[11px] text-muted tabular-nums whitespace-nowrap min-w-[64px] text-left">
@@ -66,7 +73,7 @@ function PyramidRow({ grade, s, f, p, maxRowTotal }) {
           </span>
         )}
       </span>
-    </div>
+    </motion.div>
   )
 }
 
@@ -126,7 +133,14 @@ function PyramidColumn({ label, data }) {
           )}
         </p>
       </div>
-      <div>
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={{
+          hidden:  { opacity: 1 },
+          visible: { opacity: 1, transition: { staggerChildren: 0.04 } },
+        }}
+      >
         {rowsTopDown.map((g) => (
           <PyramidRow
             key={g.grade}
@@ -137,7 +151,7 @@ function PyramidColumn({ label, data }) {
             maxRowTotal={maxRowTotal}
           />
         ))}
-      </div>
+      </motion.div>
       <p className="text-[10px] text-muted/60 mt-3 pt-2 border-t border-white/[0.06]">
         <span className="inline-block w-2 h-2 bg-accent3 rounded-sm mr-1.5 align-middle" />
         flash · row color reflects grade tier
