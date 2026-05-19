@@ -1,18 +1,29 @@
 import { Minus, Plus } from 'lucide-react'
+import { STYLE_ORDER } from '../lib/styleColors'
+
+const EMPTY_STYLES = { power: 0, dynamic: 0, technical: 0, endurance: 0 }
+
+function normalizeStyles(styles) {
+  if (!styles || typeof styles !== 'object') return { ...EMPTY_STYLES }
+  return STYLE_ORDER.reduce((acc, s) => {
+    acc[s] = Math.max(0, Number(styles[s] || 0))
+    return acc
+  }, {})
+}
 
 /**
  * One grade's three counters: Sends · Flashes · Projects.
- * Buttons are 36×36px on mobile, 44×44px on larger screens.
- * The grid uses minmax(0, 1fr) so cells can shrink below their content
- * width — prevents horizontal overflow on narrow phones.
+ * Each +/- also bumps the active style under a sibling `styles` map.
  *
  * Props:
- *   grade:    string                                — e.g. "V5" or "5.11a"
- *   counters: { s: number, f: number, p: number }   — current state
- *   onChange: (next) => void                        — receives the full updated counters object
+ *   grade:        string
+ *   counters:     { s: number, f: number, p: number, styles?: {...} }
+ *   activeStyle:  'power' | 'dynamic' | 'technical' | 'endurance'
+ *   onChange:     (next) => void  — receives { s, f, p, styles }
  */
-export default function GradeCounterRow({ grade, counters, onChange }) {
+export default function GradeCounterRow({ grade, counters, activeStyle, onChange }) {
   const { s, f, p } = counters
+  const styles = normalizeStyles(counters.styles)
 
   function bump(key, delta) {
     let nextS = s, nextF = f, nextP = p
@@ -21,7 +32,39 @@ export default function GradeCounterRow({ grade, counters, onChange }) {
     if (key === 'p') nextP = Math.max(0, p + delta)
     // Invariant: flashes <= sends. If sends drops below flashes, clamp flashes.
     if (nextF > nextS) nextF = nextS
-    onChange({ s: nextS, f: nextF, p: nextP })
+
+    // Style attribution: only when active style is one of the 4 known keys.
+    // Decrement (delta < 0) attempts to remove from the active style first;
+    // if that style has 0, fall through to whichever style has the largest
+    // count so the styles map stays in sync with the totals.
+    const nextStyles = { ...styles }
+    const totalNext = nextS + nextF + nextP
+    const totalPrev = s + f + p
+    const styleDelta = totalNext - totalPrev
+    if (styleDelta > 0 && STYLE_ORDER.includes(activeStyle)) {
+      nextStyles[activeStyle] = (nextStyles[activeStyle] || 0) + styleDelta
+    } else if (styleDelta < 0) {
+      let remaining = -styleDelta
+      // Try active style first
+      const tryDrain = (key) => {
+        const have = nextStyles[key] || 0
+        const take = Math.min(have, remaining)
+        nextStyles[key] = have - take
+        remaining -= take
+      }
+      if (STYLE_ORDER.includes(activeStyle)) tryDrain(activeStyle)
+      // Drain remaining from the largest bucket so the invariant holds
+      while (remaining > 0) {
+        let largestKey = STYLE_ORDER[0]
+        for (const s of STYLE_ORDER) {
+          if ((nextStyles[s] || 0) > (nextStyles[largestKey] || 0)) largestKey = s
+        }
+        if ((nextStyles[largestKey] || 0) === 0) break  // nothing left to drain
+        tryDrain(largestKey)
+      }
+    }
+
+    onChange({ s: nextS, f: nextF, p: nextP, styles: nextStyles })
   }
 
   return (
