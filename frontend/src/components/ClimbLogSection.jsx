@@ -1,7 +1,11 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import GradeCounterRow from './GradeCounterRow'
+import StyleChipStrip from './StyleChipStrip'
+import { STYLE_ORDER } from '../lib/styleColors'
+
+const STYLE_STORAGE_KEY = 'ct_climb_style'
 
 const V_GRADES   = Array.from({ length: 18 }, (_, i) => `V${i}`)
 const YDS_GRADES = [
@@ -29,6 +33,17 @@ export default function ClimbLogSection({ value, onChange, defaultTab = 'boulder
   })
   const [extraBoulder, setExtraBoulder] = useState(0)  // how many "+ harder" clicks
   const [extraRoute, setExtraRoute]     = useState(0)
+
+  const [activeStyle, setActiveStyle] = useState(() => {
+    try {
+      const v = localStorage.getItem(STYLE_STORAGE_KEY)
+      return STYLE_ORDER.includes(v) ? v : 'power'
+    } catch { return 'power' }
+  })
+
+  useEffect(() => {
+    try { localStorage.setItem(STYLE_STORAGE_KEY, activeStyle) } catch {}
+  }, [activeStyle])
 
   const boulderGrades = useMemo(
     () => V_GRADES.slice(0, BOULDER_DEFAULT_VISIBLE + extraBoulder),
@@ -83,6 +98,9 @@ export default function ClimbLogSection({ value, onChange, defaultTab = 'boulder
             className="overflow-hidden"
           >
             <div className="px-3 pb-3 space-y-3">
+              {/* Style chip strip */}
+              <StyleChipStrip value={activeStyle} onChange={setActiveStyle} />
+
               {/* Tab strip */}
               <div className="flex gap-1 bg-bg/40 rounded-lg p-1">
                 {[['boulder', 'Boulder'], ['route', 'Route']].map(([k, label]) => (
@@ -115,6 +133,7 @@ export default function ClimbLogSection({ value, onChange, defaultTab = 'boulder
                       key={g}
                       grade={g}
                       counters={value?.boulder?.[g] || { s: 0, f: 0, p: 0 }}
+                      activeStyle={activeStyle}
                       onChange={(c) => updateCounter('boulder', g, c)}
                     />
                   ))}
@@ -136,6 +155,7 @@ export default function ClimbLogSection({ value, onChange, defaultTab = 'boulder
                       key={g}
                       grade={g}
                       counters={value?.route?.[g] || { s: 0, f: 0, p: 0 }}
+                      activeStyle={activeStyle}
                       onChange={(c) => updateCounter('route', g, c)}
                     />
                   ))}
