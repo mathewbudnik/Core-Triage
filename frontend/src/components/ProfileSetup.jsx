@@ -50,6 +50,17 @@ const GOALS = [
 
 const STEP_LABELS = ['Background', 'Grades', 'Logistics', 'Weaknesses', 'Goal']
 
+// Lowercase ISO-ish weekday names — saved straight to athlete_profiles.training_days.
+const WEEKDAYS = [
+  { value: 'monday',    short: 'M', long: 'Mon' },
+  { value: 'tuesday',   short: 'T', long: 'Tue' },
+  { value: 'wednesday', short: 'W', long: 'Wed' },
+  { value: 'thursday',  short: 'T', long: 'Thu' },
+  { value: 'friday',    short: 'F', long: 'Fri' },
+  { value: 'saturday',  short: 'S', long: 'Sat' },
+  { value: 'sunday',    short: 'S', long: 'Sun' },
+]
+
 function StepDots({ total, current }) {
   return (
     <div className="flex items-center gap-1.5">
@@ -119,7 +130,7 @@ export default function ProfileSetup({ onComplete, user }) {
     primary_discipline: '',
     max_grade_boulder: 'V4',
     max_grade_route: '5.11a',
-    days_per_week: 3,
+    training_days: ['monday', 'wednesday', 'saturday'],
     session_length_min: 90,
     equipment: [],
     weaknesses: [],
@@ -146,6 +157,7 @@ export default function ProfileSetup({ onComplete, user }) {
 
   function canAdvance() {
     if (step === 0) return form.experience_level && form.primary_discipline
+    if (step === 2) return (form.training_days?.length || 0) >= 1
     if (step === 4) return !!form.primary_goal
     return true
   }
@@ -247,20 +259,42 @@ export default function ProfileSetup({ onComplete, user }) {
     <div key="logistics" className="space-y-6">
       <div>
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold text-muted uppercase tracking-wide">Training days / week</p>
-          <span className="text-sm font-bold text-accent">{form.days_per_week} day{form.days_per_week !== 1 ? 's' : ''}</span>
+          <p className="text-xs font-semibold text-muted uppercase tracking-wide">Days you can train</p>
+          <span className="text-sm font-bold text-accent">
+            {form.training_days.length || 0} day{form.training_days.length === 1 ? '' : 's'} / week
+          </span>
         </div>
-        <input
-          type="range"
-          min={1}
-          max={6}
-          value={form.days_per_week}
-          onChange={(e) => set('days_per_week', +e.target.value)}
-          className="w-full accent-teal-400"
-        />
-        <div className="flex justify-between text-xs text-muted mt-1">
-          <span>1</span><span>3</span><span>6</span>
+        <div className="grid grid-cols-7 gap-1.5 mt-2">
+          {WEEKDAYS.map((d) => {
+            const selected = form.training_days.includes(d.value)
+            return (
+              <button
+                key={d.value}
+                type="button"
+                onClick={() => toggleList('training_days', d.value)}
+                aria-pressed={selected}
+                aria-label={`${d.long} — ${selected ? 'selected' : 'not selected'}`}
+                className={[
+                  'flex flex-col items-center justify-center py-2.5 rounded-2xl',
+                  'border-[0.5px] transition-colors min-h-[56px]',
+                  selected
+                    ? 'border-accent bg-accent/15 text-text shadow-glow'
+                    : 'border-outline bg-panel/60 text-muted hover:border-accent/40 hover:text-text',
+                ].join(' ')}
+              >
+                <span className="text-[10px] font-extrabold tracking-[0.06em] uppercase">
+                  {d.short}
+                </span>
+                <span className="text-[12px] font-bold mt-0.5">
+                  {d.long}
+                </span>
+              </button>
+            )
+          })}
         </div>
+        <p className="text-[11px] text-muted mt-2 leading-snug">
+          Tap days you can dedicate to training. Skip days you have work, family, or rest commitments — your plan won't schedule anything on those.
+        </p>
       </div>
       <div>
         <div className="flex items-center justify-between mb-2">

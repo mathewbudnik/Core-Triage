@@ -43,4 +43,36 @@ assert.equal(week[0], '2026-05-11', 'week starts Monday')
 assert.equal(week[6], '2026-05-17', 'week ends Sunday')
 assert.ok(week.includes('2026-05-13'), 'includes given date')
 
+// ── training_days picker model ────────────────────────────────────────────
+// Climber picks Tue / Thu / Sun. Plan has 3 sessions per week so day_in_week
+// 1 → Tue, 2 → Thu, 3 → Sun.
+const picker = {
+  start_date: '2026-05-11',  // Monday
+  duration_weeks: 4,
+  plan_data: {
+    days_per_week: 3,
+    training_days: ['tuesday', 'thursday', 'sunday'],
+    sessions: [
+      { week: 1, day_in_week: 1, session_type: 'Power',     session_index: 0 },
+      { week: 1, day_in_week: 2, session_type: 'Endurance', session_index: 1 },
+      { week: 1, day_in_week: 3, session_type: 'Strength',  session_index: 2 },
+      { week: 2, day_in_week: 1, session_type: 'Power',     session_index: 3 },
+      { week: 2, day_in_week: 2, session_type: 'Endurance', session_index: 4 },
+      { week: 2, day_in_week: 3, session_type: 'Strength',  session_index: 5 },
+    ],
+  },
+}
+// Tue 2026-05-12 is the first training day -> day_in_week 1 -> Power
+assert.equal(sessionForDay(picker, '2026-05-12')?.session_type, 'Power',  'picker Tue w1 -> Power')
+// Thu 2026-05-14 is the second -> Endurance
+assert.equal(sessionForDay(picker, '2026-05-14')?.session_type, 'Endurance', 'picker Thu w1 -> Endurance')
+// Sun 2026-05-17 is the third -> Strength
+assert.equal(sessionForDay(picker, '2026-05-17')?.session_type, 'Strength', 'picker Sun w1 -> Strength')
+// Mon 2026-05-11 is NOT a training day -> null
+assert.equal(sessionForDay(picker, '2026-05-11'), null, 'picker Mon -> null')
+// Wed 2026-05-13 is NOT a training day -> null
+assert.equal(sessionForDay(picker, '2026-05-13'), null, 'picker Wed -> null')
+// Week 2: Tue 2026-05-19 -> Power
+assert.equal(sessionForDay(picker, '2026-05-19')?.session_type, 'Power', 'picker Tue w2 -> Power')
+
 console.log('OK trainSessions')

@@ -3,20 +3,15 @@ import {
   getSessions, getActivePlan, getTrainingStats, getTrainingLogs,
   getPyramid,
 } from '../api'
+import { sessionForDay } from '../lib/trainSessions'
 
 const todayIsoDate = () => new Date().toISOString().slice(0, 10)
 
+// Today's plan session — defers to the shared sessionForDay helper so Hub
+// and Train agree on both legacy and training-days-picker scheduling.
 function planSessionForToday(activePlan) {
-  if (!activePlan?.plan_data?.sessions?.length || !activePlan.start_date) return null
-  const start = new Date(activePlan.start_date + 'T00:00:00')
-  const dpw = activePlan.plan_data.days_per_week || 3
-  const today = new Date(); today.setHours(0,0,0,0)
-  const dayOffset = Math.floor((today - start) / 86400000)
-  for (const s of activePlan.plan_data.sessions) {
-    const off = (s.week - 1) * 7 + Math.round((s.day_in_week - 1) * (7 / dpw))
-    if (off === dayOffset) return s
-  }
-  return null
+  if (!activePlan) return null
+  return sessionForDay(activePlan, todayIsoDate())
 }
 
 function weekStartIso(iso) {

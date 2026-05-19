@@ -1034,7 +1034,13 @@ def generate_plan(
     """
     goal = profile.get("primary_goal", "general")
     experience = profile.get("experience_level", "beginner")
-    days = max(1, min(6, profile.get("days_per_week", 3)))
+    training_days = list(profile.get("training_days") or [])
+    # `training_days` is authoritative when present; fall back to the legacy
+    # days_per_week int for profiles created before the picker shipped.
+    days = (
+        max(1, min(6, len(training_days))) if training_days
+        else max(1, min(6, profile.get("days_per_week", 3)))
+    )
     discipline = profile.get("primary_discipline") or "bouldering"
     equipment = profile.get("equipment") or []
 
@@ -1064,5 +1070,10 @@ def generate_plan(
             "goal": goal,
             "experience": experience,
             "days_per_week": days,
+            # Freeze the climber's training-days choice into the plan so that
+            # subsequent profile edits don't reshuffle this plan's schedule.
+            # Frontend's sessionForDay() reads this when present and falls back
+            # to even spreading for legacy plans without the field.
+            "training_days": training_days,
         },
     }
