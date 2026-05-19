@@ -11,13 +11,13 @@ export const V_TIERS = ['v0','v1','v2','v3','v4','v5','v6','v7','v8','v9','v10']
 // Metals at the base, gemstones rising to Diamond at the apex. Each
 // name picks a real element/gem; the palette below uses jewel-saturated
 // hex values so the tier color feels like the real stone (not a pastel
-// approximation). Carnelian sits in the v2 slot (semi-precious agate)
-// in place of Copper — both warm, common-tier "stepping stones" before
-// the precious gemstones begin.
+// approximation). Amber sits in the v2 slot (fossilized resin, warm
+// orange) in place of Copper — both warm, common-tier "stepping stones"
+// before the precious gemstones begin.
 export const TIER_NAMES = {
   v0:  'Bronze',
   v1:  'Silver',
-  v2:  'Carnelian',
+  v2:  'Amber',
   v3:  'Aquamarine',
   v4:  'Rose Gold',
   v5:  'Sapphire',
@@ -38,7 +38,7 @@ export const TIER_TOKENS = {
   v0:  { light: '#f0a577', c: '#d97f4c', deep: '#7a3f1f' },
   // cold — silver (bright polished steel)
   v1:  { light: '#eef1f5', c: '#d6dde6', deep: '#4a5260' },
-  // hot — carnelian (vivid rust-red)
+  // hot — amber (vivid warm orange, same hex as before — only the name changed)
   v2:  { light: '#f08d6f', c: '#e85a37', deep: '#6e1f10' },
   // cold — aquamarine (deeper jewel-teal, leans more green-cyan to stay
   // visually distinct from Diamond's icy brilliance at v10)
