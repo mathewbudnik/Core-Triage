@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react'
 import { sessionForDay } from '../../lib/trainSessions'
 import { getSessionTypeLabel } from '../../lib/sessionType'
 
@@ -42,30 +43,27 @@ export default function TrainWeekStrip({ weekDates, plan, loggedDates, selectedD
 
         const dayNumClass =
           active ? 'text-white' :
+          today  ? 'text-text' :
           past   ? 'text-text/55' :
           isRest ? 'text-text/30' :
                    'text-text/85'
 
-        const dotStyle = (() => {
-          if (active) return { background: 'var(--tier-light)', boxShadow: '0 0 0 3px color-mix(in srgb, var(--tier-light) 20%, transparent)' }
-          if (logged) return { background: 'var(--tier-c)' }
-          // Past rest day reads as a quiet "you were off" — keep a visible
-          // 14% dot. Only future rest days hide the dot entirely.
-          if (past && isRest) return { background: 'rgba(255,255,255,0.14)' }
-          if (isRest) return { background: 'transparent' }
-          return { background: 'rgba(255,255,255,0.14)' }
-        })()
-
+        // Tile border + bg by state. Today gets its own tier-c outline so the
+        // "now" tile reads even when the user has selected a different day.
         const tileClass = [
           'flex flex-col items-center gap-1.5 py-2.5 rounded-2xl',
-          'border-[0.5px] transition-colors min-h-[56px]',
+          'border-[0.5px] transition-colors min-h-[56px] relative',
           active ? 'border-[color:color-mix(in_srgb,var(--tier-c)_42%,transparent)]'
-                 : 'border-transparent hover:bg-white/[0.03]',
+                 : today
+                   ? 'border-[color:color-mix(in_srgb,var(--tier-c)_48%,transparent)]'
+                   : 'border-transparent hover:bg-white/[0.03]',
         ].join(' ')
 
         const tileBg = active
           ? { background: 'linear-gradient(180deg, color-mix(in srgb, var(--tier-c) 18%, transparent), color-mix(in srgb, var(--tier-c) 4%, transparent))' }
-          : {}
+          : today
+            ? { boxShadow: '0 0 12px color-mix(in srgb, var(--tier-c) 18%, transparent)' }
+            : {}
 
         const dayLetterClass = (today || active)
           ? 'font-extrabold' : 'font-bold'
@@ -80,6 +78,36 @@ export default function TrainWeekStrip({ weekDates, plan, loggedDates, selectedD
           today ? 'today' : null,
           typeLabel ? `${typeLabel} session` : (isRest ? 'rest day' : null),
         ].filter(Boolean).join(', ')
+
+        // Indicator: Check icon when the day's session was logged, hollow ring
+        // when a session is upcoming, faint dot for past rest days, filled
+        // dot when this tile is the selected one. Width reserved so the
+        // baseline doesn't shift between states.
+        const indicator = (() => {
+          if (logged) {
+            return (
+              <Check size={12} strokeWidth={3} style={{ color: 'var(--tier-c)' }} />
+            )
+          }
+          if (active) {
+            return (
+              <span className="w-2 h-2 rounded-full"
+                    style={{ background: 'var(--tier-light)' }} />
+            )
+          }
+          if (!isRest) {
+            // Future-or-today scheduled session that hasn't been logged yet
+            return (
+              <span className="w-2 h-2 rounded-full"
+                    style={{ border: '1.5px solid color-mix(in srgb, var(--tier-c) 55%, transparent)' }} />
+            )
+          }
+          if (past && isRest) {
+            return <span className="w-1 h-1 rounded-full bg-white/20" />
+          }
+          // Future rest: no indicator
+          return <span className="w-2 h-2" />
+        })()
 
         return (
           <button
@@ -96,7 +124,9 @@ export default function TrainWeekStrip({ weekDates, plan, loggedDates, selectedD
             <span className={`text-[15px] font-extrabold leading-none tabular-nums ${dayNumClass}`}>
               {iso.slice(8, 10).replace(/^0/, '')}
             </span>
-            <span className="w-[5px] h-[5px] rounded-full" style={dotStyle} />
+            <span className="h-3 flex items-center justify-center">
+              {indicator}
+            </span>
           </button>
         )
       })}

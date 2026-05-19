@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react'
 import { sessionForDay } from '../../lib/trainSessions'
 
 const DAY_LETTER = ['M','T','W','T','F','S','S']
@@ -80,42 +81,61 @@ export default function TrainMonthGrid({ year, monthIndex, plan, loggedDates, se
           const logged     = loggedDates?.has(cell.iso)
           const isRest     = !hasSession && !logged
 
-          const dotStyle = (() => {
-            if (isSelected) return { background: 'var(--tier-light)' }
-            if (logged)     return { background: 'var(--tier-c)' }
-            if (cell.outside) return { background: 'transparent' }
-            if (past && isRest) return { background: 'rgba(255,255,255,0.14)' }
-            if (isRest)         return { background: 'transparent' }
-            return { background: 'rgba(255,255,255,0.14)' }
-          })()
-
           const numClass = cell.outside
             ? 'text-text/20'
             : isSelected
               ? 'text-white'
-              : past
-                ? 'text-text/55'
-                : isRest
-                  ? 'text-text/45'
-                  : 'text-text/85'
+              : isToday
+                ? 'text-text'
+                : past
+                  ? 'text-text/55'
+                  : isRest
+                    ? 'text-text/45'
+                    : 'text-text/85'
 
+          // Today gets a tier-c border + soft glow even when not selected.
+          // Selected wins the tile-bg gradient; today-style falls through.
           const tileClass = [
             'flex flex-col items-center justify-center py-1.5 rounded-xl',
             'border-[0.5px] min-h-[44px] transition-colors',
             isSelected
               ? 'border-[color:color-mix(in_srgb,var(--tier-c)_42%,transparent)]'
-              : 'border-transparent hover:bg-white/[0.03]',
+              : (isToday && !cell.outside)
+                ? 'border-[color:color-mix(in_srgb,var(--tier-c)_48%,transparent)]'
+                : 'border-transparent hover:bg-white/[0.03]',
           ].join(' ')
 
           const tileBg = isSelected
             ? { background: 'linear-gradient(180deg, color-mix(in srgb, var(--tier-c) 18%, transparent), color-mix(in srgb, var(--tier-c) 4%, transparent))' }
-            : undefined
+            : (isToday && !cell.outside)
+              ? { boxShadow: '0 0 10px color-mix(in srgb, var(--tier-c) 16%, transparent)' }
+              : undefined
 
-          // Today badge: a small underline-style dot via inline style only when
-          // not selected (selection style already implies "you're looking at today").
           const todayStyle = (isToday && !isSelected && !cell.outside)
             ? { color: 'var(--tier-light)' }
             : undefined
+
+          const indicator = (() => {
+            if (cell.outside) {
+              return <span className="w-2 h-2" />
+            }
+            if (logged) {
+              return <Check size={11} strokeWidth={3} style={{ color: 'var(--tier-c)' }} />
+            }
+            if (isSelected) {
+              return <span className="w-2 h-2 rounded-full" style={{ background: 'var(--tier-light)' }} />
+            }
+            if (!isRest) {
+              return (
+                <span className="w-2 h-2 rounded-full"
+                      style={{ border: '1.5px solid color-mix(in srgb, var(--tier-c) 55%, transparent)' }} />
+              )
+            }
+            if (past && isRest) {
+              return <span className="w-1 h-1 rounded-full bg-white/20" />
+            }
+            return <span className="w-2 h-2" />
+          })()
 
           return (
             <button
@@ -130,7 +150,9 @@ export default function TrainMonthGrid({ year, monthIndex, plan, loggedDates, se
                     style={todayStyle}>
                 {cell.day}
               </span>
-              <span className="w-[5px] h-[5px] rounded-full mt-1.5" style={dotStyle} />
+              <span className="h-3 mt-1 flex items-center justify-center">
+                {indicator}
+              </span>
             </button>
           )
         })}
