@@ -1100,26 +1100,41 @@ def get_active_plan(user_id: int) -> Optional[Dict[str, Any]]:
 
 def _merge_climbs(existing: Dict[str, Any], incoming: Dict[str, Any]) -> Dict[str, Any]:
     """Sum counter values per (discipline, grade) across two climbs dicts.
-    Each climbs dict has shape: { boulder|route: { '<grade>': { s, f, p } } }.
+    Each climbs dict has shape: { boulder|route: { '<grade>': { s, f, p, styles? } } }.
 
     Same-day re-logs ADD to the day's totals — never replace — so the
     grade pyramid keeps accumulating as the user logs multiple sessions.
     The f <= s invariant is preserved because both counters increase
-    together.
+    together. The optional `styles` sub-map (power/dynamic/technical/
+    endurance) is summed per-key so style attribution survives multi-log
+    days.
     """
-    out: Dict[str, Dict[str, Dict[str, int]]] = {}
+    out: Dict[str, Dict[str, Dict[str, Any]]] = {}
     for discipline in ("boulder", "route"):
         a = (existing or {}).get(discipline) or {}
         b = (incoming or {}).get(discipline) or {}
-        grades_merged: Dict[str, Dict[str, int]] = {}
+        grades_merged: Dict[str, Dict[str, Any]] = {}
         for grade in set(a.keys()) | set(b.keys()):
-            ac = a.get(grade) or {"s": 0, "f": 0, "p": 0}
-            bc = b.get(grade) or {"s": 0, "f": 0, "p": 0}
-            grades_merged[grade] = {
+            ac = a.get(grade) or {}
+            bc = b.get(grade) or {}
+            entry: Dict[str, Any] = {
                 "s": int(ac.get("s", 0)) + int(bc.get("s", 0)),
                 "f": int(ac.get("f", 0)) + int(bc.get("f", 0)),
                 "p": int(ac.get("p", 0)) + int(bc.get("p", 0)),
             }
+            # Merge the optional styles map by summing per-key. If neither
+            # side has a styles map, omit the key so legacy logs stay legacy.
+            ac_styles = ac.get("styles") if isinstance(ac.get("styles"), dict) else None
+            bc_styles = bc.get("styles") if isinstance(bc.get("styles"), dict) else None
+            if ac_styles or bc_styles:
+                merged_styles: Dict[str, int] = {}
+                for key in set((ac_styles or {}).keys()) | set((bc_styles or {}).keys()):
+                    merged_styles[key] = (
+                        int((ac_styles or {}).get(key, 0))
+                        + int((bc_styles or {}).get(key, 0))
+                    )
+                entry["styles"] = merged_styles
+            grades_merged[grade] = entry
         if grades_merged:
             out[discipline] = grades_merged
     return out
@@ -1212,7 +1227,8 @@ def get_training_logs(user_id: int, limit: int = 30) -> List[Dict[str, Any]]:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT id, date, session_type, duration_min, intensity, grades_sent, notes, created_at
+                SELECT id, date, session_type, duration_min, intensity,
+                       grades_sent, notes, climbs, created_at
                 FROM training_logs
                 WHERE user_id = %s
                 ORDER BY date DESC, created_at DESC
@@ -1230,7 +1246,8 @@ def get_training_logs(user_id: int, limit: int = 30) -> List[Dict[str, Any]]:
             "intensity":    r[4],
             "grades_sent":  r[5],
             "notes":        r[6],
-            "created_at":   str(r[7]),
+            "climbs":       r[7] or {},
+            "created_at":   str(r[8]),
         }
         for r in rows
     ]

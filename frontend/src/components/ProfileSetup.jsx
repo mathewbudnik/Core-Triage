@@ -507,7 +507,7 @@ export default function ProfileSetup({ onComplete }) {
       )
       default: return null
     }
-  }, [step, form])
+  }, [step, form, styleProfile])
 
   return (
     <div className="relative max-w-lg mx-auto px-4 py-6 md:py-10 min-h-[calc(100vh-4rem)] flex flex-col"

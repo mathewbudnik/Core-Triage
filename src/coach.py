@@ -66,7 +66,7 @@ def _derive_style_profile(training_logs):
                 dom_count = counts[s]
                 dominant = s
         weak_count = float('inf')
-        for s in reversed(STYLE_ORDER):
+        for s in STYLE_ORDER:
             if counts[s] < weak_count:
                 weak_count = counts[s]
                 weakest = s
