@@ -9,7 +9,7 @@ import TierThemeRoot from './TierThemeRoot'
 import ProfileSetup from './ProfileSetup'
 import TrainHeader from './train/TrainHeader'
 import TrainPlanArcChip from './train/TrainPlanArcChip'
-import TrainWeekStrip from './train/TrainWeekStrip'
+import TrainCalendar from './train/TrainCalendar'
 import TrainHeroCard from './train/TrainHeroCard'
 import TrainNextUpRow from './train/TrainNextUpRow'
 import PlanArcSheet from './train/PlanArcSheet'
@@ -240,7 +240,7 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
 
         <TrainHeader tierId={tierId} plan={plan} streakDays={hub.streakDays} />
 
-        <TrainWeekStrip
+        <TrainCalendar
           weekDates={weekDates}
           plan={plan}
           loggedDates={hub.weekLoggedDates}
