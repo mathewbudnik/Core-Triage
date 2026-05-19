@@ -1,56 +1,54 @@
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, ChevronLeft, Check } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { ChevronLeft, ChevronRight, Check, Loader2, ArrowRight, Sparkles } from 'lucide-react'
 import { saveProfile } from '../api'
 
+// ── Static option data ─────────────────────────────────────────────────────
 const EXPERIENCE_LEVELS = [
-  { value: 'beginner', label: 'Beginner', sub: '< 2 years', desc: 'Learning movement fundamentals, building base fitness', years: 1 },
-  { value: 'intermediate', label: 'Intermediate', sub: '2–5 years', desc: 'Consistent training, projecting moderates', years: 3 },
-  { value: 'advanced', label: 'Advanced', sub: '5–10 years', desc: 'Structured training, chasing hard grades', years: 7 },
-  { value: 'elite', label: 'Elite', sub: '10+ years', desc: 'High-performance training, competition or V10+ / 8b+', years: 12 },
+  { value: 'beginner',     label: 'Beginner',     sub: 'Less than 2 years',  years: 1  },
+  { value: 'intermediate', label: 'Intermediate', sub: '2 to 5 years',       years: 3  },
+  { value: 'advanced',     label: 'Advanced',     sub: '5 to 10 years',      years: 7  },
+  { value: 'elite',        label: 'Elite',        sub: '10+ years',          years: 12 },
 ]
 
 const DISCIPLINES = [
-  { value: 'bouldering', label: 'Bouldering', sub: 'Power & problem solving' },
-  { value: 'sport', label: 'Sport', sub: 'Endurance & redpointing' },
-  { value: 'trad', label: 'Trad', sub: 'Adventure & gear placement' },
+  { value: 'bouldering',  label: 'Bouldering',  sub: 'Power & problem solving' },
+  { value: 'sport',       label: 'Sport',       sub: 'Endurance & redpointing' },
+  { value: 'trad',        label: 'Trad',        sub: 'Adventure & gear placement' },
   { value: 'competition', label: 'Competition', sub: 'Structured performance' },
 ]
 
-const BOULDER_GRADES = ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14', 'V15', 'V16', 'V17']
-const ROUTE_GRADES = ['5.9', '5.10a', '5.10b', '5.10c', '5.10d', '5.11a', '5.11b', '5.11c', '5.11d', '5.12a', '5.12b', '5.12c', '5.12d', '5.13a', '5.13b', '5.13c', '5.13d', '5.14a', '5.14b', '5.14c', '5.14d', '5.15a']
+const BOULDER_GRADES = ['V0','V1','V2','V3','V4','V5','V6','V7','V8','V9','V10','V11','V12','V13','V14','V15','V16','V17']
+const ROUTE_GRADES   = ['5.9','5.10a','5.10b','5.10c','5.10d','5.11a','5.11b','5.11c','5.11d','5.12a','5.12b','5.12c','5.12d','5.13a','5.13b','5.13c','5.13d','5.14a','5.14b','5.14c','5.14d','5.15a']
 
 const EQUIPMENT = [
-  { value: 'hangboard', label: 'Hangboard' },
-  { value: 'home_wall', label: 'Home wall' },
+  { value: 'hangboard',      label: 'Hangboard' },
+  { value: 'home_wall',      label: 'Home wall' },
   { value: 'gym_membership', label: 'Gym' },
-  { value: 'outdoor_crag', label: 'Outdoor crag' },
-  { value: 'campus_board', label: 'Campus board' },
-  { value: 'system_wall', label: 'System wall' },
+  { value: 'outdoor_crag',   label: 'Outdoor crag' },
+  { value: 'campus_board',   label: 'Campus board' },
+  { value: 'system_wall',    label: 'System wall' },
 ]
 
 const WEAKNESSES = [
-  { value: 'fingers', label: 'Finger strength' },
-  { value: 'power', label: 'Power / contact' },
-  { value: 'endurance', label: 'Endurance / pump' },
-  { value: 'footwork', label: 'Footwork' },
-  { value: 'mental', label: 'Mental game' },
-  { value: 'core', label: 'Core tension' },
+  { value: 'fingers',     label: 'Finger strength' },
+  { value: 'power',       label: 'Power / contact' },
+  { value: 'endurance',   label: 'Endurance / pump' },
+  { value: 'footwork',    label: 'Footwork' },
+  { value: 'mental',      label: 'Mental game' },
+  { value: 'core',        label: 'Core tension' },
   { value: 'flexibility', label: 'Flexibility' },
-  { value: 'technique', label: 'Technique' },
+  { value: 'technique',   label: 'Technique' },
 ]
 
 const GOALS = [
   { value: 'grade_progression', label: 'Grade Progression', sub: 'Send a target grade' },
-  { value: 'route_endurance', label: 'Route Endurance', sub: 'Link more, pump less' },
-  { value: 'competition', label: 'Competition', sub: 'Peak for an event' },
+  { value: 'route_endurance',   label: 'Route Endurance',   sub: 'Link more, pump less' },
+  { value: 'competition',       label: 'Competition',       sub: 'Peak for an event' },
   { value: 'injury_prevention', label: 'Injury Prevention', sub: 'Train smart, stay healthy' },
-  { value: 'general', label: 'General Fitness', sub: 'Well-rounded improvement' },
+  { value: 'general',           label: 'General Fitness',   sub: 'Well-rounded improvement' },
 ]
 
-const STEP_LABELS = ['Background', 'Grades', 'Logistics', 'Weaknesses', 'Goal']
-
-// Lowercase ISO-ish weekday names — saved straight to athlete_profiles.training_days.
 const WEEKDAYS = [
   { value: 'monday',    short: 'M', long: 'Mon' },
   { value: 'tuesday',   short: 'T', long: 'Tue' },
@@ -61,70 +59,204 @@ const WEEKDAYS = [
   { value: 'sunday',    short: 'S', long: 'Sun' },
 ]
 
-function StepDots({ total, current }) {
+// ── Reusable inline atoms ──────────────────────────────────────────────────
+function ProgressBar({ pct }) {
   return (
-    <div className="flex items-center gap-1.5">
-      {Array.from({ length: total }).map((_, i) => (
-        <div
-          key={i}
-          className={`rounded-full transition-all duration-300 ${
-            i < current
-              ? 'w-2 h-2 bg-accent'
-              : i === current
-              ? 'w-4 h-2 bg-accent'
-              : 'w-2 h-2 bg-outline'
-          }`}
-        />
-      ))}
+    <div className="h-[3px] bg-white/[0.06] rounded-full overflow-hidden">
+      <motion.div
+        className="h-full rounded-full"
+        style={{ background: 'var(--tier-c)' }}
+        initial={false}
+        animate={{ width: `${Math.max(0, Math.min(100, pct))}%` }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+      />
     </div>
   )
 }
 
-function OptionCard({ label, sub, desc, selected, onClick, accent = 'teal' }) {
-  const accentClass = accent === 'coral'
-    ? 'border-accent2 bg-accent2/10 shadow-[0_0_12px_rgba(251,113,133,0.15)]'
-    : 'border-accent bg-accent/10 shadow-glow'
+function StepHeader({ stepIndex, totalSteps, title, subtitle }) {
+  return (
+    <div className="mb-6">
+      <p className="text-[11px] font-extrabold uppercase tracking-[0.13em] text-muted">
+        Step {stepIndex + 1} of {totalSteps}
+      </p>
+      <h2 className="mt-2 text-[28px] sm:text-[30px] font-extrabold -tracking-[0.025em] leading-[1.1]">
+        {title}
+      </h2>
+      {subtitle && (
+        <p className="mt-2 text-[13px] font-semibold text-text/55 leading-snug">
+          {subtitle}
+        </p>
+      )}
+    </div>
+  )
+}
+
+// One row in a single-select list. Plain rows separated by hairlines.
+function SelectRow({ label, sub, selected, onClick }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`w-full text-left rounded-xl border px-4 py-3 transition-all duration-200 ${
-        selected
-          ? accentClass
-          : 'border-outline bg-panel hover:border-accent/40'
-      }`}
+      aria-pressed={selected}
+      className="w-full flex items-center justify-between gap-3 py-4 px-1
+                 text-left border-b-[0.5px] border-white/[0.06] last:border-b-0
+                 hover:bg-white/[0.02] transition-colors"
     >
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          <p className={`text-sm font-semibold ${selected ? 'text-text' : 'text-text/80'}`}>{label}</p>
-          {sub && <p className={`text-xs mt-0.5 ${selected ? 'text-muted' : 'text-muted/70'}`}>{sub}</p>}
-          {desc && selected && <p className="text-xs text-muted mt-1">{desc}</p>}
-        </div>
-        {selected && <Check size={14} className="text-accent shrink-0" />}
+      <div className="min-w-0">
+        <p className={`text-[15px] font-extrabold leading-tight ${selected ? '' : 'text-text'}`}
+           style={selected ? { color: 'var(--tier-light)' } : {}}>
+          {label}
+        </p>
+        {sub && (
+          <p className="text-[12px] font-semibold text-text/50 leading-snug mt-1">
+            {sub}
+          </p>
+        )}
       </div>
+      <span
+        aria-hidden="true"
+        className="w-6 h-6 rounded-full inline-flex items-center justify-center shrink-0
+                   border-[1.5px]"
+        style={selected
+          ? { background: 'var(--tier-c)', borderColor: 'var(--tier-c)', color: 'var(--bg, #06120f)' }
+          : { borderColor: 'rgba(255,255,255,0.18)' }
+        }
+      >
+        {selected && <Check size={13} strokeWidth={3} />}
+      </span>
     </button>
   )
 }
 
-function MultiSelectChip({ label, selected, onClick }) {
+// Multi-select pill that lays out in a wrap grid.
+function MultiPill({ label, selected, onClick }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all duration-150 ${
-        selected
-          ? 'border-accent bg-accent/15 text-accent'
-          : 'border-outline bg-panel text-muted hover:border-accent/40 hover:text-text'
-      }`}
+      aria-pressed={selected}
+      className="px-3.5 py-2 rounded-full border-[0.5px] text-[12px] font-bold transition-colors"
+      style={selected
+        ? {
+            background: 'color-mix(in srgb, var(--tier-c) 14%, transparent)',
+            borderColor: 'color-mix(in srgb, var(--tier-c) 45%, transparent)',
+            color: 'var(--tier-light)',
+          }
+        : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.10)', color: '#e8e8ec' }
+      }
     >
       {label}
     </button>
   )
 }
 
+// Grade slider — big tabular value above a tier-colored range input.
+function GradeSlider({ value, options, onChange }) {
+  const idx = Math.max(0, options.indexOf(value))
+  return (
+    <div className="px-1">
+      <div className="flex items-baseline justify-between mb-4">
+        <p className="text-[28px] font-extrabold tabular-nums -tracking-[0.025em]"
+           style={{ color: 'var(--tier-light)' }}>
+          {value}
+        </p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.10em] text-text/45">
+          {idx + 1} of {options.length}
+        </p>
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={options.length - 1}
+        value={idx}
+        onChange={(e) => onChange(options[+e.target.value])}
+        className="w-full"
+        style={{ accentColor: 'var(--tier-c)' }}
+      />
+      <div className="flex justify-between mt-2 text-[11px] font-bold text-text/40 tabular-nums">
+        <span>{options[0]}</span>
+        <span>{options[Math.floor(options.length / 2)]}</span>
+        <span>{options[options.length - 1]}</span>
+      </div>
+    </div>
+  )
+}
+
+// 7-day weekday picker (mirrors the TrainWeekStrip aesthetic).
+function WeekdayPicker({ value, onToggle }) {
+  return (
+    <div className="grid grid-cols-7 gap-1.5">
+      {WEEKDAYS.map((d) => {
+        const selected = value.includes(d.value)
+        return (
+          <button
+            key={d.value}
+            type="button"
+            onClick={() => onToggle(d.value)}
+            aria-pressed={selected}
+            className="flex flex-col items-center justify-center py-3 rounded-2xl
+                       border-[0.5px] min-h-[60px] transition-colors"
+            style={selected
+              ? {
+                  background: 'linear-gradient(180deg, color-mix(in srgb, var(--tier-c) 18%, transparent), color-mix(in srgb, var(--tier-c) 4%, transparent))',
+                  borderColor: 'color-mix(in srgb, var(--tier-c) 42%, transparent)',
+                }
+              : { borderColor: 'transparent', background: 'transparent' }
+            }
+          >
+            <span className="text-[10px] font-extrabold uppercase tracking-[0.06em]"
+                  style={{ color: selected ? 'var(--tier-light)' : 'rgba(255,255,255,0.35)' }}>
+              {d.short}
+            </span>
+            <span className="text-[13px] font-bold mt-1"
+                  style={{ color: selected ? 'var(--tier-light)' : 'rgba(255,255,255,0.7)' }}>
+              {d.long}
+            </span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// Numeric slider with a big value display (used for session length).
+function NumberSlider({ value, min, max, step = 5, unit, onChange, hint }) {
+  return (
+    <div className="px-1">
+      <div className="flex items-baseline justify-between mb-4">
+        <p className="text-[28px] font-extrabold tabular-nums -tracking-[0.025em]"
+           style={{ color: 'var(--tier-light)' }}>
+          {value} <span className="text-[14px] font-bold text-text/55">{unit}</span>
+        </p>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(+e.target.value)}
+        className="w-full"
+        style={{ accentColor: 'var(--tier-c)' }}
+      />
+      <div className="flex justify-between mt-2 text-[11px] font-bold text-text/40 tabular-nums">
+        <span>{min} {unit}</span>
+        <span>{Math.round((min + max) / 2)} {unit}</span>
+        <span>{max} {unit}</span>
+      </div>
+      {hint && <p className="text-[11px] font-semibold text-text/45 mt-3 leading-snug">{hint}</p>}
+    </div>
+  )
+}
+
+// ── Component ──────────────────────────────────────────────────────────────
+const TOTAL_STEPS = 9
+
 export default function ProfileSetup({ onComplete }) {
   const [step, setStep] = useState(0)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
-
   const [form, setForm] = useState({
     experience_level: '',
     primary_discipline: '',
@@ -138,22 +270,26 @@ export default function ProfileSetup({ onComplete }) {
     goal_grade: '',
   })
 
-  function set(key, val) {
-    setForm((f) => ({ ...f, [key]: val }))
-  }
+  const setField = (key, val) => setForm((f) => ({ ...f, [key]: val }))
+  const toggleList = (key, val) => setForm((f) => {
+    const cur = f[key] || []
+    return { ...f, [key]: cur.includes(val) ? cur.filter((v) => v !== val) : [...cur, val] }
+  })
 
-  function toggleList(key, val) {
-    setForm((f) => {
-      const cur = f[key]
-      return { ...f, [key]: cur.includes(val) ? cur.filter((v) => v !== val) : [...cur, val] }
-    })
-  }
-
+  // Per-step gating. Optional steps (equipment, weaknesses) always advance.
   function canAdvance() {
-    if (step === 0) return form.experience_level && form.primary_discipline
-    if (step === 2) return (form.training_days?.length || 0) >= 1
-    if (step === 4) return !!form.primary_goal
-    return true
+    switch (step) {
+      case 0: return !!form.experience_level
+      case 1: return !!form.primary_discipline
+      case 2: return !!form.max_grade_boulder
+      case 3: return !!form.max_grade_route
+      case 4: return (form.training_days?.length || 0) >= 1
+      case 5: return !!form.session_length_min
+      case 6: return true   // equipment is optional
+      case 7: return true   // weaknesses is optional
+      case 8: return !!form.primary_goal
+      default: return false
+    }
   }
 
   async function handleFinish() {
@@ -170,264 +306,229 @@ export default function ProfileSetup({ onComplete }) {
     }
   }
 
-  const steps = [
-    // Step 0: Background
-    <div key="bg" className="space-y-4">
-      <div>
-        <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Experience level</p>
-        <div className="space-y-2">
-          {EXPERIENCE_LEVELS.map((o) => (
-            <OptionCard
-              key={o.value}
-              label={o.label}
-              sub={o.sub}
-              desc={o.desc}
-              selected={form.experience_level === o.value}
-              onClick={() => set('experience_level', o.value)}
-            />
-          ))}
-        </div>
-      </div>
-      <div>
-        <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Primary discipline</p>
-        <div className="grid grid-cols-2 gap-2">
-          {DISCIPLINES.map((o) => (
-            <OptionCard
-              key={o.value}
-              label={o.label}
-              sub={o.sub}
-              selected={form.primary_discipline === o.value}
-              onClick={() => set('primary_discipline', o.value)}
-            />
-          ))}
-        </div>
-      </div>
-    </div>,
+  function next() {
+    if (!canAdvance()) return
+    if (step === TOTAL_STEPS - 1) { handleFinish(); return }
+    setStep((s) => s + 1)
+  }
+  function back() {
+    setStep((s) => Math.max(0, s - 1))
+  }
 
-    // Step 1: Grades
-    <div key="grades" className="space-y-6">
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold text-muted uppercase tracking-wide">Max boulder grade</p>
-          <span className="text-sm font-bold text-accent">{form.max_grade_boulder}</span>
-        </div>
-        <input
-          type="range"
-          min={0}
-          max={BOULDER_GRADES.length - 1}
-          value={BOULDER_GRADES.indexOf(form.max_grade_boulder)}
-          onChange={(e) => set('max_grade_boulder', BOULDER_GRADES[+e.target.value])}
-          className="w-full accent-teal-400"
-        />
-        <div className="flex justify-between text-xs text-muted mt-1">
-          <span>V0</span><span>V8</span><span>V17</span>
-        </div>
-      </div>
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold text-muted uppercase tracking-wide">Max route grade</p>
-          <span className="text-sm font-bold text-accent">{form.max_grade_route}</span>
-        </div>
-        <input
-          type="range"
-          min={0}
-          max={ROUTE_GRADES.length - 1}
-          value={ROUTE_GRADES.indexOf(form.max_grade_route)}
-          onChange={(e) => set('max_grade_route', ROUTE_GRADES[+e.target.value])}
-          className="w-full accent-teal-400"
-        />
-        <div className="flex justify-between text-xs text-muted mt-1">
-          <span>5.9</span><span>5.12a</span><span>5.15a</span>
-        </div>
-      </div>
-    </div>,
+  const pct = ((step + 1) / TOTAL_STEPS) * 100
+  const isLast = step === TOTAL_STEPS - 1
 
-    // Step 2: Logistics
-    <div key="logistics" className="space-y-6">
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold text-muted uppercase tracking-wide">Days you can train</p>
-          <span className="text-sm font-bold text-accent">
-            {form.training_days.length || 0} day{form.training_days.length === 1 ? '' : 's'} / week
-          </span>
-        </div>
-        <div className="grid grid-cols-7 gap-1.5 mt-2">
-          {WEEKDAYS.map((d) => {
-            const selected = form.training_days.includes(d.value)
-            return (
-              <button
-                key={d.value}
-                type="button"
-                onClick={() => toggleList('training_days', d.value)}
-                aria-pressed={selected}
-                aria-label={`${d.long} — ${selected ? 'selected' : 'not selected'}`}
-                className={[
-                  'flex flex-col items-center justify-center py-2.5 rounded-2xl',
-                  'border-[0.5px] transition-colors min-h-[56px]',
-                  selected
-                    ? 'border-accent bg-accent/15 text-text shadow-glow'
-                    : 'border-outline bg-panel/60 text-muted hover:border-accent/40 hover:text-text',
-                ].join(' ')}
-              >
-                <span className="text-[10px] font-extrabold tracking-[0.06em] uppercase">
-                  {d.short}
-                </span>
-                <span className="text-[12px] font-bold mt-0.5">
-                  {d.long}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-        <p className="text-[11px] text-muted mt-2 leading-snug">
-          Tap days you can dedicate to training. Skip days you have work, family, or rest commitments — your plan won't schedule anything on those.
-        </p>
-      </div>
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold text-muted uppercase tracking-wide">Session length</p>
-          <span className="text-sm font-bold text-accent">{form.session_length_min} min</span>
-        </div>
-        <input
-          type="range"
-          min={30}
-          max={180}
-          step={15}
-          value={form.session_length_min}
-          onChange={(e) => set('session_length_min', +e.target.value)}
-          className="w-full accent-teal-400"
-        />
-        <div className="flex justify-between text-xs text-muted mt-1">
-          <span>30 min</span><span>90 min</span><span>3 hr</span>
-        </div>
-      </div>
-      <div>
-        <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Available equipment</p>
-        <div className="flex flex-wrap gap-2">
-          {EQUIPMENT.map((e) => (
-            <MultiSelectChip
-              key={e.value}
-              label={e.label}
-              selected={form.equipment.includes(e.value)}
-              onClick={() => toggleList('equipment', e.value)}
-            />
-          ))}
-        </div>
-      </div>
-    </div>,
-
-    // Step 3: Weaknesses
-    <div key="weaknesses" className="space-y-4">
-      <p className="text-sm text-muted">
-        Select the areas you most want to improve. Your plan will emphasise these.
-      </p>
-      <div className="flex flex-wrap gap-2">
-        {WEAKNESSES.map((w) => (
-          <MultiSelectChip
-            key={w.value}
-            label={w.label}
-            selected={form.weaknesses.includes(w.value)}
-            onClick={() => toggleList('weaknesses', w.value)}
-          />
-        ))}
-      </div>
-    </div>,
-
-    // Step 4: Goal
-    <div key="goal" className="space-y-3">
-      {GOALS.map((g) => (
-        <OptionCard
-          key={g.value}
-          label={g.label}
-          sub={g.sub}
-          selected={form.primary_goal === g.value}
-          onClick={() => set('primary_goal', g.value)}
-        />
-      ))}
-      {form.primary_goal === 'grade_progression' && (
-        <motion.div
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-xl border border-accent/30 bg-accent/5 px-4 py-3"
-        >
-          <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Target grade (optional)</p>
-          <input
-            type="text"
-            placeholder="e.g. V8 or 5.13a"
-            value={form.goal_grade}
-            onChange={(e) => set('goal_grade', e.target.value)}
-            className="w-full bg-transparent border-b border-outline text-sm text-text placeholder:text-muted/50 pb-1 outline-none focus:border-accent"
-          />
-        </motion.div>
-      )}
-
-    </div>,
-  ]
+  const stepBody = useMemo(() => {
+    switch (step) {
+      case 0: return (
+        <>
+          <StepHeader stepIndex={step} totalSteps={TOTAL_STEPS}
+                      title="How long have you been climbing?"
+                      subtitle="We'll calibrate sessions and intensity to your level." />
+          <div>
+            {EXPERIENCE_LEVELS.map((o) => (
+              <SelectRow key={o.value} label={o.label} sub={o.sub}
+                         selected={form.experience_level === o.value}
+                         onClick={() => setField('experience_level', o.value)} />
+            ))}
+          </div>
+        </>
+      )
+      case 1: return (
+        <>
+          <StepHeader stepIndex={step} totalSteps={TOTAL_STEPS}
+                      title="What's your primary discipline?"
+                      subtitle="Plans emphasise the skills your discipline rewards." />
+          <div>
+            {DISCIPLINES.map((o) => (
+              <SelectRow key={o.value} label={o.label} sub={o.sub}
+                         selected={form.primary_discipline === o.value}
+                         onClick={() => setField('primary_discipline', o.value)} />
+            ))}
+          </div>
+        </>
+      )
+      case 2: return (
+        <>
+          <StepHeader stepIndex={step} totalSteps={TOTAL_STEPS}
+                      title="What's your hardest boulder send?"
+                      subtitle="Roughly — the grade you've sent more than once." />
+          <GradeSlider value={form.max_grade_boulder} options={BOULDER_GRADES}
+                       onChange={(v) => setField('max_grade_boulder', v)} />
+        </>
+      )
+      case 3: return (
+        <>
+          <StepHeader stepIndex={step} totalSteps={TOTAL_STEPS}
+                      title="What's your hardest route send?"
+                      subtitle="Slide to skip if you don't sport climb." />
+          <GradeSlider value={form.max_grade_route} options={ROUTE_GRADES}
+                       onChange={(v) => setField('max_grade_route', v)} />
+        </>
+      )
+      case 4: return (
+        <>
+          <StepHeader stepIndex={step} totalSteps={TOTAL_STEPS}
+                      title="Which days can you train?"
+                      subtitle="Skip days you have work, family, or rest commitments — your plan won't schedule anything on those." />
+          <WeekdayPicker value={form.training_days}
+                         onToggle={(v) => toggleList('training_days', v)} />
+          <p className="text-[12px] font-bold mt-4"
+             style={{ color: 'var(--tier-light)' }}>
+            {form.training_days.length} day{form.training_days.length === 1 ? '' : 's'} / week
+          </p>
+        </>
+      )
+      case 5: return (
+        <>
+          <StepHeader stepIndex={step} totalSteps={TOTAL_STEPS}
+                      title="How long is a typical session?"
+                      subtitle="We'll size each workout to fit." />
+          <NumberSlider value={form.session_length_min} min={30} max={180} step={15} unit="min"
+                        onChange={(v) => setField('session_length_min', v)}
+                        hint="Includes warm-up and cool-down." />
+        </>
+      )
+      case 6: return (
+        <>
+          <StepHeader stepIndex={step} totalSteps={TOTAL_STEPS}
+                      title="What gear do you have access to?"
+                      subtitle="Optional. Plans use what you select — leave blank for body-weight-only." />
+          <div className="flex flex-wrap gap-2">
+            {EQUIPMENT.map((e) => (
+              <MultiPill key={e.value} label={e.label}
+                         selected={form.equipment.includes(e.value)}
+                         onClick={() => toggleList('equipment', e.value)} />
+            ))}
+          </div>
+        </>
+      )
+      case 7: return (
+        <>
+          <StepHeader stepIndex={step} totalSteps={TOTAL_STEPS}
+                      title="What do you want to improve?"
+                      subtitle="Optional. Sessions will lean into these areas." />
+          <div className="flex flex-wrap gap-2">
+            {WEAKNESSES.map((w) => (
+              <MultiPill key={w.value} label={w.label}
+                         selected={form.weaknesses.includes(w.value)}
+                         onClick={() => toggleList('weaknesses', w.value)} />
+            ))}
+          </div>
+        </>
+      )
+      case 8: return (
+        <>
+          <StepHeader stepIndex={step} totalSteps={TOTAL_STEPS}
+                      title="What's your primary goal?"
+                      subtitle="Pick the outcome you're aiming for over the next 4 weeks." />
+          <div>
+            {GOALS.map((g) => (
+              <SelectRow key={g.value} label={g.label} sub={g.sub}
+                         selected={form.primary_goal === g.value}
+                         onClick={() => setField('primary_goal', g.value)} />
+            ))}
+          </div>
+          {form.primary_goal === 'grade_progression' && (
+            <div className="mt-5">
+              <p className="text-[11px] font-bold uppercase tracking-[0.10em] text-text/45 mb-2">
+                Target grade
+              </p>
+              <input
+                type="text"
+                placeholder="V6, 5.12b, etc."
+                value={form.goal_grade}
+                onChange={(e) => setField('goal_grade', e.target.value)}
+                className="w-full bg-transparent border-b-[0.5px] border-white/[0.10]
+                           text-[15px] font-bold py-2 outline-none transition-colors
+                           focus:border-[var(--tier-c)]"
+              />
+            </div>
+          )}
+        </>
+      )
+      default: return null
+    }
+  }, [step, form])
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-1">
-          <p className="text-xs text-muted">{STEP_LABELS[step]} · {step + 1} of {steps.length}</p>
-          <StepDots total={steps.length} current={step} />
+    <div className="relative max-w-lg mx-auto px-4 py-6 md:py-10 min-h-[calc(100vh-4rem)] flex flex-col"
+         style={{
+           background:
+             'radial-gradient(circle at 50% -10%, color-mix(in srgb, var(--tier-c) 22%, transparent) 0%, transparent 55%)',
+         }}>
+      {/* Top progress + Train title */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-3 px-1">
+          <p className="text-[20px] font-extrabold -tracking-[0.025em]"
+             style={{ textShadow: '0 0 14px var(--tier-glow)' }}>
+            Train.
+          </p>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
+                           text-[10.5px] font-extrabold uppercase tracking-[0.06em]"
+                style={{
+                  background: 'color-mix(in srgb, var(--tier-c) 12%, transparent)',
+                  border: '0.5px solid color-mix(in srgb, var(--tier-c) 35%, transparent)',
+                  color: 'var(--tier-light)',
+                }}>
+            <Sparkles size={11} strokeWidth={2.6} />
+            Build my plan
+          </span>
         </div>
-        <h2 className="text-xl font-bold text-text">
-          {step === 0 && 'Tell us about your climbing'}
-          {step === 1 && 'What are your current grades?'}
-          {step === 2 && 'Training logistics'}
-          {step === 3 && 'What do you want to improve?'}
-          {step === 4 && 'What\'s your primary goal?'}
-        </h2>
+        <ProgressBar pct={pct} />
       </div>
 
-      {/* Step content */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={step}
-          initial={{ opacity: 0, x: 16 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -16 }}
-          transition={{ duration: 0.18 }}
+      {/* Step body */}
+      <div className="flex-1">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={step}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.20, ease: 'easeOut' }}
+          >
+            {stepBody}
+          </motion.div>
+        </AnimatePresence>
+
+        {error && (
+          <p className="mt-5 text-[12px] font-bold text-[#fb7185]">{error}</p>
+        )}
+      </div>
+
+      {/* Bottom action bar */}
+      <div className="sticky bottom-0 -mx-4 px-4 pt-4
+                      pb-[calc(0.75rem+env(safe-area-inset-bottom))]
+                      bg-gradient-to-t from-[#06070a] via-[#06070a]/95 to-transparent">
+        <motion.button
+          type="button"
+          onClick={next}
+          disabled={!canAdvance() || saving}
+          whileTap={canAdvance() && !saving ? { scale: 0.97 } : undefined}
+          className="w-full inline-flex items-center justify-center gap-2
+                     px-5 py-3.5 rounded-2xl font-extrabold text-[13.5px] -tracking-[0.01em]
+                     transition-opacity disabled:opacity-50"
+          style={{ background: 'var(--tier-c)', color: 'var(--bg, #06120f)' }}
         >
-          {steps[step]}
-        </motion.div>
-      </AnimatePresence>
-
-      {error && (
-        <p className="mt-4 text-xs text-accent2">{error}</p>
-      )}
-
-      {/* Navigation */}
-      <div className="flex items-center justify-between mt-8">
+          {saving
+            ? <><Loader2 size={14} className="animate-spin" /> Saving…</>
+            : isLast
+              ? <>Build my plan <ArrowRight size={14} strokeWidth={2.6} /></>
+              : <>Continue <ChevronRight size={14} strokeWidth={2.6} /></>
+          }
+        </motion.button>
         <button
-          onClick={() => setStep((s) => s - 1)}
-          disabled={step === 0}
-          className="flex items-center gap-1.5 text-sm text-muted hover:text-text disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          type="button"
+          onClick={back}
+          disabled={step === 0 || saving}
+          className="mt-3 w-full inline-flex items-center justify-center gap-1
+                     text-[11px] font-extrabold uppercase tracking-[0.10em]
+                     text-muted hover:text-text transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
-          <ChevronLeft size={16} />
+          <ChevronLeft size={12} strokeWidth={2.6} />
           Back
         </button>
-
-        {step < steps.length - 1 ? (
-          <button
-            onClick={() => setStep((s) => s + 1)}
-            disabled={!canAdvance()}
-            className="btn-primary flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Next
-            <ChevronRight size={15} />
-          </button>
-        ) : (
-          <button
-            onClick={handleFinish}
-            disabled={!canAdvance() || saving}
-            className="btn-primary flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {saving ? 'Saving…' : 'Build my plan'}
-            {!saving && <Check size={15} />}
-          </button>
-        )}
       </div>
     </div>
   )
