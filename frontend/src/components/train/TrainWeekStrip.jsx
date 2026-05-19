@@ -1,4 +1,5 @@
 import { sessionForDay } from '../../lib/trainSessions'
+import { getSessionTypeLabel } from '../../lib/sessionType'
 
 const DAY_LETTER = ['M','T','W','T','F','S','S']
 const DAY_LONG = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
@@ -73,10 +74,11 @@ export default function TrainWeekStrip({ weekDates, plan, loggedDates, selectedD
           : { color: 'rgba(255,255,255,0.35)' }
 
         const session = sessionForDay(plan, iso)
+        const typeLabel = getSessionTypeLabel(session?.type || session?.session_type)
         const ariaLabel = [
           formatLongDate(iso),
           today ? 'today' : null,
-          session?.session_type ? `${session.session_type} session` : (isRest ? 'rest day' : null),
+          typeLabel ? `${typeLabel} session` : (isRest ? 'rest day' : null),
         ].filter(Boolean).join(', ')
 
         return (

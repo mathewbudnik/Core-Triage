@@ -1,4 +1,5 @@
 import { sessionForDay, dayStatusFor } from '../../lib/trainSessions'
+import { getSessionTypeLabel } from '../../lib/sessionType'
 
 const DOW_LONG = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
 
@@ -38,10 +39,11 @@ export default function TrainNextUpRow({ weekDates, plan, fromDay, onSelectDay }
       </p>
     )
   }
-  const dur = next.session?.duration_minutes || next.session?.duration_min
+  const dur = next.session?.duration_min || next.session?.duration_minutes
+  const typeLabel = getSessionTypeLabel(next.session?.type || next.session?.session_type)
   const label = [
     DOW_LONG[dayOfWeek(next.iso)],
-    next.session?.session_type,
+    typeLabel,
     dur ? `${dur} min` : null,
   ].filter(Boolean).join(' · ')
   return (

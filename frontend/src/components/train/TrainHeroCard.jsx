@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { ArrowRight, Check, Sparkles, Loader2 } from 'lucide-react'
-import { getSessionTypeColor } from '../../lib/sessionType'
+import { getSessionTypeColor, getSessionTypeLabel } from '../../lib/sessionType'
 
 const DOW_LONG = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
 const DOW_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
@@ -96,10 +96,13 @@ export default function TrainHeroCard({
   const today   = dayStatus === 'today'
   const past    = dayStatus === 'past'
 
-  const sessionType = session?.session_type || (rest ? 'Rest' : 'Endurance')
-  const typeColors  = getSessionTypeColor(sessionType)
-  const durationMin = session?.duration_minutes || session?.duration_min || null
-  const description = session?.description || session?.summary || null
+  // Backend produces `session.type` (lowercase). `session_type` is a legacy
+  // alias kept for any older callers.
+  const rawType     = session?.type || session?.session_type
+  const sessionType = getSessionTypeLabel(rawType) || (rest ? 'Rest' : 'Endurance')
+  const typeColors  = getSessionTypeColor(rawType)
+  const durationMin = session?.duration_min || session?.duration_minutes || null
+  const exerciseCount = session?.main?.length || 0
 
   const title = rest
     ? <>Rest<br/>day</>
@@ -107,7 +110,10 @@ export default function TrainHeroCard({
 
   const subtitle = rest
     ? 'Mobility + sleep are the work today.'
-    : [durationMin ? `${durationMin} min` : null, description].filter(Boolean).join(' · ') || 'See exercises'
+    : [
+        durationMin ? `${durationMin} min` : null,
+        exerciseCount > 0 ? `${exerciseCount} exercise${exerciseCount === 1 ? '' : 's'}` : null,
+      ].filter(Boolean).join(' · ') || 'Tap to see exercises'
 
   return (
     <div

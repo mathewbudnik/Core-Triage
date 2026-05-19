@@ -1,10 +1,12 @@
 /**
- * Color tokens for session types. Each entry mirrors the V-tier palette so
- * Train's chromatic accents stay coherent with the rest of the app.
+ * Color tokens + display labels for session types. Each color entry mirrors
+ * the V-tier palette so Train's chromatic accents stay coherent with the
+ * rest of the app.
  *
- * Session-type color appears in exactly one place at runtime: the dot before
- * the eyebrow inside the hero card. Everything else uses the user's tier
- * color. See docs/superpowers/specs/2026-05-17-train-tab-redesign-design.md.
+ * Backend produces lowercase types (hangboard, power, endurance, strength,
+ * project, technique). UI displays them title-cased. Project + Technique
+ * don't have their own color slots — they alias to Limit and Mobility
+ * respectively so the splash stays inside the established palette.
  */
 export const SESSION_TYPE_COLOR = {
   Power:     { c: '#fb7185', light: '#fda4af', deep: '#7f1d2c' },   // v10 Phoenix
@@ -16,11 +18,54 @@ export const SESSION_TYPE_COLOR = {
   Rest:      { c: 'transparent', light: 'transparent', deep: 'transparent' },
 }
 
+// Backend → color-key alias map. Lowercased input.
+const COLOR_ALIAS = {
+  hangboard:  'Hangboard',
+  power:      'Power',
+  endurance:  'Endurance',
+  strength:   'Strength',
+  project:    'Limit',     // send-focused effort, borrow ember orange
+  technique:  'Mobility',  // movement work, borrow veil violet
+  limit:      'Limit',
+  mobility:   'Mobility',
+  rest:       'Rest',
+}
+
+// Display label map. Lowercased input.
+const TYPE_LABEL = {
+  hangboard:  'Hangboard',
+  power:      'Power',
+  endurance:  'Endurance',
+  strength:   'Strength',
+  project:    'Project',
+  technique:  'Technique',
+  limit:      'Limit',
+  mobility:   'Mobility',
+  rest:       'Rest',
+}
+
+function lower(t) {
+  return (t || '').toString().toLowerCase()
+}
+
 /**
- * Return { c, light, deep } for a session type. Falls back to Endurance
- * (Cove teal) for unknown / null / undefined inputs — the same fallback the
- * spec defines and the rest of the codebase already trusts.
+ * Return { c, light, deep } for a session type. Case-insensitive. Handles
+ * backend aliases (project → Limit color, technique → Mobility). Falls back
+ * to Endurance (Cove teal) for unknown / null / undefined inputs.
  */
 export function getSessionTypeColor(type) {
-  return SESSION_TYPE_COLOR[type] || SESSION_TYPE_COLOR.Endurance
+  const key = COLOR_ALIAS[lower(type)] || type
+  return SESSION_TYPE_COLOR[key] || SESSION_TYPE_COLOR.Endurance
+}
+
+/**
+ * Title-cased display label for a session type. Case-insensitive.
+ * Falls through to a naive title-case of the input when unknown so a future
+ * backend addition still renders sensibly.
+ */
+export function getSessionTypeLabel(type) {
+  if (!type) return null
+  const key = lower(type)
+  if (TYPE_LABEL[key]) return TYPE_LABEL[key]
+  return key.charAt(0).toUpperCase() + key.slice(1)
 }
