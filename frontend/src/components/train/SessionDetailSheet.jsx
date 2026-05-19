@@ -20,7 +20,10 @@ function MainExerciseCard({ block, index }) {
   const reps = block.reps
   const rest = block.rest_seconds
   const videoUrl = buildExerciseVideoUrl(block)
-  const canTime = !!(sets && rest)  // need both to drive the rest timer
+  // Timer works as long as the exercise has sets. Multi-set exercises with
+  // either parsed work patterns or a rest_seconds get an automated schedule;
+  // bare rep-based sets fall back to user-paced work + inter-set rest.
+  const canTime = !!sets
 
   return (
     <li className="px-4 py-3.5 rounded-2xl bg-black/35 backdrop-blur-md
@@ -95,8 +98,7 @@ function MainExerciseCard({ block, index }) {
 
       {canTime && timerOpen && (
         <ExerciseTimer
-          totalSets={sets}
-          restSeconds={rest}
+          block={block}
           onClose={() => setTimerOpen(false)}
         />
       )}
@@ -166,10 +168,12 @@ export default function SessionDetailSheet({ open, session, onClose, onLogged })
        w-full max-w-md max-h-[88vh] flex flex-col overflow-hidden
        bg-[#0a0a0c] border-[0.5px] border-white/[0.10]
        rounded-3xl px-4 pt-3`
-    : `fixed bottom-0 inset-x-0 z-50
+    // Mobile: bottom edge sits ABOVE the h-16 bottom nav + safe-area inset,
+    // so the sticky CTA inside the sheet is never hidden behind the nav bar.
+    : `fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] inset-x-0 z-50
        bg-[#0a0a0c] border-t-[0.5px] border-white/[0.10]
        rounded-t-3xl px-4 pt-3 flex flex-col
-       max-h-[88vh]`
+       max-h-[calc(88vh-4rem-env(safe-area-inset-bottom))]`
   const enter = isDesktop ? { opacity: 1, scale: 1 } : { y: 0 }
   const exit  = isDesktop ? { opacity: 0, scale: 0.96 } : { y: '100%' }
   const init  = isDesktop ? { opacity: 0, scale: 0.96 } : { y: '100%' }

@@ -1,18 +1,18 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Play, Pause, SkipBack, SkipForward, RotateCcw, X, Check } from 'lucide-react'
 
-// Traditional set/rest interval timer with full transport controls.
-// State machine per set:
-//   work  → user does their reps. Big digits show the rest duration that's
-//           queued up so the climber sees what's coming. Tap Play to start.
-//   rest  → countdown runs. Beep + vibrate at 00:00, then auto-advance to
-//           the next set's work phase.
-//   done  → all sets complete.
-// Controls (big tap targets, mobile-friendly):
-//   • Prev set / Play-Pause / Next set as 3 circular buttons in a row
-//   • Reset (smaller, below)
-//   • Close (X in the corner)
+// Schedule-driven interval timer. The exercise's `reps` field is parsed for
+// timed work patterns ("6 × (7s on / 3s off)", "10s on / 50s off", etc.) and
+// expanded into a flat schedule of phases:
+//
+//   prep (5s) → work (Xs) → innerRest (Ys) → work (Xs) → ... → longRest → ...
+//
+// The active step ticks down; at 00:00 it beeps + vibrates and auto-advances.
+// Rep-based exercises that don't have a parsed work duration fall back to a
+// user-paced work phase ("Done with set" advances).
+
+const PREP_SECONDS = 5
 
 function pad(n) { return String(n).padStart(2, '0') }
 function fmt(secs) {
@@ -20,9 +20,9 @@ function fmt(secs) {
   return `${pad(Math.floor(s / 60))}:${pad(s % 60)}`
 }
 
-// 180ms 880Hz sine. Lazy AudioContext init so autoplay policies don't block.
+// ── Audio + haptic ────────────────────────────────────────────────────────
 let _audioCtx = null
-function beep() {
+function tone(freq = 880, ms = 180) {
   try {
     if (!_audioCtx) {
       const Ctor = window.AudioContext || window.webkitAudioContext
@@ -33,131 +33,246 @@ function beep() {
     const osc = ctx.createOscillator()
     const gain = ctx.createGain()
     osc.type = 'sine'
-    osc.frequency.value = 880
+    osc.frequency.value = freq
     gain.gain.value = 0.18
     osc.connect(gain).connect(ctx.destination)
     osc.start()
-    setTimeout(() => { try { osc.stop() } catch {} }, 180)
+    setTimeout(() => { try { osc.stop() } catch {} }, ms)
   } catch {}
 }
-function buzz() {
-  try { navigator.vibrate?.([200, 80, 200]) } catch {}
+function buzz(pattern) {
+  try { navigator.vibrate?.(pattern) } catch {}
+}
+// Play-style cue at transitions: higher tone for "go" (entering work),
+// lower for "stop" (rest start), neutral for prep / done.
+function cueFor(kind) {
+  if (kind === 'work')         { tone(1320, 200); buzz([180, 60, 180]) }
+  else if (kind === 'longRest' || kind === 'innerRest') { tone(660, 200); buzz([220]) }
+  else if (kind === 'done')    { tone(880, 200); setTimeout(() => tone(1320, 240), 220); buzz([400]) }
+  else                         { tone(880, 140); buzz([120]) }
 }
 
+// ── Reps-string parser ────────────────────────────────────────────────────
+// Pulls workSeconds, repsPerSet, innerRestSeconds out of patterns like:
+//   "6 × (7s on / 3s off)" → reps=6, work=7, innerRest=3
+//   "7s on / 3s off"        → reps=1, work=7, innerRest=0  (inner ignored at reps=1)
+//   "10s per arm"           → reps=1, work=10
+//   "5s × 4"                → reps=4, work=5
+// Returns null if no pattern matched (caller falls back to user-paced work).
+function parseRepsPattern(repsStr) {
+  if (!repsStr) return null
+  const s = String(repsStr).toLowerCase().trim()
+
+  // "N × (Xs on / Ys off)" / "N x (Xs on / Ys off)"
+  let m = s.match(/(\d+)\s*[×x]\s*\(?\s*(\d+)\s*s\s+on\s*\/\s*(\d+)\s*s\s+off/)
+  if (m) return { repsPerSet: +m[1], workSeconds: +m[2], innerRestSeconds: +m[3] }
+
+  // "Xs on / Ys off" (no N prefix) — single rep with on/off pattern
+  m = s.match(/(\d+)\s*s\s+on\s*\/\s*(\d+)\s*s\s+off/)
+  if (m) return { repsPerSet: 1, workSeconds: +m[1], innerRestSeconds: 0 }
+
+  // "Xs × N"  (work-first) or "N × Xs"  (count-first)
+  m = s.match(/^(\d+)\s*s\s*[×x]\s*(\d+)/)
+  if (m) return { repsPerSet: +m[2], workSeconds: +m[1], innerRestSeconds: 0 }
+  m = s.match(/^(\d+)\s*[×x]\s*(\d+)\s*s\b/)
+  if (m) return { repsPerSet: +m[1], workSeconds: +m[2], innerRestSeconds: 0 }
+
+  // "Xs per arm" / "Xs hang" / standalone seconds — single timed rep
+  m = s.match(/(\d+)\s*s\b/)
+  if (m) return { repsPerSet: 1, workSeconds: +m[1], innerRestSeconds: 0 }
+
+  return null
+}
+
+// ── Schedule builder ──────────────────────────────────────────────────────
+// One step per phase. `userPaced` work has seconds=0 and won't auto-advance.
+function buildSchedule(block) {
+  const sets = Math.max(1, Number(block?.sets) || 1)
+  const restSec = Math.max(1, Number(block?.rest_seconds) || 60)
+  const parsed = parseRepsPattern(block?.reps)
+  const out = []
+
+  for (let set = 1; set <= sets; set++) {
+    out.push({ kind: 'prep', seconds: PREP_SECONDS, set })
+
+    if (parsed && parsed.workSeconds > 0) {
+      const { repsPerSet, workSeconds, innerRestSeconds } = parsed
+      for (let rep = 1; rep <= repsPerSet; rep++) {
+        out.push({ kind: 'work', seconds: workSeconds, set, rep, repsPerSet })
+        if (rep < repsPerSet && innerRestSeconds > 0) {
+          out.push({ kind: 'innerRest', seconds: innerRestSeconds, set, rep, repsPerSet })
+        }
+      }
+    } else {
+      out.push({ kind: 'work', seconds: 0, set, rep: 1, repsPerSet: 1, userPaced: true })
+    }
+
+    if (set < sets) {
+      out.push({ kind: 'longRest', seconds: restSec, set })
+    }
+  }
+
+  out.push({ kind: 'done', seconds: 0, set: sets })
+  return out
+}
+
+function indexOfFirstPrepFor(schedule, set) {
+  for (let i = 0; i < schedule.length; i++) {
+    if (schedule[i].set === set && schedule[i].kind === 'prep') return i
+  }
+  return 0
+}
+
+// ── Component ─────────────────────────────────────────────────────────────
 /**
- * Set + rest interval timer for one exercise.
+ * Schedule-driven interval timer. Accepts the full exercise block so it can
+ * read `sets`, `reps`, and `rest_seconds` to derive a multi-phase schedule.
  *
  * Props:
- *   totalSets:   number   — how many sets to walk through
- *   restSeconds: number   — inter-set rest duration in seconds
- *   onClose:     () => void
+ *   block:    object   — backend exercise block (sets/reps/rest_seconds)
+ *   onClose:  () => void
  */
-export default function ExerciseTimer({ totalSets, restSeconds, onClose }) {
-  const safeRest = Math.max(1, Number(restSeconds) || 60)
-  const safeTotal = Math.max(1, Number(totalSets) || 1)
-
-  const [currentSet, setCurrentSet] = useState(1)
-  const [phase, setPhase] = useState('work')     // 'work' | 'rest' | 'done'
-  const [secondsLeft, setSecondsLeft] = useState(safeRest)
+export default function ExerciseTimer({ block, onClose }) {
+  const schedule = useMemo(() => buildSchedule(block), [block])
+  const totalSets = block?.sets || 1
+  const [index, setIndex] = useState(0)
+  const [secondsLeft, setSecondsLeft] = useState(schedule[0]?.seconds || 0)
   const [running, setRunning] = useState(false)
   const tickRef = useRef(null)
 
-  // Countdown tick
+  const step = schedule[index] || schedule[schedule.length - 1]
+  const isUserPaced = step.kind === 'work' && step.userPaced
+  const isDone = step.kind === 'done'
+  const isResting = step.kind === 'longRest' || step.kind === 'innerRest'
+  const isPrep = step.kind === 'prep'
+  const isWork = step.kind === 'work' && !step.userPaced
+
+  // Tick the countdown
   useEffect(() => {
-    if (phase !== 'rest' || !running) return
+    if (!running || isUserPaced || isDone) return
     tickRef.current = setInterval(() => {
       setSecondsLeft((s) => Math.max(0, s - 1))
     }, 1000)
     return () => clearInterval(tickRef.current)
-  }, [phase, running])
+  }, [running, isUserPaced, isDone])
 
-  // Rest completion handler
+  // Auto-advance when a timed step hits zero
   useEffect(() => {
-    if (phase !== 'rest' || secondsLeft > 0) return
+    if (!running || isUserPaced || isDone) return
+    if (secondsLeft > 0) return
     clearInterval(tickRef.current)
-    beep(); buzz()
-    if (currentSet < safeTotal) {
-      setCurrentSet((s) => s + 1)
-      setPhase('work')
-      setSecondsLeft(safeRest)
-      setRunning(false)
-    } else {
-      setPhase('done')
-      setRunning(false)
-    }
-  }, [secondsLeft, phase, currentSet, safeTotal, safeRest])
+    const nextIdx = Math.min(index + 1, schedule.length - 1)
+    const next = schedule[nextIdx]
+    cueFor(next.kind)
+    setIndex(nextIdx)
+    setSecondsLeft(next.seconds || 0)
+    if (next.kind === 'done') setRunning(false)
+  }, [secondsLeft, running, isUserPaced, isDone, index, schedule])
 
   function togglePlay() {
-    if (phase === 'done') return
-    if (phase === 'work') {
-      // User has finished their reps — start the rest countdown.
-      setPhase('rest')
-      setSecondsLeft(safeRest)
-      setRunning(true)
+    if (isDone) return
+    if (isUserPaced) {
+      // "Done with set" — advance to whatever comes next
+      const nextIdx = Math.min(index + 1, schedule.length - 1)
+      const next = schedule[nextIdx]
+      cueFor(next.kind)
+      setIndex(nextIdx)
+      setSecondsLeft(next.seconds || 0)
+      setRunning(next.kind !== 'done')
       return
     }
-    // phase === 'rest' — toggle pause/resume
     setRunning((r) => !r)
   }
 
   function nextSet() {
-    if (currentSet >= safeTotal) {
-      setPhase('done')
+    // Find the next set's prep step
+    const targetSet = Math.min(totalSets, step.set + 1)
+    if (targetSet === step.set) {
+      // Already on last set — jump to done
+      const lastIdx = schedule.length - 1
+      setIndex(lastIdx)
+      setSecondsLeft(0)
       setRunning(false)
       return
     }
-    setCurrentSet((s) => s + 1)
-    setPhase('work')
-    setSecondsLeft(safeRest)
+    const target = indexOfFirstPrepFor(schedule, targetSet)
+    setIndex(target)
+    setSecondsLeft(schedule[target].seconds || 0)
     setRunning(false)
   }
 
   function prevSet() {
-    if (currentSet <= 1 && phase === 'work') return
-    if (phase !== 'work') {
-      // Going back from rest just rewinds to the same set's work phase.
-      setPhase('work')
-      setSecondsLeft(safeRest)
+    // If we're past the current set's prep, jump back to that prep first.
+    // Otherwise step to the previous set's prep.
+    const currentPrep = indexOfFirstPrepFor(schedule, step.set)
+    if (index > currentPrep) {
+      setIndex(currentPrep)
+      setSecondsLeft(schedule[currentPrep].seconds || 0)
       setRunning(false)
       return
     }
-    setCurrentSet((s) => Math.max(1, s - 1))
-    setPhase('work')
-    setSecondsLeft(safeRest)
+    if (step.set <= 1) return
+    const target = indexOfFirstPrepFor(schedule, step.set - 1)
+    setIndex(target)
+    setSecondsLeft(schedule[target].seconds || 0)
     setRunning(false)
   }
 
   function reset() {
     clearInterval(tickRef.current)
-    setCurrentSet(1)
-    setPhase('work')
-    setSecondsLeft(safeRest)
+    setIndex(0)
+    setSecondsLeft(schedule[0]?.seconds || 0)
     setRunning(false)
   }
 
+  // ── UI bits ────────────────────────────────────────────────────────────
   const phaseLabel =
-    phase === 'done'              ? 'COMPLETE' :
-    phase === 'rest' && running   ? 'RESTING'  :
-    phase === 'rest' && !running  ? 'PAUSED'   :
-                                    'READY'
+    isDone                 ? 'COMPLETE' :
+    isPrep                 ? 'GET READY' :
+    isUserPaced && running ? 'WORK' :
+    isUserPaced            ? 'READY' :
+    isWork && running      ? 'WORK' :
+    isWork                 ? 'READY' :
+    step.kind === 'longRest' ? 'REST BETWEEN SETS' :
+    step.kind === 'innerRest' ? 'REST' :
+                                'READY'
+
+  // Color the countdown by phase
+  const digitsColor =
+    isDone                 ? 'var(--tier-light)' :
+    isWork && running      ? 'var(--tier-light)' :
+    isResting && running   ? '#fbd470' :              // gold during rest
+    isPrep && running      ? '#fda4af' :              // coral during prep
+                              'rgba(255,255,255,0.92)'
+
   const phaseColor =
-    phase === 'done' ? 'var(--tier-light)' :
-    phase === 'rest' ? 'var(--tier-light)' :
-                       'rgba(255,255,255,0.55)'
+    isDone                 ? 'var(--tier-light)' :
+    isWork                 ? 'var(--tier-light)' :
+    isResting              ? '#fbd470' :
+    isPrep                 ? '#fda4af' :
+                              'rgba(255,255,255,0.55)'
 
-  const playIcon = phase === 'rest' && running
-    ? <Pause size={26} strokeWidth={2.4} fill="currentColor" />
-    : phase === 'done'
-      ? <Check size={26} strokeWidth={2.6} />
-      : <Play size={26} strokeWidth={2.4} fill="currentColor" />
+  // Subtitle line: "Set 2 / 4" plus optional "Rep 3 / 6" if mid-set
+  const repMeta = step.repsPerSet && step.repsPerSet > 1 && (isWork || step.kind === 'innerRest')
+    ? <> · Rep <span className="text-text font-extrabold">{step.rep}</span><span className="opacity-60">/{step.repsPerSet}</span></>
+    : null
+
+  const playIcon = isDone
+    ? <Check size={28} strokeWidth={2.6} />
+    : (running && !isUserPaced)
+      ? <Pause size={26} strokeWidth={2.4} fill="currentColor" />
+      : <Play  size={26} strokeWidth={2.4} fill="currentColor" />
   const playAriaLabel =
-    phase === 'done' ? 'Done' :
-    phase === 'rest' && running ? 'Pause' :
-    phase === 'rest' && !running ? 'Resume' :
-                                   'Start rest'
+    isDone ? 'Done' :
+    isUserPaced ? 'Done with set' :
+    running ? 'Pause' :
+    'Play'
 
-  const canPrev = currentSet > 1 || phase !== 'work'
-  const canNext = !(currentSet >= safeTotal && phase === 'done')
+  const canPrev = index > 0 && !isDone
+  const canNext = step.set < totalSets || !isDone
+
+  // For user-paced work, show "—" or the long-rest preview rather than 0
+  const displaySeconds = isUserPaced ? null : secondsLeft
 
   return (
     <div className="mt-3 px-4 py-4 rounded-2xl
@@ -180,13 +295,14 @@ export default function ExerciseTimer({ totalSets, restSeconds, onClose }) {
           {phaseLabel}
         </p>
         <p className="text-[11px] font-bold text-muted tabular-nums">
-          Set <span className="text-text font-extrabold">{currentSet}</span>
-          <span className="opacity-60"> / {safeTotal}</span>
+          Set <span className="text-text font-extrabold">{step.set}</span>
+          <span className="opacity-60">/{totalSets}</span>
+          {repMeta}
         </p>
       </div>
 
-      <div className="flex items-center justify-center py-2 mb-3">
-        {phase === 'done' ? (
+      <div className="flex items-center justify-center py-2 mb-3 min-h-[72px]">
+        {isDone ? (
           <div className="flex items-center gap-2">
             <Check size={28} strokeWidth={2.8} style={{ color: 'var(--tier-light)' }} />
             <p className="text-[28px] font-extrabold -tracking-[0.025em]"
@@ -194,15 +310,15 @@ export default function ExerciseTimer({ totalSets, restSeconds, onClose }) {
               All sets done
             </p>
           </div>
+        ) : isUserPaced ? (
+          <p className="text-[18px] font-extrabold text-muted tracking-[0.04em]">
+            {running ? 'Tap when finished' : 'Tap Play to begin'}
+          </p>
         ) : (
           <p className="text-[56px] sm:text-[60px] font-extrabold leading-none
                         -tracking-[0.04em] tabular-nums"
-             style={{
-               color: phase === 'rest' && running
-                 ? 'var(--tier-light)'
-                 : 'rgba(255,255,255,0.92)',
-             }}>
-            {fmt(secondsLeft)}
+             style={{ color: digitsColor }}>
+            {fmt(displaySeconds)}
           </p>
         )}
       </div>
@@ -224,15 +340,15 @@ export default function ExerciseTimer({ totalSets, restSeconds, onClose }) {
         <motion.button
           type="button"
           onClick={togglePlay}
-          disabled={phase === 'done'}
-          whileTap={phase !== 'done' ? { scale: 0.94 } : undefined}
+          disabled={isDone}
+          whileTap={!isDone ? { scale: 0.94 } : undefined}
           aria-label={playAriaLabel}
           className="w-[72px] h-[72px] rounded-full flex items-center justify-center
                      shadow-[0_4px_16px_color-mix(in_srgb,var(--tier-c)_28%,transparent)]
                      disabled:opacity-60"
           style={{
-            background: phase === 'done' ? 'rgba(255,255,255,0.10)' : 'var(--tier-c)',
-            color: phase === 'done' ? 'var(--tier-light)' : 'var(--bg, #06120f)',
+            background: isDone ? 'rgba(255,255,255,0.10)' : 'var(--tier-c)',
+            color: isDone ? 'var(--tier-light)' : 'var(--bg, #06120f)',
           }}
         >
           {playIcon}
