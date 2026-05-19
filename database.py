@@ -114,6 +114,12 @@ def init_db() -> None:
             # ── Users migrations ───────────────────────────────────────────
             _add_column_if_missing(cur, "sessions", "user_id",
                 "INT REFERENCES users(id) ON DELETE CASCADE")
+            # Full intake payload stored alongside the basic answer fields so
+            # the History tab can re-derive the diagnosis (bucket list +
+            # severity + plan) at view time. Optional — old rows have NULL
+            # and the API falls back to the basic fields.
+            _add_column_if_missing(cur, "sessions", "intake_json",
+                "JSONB NULL")
             _add_column_if_missing(cur, "users", "failed_login_attempts",
                 "INTEGER DEFAULT 0")
             _add_column_if_missing(cur, "users", "locked_until",
@@ -280,6 +286,17 @@ def init_db() -> None:
                 "training_logs",
                 "climbs",
                 "JSONB NOT NULL DEFAULT '{}'::jsonb",
+            )
+
+            # Training-days picker: lowercase weekday names the climber can
+            # train on (e.g. ['monday','wednesday','saturday']). Replaces the
+            # bare days_per_week count for plan generation — the array length
+            # IS the days/week, and each session lands on the i-th day.
+            _add_column_if_missing(
+                cur,
+                "athlete_profiles",
+                "training_days",
+                "TEXT[]",
             )
 
             # Seed-climber progression side table — stores per-seed nudges
@@ -858,6 +875,7 @@ def save_session(row: Dict[str, Any]) -> int:
     pain_type = row.get("pain_type")
     onset = row.get("onset")
     user_id = row.get("user_id")
+    intake_json = row.get("intake_json")  # optional full intake payload
 
     if not injury_area:
         raise ValueError("row['injury_area'] is required")
@@ -866,11 +884,12 @@ def save_session(row: Dict[str, Any]) -> int:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                INSERT INTO sessions (user_id, injury_area, pain_level, pain_type, onset)
-                VALUES (%s, %s, %s, %s, %s)
+                INSERT INTO sessions (user_id, injury_area, pain_level, pain_type, onset, intake_json)
+                VALUES (%s, %s, %s, %s, %s, %s)
                 RETURNING id;
                 """,
-                (user_id, injury_area, pain_level, pain_type, onset),
+                (user_id, injury_area, pain_level, pain_type, onset,
+                 json.dumps(intake_json) if intake_json else None),
             )
             new_id = cur.fetchone()[0]
         conn.commit()
@@ -879,12 +898,12 @@ def save_session(row: Dict[str, Any]) -> int:
 
 
 def get_session(session_id: int) -> Optional[Tuple[Any, ...]]:
-    """Returns (id, injury_area, pain_level, pain_type, onset, created_at, user_id) or None."""
+    """Returns (id, injury_area, pain_level, pain_type, onset, created_at, user_id, intake_json) or None."""
     with _connect() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT id, injury_area, pain_level, pain_type, onset, created_at, user_id
+                SELECT id, injury_area, pain_level, pain_type, onset, created_at, user_id, intake_json
                 FROM sessions
                 WHERE id = %s;
                 """,
@@ -929,13 +948,20 @@ def save_profile(user_id: int, data: Dict[str, Any]) -> None:
     """Upsert the athlete profile for a user."""
     with _connect() as conn:
         with conn.cursor() as cur:
+            # Derive days_per_week from training_days when present so the
+            # two fields stay in sync (picker is the source of truth).
+            training_days = data.get("training_days") or []
+            days_per_week = (
+                len(training_days) if training_days
+                else data.get("days_per_week")
+            )
             cur.execute(
                 """
                 INSERT INTO athlete_profiles
                     (user_id, experience_level, years_climbing, primary_discipline,
                      max_grade_boulder, max_grade_route, days_per_week, session_length_min,
-                     equipment, weaknesses, primary_goal, goal_grade, updated_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                     equipment, weaknesses, primary_goal, goal_grade, training_days, updated_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
                 ON CONFLICT (user_id) DO UPDATE SET
                     experience_level   = EXCLUDED.experience_level,
                     years_climbing     = EXCLUDED.years_climbing,
@@ -948,6 +974,7 @@ def save_profile(user_id: int, data: Dict[str, Any]) -> None:
                     weaknesses         = EXCLUDED.weaknesses,
                     primary_goal       = EXCLUDED.primary_goal,
                     goal_grade         = EXCLUDED.goal_grade,
+                    training_days      = EXCLUDED.training_days,
                     updated_at         = NOW();
                 """,
                 (
@@ -957,12 +984,13 @@ def save_profile(user_id: int, data: Dict[str, Any]) -> None:
                     data.get("primary_discipline"),
                     data.get("max_grade_boulder"),
                     data.get("max_grade_route"),
-                    data.get("days_per_week"),
+                    days_per_week,
                     data.get("session_length_min"),
                     data.get("equipment") or [],
                     data.get("weaknesses") or [],
                     data.get("primary_goal"),
                     data.get("goal_grade"),
+                    training_days or None,
                 ),
             )
         conn.commit()
@@ -976,7 +1004,7 @@ def get_profile(user_id: int) -> Optional[Dict[str, Any]]:
                 """
                 SELECT experience_level, years_climbing, primary_discipline,
                        max_grade_boulder, max_grade_route, days_per_week, session_length_min,
-                       equipment, weaknesses, primary_goal, goal_grade, updated_at
+                       equipment, weaknesses, primary_goal, goal_grade, training_days, updated_at
                 FROM athlete_profiles WHERE user_id = %s;
                 """,
                 (int(user_id),),
@@ -996,7 +1024,8 @@ def get_profile(user_id: int) -> Optional[Dict[str, Any]]:
         "weaknesses":         list(row[8]) if row[8] else [],
         "primary_goal":       row[9],
         "goal_grade":         row[10],
-        "updated_at":         str(row[11]) if row[11] else None,
+        "training_days":      list(row[11]) if row[11] else [],
+        "updated_at":         str(row[12]) if row[12] else None,
     }
 
 
@@ -1069,16 +1098,76 @@ def get_active_plan(user_id: int) -> Optional[Dict[str, Any]]:
 # ---------------------------------------------------------------------------
 
 
-def log_training(user_id: int, data: Dict[str, Any]) -> int:
-    """Insert a training log entry and return its id.
+def _merge_climbs(existing: Dict[str, Any], incoming: Dict[str, Any]) -> Dict[str, Any]:
+    """Sum counter values per (discipline, grade) across two climbs dicts.
+    Each climbs dict has shape: { boulder|route: { '<grade>': { s, f, p } } }.
 
-    If `data['climbs']` is a non-empty dict, it's persisted to the JSONB
-    column and an auto-generated human-readable summary overrides any
-    `grades_sent` value the caller passed (so the two stay in sync).
+    Same-day re-logs ADD to the day's totals — never replace — so the
+    grade pyramid keeps accumulating as the user logs multiple sessions.
+    The f <= s invariant is preserved because both counters increase
+    together.
+    """
+    out: Dict[str, Dict[str, Dict[str, int]]] = {}
+    for discipline in ("boulder", "route"):
+        a = (existing or {}).get(discipline) or {}
+        b = (incoming or {}).get(discipline) or {}
+        grades_merged: Dict[str, Dict[str, int]] = {}
+        for grade in set(a.keys()) | set(b.keys()):
+            ac = a.get(grade) or {"s": 0, "f": 0, "p": 0}
+            bc = b.get(grade) or {"s": 0, "f": 0, "p": 0}
+            grades_merged[grade] = {
+                "s": int(ac.get("s", 0)) + int(bc.get("s", 0)),
+                "f": int(ac.get("f", 0)) + int(bc.get("f", 0)),
+                "p": int(ac.get("p", 0)) + int(bc.get("p", 0)),
+            }
+        if grades_merged:
+            out[discipline] = grades_merged
+    return out
+
+
+def log_training(user_id: int, data: Dict[str, Any]) -> int:
+    """Insert or merge a training log entry; return its id.
+
+    When a row for (user_id, date) already exists, climb counters are
+    ADDED to the existing row (cumulative day totals), duration is summed,
+    intensity uses max, and other fields take the latest value. Otherwise
+    a new row is inserted.
     """
     from src.climb_grades import format_climbs_summary  # local import to avoid circular
 
-    climbs = data.get("climbs") or {}
+    incoming_climbs = data.get("climbs") or {}
+    session_date = data.get("date")
+    incoming_duration = data.get("duration_min")
+    incoming_intensity = data.get("intensity")
+
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            # Pull existing row's climbs + duration + intensity so we can
+            # merge counters rather than overwrite the day's totals.
+            cur.execute(
+                "SELECT climbs, duration_min, intensity FROM training_logs WHERE user_id = %s AND date = %s;",
+                (int(user_id), session_date),
+            )
+            existing = cur.fetchone()
+
+    if existing:
+        existing_climbs    = existing[0] or {}
+        existing_duration  = existing[1] or 0
+        existing_intensity = existing[2] or 0
+        if isinstance(existing_climbs, str):
+            existing_climbs = json.loads(existing_climbs)
+        climbs = _merge_climbs(existing_climbs, incoming_climbs)
+        # Duration: sum across same-day logs (more time climbed = more time).
+        merged_duration = (existing_duration or 0) + (incoming_duration or 0) if incoming_duration is not None else existing_duration
+        # Intensity: take max (peak intensity of the day).
+        merged_intensity = max(existing_intensity or 0, incoming_intensity or 0) if incoming_intensity is not None else existing_intensity
+    else:
+        climbs = incoming_climbs
+        merged_duration = incoming_duration
+        merged_intensity = incoming_intensity
+
+    # Regenerate grades_sent from the merged climb totals so the human-
+    # readable summary always matches the persisted JSONB.
     grades_sent = data.get("grades_sent") or ""
     if climbs:
         grades_sent = format_climbs_summary(climbs)
@@ -1103,10 +1192,10 @@ def log_training(user_id: int, data: Dict[str, Any]) -> int:
                 """,
                 (
                     int(user_id),
-                    data.get("date"),
+                    session_date,
                     data.get("session_type"),
-                    data.get("duration_min"),
-                    data.get("intensity"),
+                    merged_duration,
+                    merged_intensity,
                     grades_sent,
                     data.get("notes"),
                     json.dumps(climbs),
