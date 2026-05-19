@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router-dom'
+import { ChevronRight } from 'lucide-react'
 import { TIER_NAMES, nextTier } from '../lib/tier'
 
 /**
@@ -10,6 +12,7 @@ import { TIER_NAMES, nextTier } from '../lib/tier'
  *     // null at v10 (apex) — show "Apex tier" message instead
  */
 export default function ProgressTierHero({ tierId, metaLine, promotionProgress }) {
+  const navigate = useNavigate()
   const nextId = nextTier(tierId)
   const tierName = TIER_NAMES[tierId]
   const nextName = nextId ? TIER_NAMES[nextId] : null
@@ -20,15 +23,23 @@ export default function ProgressTierHero({ tierId, metaLine, promotionProgress }
   const remaining = promotionProgress ? Math.max(0, promotionProgress.goal - promotionProgress.current) : 0
 
   return (
-    <div className="relative rounded-2xl p-4 overflow-hidden"
-         style={{
-           background: 'linear-gradient(135deg, color-mix(in srgb, var(--tier-c) 22%, transparent), color-mix(in srgb, var(--tier-c) 6%, transparent))',
-           border: '0.5px solid color-mix(in srgb, var(--tier-c) 45%, transparent)',
-           boxShadow: 'inset 0 0 32px color-mix(in srgb, var(--tier-c) 18%, transparent)',
-         }}>
-      <div className="text-[11px] font-bold uppercase tracking-[0.08em]"
-           style={{ color: 'var(--tier-light)' }}>
-        Current tier
+    <button
+      type="button"
+      onClick={() => navigate('/progress/awards')}
+      aria-label="View all tiers and achievements"
+      className="relative rounded-2xl p-4 overflow-hidden w-full text-left
+                 transition-transform hover:scale-[1.005] active:scale-[0.995]"
+      style={{
+        background: 'linear-gradient(135deg, color-mix(in srgb, var(--tier-c) 22%, transparent), color-mix(in srgb, var(--tier-c) 6%, transparent))',
+        border: '0.5px solid color-mix(in srgb, var(--tier-c) 45%, transparent)',
+        boxShadow: 'inset 0 0 32px color-mix(in srgb, var(--tier-c) 18%, transparent)',
+      }}>
+      <div className="flex items-center justify-between mb-0">
+        <div className="text-[11px] font-bold uppercase tracking-[0.08em]"
+             style={{ color: 'var(--tier-light)' }}>
+          Current tier
+        </div>
+        <ChevronRight size={14} className="text-muted/60" />
       </div>
       <div className="text-2xl font-bold text-text -tracking-[0.025em] mt-1 mb-0.5"
            style={{ textShadow: '0 0 14px var(--tier-glow)' }}>
@@ -63,6 +74,6 @@ export default function ProgressTierHero({ tierId, metaLine, promotionProgress }
           </div>
         </>
       )}
-    </div>
+    </button>
   )
 }

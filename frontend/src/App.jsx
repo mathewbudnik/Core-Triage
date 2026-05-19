@@ -30,6 +30,7 @@ const TriageTab            = lazy(() => import('./components/TriageTab'))
 const RehabTab             = lazy(() => import('./components/RehabTab'))
 const TrainTab             = lazy(() => import('./components/TrainTab'))
 const ProgressTab          = lazy(() => import('./components/ProgressTab'))
+const AwardsPage           = lazy(() => import('./components/AwardsPage'))
 const ChatTab              = lazy(() => import('./components/ChatTab'))
 const HistoryTab           = lazy(() => import('./components/HistoryTab'))
 const AboutTab             = lazy(() => import('./components/AboutTab'))
@@ -792,7 +793,8 @@ export default function App() {
               <Route path="/rehab"         element={<Navigate to="/recover" replace />} />
               <Route path="/rehab/:region" element={<RehabRegionRedirect />} />
               <Route path="/train"         element={<TrainTab user={user} dbReady={dbReady} onLoginClick={() => setShowAuth(true)} />} />
-              <Route path="/progress"      element={<ProgressTab user={user} onLoginClick={() => setShowAuth(true)} />} />
+              <Route path="/progress"        element={<ProgressTab user={user} onLoginClick={() => setShowAuth(true)} />} />
+              <Route path="/progress/awards" element={<AwardsPage user={user} />} />
               <Route path="/chat"          element={<ChatTab k={k} user={user} onLoginClick={() => setShowAuth(true)} />} />
               <Route path="/history/*"     element={<HistoryTab dbReady={dbReady} user={user} onLoginClick={() => setShowAuth(true)} />} />
               <Route path="/about"         element={<AboutTab />} />

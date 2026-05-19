@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router-dom'
+import { ChevronRight } from 'lucide-react'
 import { useAwards } from '../hooks/useAwards'
 import { AWARD_META } from '../lib/awardCatalog'
 import AwardMedal from './AwardMedal'
@@ -5,19 +7,31 @@ import AwardMedal from './AwardMedal'
 /**
  * Horizontal-scroll awards strip on the Progress page.
  * Earned medals come first (newest first), then up to N locked.
+ * Header includes a "View all" link to the full /progress/awards page.
  *
  * Props:
  *   user:    current user (passed to useAwards)
  *   maxLocked: number  — cap on locked-tier shown (default 4)
  */
 export default function AwardsStrip({ user, maxLocked = 4 }) {
+  const navigate = useNavigate()
   const { loading, earned, locked } = useAwards(user)
 
   return (
     <div className="rounded-2xl p-4"
          style={{ background: 'rgba(0,0,0,0.35)', border: '0.5px solid rgba(255,255,255,0.1)' }}>
-      <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted mb-3">
-        Awards
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
+          Awards
+        </div>
+        <button
+          type="button"
+          onClick={() => navigate('/progress/awards')}
+          className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-muted hover:text-text transition-colors"
+        >
+          View all
+          <ChevronRight size={11} />
+        </button>
       </div>
       {loading ? (
         <div className="text-xs text-muted">Loading…</div>
@@ -42,15 +56,18 @@ export default function AwardsStrip({ user, maxLocked = 4 }) {
 }
 
 function AwardTile({ meta, locked = false, sub }) {
+  const isMystery = !!meta.mystery && locked
+  const displayName = isMystery ? '???' : meta.name
+  const displaySub  = isMystery ? 'Mystery' : sub
   return (
     <div className="shrink-0 w-24 text-center">
       <AwardMedal size="md"
         light={meta.light} mid={meta.c} deep={meta.deep}
-        icon={meta.icon} label={meta.label} locked={locked} />
+        icon={meta.icon} label={meta.label} locked={locked} mystery={isMystery} />
       <div className={`text-[11px] font-semibold mt-2 -tracking-[0.01em] ${locked ? 'text-muted' : 'text-text'}`}>
-        {meta.name}
+        {displayName}
       </div>
-      <div className="text-[10px] text-muted/50 mt-0.5">{sub}</div>
+      <div className="text-[10px] text-muted/50 mt-0.5">{displaySub}</div>
     </div>
   )
 }

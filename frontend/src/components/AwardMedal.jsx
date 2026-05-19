@@ -1,4 +1,4 @@
-import { Lock } from 'lucide-react'
+import { Lock, HelpCircle } from 'lucide-react'
 
 /**
  * Reusable medal. Three size variants:
@@ -14,13 +14,17 @@ import { Lock } from 'lucide-react'
  *   icon:     lucide component (e.g., Mountain)
  *   label:    string | null    — small label below the icon (e.g., 'V7', '10d')
  *   locked:   boolean          — render the locked variant
+ *   mystery:  boolean          — when locked, render as "???" (Xbox/Steam style)
  */
-export default function AwardMedal({ size = 'md', light, mid, deep, icon: Icon, label, locked = false }) {
+export default function AwardMedal({ size = 'md', light, mid, deep, icon: Icon, label, locked = false, mystery = false }) {
   const px = size === 'sm' ? 40 : size === 'lg' ? 168 : 84
   const iconPx = size === 'sm' ? 18 : size === 'lg' ? 36 : 22
   const labelFs = size === 'sm' ? 11 : size === 'lg' ? 28 : 14
 
   if (locked) {
+    // Mystery: hide grade/streak hint behind a "???" mark + question icon.
+    // Plain locked: padlock + dashed ring (the original).
+    const ShownIcon = mystery ? HelpCircle : Lock
     return (
       <div className="relative rounded-full flex items-center justify-center"
            style={{
@@ -29,7 +33,12 @@ export default function AwardMedal({ size = 'md', light, mid, deep, icon: Icon, 
              border: '0.5px dashed rgba(255,255,255,0.2)',
              color: 'rgba(255,255,255,0.3)',
            }}>
-        <Lock size={iconPx} />
+        <div className="flex flex-col items-center">
+          <ShownIcon size={iconPx} />
+          {mystery && size !== 'sm' && (
+            <div className="font-extrabold mt-0.5" style={{ fontSize: labelFs * 0.75 }}>???</div>
+          )}
+        </div>
       </div>
     )
   }
