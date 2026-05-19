@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Check, Loader2, ArrowRight, Sparkles } from 'lucide-react'
-import { saveProfile } from '../api'
+import { saveProfile, getTrainingLogs } from '../api'
+import { deriveStyleProfile } from '../lib/styleProfile'
+import { getStyleLabel } from '../lib/styleColors'
 
 // ── Static option data ─────────────────────────────────────────────────────
 const EXPERIENCE_LEVELS = [
@@ -257,6 +259,32 @@ export default function ProfileSetup({ onComplete }) {
   const [step, setStep] = useState(0)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+  const [logs, setLogs] = useState(null)   // null = not loaded; [] = loaded empty
+
+  useEffect(() => {
+    let cancelled = false
+    getTrainingLogs(60)
+      .then((data) => { if (!cancelled) setLogs(data || []) })
+      .catch(() => { if (!cancelled) setLogs([]) })
+    return () => { cancelled = true }
+  }, [])
+
+  const styleProfile = useMemo(
+    () => logs ? deriveStyleProfile(logs) : null,
+    [logs],
+  )
+
+  useEffect(() => {
+    if (!styleProfile || styleProfile.confidence === 'low') return
+    if (!styleProfile.weakest) return
+    const map = { power: 'power', dynamic: 'power', technical: 'technique', endurance: 'endurance' }
+    const w = map[styleProfile.weakest]
+    if (!w) return
+    setForm((f) =>
+      f.weaknesses.includes(w) ? f : { ...f, weaknesses: [...f.weaknesses, w] }
+    )
+  }, [styleProfile])
+
   const [form, setForm] = useState({
     experience_level: '',
     primary_discipline: '',
@@ -403,20 +431,50 @@ export default function ProfileSetup({ onComplete }) {
           </div>
         </>
       )
-      case 7: return (
-        <>
-          <StepHeader stepIndex={step} totalSteps={TOTAL_STEPS}
-                      title="What do you want to improve?"
-                      subtitle="Optional. Sessions will lean into these areas." />
-          <div className="flex flex-wrap gap-2">
-            {WEAKNESSES.map((w) => (
-              <MultiPill key={w.value} label={w.label}
-                         selected={form.weaknesses.includes(w.value)}
-                         onClick={() => toggleList('weaknesses', w.value)} />
-            ))}
-          </div>
-        </>
-      )
+      case 7: {
+        const conf = styleProfile?.confidence
+        const weakLabel = getStyleLabel(styleProfile?.weakest)
+        const domLabel  = getStyleLabel(styleProfile?.dominant)
+        return (
+          <>
+            <StepHeader stepIndex={step} totalSteps={TOTAL_STEPS}
+                        title="What do you want to improve?"
+                        subtitle="Optional. Sessions will lean into these areas." />
+
+            {conf === 'medium' && weakLabel && (
+              <div className="mb-4 px-3.5 py-3 rounded-2xl
+                              bg-[color:color-mix(in_srgb,var(--tier-c)_8%,transparent)]
+                              border-[0.5px] border-[color:color-mix(in_srgb,var(--tier-c)_22%,transparent)]">
+                <p className="text-[11.5px] font-semibold text-text/85 leading-snug">
+                  Based on <b className="tabular-nums">{styleProfile.total}</b> tagged climbs, your
+                  weakest style looks like <b style={{ color: 'var(--tier-light)' }}>{weakLabel}</b>.
+                  We've pre-checked it — adjust if you disagree.
+                </p>
+              </div>
+            )}
+
+            {conf === 'high' && weakLabel && domLabel && (
+              <div className="mb-4 px-3.5 py-3 rounded-2xl
+                              bg-[color:color-mix(in_srgb,var(--tier-c)_8%,transparent)]
+                              border-[0.5px] border-[color:color-mix(in_srgb,var(--tier-c)_22%,transparent)]">
+                <p className="text-[11.5px] font-semibold text-text/85 leading-snug mb-2">
+                  From <b className="tabular-nums">{styleProfile.total}</b> tagged climbs:
+                  <b style={{ color: 'var(--tier-light)' }}> {domLabel}</b>-heavy,
+                  <b style={{ color: 'var(--tier-light)' }}> {weakLabel}</b> is your gap.
+                </p>
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              {WEAKNESSES.map((w) => (
+                <MultiPill key={w.value} label={w.label}
+                           selected={form.weaknesses.includes(w.value)}
+                           onClick={() => toggleList('weaknesses', w.value)} />
+              ))}
+            </div>
+          </>
+        )
+      }
       case 8: return (
         <>
           <StepHeader stepIndex={step} totalSteps={TOTAL_STEPS}
