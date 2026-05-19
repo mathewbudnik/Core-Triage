@@ -33,8 +33,9 @@ export const TIER_NAMES = {
 // distinct. Diamond breaks strict alternation at v10 — it's the
 // universally "elite" gem and earns the apex slot.
 export const TIER_TOKENS = {
-  // hot — bronze (bright warm bronze)
-  v0:  { light: '#e8a87c', c: '#cd8843', deep: '#5a3815' },
+  // hot — bronze, but rendered as polished copper (more red-orange-warm
+  // than a yellow-brown bronze; reads like a freshly minted penny)
+  v0:  { light: '#f0a577', c: '#d97f4c', deep: '#7a3f1f' },
   // cold — silver (bright polished steel)
   v1:  { light: '#eef1f5', c: '#d6dde6', deep: '#4a5260' },
   // hot — carnelian (vivid rust-red)
