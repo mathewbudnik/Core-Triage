@@ -8,15 +8,16 @@
 
 export const V_TIERS = ['v0','v1','v2','v3','v4','v5','v6','v7','v8','v9','v10']
 
-// Duolingo-style metal/gem progression. Common metals at the base
-// (Bronze, Silver, Copper) escalate into precious gemstones (Sapphire,
-// Ruby, Emerald, Amethyst) and cap with Diamond at the apex.
-// Each tier gets a distinct hue family — no two adjacent tiers share a
-// color zone.
+// Metals at the base, gemstones rising to Diamond at the apex. Each
+// name picks a real element/gem; the palette below uses jewel-saturated
+// hex values so the tier color feels like the real stone (not a pastel
+// approximation). Carnelian sits in the v2 slot (semi-precious agate)
+// in place of Copper — both warm, common-tier "stepping stones" before
+// the precious gemstones begin.
 export const TIER_NAMES = {
   v0:  'Bronze',
   v1:  'Silver',
-  v2:  'Copper',
+  v2:  'Carnelian',
   v3:  'Aquamarine',
   v4:  'Rose Gold',
   v5:  'Sapphire',
@@ -27,33 +28,33 @@ export const TIER_NAMES = {
   v10: 'Diamond',
 }
 
-// Bright pastel palette. Adjacent grades alternate hot/cold so the
-// neighbors are always visually distinct. Diamond breaks strict
-// alternation at v10 — it's the universally "elite" gem and earns the
-// apex slot regardless of temperature.
+// Deep jewel-tone palette — saturated hexes matched to the real stone.
+// Adjacent grades alternate hot/cold so neighbors are always visually
+// distinct. Diamond breaks strict alternation at v10 — it's the
+// universally "elite" gem and earns the apex slot.
 export const TIER_TOKENS = {
-  // hot — bronze (warm tan-orange)
-  v0:  { light: '#f5d4b8', c: '#e8a87c', deep: '#9a5b2a' },
-  // cold — silver (pale silver-blue)
-  v1:  { light: '#e7eef5', c: '#cdd9e6', deep: '#475b6f' },
-  // hot — copper (terra-cotta orange)
-  v2:  { light: '#f5c4a3', c: '#e89b6c', deep: '#9a4a1c' },
-  // cold — aquamarine (aqua-green)
-  v3:  { light: '#ccfbf1', c: '#99f6e4', deep: '#115e59' },
-  // hot — rose gold (pink-rose)
-  v4:  { light: '#fce7f3', c: '#fbcfe8', deep: '#9d174d' },
-  // cold — sapphire (bright blue)
-  v5:  { light: '#bfdbfe', c: '#93c5fd', deep: '#1e3a8a' },
-  // hot — ruby (red-pink)
-  v6:  { light: '#fecdd3', c: '#fb7185', deep: '#881337' },
-  // cold — emerald (bright green)
-  v7:  { light: '#a7f3d0', c: '#6ee7b7', deep: '#064e3b' },
-  // hot — coral (peach-orange)
-  v8:  { light: '#fed7aa', c: '#fdba74', deep: '#9a3412' },
-  // cold — amethyst (purple)
-  v9:  { light: '#ddd6fe', c: '#c4b5fd', deep: '#5b21b6' },
-  // apex — diamond (brilliant cyan-blue)
-  v10: { light: '#cffafe', c: '#67e8f9', deep: '#155e75' },
+  // hot — bronze (rich tan-orange)
+  v0:  { light: '#d9a370', c: '#b8763a', deep: '#5a3815' },
+  // cold — silver (cool polished steel)
+  v1:  { light: '#e5ebf2', c: '#c8d0d8', deep: '#4a5260' },
+  // hot — carnelian (rust-red agate)
+  v2:  { light: '#e68067', c: '#c84a31', deep: '#6e1f10' },
+  // cold — aquamarine (jewel aqua)
+  v3:  { light: '#5eead4', c: '#2dd4bf', deep: '#115e59' },
+  // hot — rose gold (rose pink)
+  v4:  { light: '#f0a4c5', c: '#e879ac', deep: '#831d4c' },
+  // cold — sapphire (deep royal blue)
+  v5:  { light: '#60a5fa', c: '#2563eb', deep: '#1e3a8a' },
+  // hot — ruby (true crimson)
+  v6:  { light: '#f43f5e', c: '#be123c', deep: '#4c0519' },
+  // cold — emerald (rich jewel green)
+  v7:  { light: '#34d399', c: '#059669', deep: '#064e3b' },
+  // hot — coral (vivid orange)
+  v8:  { light: '#fbab51', c: '#f97316', deep: '#7c2d12' },
+  // cold — amethyst (saturated purple)
+  v9:  { light: '#a78bfa', c: '#7c3aed', deep: '#4c1d95' },
+  // apex — diamond (brilliant ice blue)
+  v10: { light: '#67e8f9', c: '#0ea5e9', deep: '#075985' },
 }
 
 /** Map a V-grade string ('V0'..'V17') to a tier id. V10+ collapses to 'v10'. */
