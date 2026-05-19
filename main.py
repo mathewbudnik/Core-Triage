@@ -421,7 +421,11 @@ class ProfileRequest(BaseModel):
     primary_discipline: str
     max_grade_boulder: str = ""
     max_grade_route: str = ""
-    days_per_week: int
+    # training_days is the source of truth from the wizard; days_per_week is
+    # derived from len(training_days) in save_profile but the field is kept
+    # nullable so older clients that still send a plain int continue to work.
+    training_days: List[str] = []
+    days_per_week: Optional[int] = None
     session_length_min: int
     equipment: List[str] = []
     weaknesses: List[str] = []
@@ -1019,6 +1023,7 @@ def upsert_profile(request: Request, req: ProfileRequest, user: Dict = Depends(g
             "primary_discipline": req.primary_discipline,
             "max_grade_boulder": req.max_grade_boulder,
             "max_grade_route": req.max_grade_route,
+            "training_days": req.training_days,
             "days_per_week": req.days_per_week,
             "session_length_min": req.session_length_min,
             "equipment": req.equipment,
