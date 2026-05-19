@@ -8,32 +8,52 @@
 
 export const V_TIERS = ['v0','v1','v2','v3','v4','v5','v6','v7','v8','v9','v10']
 
+// Tier names are famous boulder problems at (or representative of) each
+// grade. Locations span Bishop, RMNP, Yosemite, Hueco, Flatirons — most
+// climbers will recognize at least the harder ones (Midnight Lightning,
+// The Mandala). Grades may be approximate for the top tier (v10 catches
+// V10+ across the system).
 export const TIER_NAMES = {
-  v0:  'Frost',
-  v1:  'Halo',
-  v2:  'Ember',
-  v3:  'Bramble',
-  v4:  'Reef',
-  v5:  'Cove',
-  v6:  'Atlas',
-  v7:  'Vault',
-  v8:  'Veil',
-  v9:  'Vivid',
-  v10: 'Phoenix',
+  v0:  "Plumber's Crack",     // Flatirons, CO — V0
+  v1:  'Bachar Cracker',      // Yosemite, CA — V1
+  v2:  'King Tut',            // Bishop, CA — V2
+  v3:  'Bowling Pin',         // RMNP, CO — V3
+  v4:  'Saigon',              // Hueco Tanks, TX — V4
+  v5:  'Iron Resolution',     // Bishop, CA — V5
+  v6:  'Slashface',           // Bishop, CA — V6
+  v7:  'Solarium',            // Bishop, CA — V7
+  v8:  'Midnight Lightning',  // Yosemite, CA — V8
+  v9:  'Footprints',          // Bishop, CA — V9
+  v10: 'The Mandala',         // Bishop, CA — V12 (catch-all for elite)
 }
 
+// Palette alternates hot/cold every step so adjacent grades read as
+// visually distinct. Bright, saturated hues — no two neighbors share a
+// hue family. Hot slots use yellow / orange / pink / gold / red; cold
+// slots use sky / emerald / violet / cyan / royal blue.
 export const TIER_TOKENS = {
-  v0:  { light: '#f5f4ec', c: '#e8e6dc', deep: '#6b685a' },
-  v1:  { light: '#fbd470', c: '#f7b03a', deep: '#7c5a14' },
-  v2:  { light: '#ffa97a', c: '#ff7a3d', deep: '#802811' },
-  v3:  { light: '#d9f06a', c: '#c5e637', deep: '#5a6810' },
-  v4:  { light: '#6bf0c9', c: '#2dd4a5', deep: '#105e48' },
-  v5:  { light: '#5eead4', c: '#14b8a6', deep: '#0a4f48' },
-  v6:  { light: '#7cc3ff', c: '#3aa1ff', deep: '#0d3d70' },
-  v7:  { light: '#9598fa', c: '#5b5ff2', deep: '#1d1f7a' },
-  v8:  { light: '#ad95ff', c: '#8466ff', deep: '#3a2580' },
-  v9:  { light: '#ea7df5', c: '#d946ef', deep: '#6c1a7f' },
-  v10: { light: '#fda4af', c: '#fb7185', deep: '#7f1d2c' },
+  // hot
+  v0:  { light: '#fde68a', c: '#fcd34d', deep: '#854d0e' },  // cream gold
+  // cold
+  v1:  { light: '#7dd3fc', c: '#38bdf8', deep: '#075985' },  // sky blue
+  // hot
+  v2:  { light: '#fdba74', c: '#fb923c', deep: '#9a3412' },  // orange
+  // cold
+  v3:  { light: '#34d399', c: '#10b981', deep: '#065f46' },  // emerald
+  // hot
+  v4:  { light: '#f9a8d4', c: '#ec4899', deep: '#9d174d' },  // hot pink
+  // cold
+  v5:  { light: '#a78bfa', c: '#8b5cf6', deep: '#4c1d95' },  // violet
+  // hot
+  v6:  { light: '#facc15', c: '#eab308', deep: '#713f12' },  // sunflower gold
+  // cold
+  v7:  { light: '#22d3ee', c: '#06b6d4', deep: '#155e75' },  // cyan
+  // hot
+  v8:  { light: '#fca5a5', c: '#ef4444', deep: '#7f1d1d' },  // bright red
+  // cold
+  v9:  { light: '#60a5fa', c: '#3b82f6', deep: '#1e40af' },  // royal blue
+  // hot
+  v10: { light: '#fb7185', c: '#be123c', deep: '#4c0519' },  // rose-red
 }
 
 /** Map a V-grade string ('V0'..'V17') to a tier id. V10+ collapses to 'v10'. */

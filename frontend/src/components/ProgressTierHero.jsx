@@ -37,7 +37,7 @@ export default function ProgressTierHero({ tierId, metaLine, promotionProgress }
       <div className="text-xs text-muted/80 mb-3">{metaLine}</div>
 
       {isApex ? (
-        <div className="text-xs text-muted/70 italic">Apex tier — V10+ Coral.</div>
+        <div className="text-xs text-muted/70 italic">Apex tier — V10+ {tierName}.</div>
       ) : (
         <>
           <div className="flex items-baseline justify-between text-[11px] mb-1.5">
