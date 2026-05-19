@@ -28,33 +28,33 @@ export const TIER_NAMES = {
   v10: 'Diamond',
 }
 
-// Deep jewel-tone palette — saturated hexes matched to the real stone.
+// Minecraft-block vivid palette — saturated AND luminous, not muted.
 // Adjacent grades alternate hot/cold so neighbors are always visually
 // distinct. Diamond breaks strict alternation at v10 — it's the
 // universally "elite" gem and earns the apex slot.
 export const TIER_TOKENS = {
-  // hot — bronze (rich tan-orange)
-  v0:  { light: '#d9a370', c: '#b8763a', deep: '#5a3815' },
-  // cold — silver (cool polished steel)
-  v1:  { light: '#e5ebf2', c: '#c8d0d8', deep: '#4a5260' },
-  // hot — carnelian (rust-red agate)
-  v2:  { light: '#e68067', c: '#c84a31', deep: '#6e1f10' },
+  // hot — bronze (bright warm bronze)
+  v0:  { light: '#e8a87c', c: '#cd8843', deep: '#5a3815' },
+  // cold — silver (bright polished steel)
+  v1:  { light: '#eef1f5', c: '#d6dde6', deep: '#4a5260' },
+  // hot — carnelian (vivid rust-red)
+  v2:  { light: '#f08d6f', c: '#e85a37', deep: '#6e1f10' },
   // cold — aquamarine (jewel aqua)
   v3:  { light: '#5eead4', c: '#2dd4bf', deep: '#115e59' },
-  // hot — rose gold (rose pink)
-  v4:  { light: '#f0a4c5', c: '#e879ac', deep: '#831d4c' },
-  // cold — sapphire (deep royal blue)
-  v5:  { light: '#60a5fa', c: '#2563eb', deep: '#1e3a8a' },
-  // hot — ruby (true crimson)
-  v6:  { light: '#f43f5e', c: '#be123c', deep: '#4c0519' },
-  // cold — emerald (rich jewel green)
-  v7:  { light: '#34d399', c: '#059669', deep: '#064e3b' },
+  // hot — rose gold (vivid pink-rose)
+  v4:  { light: '#f472b6', c: '#ec4899', deep: '#831d4c' },
+  // cold — sapphire (bright royal blue)
+  v5:  { light: '#60a5fa', c: '#3b82f6', deep: '#1e3a8a' },
+  // hot — ruby (bright crimson, redstone-like)
+  v6:  { light: '#f43f5e', c: '#e11d48', deep: '#4c0519' },
+  // cold — emerald (bright Minecraft-emerald green)
+  v7:  { light: '#4ade80', c: '#22c55e', deep: '#064e3b' },
   // hot — coral (vivid orange)
-  v8:  { light: '#fbab51', c: '#f97316', deep: '#7c2d12' },
-  // cold — amethyst (saturated purple)
-  v9:  { light: '#a78bfa', c: '#7c3aed', deep: '#4c1d95' },
-  // apex — diamond (brilliant ice blue)
-  v10: { light: '#67e8f9', c: '#0ea5e9', deep: '#075985' },
+  v8:  { light: '#fb923c', c: '#f97316', deep: '#7c2d12' },
+  // cold — amethyst (vivid purple, Minecraft-amethyst-like)
+  v9:  { light: '#a78bfa', c: '#8b5cf6', deep: '#4c1d95' },
+  // apex — diamond (bright cyan, Minecraft-diamond-like)
+  v10: { light: '#67e8f9', c: '#22d3ee', deep: '#0c4a6e' },
 }
 
 /** Map a V-grade string ('V0'..'V17') to a tier id. V10+ collapses to 'v10'. */
