@@ -444,7 +444,10 @@ class TrainingLogRequest(BaseModel):
     intensity: int
     grades_sent: str = ""
     notes: str = ""
-    climbs: Dict[str, Dict[str, Dict[str, int]]] = {}
+    # Inner dict mixes int counters (s/f/p) with an optional dict-valued
+    # `styles` map. Typed as Dict[str, Any] to accept both legacy and styled
+    # payloads. Save logic handles the shape; we don't validate further here.
+    climbs: Dict[str, Dict[str, Dict[str, Any]]] = {}
 
 
 # Body / rehab progress
