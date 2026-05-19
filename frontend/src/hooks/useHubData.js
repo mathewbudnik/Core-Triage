@@ -4,6 +4,8 @@ import {
   getPyramid,
 } from '../api'
 import { sessionForDay } from '../lib/trainSessions'
+import { deriveStyleProfile } from '../lib/styleProfile'
+import { getCached, setCached } from '../lib/dataCache'
 
 const todayIsoDate = () => new Date().toISOString().slice(0, 10)
 
@@ -124,23 +126,43 @@ function pickCurrentProject(logs, workingTierId) {
   }
 }
 
+// Cache key for the composed Hub view. Cached on first successful load so
+// returning to the Hub after navigating away renders instantly with the
+// last-known data while a fresh fetch runs in the background.
+const HUB_CACHE_KEY = 'hub.data'
+
+const EMPTY_HUB_DATA = {
+  loading: true,
+  lastTriage: null, activePlan: null, todaySession: null, todayLogged: false,
+  stats: null,
+  hardestSends: { boulder: null, route: null },
+  pyramidPreview: [],
+  streakDays: 0,
+  weekLoggedDates: new Set(),
+  isFirstLogOfWeek: false,
+  isPlanRestDay: false,
+  feedItems: [],
+  currentProject: null,
+  recentLogs: [],
+  styleProfile: {
+    counts: { power: 0, dynamic: 0, technical: 0, endurance: 0 },
+    pct:    { power: 0, dynamic: 0, technical: 0, endurance: 0 },
+    total: 0, dominant: null, weakest: null, confidence: 'low',
+  },
+  ringSends:        { done: 0, goal: 10 },
+  ringClimbDays:    { done: 0, goal: 4  },
+  ringPushAttempts: { done: 0, goal: 3  },
+}
+
 export function useHubData(user) {
-  const [data, setData] = useState({
-    loading: true,
-    lastTriage: null, activePlan: null, todaySession: null, todayLogged: false,
-    stats: null,
-    hardestSends: { boulder: null, route: null },
-    pyramidPreview: [],
-    streakDays: 0,
-    weekLoggedDates: new Set(),
-    isFirstLogOfWeek: false,
-    isPlanRestDay: false,
-    feedItems: [],
-    currentProject: null,
-    recentLogs: [],
-    ringSends:        { done: 0, goal: 10 },
-    ringClimbDays:    { done: 0, goal: 4  },
-    ringPushAttempts: { done: 0, goal: 3  },
+  // Seed from cache if present so HubTab paints instantly on re-mount.
+  // Cached payload comes back with `loading: true` cleared so the UI doesn't
+  // flash a spinner over already-good data.
+  const [data, setData] = useState(() => {
+    const cached = getCached(HUB_CACHE_KEY)
+    return cached !== undefined
+      ? { ...cached, loading: false }
+      : EMPTY_HUB_DATA
   })
 
   useEffect(() => {
@@ -188,8 +210,9 @@ export function useHubData(user) {
       const primary = pyramid?.boulder?.grades?.length ? pyramid.boulder.grades : (pyramid?.route?.grades || [])
       const pyramidPreview = [...primary].reverse().slice(0,3)
       const isPlanRestDay = !!(activePlan && !todaySession)
+      const styleProfile = deriveStyleProfile(logs)
 
-      setData({
+      const next = {
         loading: false,
         lastTriage: sessions[0] || null,
         activePlan, todaySession, todayLogged,
@@ -197,8 +220,14 @@ export function useHubData(user) {
         hardestSends, pyramidPreview,
         streakDays, weekLoggedDates, isFirstLogOfWeek, isPlanRestDay,
         feedItems, currentProject, recentLogs: logs,
+        styleProfile,
         ...rings,
-      })
+      }
+      setData(next)
+      // Persist for instant render on next mount. `weekLoggedDates` is a Set
+      // but staying in-memory means we don't need to serialize, so the Set
+      // survives intact across stores in the same tab session.
+      setCached(HUB_CACHE_KEY, next)
     })
 
     return () => { cancelled = true }
