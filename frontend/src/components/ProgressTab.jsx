@@ -130,6 +130,7 @@ export default function ProgressTab({ user, onLoginClick }) {
           {logOpen ? (
             <motion.div key="log-form" initial={{opacity:0,y:-4}} animate={{opacity:1,y:0}}>
               <TrainingLogEntry
+                user={user}
                 onSave={() => { setLogOpen(false); setRefreshKey(k => k+1) }}
                 onCancel={() => setLogOpen(false)} />
             </motion.div>

@@ -398,6 +398,10 @@ class SaveSessionRequest(BaseModel):
     pain_level: int
     pain_type: str
     onset: str
+    # Optional full intake snapshot — when provided, GET /api/sessions/{id}
+    # re-derives the diagnosis (buckets + severity + plan) at view time so
+    # the History detail panel can show what the user originally saw.
+    intake_json: Optional[Dict[str, Any]] = None
 
 
 class RegisterRequest(BaseModel):
@@ -897,6 +901,7 @@ def create_session(request: Request, req: SaveSessionRequest, user: Dict = Depen
             "pain_level": req.pain_level,
             "pain_type": req.pain_type,
             "onset": req.onset,
+            "intake_json": req.intake_json,
         }
     )
     return {"id": sid}
@@ -912,6 +917,11 @@ def fetch_session(request: Request, session_id: int, user: Dict = Depends(get_cu
         raise HTTPException(status_code=404, detail="Session not found")
     if r[6] != user["id"]:
         raise HTTPException(status_code=403, detail="Access denied")
+    # Re-derive the diagnosis (buckets + severity) at view time so the History
+    # detail panel can show what the user saw, even if bucket content has
+    # been updated since the session was saved.
+    intake_json = r[7] if len(r) > 7 else None
+    derived = _derive_session_diagnosis(intake_json, r[1], r[2], r[3], r[4])
     return {
         "id": r[0],
         "injury_area": r[1],
@@ -919,7 +929,63 @@ def fetch_session(request: Request, session_id: int, user: Dict = Depends(get_cu
         "pain_type": r[3],
         "onset": r[4],
         "created_at": str(r[5]),
+        # Re-derived diagnosis. May be null for very old / minimal sessions
+        # where we couldn't reconstruct a usable Intake. Frontend gracefully
+        # hides the diagnosis panel when null.
+        "diagnosis": derived,
     }
+
+
+def _derive_session_diagnosis(intake_json, injury_area, pain_level, pain_type, onset):
+    """Re-derive the diagnosis (buckets + severity + plan) from a saved
+    session's intake. Prefers the full intake_json when available; falls back
+    to a minimal Intake built from the basic stored fields. Returns None if
+    we can't construct anything usable.
+
+    Kept private to main.py — re-derivation is a History-tab concern, not
+    something we want to expose as its own endpoint."""
+    try:
+        if intake_json and isinstance(intake_json, dict):
+            payload = dict(intake_json)
+        else:
+            # Minimal fallback: just the basic fields we always store. Most
+            # downstream branching in bucket_possibilities tolerates empty
+            # strings for the optional fields.
+            payload = {
+                "region": injury_area or "",
+                "onset": onset or "",
+                "pain_type": pain_type or "",
+                "severity": int(pain_level) if pain_level is not None else 0,
+                "swelling": "", "bruising": "", "numbness": "",
+                "weakness": "", "instability": "", "mechanism": "",
+                "free_text": "",
+            }
+        intake = Intake(
+            pain_area=payload.get("region") or payload.get("pain_area") or "",
+            onset=payload.get("onset", ""),
+            pain_type=payload.get("pain_type", ""),
+            severity=int(payload.get("severity") or 0),
+            swelling=payload.get("swelling", ""),
+            bruising=payload.get("bruising", ""),
+            numbness=payload.get("numbness", ""),
+            weakness=payload.get("weakness", ""),
+            instability=payload.get("instability", ""),
+            mechanism=payload.get("mechanism", ""),
+            free_text=payload.get("free_text", ""),
+            which_finger=payload.get("which_finger", ""),
+            finger_location=payload.get("finger_location", ""),
+            grip_mode=payload.get("grip_mode", ""),
+        )
+        buckets = bucket_possibilities(intake)
+        severity = classify_severity(intake)
+        return {
+            "buckets": [asdict(b) for b in buckets],
+            "severity": asdict(severity) if severity else None,
+        }
+    except Exception:
+        # Re-derivation is best-effort — never break the session fetch.
+        logger.exception("Session diagnosis re-derivation failed")
+        return None
 
 
 @app.delete("/api/sessions/{session_id}")
@@ -1181,6 +1247,41 @@ def fetch_training_stats(request: Request, user: Dict = Depends(get_current_user
     """Personal stats payload for the TrainStatsPanel — hero number, tiles,
     trend, percentile, personal records. See design spec for shape."""
     return get_training_stats(user["id"])
+
+
+# Number of logged training sessions required before the plausibility
+# check kicks in. During calibration, users can log freely so a real
+# V8 climber can establish their baseline without artificial friction.
+CALIBRATION_SESSION_COUNT = 5
+
+
+@app.get("/api/training/baseline")
+@limiter.limit("60/minute")
+def fetch_training_baseline(request: Request, user: Dict = Depends(get_current_user)):
+    """Return the data the frontend needs to decide whether a logged
+    grade is plausible:
+      - session_count: how many training_logs rows the user has
+      - hardest_alltime: their hardest sent boulder + route across all logs
+      - is_calibrated: true once session_count >= CALIBRATION_SESSION_COUNT
+                       (frontend skips plausibility checks while false)
+    """
+    from database import _connect, get_user_hardest
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT COUNT(*) FROM training_logs WHERE user_id = %s;",
+                (int(user["id"]),),
+            )
+            count = int(cur.fetchone()[0] or 0)
+    hardest = get_user_hardest(user["id"], window="all") or {}
+    return {
+        "session_count":   count,
+        "hardest_alltime": {
+            "boulder": hardest.get("boulder"),
+            "route":   hardest.get("route"),
+        },
+        "is_calibrated":   count >= CALIBRATION_SESSION_COUNT,
+    }
 
 
 _LEADERBOARD_WINDOWS = {"week", "month", "all"}
