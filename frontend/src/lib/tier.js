@@ -8,48 +8,52 @@
 
 export const V_TIERS = ['v0','v1','v2','v3','v4','v5','v6','v7','v8','v9','v10']
 
-// Tier names are famous boulder problems at the matching grade. Grades
-// are conservative best-effort — flag any name that's wrong for its tier.
+// Duolingo-style metal/gem progression. Common metals at the base
+// (Bronze, Silver, Copper) escalate into precious gemstones (Sapphire,
+// Ruby, Emerald, Amethyst) and cap with Diamond at the apex.
+// Each tier gets a distinct hue family — no two adjacent tiers share a
+// color zone.
 export const TIER_NAMES = {
-  v0:  "Plumber's Crack",     // Flatirons, CO — V0
-  v1:  'Penrose Step',        // Flatirons, CO — V1
-  v2:  'King Tut',            // Bishop, CA — V2
-  v3:  'Iron Cross',          // Bishop, CA — V3
-  v4:  'Ironman Traverse',    // Bishop, CA — V4
-  v5:  'Power of Silence',    // RMNP, CO — V5
-  v6:  'Pope’s Prow',    // Bishop, CA — V6
-  v7:  'Solarium',            // Bishop, CA — V7
-  v8:  'Midnight Lightning',  // Yosemite, CA — V8
-  v9:  'Diaphanous Sea',      // Bishop, CA — V9
-  v10: 'Direction',           // RMNP, CO — V10
+  v0:  'Bronze',
+  v1:  'Silver',
+  v2:  'Copper',
+  v3:  'Aquamarine',
+  v4:  'Rose Gold',
+  v5:  'Sapphire',
+  v6:  'Ruby',
+  v7:  'Emerald',
+  v8:  'Coral',
+  v9:  'Amethyst',
+  v10: 'Diamond',
 }
 
-// Bright pastel palette, alternating hot/cold each step. No yellow or
-// yellow-adjacent hues. Hot slots use peach / coral / pink family; cold
-// slots use mint / lavender / sky / aqua / periwinkle.
+// Bright pastel palette. Adjacent grades alternate hot/cold so the
+// neighbors are always visually distinct. Diamond breaks strict
+// alternation at v10 — it's the universally "elite" gem and earns the
+// apex slot regardless of temperature.
 export const TIER_TOKENS = {
-  // hot — apricot
-  v0:  { light: '#fed7aa', c: '#fdba74', deep: '#9a3412' },
-  // cold — mint
-  v1:  { light: '#d1fae5', c: '#a7f3d0', deep: '#047857' },
-  // hot — peach
-  v2:  { light: '#fde0d0', c: '#fcc8ba', deep: '#9a3412' },
-  // cold — lavender
-  v3:  { light: '#ddd6fe', c: '#c4b5fd', deep: '#5b21b6' },
-  // hot — coral
-  v4:  { light: '#fecdd3', c: '#fda4af', deep: '#9f1239' },
-  // cold — sky
-  v5:  { light: '#bae6fd', c: '#7dd3fc', deep: '#0c4a6e' },
-  // hot — bubblegum pink
-  v6:  { light: '#fbcfe8', c: '#f9a8d4', deep: '#9d174d' },
-  // cold — aqua
-  v7:  { light: '#ccfbf1', c: '#99f6e4', deep: '#115e59' },
-  // hot — hot pink
-  v8:  { light: '#fbcfe8', c: '#f472b6', deep: '#831843' },
-  // cold — periwinkle
-  v9:  { light: '#c7d2fe', c: '#a5b4fc', deep: '#3730a3' },
-  // hot — rose-red
-  v10: { light: '#fda4af', c: '#fb7185', deep: '#881337' },
+  // hot — bronze (warm tan-orange)
+  v0:  { light: '#f5d4b8', c: '#e8a87c', deep: '#9a5b2a' },
+  // cold — silver (pale silver-blue)
+  v1:  { light: '#e7eef5', c: '#cdd9e6', deep: '#475b6f' },
+  // hot — copper (terra-cotta orange)
+  v2:  { light: '#f5c4a3', c: '#e89b6c', deep: '#9a4a1c' },
+  // cold — aquamarine (aqua-green)
+  v3:  { light: '#ccfbf1', c: '#99f6e4', deep: '#115e59' },
+  // hot — rose gold (pink-rose)
+  v4:  { light: '#fce7f3', c: '#fbcfe8', deep: '#9d174d' },
+  // cold — sapphire (bright blue)
+  v5:  { light: '#bfdbfe', c: '#93c5fd', deep: '#1e3a8a' },
+  // hot — ruby (red-pink)
+  v6:  { light: '#fecdd3', c: '#fb7185', deep: '#881337' },
+  // cold — emerald (bright green)
+  v7:  { light: '#a7f3d0', c: '#6ee7b7', deep: '#064e3b' },
+  // hot — coral (peach-orange)
+  v8:  { light: '#fed7aa', c: '#fdba74', deep: '#9a3412' },
+  // cold — amethyst (purple)
+  v9:  { light: '#ddd6fe', c: '#c4b5fd', deep: '#5b21b6' },
+  // apex — diamond (brilliant cyan-blue)
+  v10: { light: '#cffafe', c: '#67e8f9', deep: '#155e75' },
 }
 
 /** Map a V-grade string ('V0'..'V17') to a tier id. V10+ collapses to 'v10'. */
