@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { X, ArrowRight, Sparkles, Timer, Snowflake } from 'lucide-react'
+import { X, ArrowRight, Sparkles, Timer, Snowflake, PlayCircle, ExternalLink } from 'lucide-react'
 import TrainingLogEntry from '../TrainingLogEntry'
+import ExerciseTimer from './ExerciseTimer'
 import { useIsDesktop } from '../../hooks/useIsDesktop'
 import { getSessionTypeLabel } from '../../lib/sessionType'
+import { buildExerciseVideoUrl } from '../../data/exercises'
 
 const REDUCE_MOTION = typeof window !== 'undefined'
   && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
@@ -13,9 +15,13 @@ const REDUCE_MOTION = typeof window !== 'undefined'
  *   { exercise, detail, sets, reps, rest_seconds, effort_note, benchmark, ... }
  */
 function MainExerciseCard({ block, index }) {
+  const [timerOpen, setTimerOpen] = useState(false)
   const sets = block.sets
   const reps = block.reps
   const rest = block.rest_seconds
+  const videoUrl = buildExerciseVideoUrl(block)
+  const canTime = !!(sets && rest)  // need both to drive the rest timer
+
   return (
     <li className="px-4 py-3.5 rounded-2xl bg-black/35 backdrop-blur-md
                    border-[0.5px] border-white/[0.10]">
@@ -53,6 +59,46 @@ function MainExerciseCard({ block, index }) {
                       pt-1.5 border-t-[0.5px] border-white/[0.06]">
           {block.benchmark}
         </p>
+      )}
+
+      <div className="flex flex-wrap items-center gap-2 mt-3">
+        {canTime && !timerOpen && (
+          <button
+            type="button"
+            onClick={() => setTimerOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
+                       text-[10.5px] font-extrabold uppercase tracking-[0.06em]
+                       bg-[color:color-mix(in_srgb,var(--tier-c)_12%,transparent)]
+                       border-[0.5px] border-[color:color-mix(in_srgb,var(--tier-c)_32%,transparent)]"
+            style={{ color: 'var(--tier-light)' }}
+          >
+            <Timer size={11} strokeWidth={2.6} />
+            Timer
+          </button>
+        )}
+        {videoUrl && (
+          <a
+            href={videoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
+                       text-[10.5px] font-extrabold uppercase tracking-[0.06em]
+                       bg-white/[0.04] border-[0.5px] border-white/[0.10]
+                       text-text/85 hover:text-text hover:bg-white/[0.06] transition-colors"
+          >
+            <PlayCircle size={11} strokeWidth={2.6} />
+            Watch demo
+            <ExternalLink size={9} strokeWidth={2.4} className="opacity-60" />
+          </a>
+        )}
+      </div>
+
+      {canTime && timerOpen && (
+        <ExerciseTimer
+          totalSets={sets}
+          restSeconds={rest}
+          onClose={() => setTimerOpen(false)}
+        />
       )}
     </li>
   )
