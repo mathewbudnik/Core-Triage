@@ -497,27 +497,39 @@ export default function ProfileSetup({ onComplete }) {
         )}
       </div>
 
-      {/* Bottom action bar */}
-      <div className="sticky bottom-0 -mx-4 px-4 pt-4
-                      pb-[calc(0.75rem+env(safe-area-inset-bottom))]
-                      bg-gradient-to-t from-[#06070a] via-[#06070a]/95 to-transparent">
-        <motion.button
-          type="button"
-          onClick={next}
-          disabled={!canAdvance() || saving}
-          whileTap={canAdvance() && !saving ? { scale: 0.97 } : undefined}
-          className="w-full inline-flex items-center justify-center gap-2
-                     px-5 py-3.5 rounded-2xl font-extrabold text-[13.5px] -tracking-[0.01em]
-                     transition-opacity disabled:opacity-50"
-          style={{ background: 'var(--tier-c)', color: 'var(--bg, #06120f)' }}
-        >
-          {saving
-            ? <><Loader2 size={14} className="animate-spin" /> Saving…</>
-            : isLast
-              ? <>Build my plan <ArrowRight size={14} strokeWidth={2.6} /></>
-              : <>Continue <ChevronRight size={14} strokeWidth={2.6} /></>
-          }
-        </motion.button>
+      {/* Bottom action bar — sits on the page (no opaque backdrop) */}
+      <div className="sticky bottom-0 pt-4
+                      pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+        {(() => {
+          const ready = canAdvance() && !saving
+          return (
+            <motion.button
+              type="button"
+              onClick={next}
+              disabled={!ready}
+              whileTap={ready ? { scale: 0.97 } : undefined}
+              className="w-full inline-flex items-center justify-center gap-2
+                         px-5 py-3.5 rounded-2xl font-extrabold text-[13.5px] -tracking-[0.01em]
+                         transition-colors"
+              style={ready
+                ? { background: 'var(--tier-c)', color: 'var(--bg, #06120f)' }
+                : {
+                    background: 'color-mix(in srgb, var(--tier-c) 14%, transparent)',
+                    border: '0.5px solid color-mix(in srgb, var(--tier-c) 32%, transparent)',
+                    color: 'color-mix(in srgb, var(--tier-light) 55%, transparent)',
+                    cursor: 'not-allowed',
+                  }
+              }
+            >
+              {saving
+                ? <><Loader2 size={14} className="animate-spin" /> Saving…</>
+                : isLast
+                  ? <>Build my plan <ArrowRight size={14} strokeWidth={2.6} /></>
+                  : <>Continue <ChevronRight size={14} strokeWidth={2.6} /></>
+              }
+            </motion.button>
+          )
+        })()}
         <button
           type="button"
           onClick={back}
