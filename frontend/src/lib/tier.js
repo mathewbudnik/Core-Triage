@@ -40,8 +40,9 @@ export const TIER_TOKENS = {
   v1:  { light: '#eef1f5', c: '#d6dde6', deep: '#4a5260' },
   // hot — carnelian (vivid rust-red)
   v2:  { light: '#f08d6f', c: '#e85a37', deep: '#6e1f10' },
-  // cold — aquamarine (jewel aqua)
-  v3:  { light: '#5eead4', c: '#2dd4bf', deep: '#115e59' },
+  // cold — aquamarine (deeper jewel-teal, leans more green-cyan to stay
+  // visually distinct from Diamond's icy brilliance at v10)
+  v3:  { light: '#5eead4', c: '#14b8a6', deep: '#0f766e' },
   // hot — rose gold (vivid pink-rose)
   v4:  { light: '#f472b6', c: '#ec4899', deep: '#831d4c' },
   // cold — sapphire (bright royal blue)
@@ -54,8 +55,10 @@ export const TIER_TOKENS = {
   v8:  { light: '#fb923c', c: '#f97316', deep: '#7c2d12' },
   // cold — amethyst (vivid purple, Minecraft-amethyst-like)
   v9:  { light: '#a78bfa', c: '#8b5cf6', deep: '#4c1d95' },
-  // apex — diamond (bright cyan, Minecraft-diamond-like)
-  v10: { light: '#67e8f9', c: '#22d3ee', deep: '#0c4a6e' },
+  // apex — diamond (icy brilliant cyan, lighter than Aquamarine so the
+  // two tiers read clearly different even though both sit in the cyan-
+  // teal family). Paired with the animated DiamondShimmer overlay.
+  v10: { light: '#a5f3fc', c: '#67e8f9', deep: '#0e7490' },
 }
 
 /** Map a V-grade string ('V0'..'V17') to a tier id. V10+ collapses to 'v10'. */
