@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { TIER_NAMES, nextTier } from '../lib/tier'
+import DiamondShimmer from './DiamondShimmer'
 
 /**
  * Tier hero card on the Progress page.
@@ -34,7 +35,8 @@ export default function ProgressTierHero({ tierId, metaLine, promotionProgress }
         border: '0.5px solid color-mix(in srgb, var(--tier-c) 45%, transparent)',
         boxShadow: 'inset 0 0 32px color-mix(in srgb, var(--tier-c) 18%, transparent)',
       }}>
-      <div className="flex items-center justify-between mb-0">
+      {tierId === 'v10' && <DiamondShimmer size="lg" intensity="soft" />}
+      <div className="flex items-center justify-between mb-0 relative z-10">
         <div className="text-[11px] font-bold uppercase tracking-[0.08em]"
              style={{ color: 'var(--tier-light)' }}>
           Current tier

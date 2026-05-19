@@ -1,4 +1,5 @@
 import { Lock, HelpCircle } from 'lucide-react'
+import DiamondShimmer from './DiamondShimmer'
 
 /**
  * Reusable medal. Three size variants:
@@ -15,6 +16,10 @@ import { Lock, HelpCircle } from 'lucide-react'
  *   label:    string | null    — small label below the icon (e.g., 'V7', '10d')
  *   locked:   boolean          — render the locked variant
  *   mystery:  boolean          — when locked, render as "???" (Xbox/Steam style)
+ *
+ * Diamond-tier medals (label === 'V10') automatically get an animated
+ * shimmer overlay — subtle shine sweep + 4-point sparkles — so the apex
+ * grade feels visually distinct from every other earned medal.
  */
 export default function AwardMedal({ size = 'md', light, mid, deep, icon: Icon, label, locked = false, mystery = false }) {
   const px = size === 'sm' ? 40 : size === 'lg' ? 168 : 84
@@ -66,6 +71,11 @@ export default function AwardMedal({ size = 'md', light, mid, deep, icon: Icon, 
              background: 'radial-gradient(ellipse 60% 50% at 50% 25%, rgba(255,255,255,0.15), rgba(255,255,255,0) 70%)',
              boxShadow: 'inset 0 0 8px rgba(0,0,0,0.25)',
            }} />
+      {/* Diamond-tier shimmer — animated overlay above the gradient
+          surface but below the icon/label content. Triggered only on
+          V10 grade medals. */}
+      {label === 'V10' && <DiamondShimmer size={size} />}
+
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center text-white"
            style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>

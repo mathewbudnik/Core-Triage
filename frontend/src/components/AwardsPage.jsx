@@ -6,6 +6,7 @@ import { AWARD_META } from '../lib/awardCatalog'
 import { getPyramid } from '../api'
 import { TIER_NAMES, TIER_TOKENS, V_TIERS, workingTierFromHardest } from '../lib/tier'
 import AwardMedal from './AwardMedal'
+import DiamondShimmer from './DiamondShimmer'
 
 /**
  * Full awards + tiers page. Two sections:
@@ -75,7 +76,7 @@ export default function AwardsPage({ user }) {
             return (
               <li
                 key={tierId}
-                className={`flex items-center gap-3 px-3.5 py-3 rounded-xl border-[0.5px]
+                className={`relative overflow-hidden flex items-center gap-3 px-3.5 py-3 rounded-xl border-[0.5px]
                             transition-all
                             ${isCurrent
                               ? 'border-[var(--tier-c)] shadow-[0_0_24px_var(--tier-glow)]'
@@ -88,6 +89,7 @@ export default function AwardsPage({ user }) {
                     : 'rgba(255,255,255,0.02)',
                 }}
               >
+                {tierId === 'v10' && isEarned && <DiamondShimmer size="sm" intensity="soft" />}
                 {/* Color swatch / lock */}
                 <div
                   className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border-[0.5px]"
