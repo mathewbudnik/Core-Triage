@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { useHubData } from '../hooks/useHubData'
@@ -6,10 +7,12 @@ import { workingTierFromHardest } from '../lib/tier'
 import TierThemeRoot from './TierThemeRoot'
 import HubGreeting from './HubGreeting'
 import HubRingsCard from './HubRingsCard'
+import HubStyleMixCard from './HubStyleMixCard'
 import HubTipCard from './HubTipCard'
 import HubProjectCard from './HubProjectCard'
 import HubWeekStrip from './HubWeekStrip'
 import HubFeedCard from './HubFeedCard'
+import StyleMixSheet from './StyleMixSheet'
 
 export default function HubTab({ user }) {
   const navigate = useNavigate()
@@ -17,6 +20,7 @@ export default function HubTab({ user }) {
   const { tip, dismiss } = useHubTip(user)
   const tierId = workingTierFromHardest(data.hardestSends)
   const today = new Date().toISOString().slice(0,10)
+  const [styleSheetOpen, setStyleSheetOpen] = useState(false)
 
   if (data.loading) {
     return (
@@ -42,6 +46,10 @@ export default function HubTab({ user }) {
             pushAttempts={data.ringPushAttempts}
             streakDays={data.streakDays}
           />
+          <HubStyleMixCard
+            profile={data.styleProfile}
+            onOpen={() => setStyleSheetOpen(true)}
+          />
           <HubTipCard tip={tip} onDismiss={dismiss} />
           {data.currentProject && (
             <HubProjectCard
@@ -55,6 +63,11 @@ export default function HubTab({ user }) {
           />
           <HubFeedCard items={data.feedItems} />
         </div>
+        <StyleMixSheet
+          open={styleSheetOpen}
+          profile={data.styleProfile}
+          onClose={() => setStyleSheetOpen(false)}
+        />
       </div>
     </TierThemeRoot>
   )
