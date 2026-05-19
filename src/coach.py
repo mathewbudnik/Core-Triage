@@ -18,6 +18,110 @@ from typing import Any, Dict, List, Optional
 
 
 # ---------------------------------------------------------------------------
+# Style-profile helpers
+# ---------------------------------------------------------------------------
+
+def _derive_style_profile(training_logs):
+    """
+    Aggregate per-style counts from a list of training_logs records.
+    Mirrors the frontend's deriveStyleProfile() exactly so plan-gen and the
+    Hub agree on confidence + weakest.
+
+    Returns:
+        dict with keys: counts, pct, total, dominant, weakest, confidence
+    """
+    STYLE_ORDER = ('power', 'dynamic', 'technical', 'endurance')
+    counts = {s: 0 for s in STYLE_ORDER}
+
+    for log in training_logs or []:
+        climbs = log.get('climbs') or {}
+        for discipline in ('boulder', 'route'):
+            grades = climbs.get(discipline) or {}
+            for entry in grades.values():
+                if not isinstance(entry, dict):
+                    continue
+                styles = entry.get('styles')
+                if not isinstance(styles, dict):
+                    continue
+                for s in STYLE_ORDER:
+                    counts[s] += int(styles.get(s) or 0)
+
+    total = sum(counts.values())
+    if total >= 20:
+        confidence = 'high'
+    elif total >= 6:
+        confidence = 'medium'
+    else:
+        confidence = 'low'
+
+    pct = {s: (round((counts[s] / total) * 100) if total else 0) for s in STYLE_ORDER}
+
+    dominant = None
+    weakest = None
+    if total > 0:
+        # First-wins on ties for dominant; last-wins for weakest (mirrors JS).
+        dom_count = -1
+        for s in STYLE_ORDER:
+            if counts[s] > dom_count:
+                dom_count = counts[s]
+                dominant = s
+        weak_count = float('inf')
+        for s in reversed(STYLE_ORDER):
+            if counts[s] < weak_count:
+                weak_count = counts[s]
+                weakest = s
+    if total < 6:
+        weakest = None
+
+    return {
+        'counts': counts, 'pct': pct, 'total': total,
+        'dominant': dominant, 'weakest': weakest, 'confidence': confidence,
+    }
+
+
+# Maps the under-developed style to the session_type we'd swap one slot for.
+# Dynamic folds into power (same taxonomy choice as the wizard mapping).
+_STYLE_TO_SWAP_SESSION = {
+    'endurance': 'endurance',
+    'technical': 'technique',
+    'power':     'power',
+    'dynamic':   'power',
+}
+
+# Session types we won't displace — these carry the goal's core stimulus.
+_PROTECTED_SESSION_TYPES = ('hangboard', 'project', 'power')
+
+def _apply_style_bias(sessions, style_profile):
+    """
+    If the climber has a clearly under-developed style (pct < 15) and the
+    weekly schedule has a non-protected slot that isn't already that style,
+    swap that slot's session_type for the target style. Mutates `sessions`
+    in place. Only swaps in the first week — the rest of the plan inherits
+    via the existing week-rotation logic in _pick_session.
+    """
+    if not style_profile or style_profile.get('confidence') == 'low':
+        return
+    weakest = style_profile.get('weakest')
+    if not weakest:
+        return
+    pct = style_profile.get('pct') or {}
+    if pct.get(weakest, 100) >= 15:
+        return
+    target = _STYLE_TO_SWAP_SESSION.get(weakest)
+    if not target:
+        return
+
+    for session in sessions:
+        if session.get('week') != 1:
+            continue
+        cur = session.get('type')
+        if cur in _PROTECTED_SESSION_TYPES or cur == target:
+            continue
+        session['type'] = target
+        return
+
+
+# ---------------------------------------------------------------------------
 # Exercise selection helpers
 # ---------------------------------------------------------------------------
 
@@ -1020,6 +1124,7 @@ def generate_plan(
     profile: Dict[str, Any],
     injury_flags: List[str],
     openai_client: Any = None,
+    existing_logs: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     """
     Generate a 4-week personalized training plan.
@@ -1028,6 +1133,7 @@ def generate_plan(
         profile: athlete profile dict from get_profile()
         injury_flags: list of injury area strings from recent triage sessions
         openai_client: optional OpenAI client for GPT-4o coach notes
+        existing_logs: recent training log records used to derive style profile
 
     Returns:
         plan dict ready to be passed to save_plan()
@@ -1045,6 +1151,9 @@ def generate_plan(
     equipment = profile.get("equipment") or []
 
     sessions = _goal_template(goal, days, experience, injury_flags, discipline, equipment)
+
+    style_profile = _derive_style_profile(existing_logs or [])
+    _apply_style_bias(sessions, style_profile)
 
     if openai_client:
         _enrich_coach_notes(sessions, profile, openai_client)
@@ -1075,5 +1184,8 @@ def generate_plan(
             # Frontend's sessionForDay() reads this when present and falls back
             # to even spreading for legacy plans without the field.
             "training_days": training_days,
+            # Snapshot of the style profile computed at plan-gen time.
+            # Frozen here so the plan stays stable even as the user logs more climbs.
+            "style_profile": style_profile,
         },
     }

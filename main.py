@@ -1078,8 +1078,10 @@ def generate_plan_endpoint(request: Request, req: GeneratePlanRequest, user: Dic
         rows = list_sessions(user["id"], limit=5)
         injury_flags = [r[1] for r in rows]
 
+    existing_logs = get_training_logs(user["id"], limit=60)
+
     try:
-        plan = generate_plan(profile, injury_flags, openai_client=_openai_client)
+        plan = generate_plan(profile, injury_flags, openai_client=_openai_client, existing_logs=existing_logs)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Plan generation error: {exc}") from exc
 
