@@ -41,20 +41,17 @@ function friendlyPlanError(msg) {
   return msg
 }
 
+// Matched 1:1 with ProgressTab.EmptyState — same wrapper height, icon
+// container colors, icon size, typography, and spacing. Both pages share
+// this empty-state visual so the app reads as a single design system
+// instead of one-off-per-tab styling left over from parallel-agent work.
 function EmptyState({ icon: Icon, title, body, action }) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-8 py-16 space-y-5">
-      <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
-           style={{
-             background: 'color-mix(in srgb, var(--tier-c) 12%, transparent)',
-             border: '0.5px solid color-mix(in srgb, var(--tier-c) 32%, transparent)',
-           }}>
-        <Icon size={22} className="text-[var(--tier-light)]" />
+    <div className="flex flex-col items-center justify-center h-full text-center px-8 py-16 space-y-5">
+      <div className="w-14 h-14 rounded-2xl bg-accent/10 border border-accent/25 flex items-center justify-center">
+        <Icon size={24} className="text-accent" />
       </div>
       <div>
-        {/* Typography matched to ProgressTab.EmptyState — font family,
-            size, weight, and color identical so the two empty states
-            read as the same component family. */}
         <p className="font-semibold text-text">{title}</p>
         <p className="text-sm text-muted mt-1 max-w-xs">{body}</p>
       </div>
@@ -163,24 +160,22 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
   // ── Render branches ──────────────────────────────────────────────────────
 
   if (state === 'no-auth') {
+    // Structure matches ProgressTab's no-auth render exactly: no TierThemeRoot
+    // wrapper (the tier theming was reading cached hub data and tinting the
+    // icon orange/bronze when it should be the global teal accent), no outer
+    // max-w container, and the same btn-primary action button.
     return (
-      <TierThemeRoot hardest={hub.hardestSends} global>
-        <div className="max-w-2xl mx-auto px-4 py-8">
-          <EmptyState
-            icon={Dumbbell}
-            title="Sign in to access training"
-            body="Your training plan and progress are private. Create a free account to get started."
-            action={
-              <button onClick={onLoginClick}
-                      className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-extrabold text-[12.5px]"
-                      style={{ background: 'var(--tier-c)', color: 'var(--bg, #06120f)' }}>
-                <LogIn size={14} />
-                Log in or create account
-              </button>
-            }
-          />
-        </div>
-      </TierThemeRoot>
+      <EmptyState
+        icon={Dumbbell}
+        title="Sign in to access training"
+        body="Your training plan and progress are private. Create a free account to get started."
+        action={
+          <button onClick={onLoginClick} className="btn-primary flex items-center gap-2">
+            <LogIn size={15} />
+            Log in or create account
+          </button>
+        }
+      />
     )
   }
 
