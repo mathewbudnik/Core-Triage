@@ -269,7 +269,15 @@
       "Bash(grep -aon 'pro:{label:\"Subscription\",price:\"[^\"]*\"' frontend/dist/assets/index-DCeE2WDd.js)",
       "Bash(xargs grep -l '\\\\$')",
       "Bash(grep -rn '\\\\$10\\\\|\\\\$ 10\\\\|\" 10\\\\| 10/m\\\\|\"10/m' frontend/src)",
-      "Bash(grep -rn '\\\\$10\\\\|10/m\\\\|10 / m' frontend/public)"
+      "Bash(grep -rn '\\\\$10\\\\|10/m\\\\|10 / m' frontend/public)",
+      "Bash(npx --yes knip --reporter json)",
+      "Bash(.venv/bin/vulture --version)",
+      "Bash(npx --yes knip --reporter symbols)",
+      "Bash(.venv/bin/vulture src/ main.py database.py --min-confidence 70)",
+      "Bash(git cherry-pick *)",
+      "Bash(git branch *)",
+      "Bash(rm frontend/src/components/TriageReport.jsx frontend/src/components/UrgentReferralCard.jsx frontend/src/data/wizardConfigV2.js frontend/src/hooks/useScrollToContinue.js)",
+      "Bash(npm uninstall *)"
     ],
     "additionalDirectories": [
       "/private/tmp"
