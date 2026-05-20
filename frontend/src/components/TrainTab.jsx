@@ -2,7 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Dumbbell, LogIn, Loader2, RefreshCw } from 'lucide-react'
 import { getProfile, getActivePlan, generatePlan } from '../api'
+import { getCached, setCached, invalidatePrefix } from '../lib/dataCache'
 import { useHubData } from '../hooks/useHubData'
+
+const PROFILE_CACHE_KEY = 'train.profile'
+const PLAN_CACHE_KEY    = 'train.activePlan'
 import { workingTierFromHardest } from '../lib/tier'
 import { currentWeekDates, dayStatusFor, sessionForDay } from '../lib/trainSessions'
 import TierThemeRoot from './TierThemeRoot'
@@ -48,8 +52,11 @@ function EmptyState({ icon: Icon, title, body, action }) {
         <Icon size={22} className="text-[var(--tier-light)]" />
       </div>
       <div>
-        <p className="text-[15px] font-extrabold text-text -tracking-[0.01em]">{title}</p>
-        <p className="text-[12.5px] font-semibold text-muted mt-1 max-w-xs leading-snug">{body}</p>
+        {/* Typography matched to ProgressTab.EmptyState — font family,
+            size, weight, and color identical so the two empty states
+            read as the same component family. */}
+        <p className="font-semibold text-text">{title}</p>
+        <p className="text-sm text-muted mt-1 max-w-xs">{body}</p>
       </div>
       {action}
     </div>
@@ -57,9 +64,19 @@ function EmptyState({ icon: Icon, title, body, action }) {
 }
 
 export default function TrainTab({ user, dbReady, onLoginClick }) {
-  const [state, setState] = useState('loading') // loading | no-auth | setup | generating | ready | error
-  const [profile, setProfile] = useState(null)
-  const [plan, setPlan] = useState(null)
+  // Seed from cache so revisits paint instantly. We jump straight to 'ready'
+  // when we already have a profile + plan in cache; the fetch below still
+  // runs in the background to refresh.
+  const cachedProfile = getCached(PROFILE_CACHE_KEY)
+  const cachedPlan    = getCached(PLAN_CACHE_KEY)
+  const [state, setState] = useState(() =>
+    !user                       ? 'no-auth' :
+    cachedProfile === undefined ? 'loading' :
+    cachedProfile === null      ? 'setup'   :
+                                  'ready'
+  ) // loading | no-auth | setup | generating | ready | error
+  const [profile, setProfile] = useState(cachedProfile ?? null)
+  const [plan, setPlan] = useState(cachedPlan ?? null)
   const [error, setError] = useState(null)
   const [generating, setGenerating] = useState(false)
 
@@ -72,19 +89,23 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
 
   const load = useCallback(async () => {
     if (!user) { setState('no-auth'); return }
-    setState('loading')
+    // Only show the full-screen loading state on a cold cache. Otherwise
+    // the cached profile + plan stay on screen while the refresh runs.
+    if (getCached(PROFILE_CACHE_KEY) === undefined) setState('loading')
     setError(null)
     try {
       const p = await getProfile().catch((err) => {
         if (err.message?.includes('404') || err.message?.includes('not set')) return null
         throw err
       })
+      setCached(PROFILE_CACHE_KEY, p)  // null is a valid cached value here
       if (!p) { setState('setup'); return }
       setProfile(p)
       const activePlan = await getActivePlan().catch((err) => {
         if (err.message?.includes('404') || err.message?.includes('No active')) return null
         throw err
       })
+      setCached(PLAN_CACHE_KEY, activePlan)
       setPlan(activePlan)
       setState('ready')
     } catch (err) {
@@ -97,13 +118,18 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
 
   async function handleProfileComplete(savedProfile) {
     setProfile(savedProfile)
+    setCached(PROFILE_CACHE_KEY, savedProfile)
     setState('generating')
     setGenerating(true)
     setError(null)
     try {
       await generatePlan({ use_injury_data: true })
+      // Plan generation just produced a fresh plan; nuke any stale cached
+      // plan so we don't briefly render the old one before the refresh.
+      invalidatePrefix('train.')
       const activePlan = await getActivePlan()
       setPlan(activePlan)
+      setCached(PLAN_CACHE_KEY, activePlan)
       setState('ready')
     } catch (err) {
       setError(friendlyPlanError(err.message))
@@ -118,8 +144,10 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
     setError(null)
     try {
       await generatePlan({ use_injury_data: true })
+      invalidatePrefix('train.')
       const activePlan = await getActivePlan()
       setPlan(activePlan)
+      setCached(PLAN_CACHE_KEY, activePlan)
     } catch (err) {
       setError(friendlyPlanError(err.message))
     } finally {
