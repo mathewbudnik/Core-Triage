@@ -70,33 +70,41 @@ function AuthModal({ onClose, onAuth }) {
   }, [onClose])
 
   return (
+    // Anchor to top on mobile (`items-start`) so when the on-screen
+    // keyboard appears it pushes content up off the bottom — not off the
+    // top, which is what `items-center` does on iOS (layout viewport
+    // doesn't shrink for the keyboard, so a centered modal partly hides
+    // behind it). Desktop stays centered.
+    // Safe-area padding handles iPhone notches / home indicators.
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-bg/80 backdrop-blur-sm overflow-y-auto
+                 pt-[max(env(safe-area-inset-top),1rem)] pb-[max(env(safe-area-inset-bottom),1rem)] sm:pt-4 sm:pb-4"
       onClick={handleOverlayClick}
     >
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.08 }}
-        className="relative w-full max-w-sm mx-4 max-h-[calc(100dvh-2rem)] overflow-y-auto bg-panel2 border border-outline rounded-2xl shadow-xl p-6 space-y-5"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 8 }}
+        transition={{ duration: 0.12 }}
+        className="relative w-full max-w-sm mx-3 sm:mx-4 my-auto bg-panel2 border border-outline rounded-2xl shadow-xl p-5 sm:p-6 space-y-4 sm:space-y-5"
       >
         {/* Close */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-muted hover:text-text transition-colors"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 text-muted hover:text-text transition-colors p-1"
+          aria-label="Close"
         >
           <X size={18} />
         </button>
 
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <Logo size={28} dark />
-          <span className="font-bold text-text">CoreTriage</span>
+          <Logo size={24} dark />
+          <span className="font-bold text-text text-sm">CoreTriage</span>
         </div>
 
         {/* Mode tabs */}
-        <div className="flex border-b border-outline -mx-6 px-6">
+        <div className="flex border-b border-outline -mx-5 sm:-mx-6 px-5 sm:px-6">
           {[
             { id: 'login', label: 'Log In' },
             { id: 'register', label: 'Create Account' },
@@ -104,7 +112,7 @@ function AuthModal({ onClose, onAuth }) {
             <button
               key={m.id}
               onClick={() => switchMode(m.id)}
-              className={`flex-1 pb-3 text-sm font-medium transition-colors ${
+              className={`flex-1 pb-2.5 text-sm font-medium transition-colors ${
                 mode === m.id
                   ? 'text-accent border-b-2 border-accent'
                   : 'text-muted hover:text-text'
@@ -115,7 +123,7 @@ function AuthModal({ onClose, onAuth }) {
           ))}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
           <div>
             <label className="label">Email</label>
             <input
