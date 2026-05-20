@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
 
@@ -56,6 +56,23 @@ class Bucket:
     matches_if: List[str]
     not_likely_if: List[str]
     quick_test: str
+    # Trust + transparency. `reasoning_basis` is a short paragraph explaining
+    # the clinical signature this bucket represents (distilled from the cited
+    # literature). `sources` lists the references the bucket draws from —
+    # peer-reviewed papers and named climbing-medicine experts — so users
+    # can see WHERE the diagnosis info comes from, not just what it says.
+    # Both are optional during the rollout: unpopulated buckets simply
+    # don't render the sources panel in the UI.
+    #
+    # Each source entry is a dict with keys:
+    #   - type:      'paper' | 'expert'
+    #   - title:     citation title (paper title / expert's contribution)
+    #   - authors:   "Schöffl V, Hochholzer T" (papers) or "Volker Schöffl, MD" (expert)
+    #   - year:      "2003" or "" (optional for experts)
+    #   - venue:     journal / publisher / org (e.g. "Sports Medicine")
+    #   - url:       link (PubMed, journal page, expert site / video) — optional but preferred
+    reasoning_basis: str = ""
+    sources: List[Dict[str, str]] = field(default_factory=list)
 
     @classmethod
     def from_id(cls, id: str, qualifier: Optional[str] = None) -> "Bucket":
@@ -79,6 +96,8 @@ class Bucket:
             matches_if=list(entry.get("matches_if", [])),
             not_likely_if=list(entry.get("not_likely_if", [])),
             quick_test=entry.get("quick_test", ""),
+            reasoning_basis=entry.get("reasoning_basis", ""),
+            sources=list(entry.get("sources", [])),
         )
 
 
@@ -1102,7 +1121,7 @@ def bucket_possibilities(i: Intake) -> List[Bucket]:
         if i.mechanism in {"Hard crimp", "High volume pulling", "Dynamic catch"}:
             out.append(Bucket.from_id("wrist_flexor_tendinopathy", qualifier="common"))
         if i.onset == "Sudden" or i.mechanism in {"Fall", "Dynamic catch"}:
-            out.append(Bucket.from_id("scaphoid_fracture", qualifier="must exclude"))
+            out.append(Bucket.from_id("scaphoid_fracture", qualifier="must rule out"))
         out.append(Bucket.from_id("tfcc", qualifier="possible"))
         out.append(Bucket.from_id("de_quervain", qualifier="possible"))
 
