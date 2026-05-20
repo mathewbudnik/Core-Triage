@@ -1,5 +1,8 @@
 import { useState } from 'react'
 import { TRANSITIONS, DURATIONS, EASE } from '../lib/motion'
+import { calculateSendXP, levelFromTotalXP } from '../lib/xp'
+import { STYLE_CHIP_TO_STATS, deriveStatShape, AXES } from '../lib/stats'
+import { generateDailyQuest } from '../lib/quests'
 import CelebrationOverlay from './ui/CelebrationOverlay'
 import Surface from './ui/Surface'
 import Eyebrow from './ui/Eyebrow'
@@ -210,7 +213,37 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
 
       <section className="mb-12">
         <h2 className="ct-title mb-4">Reward engine</h2>
-        <p className="ct-body-soft">Pending Tasks 17-19 (xp.js, stats.js, quests.js).</p>
+        <Surface tier="default" padding="lg" className="space-y-3">
+          <Eyebrow divider>Reward engine · live</Eyebrow>
+          <p className="ct-body-soft">
+            Sample send: V6 flash outdoor, climber strongest in power, climb is crimpy. XP earned:{' '}
+            <strong className="text-ct-terra-soft">
+              {calculateSendXP({
+                grade: 'V6', modality: 'outdoor', outcome: 'flash',
+                isPersonalRecord: false, stylePrimary: 'crimpy',
+                climberStatShape: { power: 7, crimpy: 6, dynamic: 4, technical: 5, mobility: 3 },
+                isDeepLog: false, sessionPosition: 0,
+              })}
+            </strong>
+          </p>
+          <p className="ct-body-soft">
+            Level breakdown at 2,500 XP:{' '}
+            <strong className="text-ct-terra-soft">
+              Lv {levelFromTotalXP(2500).level} · {levelFromTotalXP(2500).xpInLevel}/{levelFromTotalXP(2500).xpForNext} XP
+            </strong>
+          </p>
+          <p className="ct-body-soft">
+            Today's quest (seeded for Mobility-weak climber):{' '}
+            <strong className="text-ct-terra-soft">
+              {generateDailyQuest({
+                statShape: { power: 7, crimpy: 6, dynamic: 4, technical: 5, mobility: 3 },
+                lastTrainingType: 'climbing', lastTrainingDaysAgo: 1,
+                hasOutdoorIn30d: true, averageSendGrade: 'V4',
+                recentSendsAtGrade: true, seed: 7,
+              })?.title}
+            </strong>
+          </p>
+        </Surface>
       </section>
     </main>
   )

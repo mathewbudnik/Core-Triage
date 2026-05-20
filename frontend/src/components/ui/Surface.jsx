@@ -1,5 +1,5 @@
 /**
- * Outdoor card. Replaces ad-hoc bg-panel + border-outline patterns.
+ * Foundational surface card — three tiers (flat, default, hero).
  *
  * Props:
  *   tier:    'flat' | 'default' | 'hero'      (default: 'default')
