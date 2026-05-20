@@ -132,7 +132,7 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
         <div className="max-w-sm space-y-3">
           <RewardPreview xp={180} breakdown="V6 × flash × indoor" />
           <RewardPreview xp={225} breakdown="V6 × flash × indoor × deep" />
-          <RewardPreview xp={50} breakdown="Quest reward" label="QUEST COMPLETE" />
+          <RewardPreview xp={50} breakdown="Quest reward" label="QUEST CLEAR" />
         </div>
       </section>
 
@@ -166,15 +166,15 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
         <h2 className="ct-title mb-4">QuestCard</h2>
         <div className="max-w-sm space-y-3">
           <QuestCard
-            title="Try a slab problem"
-            why="You're light on Mobility (3). Slabs are quick wins. Log 2 sends."
+            title="Find something slabby"
+            why="Work the feet. 2 sends."
             xp={50}
             multiplier="MOBILITY ×1.5"
             progress={{ current: 2, target: 3 }}
           />
           <QuestCard
-            title="Log a 20-minute mobility session"
-            why="No mobility training in the last 7 days."
+            title="20 min of mobility"
+            why="Hips need it. You've been skipping."
             xp={50}
             progress={{ current: 0, target: 1 }}
           />
@@ -195,7 +195,7 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
           <CelebrationOverlay
             open={celebrate}
             onClose={() => setCelebrate(false)}
-            title="V6 SENT"
+            title="Clean send. V6."
             subtitle="+180 XP"
           />
         </Surface>

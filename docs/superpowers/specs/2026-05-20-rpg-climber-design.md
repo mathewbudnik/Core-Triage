@@ -55,6 +55,46 @@ Locked from brainstorm: forest green base, terracotta accents, cream type, clean
 - **Motion.** Default ease: `cubic-bezier(0.4, 0, 0.2, 1)`. Default duration: 320ms. Snappier than the Grand Seiko 380ms — feels more responsive for a daily-use tool. Springs are reserved for celebration moments (level-up, send-complete).
 - **No decoration costuming.** No topographic contour lines, no GPS coordinates, no mascot, no class titles. The palette and type do the work; the chrome stays clean.
 
+### 5.1 Brand voice & identity
+
+**North Star:** **Climb Clean.** Two words. Real climber vocabulary. Captures both the value (skill over force) and the literal climbing usage (clean send — no falls, no dabs, no rests). This is the app's mission in a phrase.
+
+**Voice register:** veteran routesetter watching from the floor. Observational, brief, concrete. The voice notices *how* a climber moved, not just *that* they sent. Speaks like a setter saying "that was tight" or "clean send" after watching a project go down. Confident through restraint, never performing.
+
+**Author:** implicit. The app's voice is the creator's (a 5-year veteran setter) but their name does NOT appear in the product. No "by Budnik" signature, no public author credit. The quality of being-set-by-a-veteran comes through in vocabulary, opinions, and tone — climbers feel it without being told.
+
+**Vocabulary that's IN:** clean, tight, floated, send, beta, project, slabby, crimps, dab, sandbag, overhang, gaston, dyno, redpoint, flash, the throw, the crux, the feet, working a problem.
+
+**Vocabulary that's OUT:** "line" (when meaning a problem — too forced), "quiet" (overused, reads zen), generic fitness words ("workout", "session" used loosely), AI-default phrasings ("Today's quest", "Welcome back, climber").
+
+**Rules of writing:**
+- **No exclamation marks.** Anywhere. Even on PRs.
+- **No "CRUSHED IT" energy.** Setters don't yell when their problems go down.
+- **No meditation/zen abstractions.** "Find your center" is not in this app's mouth.
+- **No cheerleader voice.** "You got this!" "Amazing job!" are out.
+- **Concrete over abstract.** "Work the feet" > "Focus on technique."
+- **Brief.** One observation per moment. Setters say "tight" not paragraphs.
+- **Empathy on off days, no toxic positivity.** "Bad days happen" — not "every climb is progress!"
+- **Climber humor when it earns its place.** "Sandbag yourself." (push quest)
+- **Confidence through restraint.** Quiet over loud, always.
+
+**Worked examples** (concrete instead of abstract):
+
+| Generic / AI-y | In-voice |
+|---|---|
+| "Welcome back, Mathew!" | "Welcome back." |
+| "Today's Quest" | "TODAY · SEND" |
+| "Try a slab problem. You're light on Mobility (3)." | "Find something slabby. Work the feet." |
+| "Personal best: 28 days" | "Best run: 28. Don't break it." |
+| "21 day streak" | "21 day flow." |
+| "Level up! You've reached Level 15!" | "Lv 15. Keep moving." |
+| "Congratulations on your first V6!" | "Clean send. V6." or "Floated it. First V6." |
+| "Nothing logged yet — start tracking your climbs!" | "Nothing logged. Send something." |
+| "Quest complete! +50 XP" | "Tight. +50 XP." |
+| "You haven't trained mobility in 7 days — keep it up!" | "Hips need it. You've been skipping." |
+
+Every consumer of copy — quests.js, celebrations, empty states, hub headers, future feature components in Phase 1+ — inherits this voice. If a string sounds like a meditation app, a cheerleader, or a brand consultant wrote it: it's wrong. If it sounds like a setter making a brief observation from the floor: keep it.
+
 ## 6. Token spine
 
 ### 6.1 Color tokens
