@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { TRANSITIONS, DURATIONS, EASE } from '../lib/motion'
+import CelebrationOverlay from './ui/CelebrationOverlay'
 import Surface from './ui/Surface'
 import Eyebrow from './ui/Eyebrow'
 import TierBadge from './ui/TierBadge'
@@ -15,6 +17,7 @@ import QuestCard from './ui/QuestCard'
  * the route via the import.meta.env.DEV gate in App.jsx.
  */
 export default function DesignSystem() {
+  const [celebrate, setCelebrate] = useState(false)
   return (
     <main className="min-h-screen bg-ct-forest text-ct-cream p-10">
       <header className="mb-12 flex items-baseline justify-between">
@@ -154,7 +157,22 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
 
       <section className="mb-12">
         <h2 className="ct-title mb-4">CelebrationOverlay</h2>
-        <p className="ct-body-soft">Pending Task 14.</p>
+        <Surface tier="default" padding="lg" className="max-w-sm">
+          <Eyebrow divider className="mb-4">Trigger</Eyebrow>
+          <button
+            type="button"
+            onClick={() => setCelebrate(true)}
+            className="w-full py-3 rounded-lg bg-ct-terracotta text-ct-forest font-extrabold text-sm tracking-[0.04em]"
+          >
+            Fire celebration
+          </button>
+          <CelebrationOverlay
+            open={celebrate}
+            onClose={() => setCelebrate(false)}
+            title="V6 SENT"
+            subtitle="+180 XP"
+          />
+        </Surface>
       </section>
 
       <section className="mb-12">
