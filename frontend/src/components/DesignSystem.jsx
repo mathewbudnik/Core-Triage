@@ -4,6 +4,7 @@ import Eyebrow from './ui/Eyebrow'
 import TierBadge from './ui/TierBadge'
 import LevelMeter from './ui/LevelMeter'
 import StreakEmblem from './ui/StreakEmblem'
+import RewardPreview from './ui/RewardPreview'
 
 /**
  * Dev-only design system showcase. Mounted at /design-system (only in DEV builds).
@@ -96,7 +97,11 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
 
       <section className="mb-12">
         <h2 className="ct-title mb-4">RewardPreview</h2>
-        <p className="ct-body-soft">Pending Task 10.</p>
+        <div className="max-w-sm space-y-3">
+          <RewardPreview xp={180} breakdown="V6 × flash × indoor" />
+          <RewardPreview xp={225} breakdown="V6 × flash × indoor × deep" />
+          <RewardPreview xp={50} breakdown="Quest reward" label="QUEST COMPLETE" />
+        </div>
       </section>
 
       <section className="mb-12">
