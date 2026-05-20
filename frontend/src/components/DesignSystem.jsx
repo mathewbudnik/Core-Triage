@@ -3,6 +3,7 @@ import Surface from './ui/Surface'
 import Eyebrow from './ui/Eyebrow'
 import TierBadge from './ui/TierBadge'
 import LevelMeter from './ui/LevelMeter'
+import StreakEmblem from './ui/StreakEmblem'
 
 /**
  * Dev-only design system showcase. Mounted at /design-system (only in DEV builds).
@@ -87,7 +88,10 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
 
       <section className="mb-12">
         <h2 className="ct-title mb-4">StreakEmblem</h2>
-        <p className="ct-body-soft">Pending Task 9.</p>
+        <div className="max-w-sm space-y-3">
+          <StreakEmblem days={21} best={28} />
+          <StreakEmblem days={28} best={28} />
+        </div>
       </section>
 
       <section className="mb-12">
