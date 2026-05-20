@@ -1,4 +1,5 @@
 import { TRANSITIONS, DURATIONS, EASE } from '../lib/motion'
+import Surface from './ui/Surface'
 
 /**
  * Dev-only design system showcase. Mounted at /design-system (only in DEV builds).
@@ -29,7 +30,20 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
 
       <section className="mb-12">
         <h2 className="ct-title mb-4">Surface</h2>
-        <p className="ct-body-soft">Pending Task 5.</p>
+        <div className="grid grid-cols-3 gap-4">
+          <Surface tier="flat" padding="lg">
+            <p className="ct-eyebrow mb-2">Flat</p>
+            <p className="ct-body-soft">Solid forest, hairline border, no gradient. Tertiary containers.</p>
+          </Surface>
+          <Surface tier="default" padding="lg">
+            <p className="ct-eyebrow mb-2">Default</p>
+            <p className="ct-body-soft">Forest gradient + hairline border. The standard surface.</p>
+          </Surface>
+          <Surface tier="hero" padding="lg">
+            <p className="ct-eyebrow mb-2">Hero</p>
+            <p className="ct-body-soft">Warmer gradient + terracotta-tinted border. For featured panels.</p>
+          </Surface>
+        </div>
       </section>
 
       <section className="mb-12">
