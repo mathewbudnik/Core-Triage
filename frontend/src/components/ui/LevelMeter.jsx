@@ -23,7 +23,7 @@ export default function LevelMeter({
   const transition = useReducedTransition(TRANSITIONS.bar_fill)
   return (
     <div className={className}>
-      <p className="ct-eyebrow">RPG · Level</p>
+      <p className="ct-eyebrow">Flow</p>
       <p className="ct-display mt-1">{level}</p>
       <div className="relative h-[5px] bg-white/[0.07] rounded-full overflow-hidden mt-3">
         <motion.div
