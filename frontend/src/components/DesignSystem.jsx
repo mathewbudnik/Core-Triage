@@ -6,6 +6,7 @@ import LevelMeter from './ui/LevelMeter'
 import StreakEmblem from './ui/StreakEmblem'
 import RewardPreview from './ui/RewardPreview'
 import StatStrip from './ui/StatStrip'
+import StatRadar from './ui/StatRadar'
 
 /**
  * Dev-only design system showcase. Mounted at /design-system (only in DEV builds).
@@ -115,7 +116,20 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
 
       <section className="mb-12">
         <h2 className="ct-title mb-4">StatRadar</h2>
-        <p className="ct-body-soft">Pending Task 12.</p>
+        <div className="grid grid-cols-3 gap-4">
+          <Surface tier="default" padding="lg">
+            <Eyebrow divider className="mb-3">Asymmetric</Eyebrow>
+            <StatRadar stats={{ power: 7, crimpy: 6, dynamic: 4, technical: 5, mobility: 3 }} size={130} />
+          </Surface>
+          <Surface tier="default" padding="lg">
+            <Eyebrow divider className="mb-3">Balanced</Eyebrow>
+            <StatRadar stats={{ power: 5, crimpy: 5, dynamic: 5, technical: 5, mobility: 5 }} size={130} />
+          </Surface>
+          <Surface tier="default" padding="lg">
+            <Eyebrow divider className="mb-3">Brand new</Eyebrow>
+            <StatRadar stats={{ power: 1, crimpy: 1, dynamic: 0, technical: 1, mobility: 0 }} size={130} />
+          </Surface>
+        </div>
       </section>
 
       <section className="mb-12">
