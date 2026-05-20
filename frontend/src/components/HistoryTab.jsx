@@ -364,6 +364,56 @@ export default function HistoryTab({ dbReady, user, onLoginClick }) {
                     ))}
                   </div>
 
+                  {/* Re-derived diagnosis (primary bucket + differentials).
+                      Backend recomputes from the saved intake at fetch time
+                      so the view stays in sync with current bucket content.
+                      Hidden when re-derivation produced nothing usable. */}
+                  {selected.diagnosis?.buckets?.length > 0 && (
+                    <div className="pt-3 border-t border-outline/40 space-y-2.5">
+                      <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-muted">
+                        Diagnosis
+                      </p>
+                      {selected.diagnosis.severity?.label && (
+                        <p className="text-[11px] font-bold uppercase tracking-wider"
+                           style={{
+                             color: selected.diagnosis.severity?.level === 'severe'   ? '#fda4af'
+                                  : selected.diagnosis.severity?.level === 'moderate' ? '#f7bb51'
+                                  :                                                     '#7dd3c0',
+                           }}>
+                          {selected.diagnosis.severity.label}
+                        </p>
+                      )}
+                      {/* Primary bucket — name only; the qualifier appears
+                          inside the title via em-dash, no chip parsing here
+                          to keep this panel compact. */}
+                      <p className="text-sm font-semibold text-text leading-snug">
+                        {selected.diagnosis.buckets[0]?.title}
+                      </p>
+                      {selected.diagnosis.buckets[0]?.why && (
+                        <p className="text-xs text-muted leading-relaxed">
+                          {selected.diagnosis.buckets[0].why}
+                        </p>
+                      )}
+                      {selected.diagnosis.buckets.length > 1 && (
+                        <div className="pt-2">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-muted/70 mb-1.5">
+                            Other possibilities
+                          </p>
+                          <ul className="space-y-1">
+                            {selected.diagnosis.buckets.slice(1).map((b, i) => (
+                              <li key={i} className="text-xs text-muted leading-snug">
+                                · {b.title}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      <p className="text-[10px] text-muted/50 italic pt-1">
+                        Re-derived from your saved answers using the current rule set.
+                      </p>
+                    </div>
+                  )}
+
                   <button
                     onClick={handleDelete}
                     disabled={deleting}

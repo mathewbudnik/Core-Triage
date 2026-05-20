@@ -5,8 +5,11 @@ import { X } from 'lucide-react'
 
 const GAP = 12
 const VIEWPORT_PAD = 12
-const COACHMARK_W_DESKTOP = 340
-const MOBILE_BOTTOM_OFFSET = 76 // above bottom nav (~62px) + a little air
+const COACHMARK_W_DESKTOP = 300
+const COACHMARK_W_MOBILE = 320           // narrower than full-width so the
+                                          // diagram below stays visible/tappable
+const MOBILE_BOTTOM_OFFSET = 92          // above bottom nav + extra air so the
+                                          // tip clears the diagram's lower legs
 
 // Desktop only: compute anchored position in document coordinates so the
 // coachmark scrolls naturally with the anchor instead of chasing it on every
@@ -108,12 +111,20 @@ export default function Coachmark({ tour }) {
 
   const isMobileBottom = pos.mode === 'mobile-bottom'
 
+  // NOTE on centering: framer-motion drives entry/exit via the CSS `transform`
+  // property, so we can't use `transform: translateX(-50%)` for centering —
+  // motion would clobber it. Use the "left + right + margin: auto + max-width"
+  // pattern instead, which centers reliably and leaves `transform` free for
+  // motion to animate.
   const wrapperStyle = isMobileBottom
     ? {
         position: 'fixed',
         left: VIEWPORT_PAD,
         right: VIEWPORT_PAD,
         bottom: `calc(${MOBILE_BOTTOM_OFFSET}px + env(safe-area-inset-bottom, 0px))`,
+        maxWidth: COACHMARK_W_MOBILE,
+        marginLeft: 'auto',
+        marginRight: 'auto',
         zIndex: 200,
       }
     : {
@@ -137,57 +148,59 @@ export default function Coachmark({ tour }) {
         exit={{ opacity: 0, y: isMobileBottom ? 16 : (pos.placement === 'below' ? -8 : 8) }}
         transition={{ duration: 0.24, ease: [0.2, 0.7, 0.2, 1] }}
         style={wrapperStyle}
-        className="bg-panel/95 backdrop-blur-md border-2 border-accent/50 rounded-xl shadow-glow text-text"
+        className="bg-panel/95 backdrop-blur-md border border-accent/30 rounded-lg shadow-lg text-text"
       >
         {/* Arrow — desktop anchored only */}
         {!isMobileBottom && (
           <span
             aria-hidden
-            className="absolute w-3 h-3 bg-panel border-accent/50 rotate-45"
+            className="absolute w-2.5 h-2.5 bg-panel border-accent/30 rotate-45"
             style={{
-              left: Math.max(10, Math.min(pos.arrowX - 6, pos.width - 16)),
-              top: pos.placement === 'below' ? -7 : 'auto',
-              bottom: pos.placement === 'above' ? -7 : 'auto',
-              borderTopWidth: pos.placement === 'below' ? 2 : 0,
-              borderLeftWidth: pos.placement === 'below' ? 2 : 0,
-              borderRightWidth: pos.placement === 'above' ? 2 : 0,
-              borderBottomWidth: pos.placement === 'above' ? 2 : 0,
+              left: Math.max(10, Math.min(pos.arrowX - 5, pos.width - 14)),
+              top: pos.placement === 'below' ? -6 : 'auto',
+              bottom: pos.placement === 'above' ? -6 : 'auto',
+              borderTopWidth: pos.placement === 'below' ? 1 : 0,
+              borderLeftWidth: pos.placement === 'below' ? 1 : 0,
+              borderRightWidth: pos.placement === 'above' ? 1 : 0,
+              borderBottomWidth: pos.placement === 'above' ? 1 : 0,
               borderStyle: 'solid',
             }}
           />
         )}
 
-        <div className="px-4 py-3">
-          <div className="flex items-start justify-between gap-3">
-            <span className="text-[10px] uppercase tracking-wider font-semibold text-accent">
-              {tip.label}
-            </span>
+        <div className="px-3 py-2.5">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <span className="text-[9px] uppercase tracking-wider font-semibold text-accent">
+                {tip.label}
+              </span>
+              <p className="text-xs text-text/90 leading-snug mt-0.5">{tip.body}</p>
+            </div>
             <button
               onClick={skip}
               aria-label="Skip tour"
-              className="text-muted hover:text-text transition-colors -mt-0.5 -mr-1 p-1"
+              className="text-muted/60 hover:text-text transition-colors -mt-0.5 -mr-0.5 p-0.5 shrink-0"
             >
-              <X size={14} />
+              <X size={12} />
             </button>
           </div>
-          <p className="text-sm text-text leading-snug mt-0.5">{tip.body}</p>
 
-          <div className="flex items-center justify-between mt-2.5">
+          <div className="flex items-center justify-between mt-2">
             <div className="flex items-center gap-1.5">
               {Array.from({ length: tip.total }).map((_, i) => (
                 <span
                   key={i}
                   className={`rounded-full transition-all ${
-                    i === tip.index ? 'w-4 h-1.5 bg-accent' :
-                    i <  tip.index ? 'w-1.5 h-1.5 bg-accent/50' :
-                                     'w-1.5 h-1.5 bg-outline'
+                    i === tip.index ? 'w-3 h-1 bg-accent' :
+                    i <  tip.index ? 'w-1 h-1 bg-accent/50' :
+                                     'w-1 h-1 bg-outline'
                   }`}
                 />
               ))}
             </div>
             <button
               onClick={dismiss}
-              className="text-xs font-semibold text-accent hover:text-accent/80 transition-colors px-2 py-1"
+              className="text-[11px] font-semibold text-accent hover:text-accent/80 transition-colors px-2 py-0.5"
             >
               Got it
             </button>

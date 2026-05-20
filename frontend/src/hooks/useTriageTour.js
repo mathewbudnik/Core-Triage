@@ -2,18 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 const STORAGE_KEY = 'coretriage_tour_v1'
 
-// Tour tips keyed by slug. The wizard renders different slugs depending on
-// region (non-finger: 5 steps; finger: 8 steps with three drill-down screens
-// inserted). Slug-based lookup keeps the right tip on the right screen.
+// Tour tips keyed by slug. Two screens now: region picker, then smart card.
+// The smart card is self-explanatory, so no coachmark there.
 const TIPS_BY_SLUG = {
-  '':                { anchorId: 'region-diagram',  label: 'Where',         body: 'Tap where it hurts. You can change this anytime.' },
-  'finger_which':    { anchorId: 'which-finger',     label: 'Finger',        body: 'Which finger? Helps narrow what got hurt.' },
-  'finger_location': { anchorId: 'finger-location',  label: 'Location',      body: 'Where on the finger? Picks out pulley vs joint vs side.' },
-  'grip_mode':       { anchorId: 'grip-mode',        label: 'Grip',          body: 'What grip? Crimp loads A2/A4 — pockets load lumbrical.' },
-  'onset':           { anchorId: 'onset-row',        label: 'Onset',         body: 'Was it gradual or sudden? Then pick how it happened.' },
-  'symptoms':        { anchorId: 'severity-slider', label: 'Pain',          body: "Slide to rate today's pain, then pick what it feels like." },
-  'details':         { anchorId: 'symptoms-grid',    label: 'Symptoms',      body: 'Tick everything that applies — none is fine too.' },
-  'finish':          { anchorId: 'free-text',        label: 'Notes',         body: 'Add anything else (climbs, holds, history). Optional.' },
+  '': { anchorId: 'region-diagram', label: 'Where', body: 'You can change this anytime.' },
 }
 
 function readSeen() {
@@ -80,10 +72,10 @@ export default function useTriageTour({ slug, totalSteps }) {
     setDismissed(new Set())
   }, [])
 
-  // Auto-mark-seen when the user reaches the final wizard step (the 'finish'
-  // slug) for the first time while the tour is active.
+  // Auto-mark-seen when the user reaches the smart-card step for the first
+  // time. Picking a region is the user's signal that they've seen the tour.
   useEffect(() => {
-    if (active && slug === 'finish') markSeen()
+    if (active && slug === 'card') markSeen()
   }, [active, slug, markSeen])
 
   // Auto-dismiss the current tip on the first pointer interaction with the

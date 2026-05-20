@@ -41,14 +41,21 @@ export default function AvatarPickerModal({ user, onClose, onUserChange, onToast
 
   async function handleSave() {
     if (!dirty || saving) return
+    // Optimistic update: apply the new avatar to the user object + close
+    // the modal immediately. Background sync runs after; on failure we
+    // revert the user object and re-open the modal so the user can retry.
+    const previous = { avatar_icon: user?.avatar_icon, avatar_color: user?.avatar_color }
+    onUserChange?.({ ...user, avatar_icon: icon, avatar_color: color })
+    onClose?.()
     setSaving(true)
     try {
       await apiSetAvatar({ icon, color })
-      const me = await getMe()
-      onUserChange?.(me)
-      onToast?.({ kind: 'info', message: 'Avatar updated.' })
-      onClose?.()
+      // Refresh in the background to pick up any normalization. Non-blocking.
+      getMe().then((me) => onUserChange?.(me)).catch(() => {})
     } catch (err) {
+      // Revert + notify. The modal is already closed; toast carries the
+      // failure so the user knows the avatar didn't actually save.
+      onUserChange?.({ ...user, avatar_icon: previous.avatar_icon, avatar_color: previous.avatar_color })
       onToast?.({ kind: 'error', message: err.message || 'Could not save avatar.' })
     } finally {
       setSaving(false)

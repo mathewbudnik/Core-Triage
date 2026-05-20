@@ -174,38 +174,45 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
     setForm((f) => ({ ...f, [key]: val }))
   }
 
-  // Actually fire the POST. Optionally pass a `note` that gets appended
-  // to the form's notes field — used by the strong-prompt confirm path
-  // so the user's "about this send" text is persisted.
-  async function performSave(extraNote) {
-    setSaving(true)
-    setError(null)
+  // Optimistic save: dismiss the modal immediately so the user is freed up
+  // and fire the POST in the background. The cascading side-effects (new
+  // PR toast, award unlock, tier promotion takeover) still fire from the
+  // background promise — they're event-driven and don't require the modal
+  // to be mounted. On failure we surface a toast since the originating
+  // modal is already gone.
+  function performSave(extraNote) {
     setPending(null)
-    try {
-      const payload = extraNote
-        ? { ...form, notes: form.notes ? `${form.notes}\n${extraNote}` : extraNote }
-        : form
-      const res = await logTraining(payload)
-      // PR toast — existing.
-      if (res?.new_prs && (res.new_prs.boulder || res.new_prs.route)) {
-        window.dispatchEvent(new CustomEvent('ct:new-pr', { detail: res.new_prs }))
+    setError(null)
+    // Snapshot the payload now; we still need it inside the async call
+    // even though we're closing the modal first.
+    const payload = extraNote
+      ? { ...form, notes: form.notes ? `${form.notes}\n${extraNote}` : extraNote }
+      : form
+    // Close the modal *first* — the user perceives the save as instant.
+    onSave?.()
+    // Fire the network call in the background. Returning the promise lets
+    // callers await if they need to (none currently do).
+    return (async () => {
+      try {
+        const res = await logTraining(payload)
+        if (res?.new_prs && (res.new_prs.boulder || res.new_prs.route)) {
+          window.dispatchEvent(new CustomEvent('ct:new-pr', { detail: res.new_prs }))
+        }
+        if (Array.isArray(res?.new_awards) && res.new_awards.length) {
+          window.dispatchEvent(new CustomEvent('ct:award-unlocked', { detail: { awards: res.new_awards } }))
+        }
+        if (res?.tier_change && res.tier_change.from !== res.tier_change.to) {
+          window.dispatchEvent(new CustomEvent('ct:tier-promotion', { detail: res.tier_change }))
+        }
+        baseline.refresh()
+      } catch (err) {
+        // Modal already closed — surface via the global toast channel so the
+        // failure isn't silent.
+        window.dispatchEvent(new CustomEvent('ct:toast', {
+          detail: { kind: 'error', message: err?.message || 'Could not log your session. Try again.' },
+        }))
       }
-      // Award unlock toasts — App.jsx queues them.
-      if (Array.isArray(res?.new_awards) && res.new_awards.length) {
-        window.dispatchEvent(new CustomEvent('ct:award-unlocked', { detail: { awards: res.new_awards } }))
-      }
-      // Tier promotion takeover.
-      if (res?.tier_change && res.tier_change.from !== res.tier_change.to) {
-        window.dispatchEvent(new CustomEvent('ct:tier-promotion', { detail: res.tier_change }))
-      }
-      // Refresh baseline so plausibility thresholds move with the climber's
-      // new hardest send.
-      baseline.refresh()
-      onSave?.()
-    } catch (err) {
-      setError(err.message)
-      setSaving(false)
-    }
+    })()
   }
 
   function handleSave() {
@@ -253,7 +260,7 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
           <select
             value={form.session_type}
             onChange={(e) => set('session_type', e.target.value)}
-            className="w-full bg-panel border border-outline rounded-lg px-3 py-1.5 text-sm text-text outline-none focus:border-accent capitalize"
+            className="w-full bg-panel border border-outline rounded-lg px-3 py-1.5 text-base sm:text-sm text-text outline-none focus:border-accent capitalize"
           >
             {SESSION_TYPES.map((t) => (
               <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
@@ -323,7 +330,7 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
               placeholder="e.g. V5×3, V6×1, V7 attempt"
               value={form.grades_sent}
               onChange={(e) => set('grades_sent', e.target.value)}
-              className="w-full bg-panel border border-outline rounded-lg px-3 py-1.5 text-sm text-text placeholder:text-muted/50 outline-none focus:border-accent"
+              className="w-full bg-panel border border-outline rounded-lg px-3 py-1.5 text-base sm:text-sm text-text placeholder:text-muted/50 outline-none focus:border-accent"
             />
           </div>
           <ClimbLogSection
@@ -342,7 +349,7 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
           placeholder="How did it feel? Any breakthroughs or setbacks?"
           value={form.notes}
           onChange={(e) => set('notes', e.target.value)}
-          className="w-full bg-panel border border-outline rounded-lg px-3 py-1.5 text-sm text-text placeholder:text-muted/50 outline-none focus:border-accent resize-none"
+          className="w-full bg-panel border border-outline rounded-lg px-3 py-1.5 text-base sm:text-sm text-text placeholder:text-muted/50 outline-none focus:border-accent resize-none"
         />
       </div>
 
