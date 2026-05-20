@@ -2,6 +2,7 @@ import { TRANSITIONS, DURATIONS, EASE } from '../lib/motion'
 import Surface from './ui/Surface'
 import Eyebrow from './ui/Eyebrow'
 import TierBadge from './ui/TierBadge'
+import LevelMeter from './ui/LevelMeter'
 
 /**
  * Dev-only design system showcase. Mounted at /design-system (only in DEV builds).
@@ -73,7 +74,15 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
 
       <section className="mb-12">
         <h2 className="ct-title mb-4">LevelMeter</h2>
-        <p className="ct-body-soft">Pending Task 8.</p>
+        <Surface tier="default" padding="lg" className="max-w-sm">
+          <LevelMeter
+            level={14}
+            xpInLevel={620}
+            xpForNext={1000}
+            nextLabel="next: unlock new quest tier"
+            animateOnMount
+          />
+        </Surface>
       </section>
 
       <section className="mb-12">
