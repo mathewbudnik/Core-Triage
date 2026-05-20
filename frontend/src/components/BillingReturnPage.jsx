@@ -79,7 +79,7 @@ export default function BillingReturnPage({ outcome, onDone }) {
             <div>
               <h1 className="text-lg font-bold text-text">You're subscribed</h1>
               <p className="text-sm text-muted mt-2">
-                Pro features are unlocked. Welcome to CoreTriage.
+                Your subscription is active — full access stays unlocked. Welcome to CoreTriage.
               </p>
             </div>
             <button onClick={handleContinue} className="btn-primary w-full">

@@ -22,7 +22,7 @@ const FEATURES = [
     color: 'text-accent',
     bg: 'bg-accent/10 border-accent/20',
     title: 'Rehab Library',
-    desc: 'Week-by-week exercise protocols for every injury area. Phase 1 (gentle reactivation) is free; Phase 2 and 3 (progressive loading and sport-specific reload) are part of Pro.',
+    desc: 'Week-by-week exercise protocols for every injury area. Phase 1 (gentle reactivation) is always free; Phase 2 and 3 (progressive loading and sport-specific reload) are part of the subscription — included in your 14-day free trial.',
   },
   {
     icon: UserCircle2,
@@ -58,7 +58,10 @@ export default function AboutTab() {
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
         <div className="flex items-center gap-3">
           <Logo size={40} dark />
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-accent via-text to-accent2 bg-clip-text text-transparent">
+          <h2
+            className="text-3xl font-bold bg-clip-text text-transparent"
+            style={{ backgroundImage: 'linear-gradient(90deg, var(--tier-c, #7dd3c0), #e7eaf0, #f47272)' }}
+          >
             CoreTriage
           </h2>
         </div>
@@ -132,7 +135,7 @@ export default function AboutTab() {
           </p>
 
           <p className="text-xs text-muted leading-relaxed">
-            The Coach Chat connects you directly with him for the questions an algorithm can't answer — load management, return-to-climbing decisions, technique tweaks that protect the bits that hurt.
+            Coach Chat connects you directly with him for the work an algorithm can't do: <span className="text-text font-medium">beta breakdowns from video of your project</span>, a training plan shaped around it, plus async messaging for load management, return-to-climbing calls, and technique tweaks — feedback from an <span className="text-text font-medium">outdoor V13 boulderer</span> and USAC-certified routesetter who's been at this for a decade.
           </p>
 
           <div className="pt-1 flex items-center gap-1.5 text-xs text-accent3">

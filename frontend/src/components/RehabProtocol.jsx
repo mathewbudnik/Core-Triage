@@ -117,13 +117,13 @@ function PhaseLockGate({ onUpgrade }) {
         <Lock size={20} className="text-accent" />
       </div>
       <div>
-        <p className="text-sm font-semibold text-text">Pro Subscription Required</p>
+        <p className="text-sm font-semibold text-text">Subscription required</p>
         <p className="text-xs text-muted mt-1 max-w-xs">
-          Phase 2 &amp; 3 progressions are part of Pro — full periodized protocols mapped to your injury, $10/mo.
+          Phase 2 &amp; 3 progressions are part of the subscription — full periodized protocols mapped to your injury. Free 14-day trial, then $7.99/mo.
         </p>
       </div>
       <button onClick={onUpgrade} className="btn-primary text-sm">
-        Upgrade to Pro
+        Subscribe — $7.99/mo
       </button>
     </div>
   )

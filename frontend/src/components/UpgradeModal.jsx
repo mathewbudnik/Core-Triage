@@ -12,19 +12,20 @@ const PRO_BENEFITS = [
 ]
 
 const COACHING_BENEFITS = [
-  { icon: UserCircle2,   text: 'Direct 1:1 async messaging with Mathew' },
-  { icon: Activity,      text: 'Personal review of your triage results' },
-  { icon: Dumbbell,      text: 'Custom return-to-climb plan built around you' },
-  { icon: Clock,         text: 'Includes everything in Pro for the month' },
+  { icon: MessageSquare, text: 'Send video of your project — get a beta breakdown with technique + sequence ideas' },
+  { icon: UserCircle2,   text: 'Direct 1:1 async messaging with Mathew — outdoor V13 boulderer, USAC-certified routesetter' },
+  { icon: Dumbbell,      text: 'Training plan shaped around your project, goals, and weaknesses' },
+  { icon: Activity,      text: 'Injury and load-management calls when you need them' },
+  { icon: Clock,         text: 'Includes the full app for the month' },
 ]
 
 const PLAN_META = {
   pro: {
-    label: 'Pro',
-    price: '$10',
-    cadence: '/ month',
-    headline: 'Unlock the full app',
-    sub: 'Full rehab library, AI training plans, and PDF reports — everything you need to recover and train smarter.',
+    label: 'Subscription',
+    price: '$7.99',
+    cadence: '/ month · 14-day free trial',
+    headline: 'Keep your full access',
+    sub: 'New accounts get 14 days of unlimited access. Subscribe to keep AI training plans, full rehab progressions, and unlimited AI chat after your trial ends.',
     benefits: PRO_BENEFITS,
     color: 'text-accent',
     bg: 'bg-accent/10',
@@ -36,11 +37,11 @@ const PLAN_META = {
     label: 'Coaching',
     price: '$89',
     cadence: '/ month · application only',
-    headline: 'Work 1:1 with Mathew',
-    sub: '1:1 coaching from an outdoor V13 boulderer and USAC-certified routesetter with over a decade of climbing experience. Personal injury review and a return-to-climb plan built around you. Apply and we\'ll talk.',
+    headline: 'Inside knowledge, climber to climber',
+    sub: 'Send video of your project and get the kind of feedback that only comes from years inside the sport — beta breakdowns, technique fixes, and a training plan shaped around your weaknesses. Plus direct messaging for the calls an algorithm can\'t make: load management, return-to-climb, the small technique tweaks that change everything. Mathew climbs V13 outdoors, sets at Momentum, and has spent a decade figuring out what works.',
     benefits: COACHING_BENEFITS,
     mailSubject: 'CoreTriage Coaching — Application',
-    mailBody: "Hi Mathew, I'd like to apply for 1:1 coaching. Here's a bit about my situation:\n\n- Injury / goal:\n- Climbing background:\n- What you'd want help with:\n\n",
+    mailBody: "Hi Mathew, I'd like to apply for 1:1 coaching. A bit about me:\n\n- Current project / goal:\n- Climbing background (grades, years, disciplines):\n- What you'd want help with (beta breakdown, training plan, injury, technique):\n- Link to a recent project video (optional but recommended):\n\n",
     cta: 'Apply for Coaching',
     color: 'text-accent3',
     bg: 'bg-accent3/10',
@@ -138,7 +139,7 @@ export default function UpgradeModal({ onClose, trigger = 'feature', user, onSig
               {checkoutLoading ? (
                 <><Loader2 size={14} className="animate-spin" /> Opening checkout…</>
               ) : (
-                user ? 'Subscribe — $10/mo' : 'Sign in to subscribe'
+                user ? 'Subscribe — $7.99/mo' : 'Sign in to subscribe'
               )}
             </button>
           ) : (

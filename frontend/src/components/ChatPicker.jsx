@@ -60,7 +60,7 @@ export default function ChatPicker({ user, onSelectCoach, onSelectAI }) {
               </span>
             </div>
             <p className="text-xs text-muted mt-1.5 leading-relaxed">
-              Send video of your project — get a beta breakdown and training feedback from an outdoor V13 boulderer with a decade in the sport. Plus direct messaging for return-to-climb and load-management calls.
+              Send video of your project — get a beta breakdown and training feedback from an outdoor V13 boulderer and USAC-certified routesetter with a decade in the sport. Plus direct messaging for return-to-climb and load-management calls.
             </p>
             <p className="text-[10px] text-muted/70 mt-2">
               Replies in 24–48h

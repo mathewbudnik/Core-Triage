@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronDown, LogOut, Pencil, CreditCard, Sparkles,
-  Eye, EyeOff, Check, X, Loader2, Shield, Mail, Trophy, Palette,
+  Check, X, Loader2, Shield, Mail, Trophy, Palette, Clock,
 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import {
   setDisplayName as apiSetDisplayName,
-  setLeaderboardPrivate as apiSetPrivate,
   openBillingPortal,
   getMe,
 } from '../api'
@@ -15,18 +15,30 @@ import AvatarPickerModal from './AvatarPickerModal'
 
 const NAME_RE = /^[A-Za-z0-9_-]{3,20}$/
 
-const TIER_THEME = {
-  pro:   { bg: 'rgba(125,211,192,0.15)', border: 'rgba(125,211,192,0.35)', text: '#7dd3c0', label: 'Pro' },
-  coach: { bg: 'rgba(247,187,81,0.15)',  border: 'rgba(247,187,81,0.35)',  text: '#f7bb51', label: 'Coach' },
-  free:  null,
+// Subscription state badges shown in the menu header. The shape is a
+// superset of the old free/pro tier model so existing layouts keep
+// working — the trial / expired / coaching variants just give clearer
+// context now that we've moved to a trial-then-subscribe model.
+const STATE_BADGES = {
+  active:   { bg: 'rgba(125,211,192,0.15)', border: 'rgba(125,211,192,0.35)', text: '#7dd3c0', label: 'Subscribed' },
+  trial:    { bg: 'rgba(125,211,192,0.12)', border: 'rgba(125,211,192,0.30)', text: '#7dd3c0', label: 'Trial' },
+  expired:  { bg: 'rgba(244,114,114,0.10)', border: 'rgba(244,114,114,0.30)', text: '#f47272', label: 'Trial ended' },
+  coaching: { bg: 'rgba(247,187,81,0.15)',  border: 'rgba(247,187,81,0.35)',  text: '#f7bb51', label: 'Coaching' },
+  coach:    { bg: 'rgba(247,187,81,0.15)',  border: 'rgba(247,187,81,0.35)',  text: '#f7bb51', label: 'Coach' },
+}
+
+function badgeFor(user) {
+  if (user.is_coach) return STATE_BADGES.coach
+  const state = user.subscription_state?.state
+  return state ? STATE_BADGES[state] : null
 }
 
 export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeClick, onToast }) {
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [editingName, setEditingName] = useState(false)
   const [draftName, setDraftName] = useState(user.display_name || '')
   const [savingName, setSavingName] = useState(false)
-  const [savingPrivate, setSavingPrivate] = useState(false)
   const [billingLoading, setBillingLoading] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const wrapRef = useRef(null)
@@ -67,32 +79,27 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
   async function handleSaveName() {
     if (localNameError || savingName) return
     if (draftName === user.display_name) { setEditingName(false); return }
+    // Optimistic update: flip the UI immediately, then sync to the server.
+    // On failure we revert + show a toast so the user knows it didn't stick.
+    const previousName = user.display_name
+    onUserChange?.({ ...user, display_name: draftName })
+    setEditingName(false)
     setSavingName(true)
     try {
       await apiSetDisplayName(draftName)
-      await refreshUser()
-      setEditingName(false)
-      onToast?.({ kind: 'info', message: 'Display name updated.' })
+      // Refresh in the background to pick up any server-side normalization
+      // (case, trim) without blocking the user.
+      refreshUser()
     } catch (err) {
+      // Revert and re-open the editor so the user can fix / retry.
+      onUserChange?.({ ...user, display_name: previousName })
+      setEditingName(true)
       onToast?.({ kind: 'error', message: err.message || 'Could not save display name.' })
     } finally {
       setSavingName(false)
     }
   }
 
-  async function handleTogglePrivate() {
-    if (savingPrivate) return
-    const next = !user.leaderboard_private
-    setSavingPrivate(true)
-    try {
-      await apiSetPrivate(next)
-      await refreshUser()
-    } catch (err) {
-      onToast?.({ kind: 'error', message: err.message || 'Could not update privacy.' })
-    } finally {
-      setSavingPrivate(false)
-    }
-  }
 
   async function handleBilling() {
     if (billingLoading) return
@@ -106,8 +113,12 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
     }
   }
 
-  const isPaid = user.tier && user.tier !== 'free'
-  const tierBadge = user.is_coach ? TIER_THEME.coach : (isPaid ? TIER_THEME.pro : null)
+  const subState = user.subscription_state?.state
+  const trialDaysLeft = user.subscription_state?.days_remaining
+  // "Paying" for billing-portal purposes = active subscription or coaching.
+  // Trial users should still see the upgrade CTA, not "Manage subscription".
+  const isPaid = subState === 'active' || subState === 'coaching'
+  const tierBadge = badgeFor(user)
   const avatarName = user.display_name || user.email
 
   return (
@@ -176,6 +187,18 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
                       </span>
                     )}
                   </div>
+                  {/* Trial countdown — only shown during trial, gives the
+                      user a glanceable "X days left" right under their name. */}
+                  {subState === 'trial' && trialDaysLeft != null && (
+                    <p className="text-[10px] text-accent font-semibold mt-0.5">
+                      {trialDaysLeft} day{trialDaysLeft === 1 ? '' : 's'} left in your trial
+                    </p>
+                  )}
+                  {subState === 'expired' && (
+                    <p className="text-[10px] text-accent2 font-semibold mt-0.5">
+                      Trial ended — subscribe to unlock
+                    </p>
+                  )}
                   <p className="text-[11px] text-muted truncate flex items-center gap-1 mt-0.5">
                     <Mail size={10} />
                     {user.email}
@@ -205,7 +228,7 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
                         }}
                         disabled={savingName}
                         maxLength={24}
-                        className="input-base flex-1 text-xs py-1.5"
+                        className="input-base flex-1 text-base sm:text-xs py-1.5"
                         placeholder="Display name"
                       />
                       <button
@@ -256,42 +279,17 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
               </button>
             </div>
 
-            {/* Leaderboard privacy toggle */}
+            {/* History — moved here from the top nav so the bottom nav can
+                stay focused on the 5 primary climbing surfaces. */}
             <div className="py-1 border-b border-outline">
               <button
-                onClick={handleTogglePrivate}
-                disabled={savingPrivate}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-panel transition-colors disabled:opacity-60"
+                onClick={() => { setOpen(false); navigate('/history') }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-panel transition-colors"
                 role="menuitem"
               >
-                {user.leaderboard_private
-                  ? <EyeOff size={14} className="text-muted flex-shrink-0" />
-                  : <Eye size={14} className="text-accent flex-shrink-0" />}
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-text">
-                    Leaderboard {user.leaderboard_private ? 'hidden' : 'visible'}
-                  </p>
-                  <p className="text-[10px] text-muted leading-tight mt-0.5">
-                    {user.leaderboard_private
-                      ? 'Your sessions stay private.'
-                      : 'You appear on public leaderboards.'}
-                  </p>
-                </div>
-                {savingPrivate ? (
-                  <Loader2 size={12} className="animate-spin text-muted flex-shrink-0" />
-                ) : (
-                  <span
-                    className={`relative w-8 h-4 rounded-full flex-shrink-0 transition-colors ${
-                      user.leaderboard_private ? 'bg-outline' : 'bg-accent/40'
-                    }`}
-                  >
-                    <span
-                      className={`absolute top-0.5 w-3 h-3 rounded-full bg-text transition-all ${
-                        user.leaderboard_private ? 'left-0.5' : 'left-[18px] bg-accent'
-                      }`}
-                    />
-                  </span>
-                )}
+                <Clock size={14} className="text-muted flex-shrink-0" />
+                <span className="text-xs font-semibold text-text flex-1">History</span>
+                <span className="text-[10px] text-muted">Your past sessions</span>
               </button>
             </div>
 
