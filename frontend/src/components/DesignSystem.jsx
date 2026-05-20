@@ -7,6 +7,7 @@ import StreakEmblem from './ui/StreakEmblem'
 import RewardPreview from './ui/RewardPreview'
 import StatStrip from './ui/StatStrip'
 import StatRadar from './ui/StatRadar'
+import QuestCard from './ui/QuestCard'
 
 /**
  * Dev-only design system showcase. Mounted at /design-system (only in DEV builds).
@@ -134,7 +135,21 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
 
       <section className="mb-12">
         <h2 className="ct-title mb-4">QuestCard</h2>
-        <p className="ct-body-soft">Pending Task 13.</p>
+        <div className="max-w-sm space-y-3">
+          <QuestCard
+            title="Try a slab problem"
+            why="You're light on Mobility (3). Slabs are quick wins. Log 2 sends."
+            xp={50}
+            multiplier="MOBILITY ×1.5"
+            progress={{ current: 2, target: 3 }}
+          />
+          <QuestCard
+            title="Log a 20-minute mobility session"
+            why="No mobility training in the last 7 days."
+            xp={50}
+            progress={{ current: 0, target: 1 }}
+          />
+        </div>
       </section>
 
       <section className="mb-12">
