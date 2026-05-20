@@ -77,7 +77,7 @@ describe('calculateSendXP', () => {
   it('gap multiplier x1.0 when style targets a non-weakness', () => {
     const xp = calculateSendXP({
       grade: 'V4', modality: 'indoor', outcome: 'redpoint',
-      isPersonalRecord: false, stylePrimary: 'power', climberStatShape, isDeepLog: false,
+      isPersonalRecord: false, stylePrimary: 'powerful', climberStatShape, isDeepLog: false,
       sessionPosition: 0,
     })
     expect(xp).toBe(80)
@@ -86,7 +86,7 @@ describe('calculateSendXP', () => {
   it('deep log multiplier adds 25%', () => {
     const xp = calculateSendXP({
       grade: 'V4', modality: 'indoor', outcome: 'redpoint',
-      isPersonalRecord: false, stylePrimary: 'power', climberStatShape, isDeepLog: true,
+      isPersonalRecord: false, stylePrimary: 'powerful', climberStatShape, isDeepLog: true,
       sessionPosition: 0,
     })
     expect(xp).toBe(100)
@@ -104,7 +104,7 @@ describe('calculateSendXP', () => {
   it('chain bonus adds +5 per session position, capped at +30', () => {
     const baseInputs = {
       grade: 'V4', modality: 'indoor', outcome: 'redpoint',
-      isPersonalRecord: false, stylePrimary: 'power', climberStatShape, isDeepLog: false,
+      isPersonalRecord: false, stylePrimary: 'powerful', climberStatShape, isDeepLog: false,
     }
     expect(calculateSendXP({ ...baseInputs, sessionPosition: 0 })).toBe(80)
     expect(calculateSendXP({ ...baseInputs, sessionPosition: 3 })).toBe(95)
