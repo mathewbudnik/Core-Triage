@@ -7,6 +7,7 @@ import { rehabProgress } from '../lib/rehabHeuristic'
 import RecoverStatusPills from './RecoverStatusPills'
 import RecoverExerciseCard from './RecoverExerciseCard'
 import TriageDiagnosis from './TriageDiagnosis'
+import SavedToHistoryBanner from './SavedToHistoryBanner'
 
 /**
  * Renders when the user has an active triage. Sticky header with greeting +
@@ -22,6 +23,8 @@ import TriageDiagnosis from './TriageDiagnosis'
  *   triage:         { id, injury_area, created_at }
  *   diagnosis:      optional rich triage result (matches_if, buckets, plan)
  *   diagnosisForm:  { region, severity, onset } context for the hero pills
+ *   savedSessionId: optional id of the just-written /api/sessions row —
+ *                   drives the "Saved to history. Undo?" banner.
  *   signedIn:       boolean — gates the "sign in to save" nudge
  *   checked:        Set<string> — exercise_keys checked today
  *   onToggle:       (exerciseKey, region, phase) => void
@@ -30,6 +33,7 @@ export default function RecoverActiveView({
   triage,
   diagnosis,
   diagnosisForm,
+  savedSessionId = null,
   signedIn,
   onLoginClick,
   checked,
@@ -109,6 +113,15 @@ export default function RecoverActiveView({
             Your guidance
           </p>
           <TriageDiagnosis result={diagnosis} form={diagnosisForm} />
+
+          {/* Saved-to-history confirmation with Undo. Renders only for
+              signed-in users with a saved row id; anonymous users get the
+              sign-in nudge below instead. */}
+          {signedIn && savedSessionId && (
+            <div className="mt-3">
+              <SavedToHistoryBanner sessionId={savedSessionId} />
+            </div>
+          )}
 
           {/* Sign-in nudge — only when we have a result the user could lose */}
           {!signedIn && onLoginClick && (

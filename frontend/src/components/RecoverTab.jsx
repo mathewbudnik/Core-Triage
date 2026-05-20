@@ -48,6 +48,10 @@ export default function RecoverTab({ user, onLoginClick }) {
   const cached    = useMemo(() => readLastTriage(), [])
   const diagnosis     = navResult ?? cached?.result ?? null
   const diagnosisForm = navForm   ?? cached?.form   ?? null
+  // Cached session id from the post-triage save — drives the
+  // "Saved to history. Undo?" banner under the diagnosis. Null for
+  // anonymous users / when the save failed silently.
+  const savedSessionId = cached?.sessionId ?? null
 
   useEffect(() => {
     if (!user) { setLoading(false); return }
@@ -88,6 +92,7 @@ export default function RecoverTab({ user, onLoginClick }) {
         triage={activeTriage}
         diagnosis={diagnosis}
         diagnosisForm={diagnosisForm}
+        savedSessionId={savedSessionId}
         signedIn={!!user}
         onLoginClick={onLoginClick}
         checked={checked}
