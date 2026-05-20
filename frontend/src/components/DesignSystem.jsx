@@ -1,5 +1,6 @@
 import { TRANSITIONS, DURATIONS, EASE } from '../lib/motion'
 import Surface from './ui/Surface'
+import Eyebrow from './ui/Eyebrow'
 
 /**
  * Dev-only design system showcase. Mounted at /design-system (only in DEV builds).
@@ -48,7 +49,12 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
 
       <section className="mb-12">
         <h2 className="ct-title mb-4">Eyebrow</h2>
-        <p className="ct-body-soft">Pending Task 6.</p>
+        <Surface tier="default" padding="lg">
+          <Eyebrow>This week · climbing</Eyebrow>
+          <p className="ct-title mt-2">Plain eyebrow above a title.</p>
+          <Eyebrow divider className="mt-6">With divider</Eyebrow>
+          <p className="ct-body-soft mt-3">Body content under a divider eyebrow.</p>
+        </Surface>
       </section>
 
       <section className="mb-12">
