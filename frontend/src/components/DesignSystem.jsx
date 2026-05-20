@@ -10,6 +10,29 @@ import RewardPreview from './ui/RewardPreview'
 import StatStrip from './ui/StatStrip'
 import StatRadar from './ui/StatRadar'
 import QuestCard from './ui/QuestCard'
+import { TierThemeProvider, useTierTheme } from './ui/TierThemeProvider'
+
+function ThemeDemoBody() {
+  const { themeKey, theme, setThemeKey } = useTierTheme()
+  return (
+    <>
+      <p className="ct-body-soft">
+        Active theme: <span className="font-bold text-ct-terra-soft">{theme.name}</span> ({themeKey})
+      </p>
+      <p className="ct-meta mt-2">
+        Phase 0 ships only Ember. Phase 5 unlocks Frost / Slatehold / Phoenix.
+        Theme persistence is wired (localStorage key <code>ct_theme</code>).
+      </p>
+      <button
+        type="button"
+        onClick={() => setThemeKey('ember')}
+        className="mt-3 px-4 py-2 rounded-md bg-ct-terracotta text-ct-forest text-sm font-bold"
+      >
+        Set Ember
+      </button>
+    </>
+  )
+}
 
 /**
  * Dev-only design system showcase. Mounted at /design-system (only in DEV builds).
@@ -177,7 +200,12 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
 
       <section className="mb-12">
         <h2 className="ct-title mb-4">TierThemeProvider</h2>
-        <p className="ct-body-soft">Pending Task 15.</p>
+        <TierThemeProvider>
+          <Surface tier="default" padding="lg" className="max-w-sm">
+            <Eyebrow divider className="mb-3">Active theme</Eyebrow>
+            <ThemeDemoBody />
+          </Surface>
+        </TierThemeProvider>
       </section>
 
       <section className="mb-12">
