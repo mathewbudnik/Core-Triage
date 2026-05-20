@@ -49,7 +49,6 @@ export const getSessions = (limit = 50) => request('GET', `/api/sessions?limit=$
 export const saveSession = (payload) => request('POST', '/api/sessions', payload)
 export const fetchSession = (id) => request('GET', `/api/sessions/${id}`)
 export const deleteSession = (id) => request('DELETE', `/api/sessions/${id}`)
-export const getKbFiles = () => request('GET', '/api/kb')
 
 // Auth
 export const authRegister = (payload) => request('POST', '/api/auth/register', payload)
@@ -91,18 +90,12 @@ export const checkRehabExercise = ({ exercise_key, region, phase, date }) =>
 export const uncheckRehabExercise = ({ exercise_key, date }) =>
   request('DELETE', '/api/rehab/progress/check', { exercise_key, date })
 
-// Train stats + leaderboard
+// Train stats
 export const getTrainingStats = () => request('GET', '/api/training/stats')
-export const getLeaderboard = ({ window = 'week', cohort, limit = 10 } = {}) => {
-  const params = new URLSearchParams({ window, limit })
-  if (cohort) params.set('cohort', cohort)
-  return request('GET', `/api/training/leaderboard?${params}`)
-}
 
-// Display name + leaderboard privacy + avatar customization
-export const setDisplayName       = (name)   => request('PATCH', '/api/auth/me/display-name',       { display_name: name })
-export const setLeaderboardPrivate = (priv)  => request('PATCH', '/api/auth/me/leaderboard-private', { private: !!priv })
-export const setAvatar             = ({ icon = null, color = null } = {}) =>
+// Display name + avatar customization
+export const setDisplayName = (name) => request('PATCH', '/api/auth/me/display-name', { display_name: name })
+export const setAvatar      = ({ icon = null, color = null } = {}) =>
   request('PATCH', '/api/auth/me/avatar', { icon, color })
 
 // Billing (Stripe)
