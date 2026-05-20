@@ -6,11 +6,11 @@
  *   className: extra classes
  */
 const AXES = [
-  { key: 'power',     label: 'POW' },
-  { key: 'crimpy',    label: 'CRP' },
-  { key: 'dynamic',   label: 'DYN' },
-  { key: 'technical', label: 'TEC' },
-  { key: 'mobility',  label: 'MOB' },
+  { key: 'power',     label: 'POWER' },
+  { key: 'crimpy',    label: 'CRIMPY' },
+  { key: 'dynamic',   label: 'DYNAMIC' },
+  { key: 'technical', label: 'TECHNICAL' },
+  { key: 'mobility',  label: 'MOBILITY' },
 ]
 
 export default function StatStrip({ stats, className = '' }) {
@@ -19,7 +19,7 @@ export default function StatStrip({ stats, className = '' }) {
       {AXES.map(({ key, label }) => (
         <div key={key} className="flex-1 text-center">
           <p className="ct-stat-num text-[16px] leading-none">{stats[key] ?? 0}</p>
-          <p className="text-[8px] tracking-[0.12em] uppercase text-ct-moss font-bold mt-1">{label}</p>
+          <p className="text-[8px] tracking-[0.08em] uppercase text-ct-moss font-bold mt-1">{label}</p>
         </div>
       ))}
     </div>

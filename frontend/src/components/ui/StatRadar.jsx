@@ -40,7 +40,16 @@ export default function StatRadar({ stats, size = 130, className = '', animate =
   const cx = size / 2
   const cy = size / 2
   const radius = size * 0.42
-  const points = statPolygon(stats, cx, cy, radius)
+  // Starter pentagon for brand-new climbers — a clean small uniform pentagon
+  // at value 3 (~half the size of balanced) so very-low-stat climbers don't
+  // see a jagged near-zero spike. Threshold is mean < 1.5 so anyone with
+  // real activity sees their real shape.
+  const total = AXES.reduce((sum, axis) => sum + (stats[axis] ?? 0), 0)
+  const isStarter = total / AXES.length < 1.5
+  const renderStats = isStarter
+    ? { power: 3, crimpy: 3, dynamic: 3, technical: 3, mobility: 3 }
+    : stats
+  const points = statPolygon(renderStats, cx, cy, radius)
   const transition = useReducedTransition(TRANSITIONS.surface_rise)
   return (
     <svg
@@ -71,7 +80,7 @@ export default function StatRadar({ stats, size = 130, className = '', animate =
       {/* Vertex dots */}
       <g fill="#f0a875">
         {AXES.map((axis, i) => {
-          const [x, y] = pointAt(stats[axis] ?? 0, AXIS_ANGLES[i], cx, cy, radius)
+          const [x, y] = pointAt(renderStats[axis] ?? 0, AXIS_ANGLES[i], cx, cy, radius)
           return <circle key={axis} cx={x} cy={y} r="2.5" />
         })}
       </g>
