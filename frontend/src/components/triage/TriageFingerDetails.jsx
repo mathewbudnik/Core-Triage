@@ -41,7 +41,10 @@ export default function TriageFingerDetails({
       </div>
 
       <div>
-        <p className="text-xs font-semibold text-muted mb-1.5">Where on the finger?</p>
+        <p className="text-xs font-semibold text-muted mb-1">Where on the finger?</p>
+        <p className="text-[11px] text-muted/70 mb-2 leading-snug">
+          Press lightly along your finger to find the tender spot — pick the area closest to it.
+        </p>
         <ChipGroup
           options={locationChips}
           value={fingerLocation}

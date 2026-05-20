@@ -62,11 +62,16 @@ const WHICH_FINGER_OPTIONS = [
   'Index', 'Middle', 'Ring', 'Pinky', 'Thumb', 'Multiple',
 ]
 
+// Labels use plain anatomy a new climber can understand. The pulley
+// positions (A1/A2/A4) are deliberately hidden — they're what the
+// classifier maps to internally, but the chip wording should be
+// findable by someone who has never heard the term "A2 pulley". Keys
+// are unchanged so the backend rules still fire.
 const FINGER_LOCATION_OPTIONS = [
-  { key: 'palm_base', label: 'Palm-side base (A1)' },
-  { key: 'palm_mid',  label: 'Palm-side middle (A2)' },
-  { key: 'palm_tip',  label: 'Palm-side tip (A4)' },
-  { key: 'side',      label: 'Side of a joint' },
+  { key: 'palm_base', label: 'Where finger meets palm' },
+  { key: 'palm_mid',  label: 'Middle of finger (palm side)' },
+  { key: 'palm_tip',  label: 'Closer to the fingertip' },
+  { key: 'side',      label: 'Side of a knuckle' },
   { key: 'dorsal',    label: 'Back of the finger' },
   { key: 'whole',     label: 'Whole finger' },
 ]
@@ -197,14 +202,21 @@ export default function TriageTab({ k, user }) {
 
       // Best-effort session save for signed-in users (non-fatal on failure —
       // free-tier limit / network blip; /recover's sessionStorage fallback covers it).
+      // Capture the returned row id so /recover can show "Saved to history.
+      // Undo?" and back the undo with a real deleteSession call.
+      let savedSessionId = null
       if (user) {
         try {
-          await saveSession({
+          const saved = await saveSession({
             injury_area: form.region,
             pain_level:  Number(form.severity),
             pain_type:   form.pain_type,
             onset:       form.onset,
+            // Full intake snapshot — backend persists it as JSONB so the
+            // History detail view can re-derive the full diagnosis later.
+            intake_json: { ...form, severity: Number(form.severity) },
           })
+          savedSessionId = saved?.id ?? null
         } catch (_) { /* swallowed */ }
       }
 
@@ -212,6 +224,7 @@ export default function TriageTab({ k, user }) {
       saveLastTriage({
         result: data,
         form: { region: form.region, severity: form.severity, onset: form.onset },
+        sessionId: savedSessionId,
       })
       // NOTE: we deliberately do NOT navigate here. The diagnosis reveals
       // inline in the TriageWizard. The "Open my rehab plan" CTA below
