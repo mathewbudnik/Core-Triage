@@ -40,6 +40,7 @@ const HistoryTab           = lazy(() => import('./components/HistoryTab'))
 const AboutTab             = lazy(() => import('./components/AboutTab'))
 const VerifyEmailPage      = lazy(() => import('./components/VerifyEmailPage'))
 const BillingReturnPage    = lazy(() => import('./components/BillingReturnPage'))
+const DesignSystem         = lazy(() => import('./components/DesignSystem'))
 
 // Tiny full-screen loader used as the Suspense fallback while a route chunk
 // is fetched. Sized to match the visual weight of a real tab so the layout
@@ -873,6 +874,9 @@ export default function App() {
                   <Route path="/chat"          element={<ChatTab k={k} user={user} onLoginClick={() => setShowAuth(true)} />} />
                   <Route path="/history/*"     element={<HistoryTab dbReady={dbReady} user={user} onLoginClick={() => setShowAuth(true)} />} />
                   <Route path="/about"         element={<AboutTab />} />
+                  {import.meta.env.DEV && (
+                    <Route path="/design-system" element={<DesignSystem />} />
+                  )}
                   {/* Any unknown path lands the user on Hub. */}
                   <Route path="*"              element={<Navigate to="/hub" replace />} />
                 </Routes>
