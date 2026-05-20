@@ -5,6 +5,7 @@ import TierBadge from './ui/TierBadge'
 import LevelMeter from './ui/LevelMeter'
 import StreakEmblem from './ui/StreakEmblem'
 import RewardPreview from './ui/RewardPreview'
+import StatStrip from './ui/StatStrip'
 
 /**
  * Dev-only design system showcase. Mounted at /design-system (only in DEV builds).
@@ -106,7 +107,10 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
 
       <section className="mb-12">
         <h2 className="ct-title mb-4">StatStrip</h2>
-        <p className="ct-body-soft">Pending Task 11.</p>
+        <Surface tier="default" padding="lg" className="max-w-sm">
+          <Eyebrow divider className="mb-3">Sample stats</Eyebrow>
+          <StatStrip stats={{ power: 7, crimpy: 6, dynamic: 4, technical: 5, mobility: 3 }} />
+        </Surface>
       </section>
 
       <section className="mb-12">
