@@ -25,9 +25,10 @@ export default {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
       },
       animation: {
-        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'fade-in': 'fadeIn 0.4s ease-out',
-        'slide-up': 'slideUp 0.4s ease-out',
+        'pulse-slow':  'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'fade-in':     'fadeIn 0.4s ease-out',
+        'slide-up':    'slideUp 0.4s ease-out',
+        'ct-shimmer':  'ctShimmer 1.4s linear infinite',
       },
       keyframes: {
         fadeIn: {
@@ -37,6 +38,12 @@ export default {
         slideUp: {
           '0%': { opacity: '0', transform: 'translateY(16px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        // Diagnosis skeleton shimmer. Paired with a background-size of 200%
+        // so the gradient highlight sweeps across the placeholder bar.
+        ctShimmer: {
+          '0%':   { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
         },
       },
     },

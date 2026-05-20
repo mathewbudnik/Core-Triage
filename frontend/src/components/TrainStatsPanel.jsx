@@ -2,10 +2,13 @@ import { useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { Loader2, Flame } from 'lucide-react'
 import { getTrainingStats } from '../api'
+import { getCached, setCached } from '../lib/dataCache'
 import TrainStatsHero from './TrainStatsHero'
 import TrainTrendChart from './TrainTrendChart'
 import TrainLeaderboard from './TrainLeaderboard'
 import TrainRecentSessions from './TrainRecentSessions'
+
+const STATS_CACHE_KEY = 'train.stats'
 
 /**
  * Strava-flavored Progress surface.
@@ -26,16 +29,22 @@ import TrainRecentSessions from './TrainRecentSessions'
  *   - user (optional): used to greet the user by display_name when available.
  */
 export default function TrainStatsPanel({ refreshKey = 0, user = null }) {
-  const [stats, setStats] = useState(null)
-  const [loading, setLoading] = useState(true)
+  // Seed from cache so revisits render instantly. The fetch below still
+  // runs to refresh in the background — but we don't show a spinner if
+  // we already have last-known data on screen.
+  const [stats, setStats] = useState(() => getCached(STATS_CACHE_KEY) ?? null)
+  const [loading, setLoading] = useState(() => getCached(STATS_CACHE_KEY) === undefined)
   const [error, setError] = useState(null)
 
   const load = useCallback(async () => {
-    setLoading(true)
+    // Only show the loading spinner on a cold cache. Otherwise the cached
+    // data stays on screen while the refresh happens silently.
+    if (getCached(STATS_CACHE_KEY) === undefined) setLoading(true)
     setError(null)
     try {
       const data = await getTrainingStats()
       setStats(data)
+      setCached(STATS_CACHE_KEY, data)
     } catch (err) {
       setError(err.message || 'Could not load your stats.')
     } finally {
@@ -81,7 +90,7 @@ export default function TrainStatsPanel({ refreshKey = 0, user = null }) {
         <div className="min-w-0">
           <h2
             className="text-2xl sm:text-[28px] font-extrabold leading-[1.05] tracking-tight bg-clip-text text-transparent"
-            style={{ backgroundImage: 'linear-gradient(90deg, #7dd3c0, #e7eaf0, #f7bb51)' }}
+            style={{ backgroundImage: 'linear-gradient(90deg, var(--tier-c, #7dd3c0), #e7eaf0, #f7bb51)' }}
           >
             {firstName ? `Nice work, ${firstName}` : 'Your progress'}
           </h2>

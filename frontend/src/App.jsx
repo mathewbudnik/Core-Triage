@@ -582,14 +582,20 @@ export default function App() {
             >
               {({ isActive }) => (
                 <>
-                  <Icon size={16} />
+                  <Icon
+                    size={16}
+                    strokeWidth={isActive ? 2.25 : 2}
+                  />
                   {label}
                   {isActive && (
                     <motion.div
                       layoutId="nav-indicator"
                       transition={{ duration: 0.12, ease: 'easeOut' }}
                       className="ml-auto w-1.5 h-1.5 rounded-full"
-                      style={{ background: 'var(--tier-c, #14b8a6)' }}
+                      style={{
+                        background: 'var(--tier-c, #14b8a6)',
+                        boxShadow: '0 0 6px var(--tier-glow, rgba(20,184,166,0.55))',
+                      }}
                     />
                   )}
                 </>
@@ -754,8 +760,18 @@ export default function App() {
           />
         )}
 
-        {/* Top bar */}
-        <header className="border-b border-outline px-4 md:px-8 py-4 flex items-center justify-between bg-panel2/40 backdrop-blur-sm sticky top-0 z-20">
+        {/* Top bar — tier-themed accent: a hairline gradient at the bottom
+            edge and a small filled icon in the active tab's tier color keep
+            mobile chrome from reading as flat grey. */}
+        <header className="border-b border-outline px-4 md:px-8 py-4 flex items-center justify-between bg-panel2/40 backdrop-blur-sm sticky top-0 z-20 relative">
+          <span
+            aria-hidden
+            className="pointer-events-none absolute left-0 right-0 bottom-[-1px] h-px"
+            style={{
+              background: 'linear-gradient(90deg, transparent 0%, var(--tier-c, #14b8a6) 50%, transparent 100%)',
+              opacity: 0.45,
+            }}
+          />
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -764,15 +780,35 @@ export default function App() {
             >
               <Menu size={20} />
             </button>
-            <div>
-              <h1 className="text-base md:text-xl font-bold text-text">
-                {activeTabLabel}
-              </h1>
-              {activeTabSubtitle && (
-                <p className="text-xs text-muted hidden sm:block mt-0.5">
-                  {activeTabSubtitle}
-                </p>
+            <div className="flex items-center gap-2.5 min-w-0">
+              {activeTab?.icon && (
+                <motion.span
+                  key={activeTab.id}
+                  initial={{ scale: 0.7, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 360, damping: 22 }}
+                  aria-hidden
+                  className="shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-lg flex items-center justify-center"
+                  style={{
+                    background: 'color-mix(in srgb, var(--tier-c, #14b8a6) 16%, transparent)',
+                    border: '0.5px solid color-mix(in srgb, var(--tier-c, #14b8a6) 30%, transparent)',
+                    boxShadow: '0 0 10px var(--tier-glow, rgba(20,184,166,0.25))',
+                    color: 'var(--tier-light, #5eead4)',
+                  }}
+                >
+                  <activeTab.icon size={14} strokeWidth={2.25} />
+                </motion.span>
               )}
+              <div className="min-w-0">
+                <h1 className="text-base md:text-xl font-bold text-text leading-tight">
+                  {activeTabLabel}
+                </h1>
+                {activeTabSubtitle && (
+                  <p className="text-xs text-muted hidden sm:block mt-0.5">
+                    {activeTabSubtitle}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -857,21 +893,44 @@ export default function App() {
             <NavLink
               key={id}
               to={`/${id}`}
-              className={({ isActive }) => `flex-1 min-w-0 flex flex-col items-center gap-1 py-3 text-[10px] sm:text-xs font-medium leading-tight transition-colors duration-100 ${
+              className={({ isActive }) => `relative flex-1 min-w-0 flex flex-col items-center gap-1 pt-2.5 pb-3 text-[10px] sm:text-xs font-medium leading-tight transition-colors duration-100 active:scale-[0.92] [transition:transform_120ms_ease,color_100ms_ease] ${
                 isActive ? '' : 'text-muted'
               }`}
               style={({ isActive }) => isActive ? { color: 'var(--tier-light, #5eead4)' } : undefined}
             >
               {({ isActive }) => (
                 <>
-                  <Icon size={18} />
+                  {/* Icon + soft tier-glow blob behind it on active. The blob
+                      uses color-mix so it adapts to whatever tier color is live. */}
+                  <span className="relative flex items-center justify-center w-9 h-7">
+                    {isActive && (
+                      <motion.span
+                        layoutId="bottom-nav-blob"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                        aria-hidden
+                        className="absolute inset-0 rounded-full"
+                        style={{
+                          background: 'color-mix(in srgb, var(--tier-c, #14b8a6) 22%, transparent)',
+                          boxShadow: '0 0 12px var(--tier-glow, rgba(20,184,166,0.35))',
+                        }}
+                      />
+                    )}
+                    <Icon
+                      size={isActive ? 19 : 18}
+                      strokeWidth={isActive ? 2.25 : 2}
+                      className="relative z-10 transition-[font-size] duration-150"
+                    />
+                  </span>
                   <span className="truncate max-w-full px-0.5">{label}</span>
                   {isActive && (
                     <motion.div
                       layoutId="bottom-nav-indicator"
-                      transition={{ duration: 0.12, ease: 'easeOut' }}
-                      className="absolute bottom-0 w-8 h-0.5 rounded-full"
-                      style={{ background: 'var(--tier-c, #14b8a6)' }}
+                      transition={{ duration: 0.18, ease: 'easeOut' }}
+                      className="absolute bottom-0 w-10 h-1 rounded-full"
+                      style={{
+                        background: 'var(--tier-c, #14b8a6)',
+                        boxShadow: '0 0 10px var(--tier-glow, rgba(20,184,166,0.55))',
+                      }}
                     />
                   )}
                 </>

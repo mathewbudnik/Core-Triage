@@ -48,7 +48,7 @@ export default function TrainStatsHero({ hours, lastWeekHours = 0, percentile, c
           <span
             className="text-5xl sm:text-6xl font-extrabold bg-clip-text text-transparent tracking-tight"
             style={{
-              backgroundImage: 'linear-gradient(90deg, #7dd3c0, #e7eaf0, #f7bb51)',
+              backgroundImage: 'linear-gradient(90deg, var(--tier-c, #7dd3c0), #e7eaf0, #f7bb51)',
             }}
           >
             {hours.toFixed(1)}
