@@ -18,7 +18,7 @@ export default function ChatPicker({ user, onSelectCoach, onSelectAI }) {
 
   let coachCtaLabel
   if (isAnon) coachCtaLabel = 'Sign in to apply'
-  else if (isCoachingSub) coachCtaLabel = 'Open chat with Mathew'
+  else if (isCoachingSub) coachCtaLabel = 'Open chat with Budnik'
   else coachCtaLabel = 'Apply — $89/mo'
 
   return (
@@ -54,7 +54,7 @@ export default function ChatPicker({ user, onSelectCoach, onSelectAI }) {
           </div>
           <div>
             <div className="flex items-center justify-center gap-2 flex-wrap">
-              <h3 className="text-sm font-bold text-text">Talk to Mathew</h3>
+              <h3 className="text-sm font-bold text-text">Talk to Budnik</h3>
               <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[rgba(247,187,81,0.15)] text-accent3 border border-[rgba(247,187,81,0.3)]">
                 Coaching
               </span>

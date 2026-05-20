@@ -182,7 +182,7 @@ export default function Landing({ onEnter }) {
                 Inside knowledge, climber to climber
               </h2>
               <p className="text-sm text-muted leading-relaxed mb-5 max-w-lg">
-                Send video of your project and get the kind of feedback that only comes from years inside the sport — a <span className="text-text font-medium">beta breakdown</span> with technique fixes and sequence ideas, plus a <span className="text-text font-medium">training plan shaped around your weaknesses</span>. Direct messaging covers everything an AI can't help with. Mathew climbs V13 outdoors, sets at Momentum, and has spent a decade figuring out what actually works on the wall.
+                Send video of your project and get the kind of feedback that only comes from years inside the sport — a <span className="text-text font-medium">beta breakdown</span> with technique fixes and sequence ideas, plus a <span className="text-text font-medium">training plan shaped around your weaknesses</span>. Direct messaging covers everything an AI can't help with. Budnik climbs V13 outdoors, sets at Momentum Houston, and has spent a decade figuring out what actually works on the wall.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-6">
                 {COACHING_INCLUDES.map((point) => (

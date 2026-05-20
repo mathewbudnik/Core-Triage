@@ -95,7 +95,7 @@ export default function CoachChat({ user, onLoginClick }) {
         <div>
           <p className="font-semibold text-text">Chat with your coach</p>
           <p className="text-sm text-muted mt-1 max-w-xs">
-            Sign in to send a message directly to Mathew for a personalised training plan or coaching advice.
+            Sign in to send a message directly to Budnik for a personalised training plan or coaching advice.
           </p>
         </div>
         <button onClick={onLoginClick} className="btn-primary flex items-center gap-2">
@@ -112,7 +112,7 @@ export default function CoachChat({ user, onLoginClick }) {
       <div className="border-b border-outline px-6 py-3 flex items-center gap-3 bg-panel2/40">
         <img src="/logo.png" alt="Coach" className="w-8 h-8 rounded-xl" />
         <div>
-          <p className="text-sm font-semibold text-text">Mathew · Coach</p>
+          <p className="text-sm font-semibold text-text">Budnik · Coach</p>
           <p className="text-xs text-muted">Replies within 24–48 hours</p>
         </div>
       </div>
@@ -131,7 +131,7 @@ export default function CoachChat({ user, onLoginClick }) {
             <div>
               <p className="font-semibold text-text">Start a conversation</p>
               <p className="text-sm text-muted mt-1 max-w-sm">
-                Tell Mathew about your climbing background, goals, and what you're working on.
+                Tell Budnik about your climbing background, goals, and what you're working on.
                 He'll write you a hyper-specific plan tailored to you.
               </p>
             </div>
@@ -187,7 +187,7 @@ export default function CoachChat({ user, onLoginClick }) {
           </button>
         </form>
         <p className="text-xs text-muted mt-2 text-center">
-          Direct messages to Mathew · Not an AI
+          Direct messages to Budnik · Not an AI
         </p>
       </div>
     </div>

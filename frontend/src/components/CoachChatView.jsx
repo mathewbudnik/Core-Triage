@@ -17,7 +17,7 @@ export default function CoachChatView({ user, onLoginClick, onBack }) {
           <ArrowLeft size={13} />
           Back
         </button>
-        <span className="text-xs font-semibold text-accent3">1:1 with Mathew</span>
+        <span className="text-xs font-semibold text-accent3">1:1 with Budnik</span>
       </div>
       <div className="flex-1 min-h-0">
         <CoachChat user={user} onLoginClick={onLoginClick} />

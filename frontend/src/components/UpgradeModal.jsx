@@ -13,7 +13,7 @@ const PRO_BENEFITS = [
 
 const COACHING_BENEFITS = [
   { icon: MessageSquare, text: 'Send video of your project — get a beta breakdown with technique + sequence ideas' },
-  { icon: UserCircle2,   text: 'Direct 1:1 async messaging with Mathew — outdoor V13 boulderer, USAC-certified routesetter' },
+  { icon: UserCircle2,   text: 'Direct 1:1 async messaging with Budnik — outdoor V13 boulderer, Momentum Houston routesetter (USAC L1 + L2 certified)' },
   { icon: Dumbbell,      text: 'Training plan shaped around your project, goals, and weaknesses' },
   { icon: Activity,      text: 'Injury and load-management calls when you need them' },
   { icon: Clock,         text: 'Includes the full app for the month' },
@@ -38,10 +38,10 @@ const PLAN_META = {
     price: '$89',
     cadence: '/ month · application only',
     headline: 'Inside knowledge, climber to climber',
-    sub: 'Send video of your project and get the kind of feedback that only comes from years inside the sport — beta breakdowns, technique fixes, and a training plan shaped around your weaknesses. Plus direct messaging for the calls an algorithm can\'t make: load management, return-to-climb, the small technique tweaks that change everything. Mathew climbs V13 outdoors, sets at Momentum, and has spent a decade figuring out what works.',
+    sub: 'Send video of your project and get the kind of feedback that only comes from years inside the sport — beta breakdowns, technique fixes, and a training plan shaped around your weaknesses. Plus direct messaging for the calls an algorithm can\'t make: load management, return-to-climb, the small technique tweaks that change everything. Budnik climbs V13 outdoors, sets at Momentum Houston, and has spent a decade figuring out what works.',
     benefits: COACHING_BENEFITS,
     mailSubject: 'CoreTriage Coaching — Application',
-    mailBody: "Hi Mathew, I'd like to apply for 1:1 coaching. A bit about me:\n\n- Current project / goal:\n- Climbing background (grades, years, disciplines):\n- What you'd want help with (beta breakdown, training plan, injury, technique):\n- Link to a recent project video (optional but recommended):\n\n",
+    mailBody: "Hi Budnik, I'd like to apply for 1:1 coaching. A bit about me:\n\n- Current project / goal:\n- Climbing background (grades, years, disciplines):\n- What you'd want help with (beta breakdown, training plan, injury, technique):\n- Link to a recent project video (optional but recommended):\n\n",
     cta: 'Apply for Coaching',
     color: 'text-accent3',
     bg: 'bg-accent3/10',

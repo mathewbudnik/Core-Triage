@@ -2,7 +2,7 @@ import { ArrowLeft, Inbox } from 'lucide-react'
 import CoachInbox from './CoachInbox'
 
 /**
- * Wraps CoachInbox (admin only) with the consistent header bar so Mathew
+ * Wraps CoachInbox (admin only) with the consistent header bar so Budnik
  * has the same "← Back" affordance to flip to the picker (and from there
  * into AI / Coach views).
  */

@@ -12,7 +12,7 @@ const VIEW_KEY = 'coretriage_chat_view'
  * Chat tab router.
  *
  * Decides which sub-view to render based on user state + persisted preference:
- *   - Mathew (coach role)         → Inbox by default
+ *   - Budnik (coach role)         → Inbox by default
  *   - Coaching subscriber         → Coach chat by default
  *   - Everyone else, first visit  → Picker
  *   - Everyone else, returning    → Last picked view (localStorage)

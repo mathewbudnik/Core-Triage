@@ -127,7 +127,7 @@ export default function AboutTab() {
           <p className="text-sm font-semibold text-text">About the Coach</p>
 
           <p className="text-xs text-muted leading-relaxed">
-            Mathew is an <span className="text-text font-medium">outdoor V13 boulderer</span> with over a decade of climbing experience across bouldering, sport, and competition. He's been <span className="text-text font-medium">routesetting at Momentum for the past five years</span>, holds <span className="text-text font-medium">USAC L1 and L2 routesetting certifications</span>, and has coached climbers from first-timers to regional competitors. That combination — climbing at a high level AND setting at scale — gives him a rare view of movement from both sides of the wall: how holds load the body, where positions force compromise, and why certain patterns chronically injure climbers.
+            Budnik is an <span className="text-text font-medium">outdoor V13 boulderer</span> with over a decade of climbing experience across bouldering, sport, and competition. He's been <span className="text-text font-medium">routesetting at Momentum Houston for the past five years</span>, holds <span className="text-text font-medium">USAC L1 and L2 routesetting certifications</span>, and has coached climbers from first-timers to regional competitors. That combination — climbing at a high level AND setting at scale — gives him a rare view of movement from both sides of the wall: how holds load the body, where positions force compromise, and why certain patterns chronically injure climbers.
           </p>
 
           <p className="text-xs text-muted leading-relaxed">
