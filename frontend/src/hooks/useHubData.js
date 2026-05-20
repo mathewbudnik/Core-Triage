@@ -67,7 +67,10 @@ function computeStreakDays(logs, todayIso) {
 }
 
 function tierOrdinal(id) {
-  return parseInt(String(id || 'v0').slice(1), 10)
+  // 'rookie' (pre-V0) maps to -1 so every logged climb counts as "above
+  // tier" for push-attempt counting. Bare v0..v10 use the digit suffix.
+  if (id === 'rookie' || !id) return -1
+  return parseInt(String(id).slice(1), 10)
 }
 
 function computeRings(logs, todayIso, workingTierId) {
@@ -191,13 +194,15 @@ export function useHubData(user) {
         boulder: pyramid?.boulder?.hardest_send || null,
         route:   pyramid?.route?.hardest_send   || null,
       }
-      // Compute working tier inline (avoid importing tier.js to keep this hook self-contained)
+      // Compute working tier inline (avoid importing tier.js to keep this
+      // hook self-contained). No logged sends → 'rookie' (Quartz pre-tier),
+      // mirroring workingTierFromHardest's behavior.
       const workingTierId = (() => {
         if (hardestSends.boulder) {
           const n = parseInt(/V(\d+)/.exec(hardestSends.boulder)?.[1] || '0', 10)
           return `v${Math.min(n, 10)}`
         }
-        return 'v0'
+        return 'rookie'
       })()
       const streakDays = computeStreakDays(logs, today)
       const ws = weekStartIso(today)

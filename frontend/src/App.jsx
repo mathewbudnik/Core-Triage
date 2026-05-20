@@ -221,7 +221,7 @@ export default function App() {
   // so the nav color always matches what the user sees there — not their
   // lifetime max grade from the profile (which leads to confusing
   // "I'm V0 Frost on Progress but my nav is V10 coral" mismatches).
-  // No recent sends → workingTierFromHardest falls back to 'v0' (frost).
+  // No recent sends → workingTierFromHardest falls back to 'rookie' (Quartz).
   useEffect(() => {
     if (!user) { setUserTier(null); return }
     let cancelled = false

@@ -8,6 +8,11 @@
 
 export const V_TIERS = ['v0','v1','v2','v3','v4','v5','v6','v7','v8','v9','v10']
 
+// `rookie` is the pre-V0 default tier: brand-new climbers who haven't
+// logged a single send sit here. It is NOT in V_TIERS (which represents
+// the earned-tier ladder Bronze→Diamond) — once a user logs V0, the
+// working-tier resolver moves them up to Bronze.
+//
 // Metals at the base, gemstones rising to Diamond at the apex. Each
 // name picks a real element/gem; the palette below uses jewel-saturated
 // hex values so the tier color feels like the real stone (not a pastel
@@ -15,6 +20,7 @@ export const V_TIERS = ['v0','v1','v2','v3','v4','v5','v6','v7','v8','v9','v10']
 // orange) in place of Copper — both warm, common-tier "stepping stones"
 // before the precious gemstones begin.
 export const TIER_NAMES = {
+  rookie: 'Quartz',
   v0:  'Bronze',
   v1:  'Silver',
   v2:  'Amber',
@@ -33,6 +39,10 @@ export const TIER_NAMES = {
 // distinct. Diamond breaks strict alternation at v10 — it's the
 // universally "elite" gem and earns the apex slot.
 export const TIER_TOKENS = {
+  // pre-tier — quartz (pale crystalline lavender-white). Most abundant
+  // mineral on earth: pretty without feeling earned. Brand-new users
+  // see this until they log their first V0, then climb into Bronze.
+  rookie: { light: '#ece9f0', c: '#c8c2d6', deep: '#5b556b' },
   // hot — bronze, but rendered as polished copper (more red-orange-warm
   // than a yellow-brown bronze; reads like a freshly minted penny)
   v0:  { light: '#f0a577', c: '#d97f4c', deep: '#7a3f1f' },
@@ -90,22 +100,26 @@ export function ydsToTier(grade) {
   return YDS_TO_TIER[grade] || null
 }
 
-/** Pick the higher of two tier ids; null-safe. */
+/** Pick the higher of two tier ids; null-safe. Both null => 'rookie'. */
 export function maxTier(a, b) {
-  if (!a) return b || 'v0'
+  if (!a) return b || 'rookie'
   if (!b) return a
   return V_TIERS.indexOf(a) >= V_TIERS.indexOf(b) ? a : b
 }
 
-/** Given a hardest-grade dict { boulder, route }, return the working tier id. */
+/** Given a hardest-grade dict { boulder, route }, return the working tier id.
+ * Returns 'rookie' for users with no logged sends so brand-new climbers see
+ * the Quartz pre-tier UI rather than landing on Bronze identically to
+ * someone who actually sent a V0. */
 export function workingTierFromHardest(hardest) {
   const a = hardest?.boulder ? vGradeToTier(hardest.boulder) : null
   const b = hardest?.route   ? ydsToTier(hardest.route)      : null
-  return maxTier(a, b) || 'v0'
+  return maxTier(a, b) || 'rookie'
 }
 
 /** Return the next-higher tier id, or null if already at v10. */
 export function nextTier(tierId) {
+  if (tierId === 'rookie') return 'v0'
   const idx = V_TIERS.indexOf(tierId)
   if (idx < 0 || idx >= V_TIERS.length - 1) return null
   return V_TIERS[idx + 1]
@@ -113,8 +127,10 @@ export function nextTier(tierId) {
 
 /**
  * Resolve any climbing grade (V-grade or YDS) to its tier-token entry.
- * Falls back to v0 (Frost) for unrecognised inputs so callers can always
- * read `.c` / `.light` / `.deep` without guarding.
+ * Falls back to v0 (Bronze) for unrecognised inputs so callers can always
+ * read `.c` / `.light` / `.deep` without guarding. (Does NOT fall back to
+ * 'rookie' — rookie is a pre-tier state for users with no logs, not a
+ * fallback for unknown grade strings.)
  */
 export function tokenForGrade(grade) {
   const tierId = vGradeToTier(grade) ?? ydsToTier(grade) ?? 'v0'
