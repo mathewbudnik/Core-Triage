@@ -5,6 +5,7 @@ import { MessageSquare, Clock, Info, AlertTriangle, Menu, X, LogIn, Activity, Du
 import * as Sentry from '@sentry/react'
 import { getHealth, getMe, getPyramid, acceptDisclaimer } from './api'
 import { workingTierFromHardest, TIER_TOKENS } from './lib/tier'
+import { clearAll as clearDataCache } from './lib/dataCache'
 import Landing from './components/Landing'
 import Logo from './components/Logo'
 import AuthModal from './components/AuthModal'
@@ -20,18 +21,21 @@ import UpgradeModal from './components/UpgradeModal'
 import AwardUnlockToast from './components/AwardUnlockToast'
 import TierPromotionTakeover from './components/TierPromotionTakeover'
 
-// Lazy-loaded routes — each tab + the standalone pages download only when
-// the user navigates to them. First-paint bundle drops dramatically because
-// users don't pay for tabs they may never visit.
-const HubTab               = lazy(() => import('./components/HubTab'))
-const RecoverTab           = lazy(() => import('./components/RecoverTab'))
+// Routing strategy — split into "primary" (eager-loaded, in the main bundle)
+// and "secondary" (still lazy). The 5 primary tabs are what users navigate
+// between constantly; eager-loading means switching from Train → Progress →
+// Hub is instant with no Suspense flash. Secondary surfaces stay lazy so
+// they only download when actually visited.
+import HubTab      from './components/HubTab'
+import RecoverTab  from './components/RecoverTab'
+import TrainTab    from './components/TrainTab'
+import ProgressTab from './components/ProgressTab'
+import ChatTab     from './components/ChatTab'
+
 const RehabRegionRedirect  = lazy(() => import('./components/RehabRegionRedirect'))
 const TriageTab            = lazy(() => import('./components/TriageTab'))
 const RehabTab             = lazy(() => import('./components/RehabTab'))
-const TrainTab             = lazy(() => import('./components/TrainTab'))
-const ProgressTab          = lazy(() => import('./components/ProgressTab'))
 const AwardsPage           = lazy(() => import('./components/AwardsPage'))
-const ChatTab              = lazy(() => import('./components/ChatTab'))
 const HistoryTab           = lazy(() => import('./components/HistoryTab'))
 const AboutTab             = lazy(() => import('./components/AboutTab'))
 const VerifyEmailPage      = lazy(() => import('./components/VerifyEmailPage'))
@@ -124,6 +128,9 @@ export default function App() {
     sessionStorage.removeItem('ct_token')
     localStorage.removeItem('ct_token')
     setUser(null)
+    // Drop the in-memory API cache so the next user doesn't see the
+    // previous user's data on first paint.
+    clearDataCache()
   }, [])
 
   const resetTimeout = useCallback(() => {
@@ -151,6 +158,19 @@ export default function App() {
     }
     window.addEventListener('ct:auth-expired', handler)
     return () => window.removeEventListener('ct:auth-expired', handler)
+  }, [])
+
+  // Generic toast channel — any deep child can dispatch
+  // `new CustomEvent('ct:toast', { detail: { kind, message } })` to surface
+  // a toast without prop-drilling a callback through. Used for optimistic-
+  // UI failure paths where the originating component may already be unmounted.
+  useEffect(() => {
+    const handler = (ev) => {
+      const { kind = 'info', message } = ev.detail || {}
+      if (message) setToast({ kind, message })
+    }
+    window.addEventListener('ct:toast', handler)
+    return () => window.removeEventListener('ct:toast', handler)
   }, [])
 
   // Climb log celebration: PR toast on new hardest send. Dispatched by
@@ -311,6 +331,7 @@ export default function App() {
     sessionStorage.removeItem('ct_token')
     localStorage.removeItem('ct_token')
     setUser(null)
+    clearDataCache()
   }, [])
 
   // Standalone routes (verify-email, billing/*) bypass sidebar/disclaimer chrome
@@ -780,27 +801,47 @@ export default function App() {
         {/* Tab content — driven by URL routes. Each tab handles its own
             internal navigation (e.g. /triage/onset, /rehab/finger). The
             Suspense wrapper covers the lazy-load gap as a route's chunk
-            downloads on first navigation to it. */}
+            downloads on first navigation to it.
+
+            AnimatePresence (mode="wait") gives every route change a soft
+            fade-rise — the global "Apple-flow" transition. Keyed on the
+            URL's first segment so it fires on tab switches AND cross-tab
+            navigations (e.g. Body's Screen CTA → /triage) but NOT on
+            in-tab navigation between sub-routes (e.g. /triage → /triage/card)
+            where the route component owns its own internal motion.
+
+            initial={false} suppresses the animation on first paint so app
+            load doesn't feel artificially slow. */}
         <div className="flex-1 overflow-auto">
           <Suspense fallback={<RouteLoading />}>
-            <Routes>
-              <Route path="/hub/*"         element={<HubTab user={user} />} />
-              <Route path="/recover/*"     element={<RecoverTab user={user} onLoginClick={() => setShowAuth(true)} />} />
-              {/* Legacy /body links — bookmarks, old emails, in-app cache —
-                  redirect to /recover so the old path keeps working. */}
-              <Route path="/body/*"        element={<Navigate to="/recover" replace />} />
-              <Route path="/triage/*"      element={<TriageTab k={k} user={user} />} />
-              <Route path="/rehab"         element={<Navigate to="/recover" replace />} />
-              <Route path="/rehab/:region" element={<RehabRegionRedirect />} />
-              <Route path="/train"         element={<TrainTab user={user} dbReady={dbReady} onLoginClick={() => setShowAuth(true)} />} />
-              <Route path="/progress"        element={<ProgressTab user={user} onLoginClick={() => setShowAuth(true)} />} />
-              <Route path="/progress/awards" element={<AwardsPage user={user} />} />
-              <Route path="/chat"          element={<ChatTab k={k} user={user} onLoginClick={() => setShowAuth(true)} />} />
-              <Route path="/history/*"     element={<HistoryTab dbReady={dbReady} user={user} onLoginClick={() => setShowAuth(true)} />} />
-              <Route path="/about"         element={<AboutTab />} />
-              {/* Any unknown path lands the user on Hub. */}
-              <Route path="*"              element={<Navigate to="/hub" replace />} />
-            </Routes>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={location.pathname.split('/')[1] || 'root'}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.22, ease: [0.2, 0.7, 0.2, 1] }}
+              >
+                <Routes location={location}>
+                  <Route path="/hub/*"         element={<HubTab user={user} />} />
+                  <Route path="/recover/*"     element={<RecoverTab user={user} onLoginClick={() => setShowAuth(true)} />} />
+                  {/* Legacy /body links — bookmarks, old emails, in-app cache —
+                      redirect to /recover so the old path keeps working. */}
+                  <Route path="/body/*"        element={<Navigate to="/recover" replace />} />
+                  <Route path="/triage/*"      element={<TriageTab k={k} user={user} />} />
+                  <Route path="/rehab"         element={<Navigate to="/recover" replace />} />
+                  <Route path="/rehab/:region" element={<RehabRegionRedirect />} />
+                  <Route path="/train"         element={<TrainTab user={user} dbReady={dbReady} onLoginClick={() => setShowAuth(true)} />} />
+                  <Route path="/progress"        element={<ProgressTab user={user} onUserChange={setUser} onLoginClick={() => setShowAuth(true)} />} />
+                  <Route path="/progress/awards" element={<AwardsPage user={user} />} />
+                  <Route path="/chat"          element={<ChatTab k={k} user={user} onLoginClick={() => setShowAuth(true)} />} />
+                  <Route path="/history/*"     element={<HistoryTab dbReady={dbReady} user={user} onLoginClick={() => setShowAuth(true)} />} />
+                  <Route path="/about"         element={<AboutTab />} />
+                  {/* Any unknown path lands the user on Hub. */}
+                  <Route path="*"              element={<Navigate to="/hub" replace />} />
+                </Routes>
+              </motion.div>
+            </AnimatePresence>
           </Suspense>
         </div>
       </main>

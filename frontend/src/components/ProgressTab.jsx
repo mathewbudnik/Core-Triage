@@ -27,7 +27,7 @@ function EmptyState({ icon: Icon, title, body, action }) {
   )
 }
 
-export default function ProgressTab({ user, onLoginClick }) {
+export default function ProgressTab({ user, onUserChange, onLoginClick }) {
   const navigate = useNavigate()
   const [state, setState] = useState('loading')
   const [error, setError] = useState(null)
@@ -82,7 +82,20 @@ export default function ProgressTab({ user, onLoginClick }) {
   if (state === 'needs-name') {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <DisplayNamePromptModal onDone={async (name) => { setDisplayName(name); try { await getMe() } catch {}; setState('ready') }} />
+        <DisplayNamePromptModal onDone={async (name) => {
+          // Update local state immediately so this render advances past the
+          // 'needs-name' gate. Then refresh the user object from /me and
+          // lift it up so App.jsx's `user` carries the new display_name —
+          // without this, navigating away and back re-seeds null into the
+          // local displayName state via the user-prop sync effect, and the
+          // modal pops again.
+          setDisplayName(name)
+          try {
+            const fresh = await getMe()
+            if (fresh) onUserChange?.(fresh)
+          } catch {}
+          setState('ready')
+        }} />
       </div>
     )
   }
