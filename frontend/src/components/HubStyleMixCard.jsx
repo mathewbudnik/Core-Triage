@@ -53,15 +53,19 @@ export default function HubStyleMixCard({ profile, onOpen }) {
         ))}
       </div>
 
-      <div className="grid grid-cols-4 gap-1 mb-2">
+      {/* 2 cols on mobile (room for full labels), 4 cols on sm+ (the
+          original desktop layout — unchanged). Label gets `min-w-0
+          flex-1` so its `truncate` actually clips instead of forcing
+          the row wider than its grid track. */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-1.5 sm:gap-1 mb-2">
         {STYLE_ORDER.map((s) => (
           <div key={s} className="flex items-center gap-1.5 min-w-0">
             <span className="w-1.5 h-1.5 rounded-full shrink-0"
                   style={{ background: STYLE_COLOR[s].c }} />
-            <span className="text-[9.5px] font-bold uppercase tracking-[0.04em] text-text/55 truncate">
+            <span className="flex-1 min-w-0 text-[9.5px] font-bold uppercase tracking-[0.04em] text-text/55 truncate">
               {getStyleLabel(s)}
             </span>
-            <span className="text-[10px] font-extrabold tabular-nums ml-auto"
+            <span className="text-[10px] font-extrabold tabular-nums shrink-0"
                   style={{ color: STYLE_COLOR[s].light }}>
               {profile.pct[s]}%
             </span>
