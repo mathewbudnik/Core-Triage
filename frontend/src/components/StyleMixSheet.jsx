@@ -84,7 +84,12 @@ export default function StyleMixSheet({ open, profile, onClose }) {
               </button>
             </div>
 
-            <div className="flex-1 overflow-auto pb-4">
+            {/* Bottom padding clears the mobile bottom nav (h-16 = 4rem)
+                plus the iPhone home-indicator safe-area inset, so the
+                last list item (Endurance) isn't hidden behind the nav.
+                Desktop keeps the original pb-4 since there's no bottom
+                nav on md+. */}
+            <div className="flex-1 overflow-auto pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-4">
               <div className="flex h-5 rounded-full overflow-hidden bg-white/[0.04] mb-5">
                 {STYLE_ORDER.map((s) => (
                   <div key={s} className="h-full"
