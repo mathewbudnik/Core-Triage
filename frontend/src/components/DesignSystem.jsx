@@ -1,6 +1,7 @@
 import { TRANSITIONS, DURATIONS, EASE } from '../lib/motion'
 import Surface from './ui/Surface'
 import Eyebrow from './ui/Eyebrow'
+import TierBadge from './ui/TierBadge'
 
 /**
  * Dev-only design system showcase. Mounted at /design-system (only in DEV builds).
@@ -59,7 +60,15 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
 
       <section className="mb-12">
         <h2 className="ct-title mb-4">TierBadge</h2>
-        <p className="ct-body-soft">Pending Task 7.</p>
+        <Surface tier="default" padding="lg">
+          <Eyebrow divider className="mb-4">Tier badges</Eyebrow>
+          <div className="flex flex-wrap gap-3">
+            <TierBadge name="FROST" color="#7dd3c0" />
+            <TierBadge name="SLATEHOLD" color="#94a3b8" />
+            <TierBadge name="EMBER" color="#d97757" />
+            <TierBadge name="PHOENIX" color="#fbbf24" />
+          </div>
+        </Surface>
       </section>
 
       <section className="mb-12">
