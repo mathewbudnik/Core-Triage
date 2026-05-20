@@ -81,7 +81,7 @@ export default function PlausibilityConfirmModal({
               placeholder="e.g. flash, project send, outdoor day at Bishop…"
               rows={2}
               maxLength={300}
-              className="input-base w-full text-xs leading-snug resize-none"
+              className="input-base w-full text-base sm:text-xs leading-snug resize-none"
             />
             <p className="text-[10px] text-muted/50 mt-1">
               {Math.max(0, 10 - note.trim().length)} chars to go

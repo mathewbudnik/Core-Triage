@@ -53,12 +53,17 @@ export default function DisplayNamePromptModal({ onDone }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-bg/85 backdrop-blur-sm p-4">
+    // Top-anchored on mobile (`items-start`) so the soft keyboard doesn't
+    // push a centered modal off-screen. Same pattern as AuthModal.
+    <div
+      className="fixed inset-0 z-[120] flex items-start sm:items-center justify-center bg-bg/85 backdrop-blur-sm overflow-y-auto
+                 pt-[max(env(safe-area-inset-top),1rem)] pb-[max(env(safe-area-inset-bottom),1rem)] px-3 sm:p-4"
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.12 }}
-        className="relative w-full max-w-sm bg-panel2 border border-outline rounded-2xl shadow-xl p-6 space-y-5"
+        className="relative w-full max-w-sm my-auto bg-panel2 border border-outline rounded-2xl shadow-xl p-5 sm:p-6 space-y-5"
       >
         <div className="flex flex-col items-center text-center space-y-3">
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-[rgba(247,187,81,0.15)] border border-[rgba(247,187,81,0.3)]">
@@ -83,7 +88,7 @@ export default function DisplayNamePromptModal({ onDone }) {
               value={name}
               onChange={(e) => setName(e.target.value.slice(0, 24))}
               placeholder="e.g. SnowyCrimper42"
-              className="input-base w-full text-sm"
+              className="input-base w-full text-base sm:text-sm"
               disabled={submitting}
               maxLength={24}
             />

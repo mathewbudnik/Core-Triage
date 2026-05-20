@@ -13,6 +13,20 @@
     box-sizing: border-box;
   }
 
+  /* Mobile chrome lockdown — keeps the app feeling anchored instead of like
+     a zoomable webpage. `touch-action: manipulation` disables iOS double-tap
+     zoom (the viewport `maximum-scale=1` already covers Android pinch, but
+     iOS ignores it for accessibility, so the listener in main.jsx handles
+     iOS pinch separately). `overscroll-behavior: none` kills the rubber-band
+     bounce at page edges. `-webkit-text-size-adjust: 100%` stops iOS from
+     auto-resizing text on orientation changes. */
+  html, body {
+    touch-action: manipulation;
+    overscroll-behavior: none;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     background-color: #0b1220;
     color: #e8eefc;
@@ -40,7 +54,11 @@
 
 @layer components {
   .input-base {
-    @apply w-full bg-panel border border-outline rounded-lg px-3 py-2 text-text text-sm
+    /* text-base (16px) on mobile prevents iOS Safari from auto-zooming
+       focused inputs — that zoom was making auth/avatar modals look
+       cartoonishly large on phones. Desktop reverts to the tighter
+       text-sm we had before. */
+    @apply w-full bg-panel border border-outline rounded-lg px-3 py-2 text-text text-base sm:text-sm
            focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent
            transition-colors duration-200;
   }

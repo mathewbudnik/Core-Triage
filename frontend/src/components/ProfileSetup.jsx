@@ -498,7 +498,7 @@ export default function ProfileSetup({ onComplete }) {
                 value={form.goal_grade}
                 onChange={(e) => setField('goal_grade', e.target.value)}
                 className="w-full bg-transparent border-b-[0.5px] border-white/[0.10]
-                           text-[15px] font-bold py-2 outline-none transition-colors
+                           text-base sm:text-[15px] font-bold py-2 outline-none transition-colors
                            focus:border-[var(--tier-c)]"
               />
             </div>
