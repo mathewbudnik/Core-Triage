@@ -1,7 +1,12 @@
 import Surface from '../ui/Surface'
 import TierBadge from '../ui/TierBadge'
+import StatRadar from '../ui/StatRadar'
+import LevelMeter from '../ui/LevelMeter'
+import StatStrip from '../ui/StatStrip'
 import { useRewardEngine } from '../../lib/rewardEngine'
 import { vGradeToTier, TIER_NAMES, TIER_TOKENS } from '../../lib/tier'
+import { levelFromTotalXP } from '../../lib/xp'
+import { deriveStatShape } from '../../lib/stats'
 
 /**
  * Top hero panel — greeting + name + V-grade tier badge.
@@ -22,6 +27,9 @@ export default function HubHero() {
     ? { name: TIER_NAMES[tierId], color: TIER_TOKENS[tierId]?.c }
     : null
 
+  const shape = deriveStatShape(state.sends)
+  const { level, xpInLevel, xpForNext } = levelFromTotalXP(state.totalXP)
+
   return (
     <Surface tier="hero" padding="lg" className="mb-3">
       <div className="flex justify-between items-start">
@@ -37,6 +45,22 @@ export default function HubHero() {
             color={tier.color || '#d97757'}
           />
         )}
+      </div>
+
+      <div className="flex items-center gap-4 mt-4 pt-4 border-t border-ct-hairline">
+        <StatRadar stats={shape} size={110} />
+        <div className="flex-1 min-w-0">
+          <LevelMeter
+            level={level}
+            xpInLevel={xpInLevel}
+            xpForNext={xpForNext}
+            animateOnMount
+          />
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <StatStrip stats={shape} />
       </div>
     </Surface>
   )
