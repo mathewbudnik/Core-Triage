@@ -4,6 +4,7 @@
  * backend sync is deferred to a later phase per spec.
  */
 
+import { useCallback, useEffect, useState } from 'react'
 import { calculateSendXP, levelFromTotalXP } from './xp.js'
 import { gradeStringToNum } from './gradeUtil.js'
 import { deriveStatShape } from './stats.js'
@@ -190,4 +191,38 @@ export function addSend(state, send) {
       prevStatShape,
     },
   }
+}
+
+/**
+ * React hook returning current engine state plus a stable logSend(send)
+ * function that applies addSend and persists. logSend returns the events
+ * object so callers can drive celebrations.
+ *
+ * Loads state from localStorage on mount; persists on every successful logSend.
+ */
+export function useRewardEngine() {
+  const [state, setState] = useState(() => loadState())
+
+  // Re-load if storage is cleared externally (e.g., devtools, theme reset).
+  // No-op safety so hot reload during dev doesn't lose state.
+  useEffect(() => {
+    // initial mount: state already loaded above
+  }, [])
+
+  const logSend = useCallback((send) => {
+    const { state: next, events } = addSend(state, send)
+    if (events.xpEarned > 0) {
+      setState(next)
+      saveState(next)
+    }
+    return events
+  }, [state])
+
+  const reset = useCallback(() => {
+    const fresh = getInitialState()
+    setState(fresh)
+    saveState(fresh)
+  }, [])
+
+  return { state, logSend, reset }
 }

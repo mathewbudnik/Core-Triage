@@ -3,6 +3,7 @@ import { TRANSITIONS, DURATIONS, EASE } from '../lib/motion'
 import { calculateSendXP, levelFromTotalXP } from '../lib/xp'
 import { STYLE_CHIP_TO_STATS, deriveStatShape, AXES } from '../lib/stats'
 import { generateDailyQuest } from '../lib/quests'
+import { useRewardEngine } from '../lib/rewardEngine'
 import CelebrationOverlay from './ui/CelebrationOverlay'
 import Surface from './ui/Surface'
 import Eyebrow from './ui/Eyebrow'
@@ -14,6 +15,40 @@ import StatStrip from './ui/StatStrip'
 import StatRadar from './ui/StatRadar'
 import QuestCard from './ui/QuestCard'
 import { TierThemeProvider, useTierTheme } from './ui/TierThemeProvider'
+
+function EngineLiveDemo() {
+  const { state, logSend, reset } = useRewardEngine()
+  const handleSend = () => {
+    logSend({
+      grade: 'V6', modality: 'indoor', outcome: 'flash',
+      stylePrimary: 'crimpy', isDeepLog: false, ts: Date.now(),
+    })
+  }
+  return (
+    <div className="mt-4 space-y-2 text-sm">
+      <p className="ct-body-soft">
+        Total XP: <strong className="text-ct-terra-soft">{state.totalXP}</strong>
+        {' · '}Streak: <strong className="text-ct-terra-soft">{state.streak.days} days</strong>
+        {' · '}Sends: <strong className="text-ct-terra-soft">{state.sends.length}</strong>
+      </p>
+      <p className="ct-body-soft">
+        Crimpy best: <strong className="text-ct-terra-soft">
+          {state.bestPerStyle.crimpy === null ? '—' : `V${state.bestPerStyle.crimpy}`}
+        </strong>
+      </p>
+      <div className="flex gap-2 mt-2">
+        <button type="button" onClick={handleSend}
+          className="px-3 py-1.5 rounded-md bg-ct-terracotta text-ct-forest text-xs font-bold">
+          Log V6 crimpy flash
+        </button>
+        <button type="button" onClick={reset}
+          className="px-3 py-1.5 rounded-md border border-ct-hairline text-ct-cream text-xs font-bold">
+          Reset engine
+        </button>
+      </div>
+    </div>
+  )
+}
 
 function ThemeDemoBody() {
   const { themeKey, theme, setThemeKey } = useTierTheme()
@@ -243,6 +278,7 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
               })?.title}
             </strong>
           </p>
+          <EngineLiveDemo />
         </Surface>
       </section>
     </main>
