@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { TIER_NAMES, nextTier } from '../lib/tier'
 import DiamondShimmer from './DiamondShimmer'
+import Surface from './ui/Surface'
 
 /**
  * Tier hero card on the Progress page.
@@ -24,23 +25,23 @@ export default function ProgressTierHero({ tierId, metaLine, promotionProgress }
   const remaining = promotionProgress ? Math.max(0, promotionProgress.goal - promotionProgress.current) : 0
 
   return (
-    <button
+    <Surface
+      as="button"
+      tier="hero"
+      padding="md"
+      rounded="rounded-2xl"
       type="button"
       onClick={() => navigate('/progress/awards')}
       aria-label="View all tiers and achievements"
-      className="relative rounded-2xl p-4 overflow-hidden w-full text-left
-                 transition-transform hover:scale-[1.005] active:scale-[0.995]"
+      className="w-full text-left transition-transform hover:scale-[1.005] active:scale-[0.995]"
       style={{
         background: 'linear-gradient(135deg, color-mix(in srgb, var(--tier-c) 22%, transparent), color-mix(in srgb, var(--tier-c) 6%, transparent))',
-        border: '0.5px solid color-mix(in srgb, var(--tier-c) 45%, transparent)',
+        borderColor: 'color-mix(in srgb, var(--tier-c) 45%, transparent)',
         boxShadow: 'inset 0 0 32px color-mix(in srgb, var(--tier-c) 18%, transparent)',
       }}>
       {tierId === 'v10' && <DiamondShimmer size="lg" intensity="soft" />}
       <div className="flex items-center justify-between mb-0 relative z-10">
-        <div className="text-[11px] font-bold uppercase tracking-[0.08em]"
-             style={{ color: 'var(--tier-light)' }}>
-          Current tier
-        </div>
+        <p className="ct-eyebrow" style={{ color: 'var(--tier-light)' }}>Current tier</p>
         <ChevronRight size={14} className="text-muted/60" />
       </div>
       <div className="text-2xl font-bold text-text -tracking-[0.025em] mt-1 mb-0.5"
@@ -76,6 +77,6 @@ export default function ProgressTierHero({ tierId, metaLine, promotionProgress }
           </div>
         </>
       )}
-    </button>
+    </Surface>
   )
 }
