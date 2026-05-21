@@ -30,17 +30,17 @@ export default function RecoverEmptyView({ pastTriage = [] }) {
       {/* Hero CTA */}
       <div
         className="relative overflow-hidden rounded-2xl p-6
-                   bg-[linear-gradient(135deg,rgba(251,113,133,0.20),rgba(251,113,133,0.04))]
-                   border border-accent2/40 shadow-[0_0_36px_rgba(251,113,133,0.14)]
+                   bg-[linear-gradient(135deg,rgba(217,119,87,0.20),rgba(217,119,87,0.04))]
+                   border border-ct-terracotta/40 shadow-[0_0_36px_rgba(217,119,87,0.14)]
                    text-center mb-4"
       >
         <div className="inline-flex w-[54px] h-[54px] rounded-2xl items-center justify-center mb-3
-                        bg-[linear-gradient(135deg,rgba(251,113,133,0.30),rgba(251,113,133,0.08))]
-                        border border-accent2/50 text-accent2
-                        shadow-[0_0_18px_rgba(251,113,133,0.30)]">
+                        bg-[linear-gradient(135deg,rgba(217,119,87,0.30),rgba(217,119,87,0.08))]
+                        border border-ct-terracotta/50 text-ct-terra-soft
+                        shadow-[0_0_18px_rgba(217,119,87,0.30)]">
           <Activity size={26} strokeWidth={2} />
         </div>
-        <h2 className="text-[19px] font-extrabold mb-2">Something hurts?</h2>
+        <h2 className="text-[19px] font-extrabold text-ct-cream mb-2">Something hurts?</h2>
         <p className="text-[13px] text-ct-cream/60 leading-relaxed mb-4 max-w-[280px] mx-auto">
           5-question screen — red-flag warnings, likely injury patterns, and a phase-based rehab plan.
         </p>
@@ -48,7 +48,7 @@ export default function RecoverEmptyView({ pastTriage = [] }) {
           type="button"
           onClick={() => navigate('/triage')}
           className="w-full inline-flex items-center justify-center gap-2
-                     px-5 py-3 rounded-xl bg-accent2 text-bg text-sm font-bold
+                     px-5 py-3 rounded-xl bg-ct-terracotta text-ct-cream text-sm font-bold
                      hover:brightness-110 active:brightness-95 transition"
         >
           Run a screen
@@ -58,7 +58,7 @@ export default function RecoverEmptyView({ pastTriage = [] }) {
 
       <p className="text-center text-xs text-ct-cream/60 mb-8">
         Or browse exercises for prehab + mobility — no injury required.{' '}
-        <button onClick={() => navigate('/triage')} className="text-accent font-bold hover:underline">
+        <button onClick={() => navigate('/triage')} className="text-ct-terra-soft font-bold hover:underline">
           Start triage
         </button>
       </p>

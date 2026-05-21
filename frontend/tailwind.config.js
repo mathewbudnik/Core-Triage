@@ -4,11 +4,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: '#0b1220',
-        panel: '#121b2e',
-        panel2: '#0f172a',
-        text: '#e8eefc',
-        muted: '#a9b7d0',
+        bg: '#1c2520',
+        panel: '#243530',
+        panel2: '#1f2924',
+        text: '#f0f5ed',
+        muted: '#95a698',
         accent: '#14b8a6',
         accent2: '#fb7185',
         accent3: '#fbbf24',
@@ -27,7 +27,7 @@ export default {
         },
       },
       borderColor: {
-        outline: 'rgba(232,238,252,0.12)',
+        outline: 'rgba(230,237,228,0.12)',
       },
       boxShadow: {
         glow: '0 0 24px rgba(20,184,166,0.25)',
