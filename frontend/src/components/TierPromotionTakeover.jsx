@@ -50,10 +50,10 @@ export default function TierPromotionTakeover({ from, to, onClose }) {
              style={{ textShadow: `0 0 22px ${t.c}99` }}>
           {name}
         </div>
-        <div className="text-sm text-white/75 leading-snug mb-7">
-          You've stepped into the {name} tier — the app's identity is now yours.
+        <div className="text-sm text-white/80 leading-snug mb-7">
+          You climbed clean into {name}. Keep moving.
         </div>
-        <div className="text-[11px] tracking-[0.05em] text-white/45">
+        <div className="text-[11px] tracking-[0.05em] text-white/60">
           Tap to continue
         </div>
       </div>

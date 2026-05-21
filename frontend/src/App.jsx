@@ -20,6 +20,7 @@ import { openBillingPortal } from './api'
 import UpgradeModal from './components/UpgradeModal'
 import AwardUnlockToast from './components/AwardUnlockToast'
 import TierPromotionTakeover from './components/TierPromotionTakeover'
+import { TierThemeProvider } from './components/ui/TierThemeProvider'
 
 // Routing strategy — split into "primary" (eager-loaded, in the main bundle)
 // and "secondary" (still lazy). The 5 primary tabs are what users navigate
@@ -861,6 +862,7 @@ export default function App() {
                 exit={{ opacity: 0, y: -4 }}
                 transition={{ duration: 0.22, ease: [0.2, 0.7, 0.2, 1] }}
               >
+                <TierThemeProvider tier={userTier}>
                 <Routes location={location}>
                   <Route path="/hub/*"         element={<HubTab user={user} />} />
                   <Route path="/recover/*"     element={<RecoverTab user={user} onLoginClick={() => setShowAuth(true)} />} />
@@ -882,6 +884,7 @@ export default function App() {
                   {/* Any unknown path lands the user on Hub. */}
                   <Route path="*"              element={<Navigate to="/hub" replace />} />
                 </Routes>
+                </TierThemeProvider>
               </motion.div>
             </AnimatePresence>
           </Suspense>

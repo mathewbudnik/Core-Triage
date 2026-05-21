@@ -1,14 +1,19 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { TIER_TOKENS, TIER_NAMES } from '../../lib/tier'
 
 /**
  * Provides the active V-grade tier theme via React context + CSS variables.
  *
- * Phase 0 ships ONE theme — "ember" (default, matches the locked aesthetic).
- * Phase 5 adds the other tier palettes (frost, slatehold, phoenix) and the
- * unlock/switch flow.
+ * Phase 0 shipped ONE theme — "ember" (default, matches the locked aesthetic).
+ * Phase 5 keeps the unified RPG palette (per user direction) and uses this
+ * provider primarily to expose the climber's current tier id to descendants
+ * without prop drilling. Per-tier chrome swapping is deliberately deferred.
  *
- * Theme is read from localStorage key `ct_theme` on mount.
- * Defaults to 'ember' if no value is set.
+ * Props:
+ *   tier:      tier id ('rookie' | 'v0' | 'v1' | ... | 'v10') | null
+ *   children
+ *
+ * Theme key is read from localStorage `ct_theme` (legacy compat).
  */
 
 const THEMES = {
@@ -23,9 +28,12 @@ const TierThemeContext = createContext({
   themeKey: 'ember',
   theme: THEMES.ember,
   setThemeKey: () => {},
+  tier: null,
+  tierTokens: null,
+  tierName: null,
 })
 
-export function TierThemeProvider({ children }) {
+export function TierThemeProvider({ tier = null, children }) {
   const [themeKey, setThemeKeyState] = useState(() => {
     try {
       const stored = localStorage.getItem('ct_theme')
@@ -46,8 +54,17 @@ export function TierThemeProvider({ children }) {
     document.documentElement.style.setProperty('--ct-theme-accent-soft', theme.accentSoft)
   }, [theme])
 
+  const value = useMemo(() => ({
+    themeKey,
+    theme,
+    setThemeKey,
+    tier: tier || null,
+    tierTokens: tier ? TIER_TOKENS[tier] || null : null,
+    tierName:   tier ? TIER_NAMES[tier]  || null : null,
+  }), [themeKey, theme, tier])
+
   return (
-    <TierThemeContext.Provider value={{ themeKey, theme, setThemeKey }}>
+    <TierThemeContext.Provider value={value}>
       {children}
     </TierThemeContext.Provider>
   )
