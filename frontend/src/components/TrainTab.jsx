@@ -52,8 +52,8 @@ function EmptyState({ icon: Icon, title, body, action }) {
         <Icon size={24} className="text-accent" />
       </div>
       <div>
-        <p className="font-semibold text-text">{title}</p>
-        <p className="text-sm text-muted mt-1 max-w-xs">{body}</p>
+        <p className="font-semibold text-ct-cream">{title}</p>
+        <p className="text-sm text-ct-cream/60 mt-1 max-w-xs">{body}</p>
       </div>
       {action}
     </div>
@@ -207,8 +207,8 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
         <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 text-center px-8">
           <Loader2 size={28} className="text-[var(--tier-light)] animate-spin" />
           <div>
-            <p className="text-[15px] font-extrabold text-text -tracking-[0.01em]">Building your plan…</p>
-            <p className="text-[12.5px] font-semibold text-muted mt-1">
+            <p className="text-[15px] font-extrabold text-ct-cream -tracking-[0.01em]">Building your plan…</p>
+            <p className="text-[12.5px] font-semibold text-ct-cream/60 mt-1">
               Personalising sessions based on your profile and injury history.
             </p>
           </div>
@@ -244,11 +244,7 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
   // state === 'ready'
   return (
     <TierThemeRoot hardest={hub.hardestSends} global>
-      <div className="relative max-w-2xl mx-auto px-4 py-6 md:py-8"
-           style={{
-             background:
-               'radial-gradient(circle at 50% -10%, color-mix(in srgb, var(--tier-c) 22%, transparent) 0%, transparent 55%)',
-           }}>
+      <div className="relative max-w-2xl mx-auto px-4 py-6 md:py-8">
 
         {plan && (
           <div className="px-1 mb-1">
@@ -298,7 +294,7 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
 
         <button
           onClick={() => setState('setup')}
-          className="mt-6 px-1 text-[11px] font-bold text-muted hover:text-text transition-colors"
+          className="mt-6 px-1 text-[11px] font-bold text-ct-cream/60 hover:text-ct-cream transition-colors"
         >
           Edit profile ›
         </button>

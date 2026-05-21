@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion'
 import { ArrowRight, Check, Sparkles, Loader2 } from 'lucide-react'
 import { getSessionTypeColor, getSessionTypeLabel } from '../../lib/sessionType'
+import Surface from '../ui/Surface'
+import Eyebrow from '../ui/Eyebrow'
 
 const DOW_LONG = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
 const DOW_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
@@ -23,19 +25,6 @@ function eyebrowText(dayStatus, isoDate, sessionType) {
   return `${DOW_LONG[dayOfWeek(isoDate)]} · ${sessionType || 'Session'}`
 }
 
-const TIER_BG = `
-  radial-gradient(circle at 28% 0%, color-mix(in srgb, var(--tier-c) 40%, transparent) 0%, transparent 60%),
-  radial-gradient(circle at 95% 100%, color-mix(in srgb, var(--tier-light) 16%, transparent) 0%, transparent 70%),
-  linear-gradient(180deg, color-mix(in srgb, var(--tier-c) 10%, transparent), color-mix(in srgb, var(--tier-deep) 20%, transparent))
-`.trim()
-
-const REST_BG = `
-  radial-gradient(circle at 30% 0%, rgba(255,255,255,0.08) 0%, transparent 65%),
-  linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0))
-`.trim()
-
-const TIER_BORDER = '0.5px solid color-mix(in srgb, var(--tier-c) 22%, transparent)'
-const REST_BORDER = '0.5px solid rgba(255,255,255,0.10)'
 
 /**
  * The dominant card. One per Train render.
@@ -56,20 +45,15 @@ export default function TrainHeroCard({
 }) {
   if (noPlan) {
     return (
-      <div
-        className="rounded-2xl px-5 py-6 border"
-        style={{ background: TIER_BG, border: TIER_BORDER }}
-      >
+      <Surface tier="hero" padding="lg" rounded="rounded-2xl">
         <div className="flex items-center gap-2.5 mb-2">
-          <Sparkles size={16} className="text-[var(--tier-light)]" />
-          <span className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--tier-light)]">
-            Ready when you are
-          </span>
+          <Sparkles size={16} className="text-ct-terra-soft" />
+          <Eyebrow>Ready when you are</Eyebrow>
         </div>
-        <h2 className="text-[26px] font-extrabold -tracking-[0.025em] leading-tight mb-2">
+        <h2 className="text-[26px] font-extrabold -tracking-[0.025em] leading-tight mb-2 text-ct-cream">
           Ready to build<br/>your plan
         </h2>
-        <p className="text-[12.5px] font-semibold text-text/70 leading-snug mb-4">
+        <p className="text-[12.5px] font-semibold text-ct-cream/60 leading-snug mb-4">
           We'll generate a 4-week personalised plan based on your profile and
           adapt it around any injuries in your history.
         </p>
@@ -82,13 +66,14 @@ export default function TrainHeroCard({
           disabled={generating}
           whileTap={generating ? undefined : { scale: 0.97 }}
           className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl
-                     font-extrabold text-[12.5px] -tracking-[0.01em] disabled:opacity-60"
-          style={{ background: 'var(--tier-c)', color: 'var(--bg, #06120f)' }}
+                     font-extrabold text-[12.5px] -tracking-[0.01em] disabled:opacity-60
+                     bg-ct-terra-tint border border-ct-terracotta/30 text-ct-terra-soft
+                     hover:bg-ct-terracotta/10 transition-colors"
         >
           {generating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
           {generating ? 'Generating…' : 'Generate my plan'}
         </motion.button>
-      </div>
+      </Surface>
     )
   }
 
@@ -116,30 +101,21 @@ export default function TrainHeroCard({
       ].filter(Boolean).join(' · ') || 'Tap to see exercises'
 
   return (
-    <div
-      className="rounded-2xl px-5 py-5 border"
-      style={{
-        background: rest ? REST_BG : TIER_BG,
-        border:     rest ? REST_BORDER : TIER_BORDER,
-      }}
-    >
+    <Surface tier={rest ? 'default' : 'hero'} padding="lg" rounded="rounded-2xl">
       <div className="flex items-center gap-2 mb-3">
         {!rest && (
           <span className="w-[7px] h-[7px] rounded-full shrink-0"
                 style={{ background: typeColors.c }} />
         )}
-        <span
-          className="text-[10px] font-extrabold uppercase tracking-[0.13em]"
-          style={{ color: rest ? 'rgba(255,255,255,0.55)' : 'var(--tier-light)' }}
-        >
+        <Eyebrow>
           {eyebrowText(dayStatus, isoDate, sessionType)}
-        </span>
+        </Eyebrow>
       </div>
 
-      <h2 className="text-[28px] font-extrabold -tracking-[0.025em] leading-[1.05] mb-2.5">
+      <h2 className="text-[28px] font-extrabold -tracking-[0.025em] leading-[1.05] mb-2.5 text-ct-cream">
         {title}
       </h2>
-      <p className="text-[12.5px] font-semibold text-text/72 leading-snug mb-5">
+      <p className="text-[12.5px] font-semibold text-ct-cream/60 leading-snug mb-5">
         {subtitle}
       </p>
 
@@ -149,25 +125,25 @@ export default function TrainHeroCard({
             type="button"
             onClick={onStart}
             whileTap={{ scale: 0.97 }}
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl
-                       font-extrabold text-[12.5px] -tracking-[0.01em]"
-            style={today
-              ? { background: 'var(--tier-c)', color: 'var(--bg, #06120f)' }
-              : { background: 'rgba(255,255,255,0.06)', color: '#e8e8ec', border: '0.5px solid rgba(255,255,255,0.14)' }
-            }
+            className={[
+              'inline-flex items-center gap-2 px-5 py-3 rounded-2xl',
+              'font-extrabold text-[12.5px] -tracking-[0.01em]',
+              today
+                ? 'bg-ct-terra-tint border border-ct-terracotta/30 text-ct-terra-soft hover:bg-ct-terracotta/10 transition-colors'
+                : 'bg-white/[0.06] text-ct-cream/70 border border-white/[0.14]',
+            ].join(' ')}
           >
             {today ? 'Start session' : 'View session'}
             <ArrowRight size={14} strokeWidth={2.4} />
           </motion.button>
           {past && (
-            <span className="inline-flex items-center gap-1.5 text-[10.5px] font-extrabold tracking-[0.06em]"
-                  style={{ color: 'var(--tier-light)' }}>
+            <span className="inline-flex items-center gap-1.5 text-[10.5px] font-extrabold tracking-[0.06em] text-ct-terra-soft">
               <Check size={12} strokeWidth={2.8} />
               COMPLETED
             </span>
           )}
         </div>
       )}
-    </div>
+    </Surface>
   )
 }

@@ -1,5 +1,6 @@
 import { TIER_NAMES } from '../../lib/tier'
 import TrainStreakChip from './TrainStreakChip'
+import Eyebrow from '../ui/Eyebrow'
 
 const DOW_LONG  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
 const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -29,18 +30,15 @@ export default function TrainHeader({ tierId, plan, streakDays }) {
   return (
     <div className="px-1 pt-2 pb-4 flex items-start justify-between gap-3">
       <div className="min-w-0">
-        <div className="text-[11px] font-extrabold uppercase tracking-[0.10em] text-muted">
-          {dowMon}
-        </div>
+        <Eyebrow className="mb-1">{dowMon}</Eyebrow>
         <h1
-          className="text-[28px] sm:text-[30px] font-extrabold text-text -tracking-[0.025em] mt-1 leading-none"
-          style={{ textShadow: '0 0 14px var(--tier-glow)' }}
+          className="text-[28px] sm:text-[30px] font-extrabold text-ct-cream -tracking-[0.025em] mt-1 leading-none"
         >
           Train.
         </h1>
         {tierId && (
           <div className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-full
-                          text-[11px] font-bold text-text"
+                          text-[11px] font-bold text-ct-cream"
                style={{
                  background: 'color-mix(in srgb, var(--tier-c) 12%, transparent)',
                  border: '0.5px solid color-mix(in srgb, var(--tier-c) 35%, transparent)',
