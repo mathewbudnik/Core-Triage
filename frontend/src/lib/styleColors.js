@@ -1,47 +1,32 @@
 /**
- * Color tokens + display labels for the four climb styles. Mirrors the V-tier
- * palette so the style chips, Hub stacked bar, and plan-gen logs all share
- * the same vocabulary.
+ * Color tokens + display labels for the five climb styles. Mirrors the
+ * five stat axes in lib/stats.js so chips, stat radar, HubStyleStrip,
+ * and the reward engine all read identically.
  *
- * Lean 4 (per spec):
- *   power      — explosive, contact-strength climbs
+ *   powerful   — explosive, contact-strength climbs
+ *   crimpy     — finger-tension dominant climbs
  *   dynamic    — committing, momentum-based climbs
  *   technical  — body-position-dependent climbs
- *   endurance  — sustained, pumpy climbs
- *
- * Order matters: STYLE_ORDER drives the chip strip and the stacked bar so
- * both surfaces read identically.
+ *   mobility   — range / flexibility dominant climbs
  */
-export const STYLE_ORDER = ['power', 'dynamic', 'technical', 'endurance']
+export const STYLE_ORDER = ['powerful', 'crimpy', 'dynamic', 'technical', 'mobility']
 
 export const STYLE_COLOR = {
-  power:     { c: '#fb7185', light: '#fda4af', deep: '#7f1d2c' },   // Phoenix coral
+  powerful:  { c: '#fb7185', light: '#fda4af', deep: '#7f1d2c' },   // Phoenix coral
+  crimpy:    { c: '#94a3b8', light: '#cbd5e1', deep: '#334155' },   // Granite slate
   dynamic:   { c: '#f97316', light: '#fb923c', deep: '#7c2d12' },   // Coral orange
   technical: { c: '#8b5cf6', light: '#a78bfa', deep: '#4c1d95' },   // Amethyst violet
-  endurance: { c: '#2dd4bf', light: '#5eead4', deep: '#115e59' },   // Aquamarine teal
+  mobility:  { c: '#86efac', light: '#bbf7d0', deep: '#14532d' },   // Sage green
 }
 
 const STYLE_LABEL = {
-  power:     'Power',
+  powerful:  'Powerful',
+  crimpy:    'Crimpy',
   dynamic:   'Dynamic',
   technical: 'Technical',
-  endurance: 'Endurance',
+  mobility:  'Mobility',
 }
 
-/**
- * Case-insensitive lookup of color tokens. Unknown / null / undefined input
- * falls back to power so callers never crash on a missing field.
- */
-export function getStyleColor(style) {
-  const key = (style || '').toString().toLowerCase()
-  return STYLE_COLOR[key] || STYLE_COLOR.power
-}
-
-/**
- * Title-cased display label. Returns null when the input is empty so callers
- * can render conditionally (e.g. "{label && <span>{label}</span>}").
- */
-export function getStyleLabel(style) {
-  if (!style) return null
-  return STYLE_LABEL[String(style).toLowerCase()] || null
+export function getStyleLabel(key) {
+  return STYLE_LABEL[key] ?? key
 }
