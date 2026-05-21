@@ -25,32 +25,41 @@ export function styleChipToStats(chipKey) {
   return STYLE_CHIP_TO_STATS[chipKey] ?? { ...ZERO_SHAPE }
 }
 
-const WINDOW_DAYS = 30
-const SCALE_FACTOR = 10
+const NULL_SHAPE = Object.freeze({
+  power: null, crimpy: null, dynamic: null, technical: null, mobility: null,
+})
+
+// Style chip → primary stat axis. Note: "powerful" chip maps to "power" axis.
+const STYLE_TO_AXIS = {
+  powerful:  'power',
+  crimpy:    'crimpy',
+  dynamic:   'dynamic',
+  technical: 'technical',
+  mobility:  'mobility',
+}
+
+const V_GRADE_CAP = 10  // V10+ all cap at 10
 
 /**
- * Compute the climber's current 5-axis stat shape.
+ * Compute the climber's stat shape — the max V-grade ticked in each style.
  *
- * @param {Array} sends — array of { stylePoints: {power, crimpy, ...}, daysAgo: number }
- * @returns {object} { power, crimpy, dynamic, technical, mobility } each in 0..10
+ * @param {Array} sends — array of { stylePrimary: string, gradeNum: number }
+ * @returns {object} { power, crimpy, dynamic, technical, mobility } — each is
+ *   the max V-grade number sent in that style, or null if no sends in that style.
+ *   Values are capped at 10 (V10+ all read as 10).
  */
 export function deriveStatShape(sends) {
-  if (!Array.isArray(sends) || sends.length === 0) return { ...ZERO_SHAPE }
-  const totals = { ...ZERO_SHAPE }
+  if (!Array.isArray(sends) || sends.length === 0) return { ...NULL_SHAPE }
+  const shape = { ...NULL_SHAPE }
   for (const send of sends) {
-    if (!send || !send.stylePoints) continue
-    if (send.daysAgo > WINDOW_DAYS) continue
-    for (const axis of AXES) {
-      totals[axis] += send.stylePoints[axis] ?? 0
+    if (!send || typeof send !== 'object') continue
+    const axis = STYLE_TO_AXIS[send.stylePrimary]
+    if (!axis) continue
+    if (typeof send.gradeNum !== 'number' || !Number.isFinite(send.gradeNum)) continue
+    const capped = Math.max(0, Math.min(V_GRADE_CAP, Math.floor(send.gradeNum)))
+    if (shape[axis] === null || capped > shape[axis]) {
+      shape[axis] = capped
     }
-  }
-  const meanPerDay = {}
-  for (const axis of AXES) {
-    meanPerDay[axis] = totals[axis] / WINDOW_DAYS
-  }
-  const shape = {}
-  for (const axis of AXES) {
-    shape[axis] = Math.max(0, Math.min(10, Math.round(meanPerDay[axis] * SCALE_FACTOR)))
   }
   return shape
 }

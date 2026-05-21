@@ -39,43 +39,70 @@ describe('styleChipToStats', () => {
   })
 })
 
-describe('deriveStatShape', () => {
-  it('empty log returns all zeros', () => {
+describe('deriveStatShape (max V-grade per style)', () => {
+  it('empty log returns all nulls', () => {
     const shape = deriveStatShape([])
-    AXES.forEach((axis) => expect(shape[axis]).toBe(0))
+    AXES.forEach((axis) => expect(shape[axis]).toBeNull())
   })
 
-  it('single crimpy send increments crimpy axis the most', () => {
+  it('one V6 crimpy send sets crimpy to 6, others null', () => {
     const shape = deriveStatShape([
-      { stylePoints: STYLE_CHIP_TO_STATS.crimpy, daysAgo: 0 },
+      { stylePrimary: 'crimpy', gradeNum: 6 },
     ])
-    expect(shape.crimpy).toBeGreaterThan(shape.power)
-    expect(shape.crimpy).toBeGreaterThan(shape.dynamic)
+    expect(shape.crimpy).toBe(6)
+    expect(shape.power).toBeNull()
+    expect(shape.dynamic).toBeNull()
+    expect(shape.technical).toBeNull()
+    expect(shape.mobility).toBeNull()
   })
 
-  it('values are clamped to 0-10 range', () => {
-    const sends = Array.from({ length: 50 }).map(() => ({
-      stylePoints: STYLE_CHIP_TO_STATS.crimpy,
-      daysAgo: 0,
-    }))
-    const shape = deriveStatShape(sends)
-    AXES.forEach((axis) => {
-      expect(shape[axis]).toBeGreaterThanOrEqual(0)
-      expect(shape[axis]).toBeLessThanOrEqual(10)
-    })
-    expect(shape.crimpy).toBe(10)
-  })
-
-  it('sends older than 30 days are excluded', () => {
+  it('multiple sends in one style keep the max', () => {
     const shape = deriveStatShape([
-      { stylePoints: STYLE_CHIP_TO_STATS.crimpy, daysAgo: 60 },
+      { stylePrimary: 'crimpy', gradeNum: 3 },
+      { stylePrimary: 'crimpy', gradeNum: 6 },
+      { stylePrimary: 'crimpy', gradeNum: 4 },
     ])
-    AXES.forEach((axis) => expect(shape[axis]).toBe(0))
+    expect(shape.crimpy).toBe(6)
   })
 
-  it('result includes all five axes even when no sends touch some', () => {
+  it('different styles are tracked independently', () => {
     const shape = deriveStatShape([
-      { stylePoints: STYLE_CHIP_TO_STATS.crimpy, daysAgo: 0 },
+      { stylePrimary: 'powerful', gradeNum: 7 },
+      { stylePrimary: 'mobility', gradeNum: 3 },
+    ])
+    expect(shape.power).toBe(7)
+    expect(shape.mobility).toBe(3)
+    expect(shape.crimpy).toBeNull()
+  })
+
+  it('"powerful" chip maps to "power" axis', () => {
+    const shape = deriveStatShape([
+      { stylePrimary: 'powerful', gradeNum: 5 },
+    ])
+    expect(shape.power).toBe(5)
+  })
+
+  it('ignores sends with missing fields', () => {
+    const shape = deriveStatShape([
+      { stylePrimary: 'crimpy', gradeNum: 6 },
+      { stylePrimary: 'crimpy' },
+      { gradeNum: 8 },
+      null,
+      undefined,
+    ])
+    expect(shape.crimpy).toBe(6)
+  })
+
+  it('V10+ caps at 10', () => {
+    const shape = deriveStatShape([
+      { stylePrimary: 'powerful', gradeNum: 15 },
+    ])
+    expect(shape.power).toBe(10)
+  })
+
+  it('returns all five axes even when only some have data', () => {
+    const shape = deriveStatShape([
+      { stylePrimary: 'crimpy', gradeNum: 6 },
     ])
     AXES.forEach((axis) => expect(shape).toHaveProperty(axis))
   })
