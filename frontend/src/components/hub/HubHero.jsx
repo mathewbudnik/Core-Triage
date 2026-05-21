@@ -3,6 +3,7 @@ import TierBadge from '../ui/TierBadge'
 import StatRadar from '../ui/StatRadar'
 import LevelMeter from '../ui/LevelMeter'
 import StatStrip from '../ui/StatStrip'
+import StreakEmblem from '../ui/StreakEmblem'
 import HubStyleStrip from './HubStyleStrip'
 import { useRewardEngine } from '../../lib/rewardEngine'
 import { useHubData } from '../../hooks/useHubData'
@@ -61,6 +62,12 @@ export default function HubHero({ user }) {
           />
         </div>
       </div>
+
+      {(state.streak.days > 0 || state.streak.best > 0) && (
+        <div className="mt-4">
+          <StreakEmblem days={state.streak.days} best={state.streak.best} />
+        </div>
+      )}
 
       <div className="mt-4">
         <StatStrip stats={shape} />
