@@ -3,6 +3,8 @@ import { motion } from 'framer-motion'
 import { Loader2 } from 'lucide-react'
 import { getPyramid } from '../api'
 import { tokenForGrade } from '../lib/tier'
+import Surface from './ui/Surface'
+import Eyebrow from './ui/Eyebrow'
 
 /**
  * One row in the pyramid: tier-colored bar + grade label + count.
@@ -190,9 +192,9 @@ export default function GradePyramidCard() {
     && !data.route?.grades?.length
 
   return (
-    <div className="rounded-xl border border-outline bg-panel/40 p-4">
+    <Surface tier="default" padding="md" rounded="rounded-2xl">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-sm font-extrabold text-text">Grade Pyramid</p>
+        <Eyebrow>Grade Pyramid</Eyebrow>
         <div className="flex gap-1 bg-bg/40 rounded-lg p-0.5 text-[11px]">
           {[['month', 'Month'], ['all', 'All']].map(([k, label]) => (
             <button
@@ -222,6 +224,6 @@ export default function GradePyramidCard() {
           <PyramidColumn label="Route" data={data.route} />
         </div>
       )}
-    </div>
+    </Surface>
   )
 }
