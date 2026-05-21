@@ -14,10 +14,10 @@ import HubRecentSends from './hub/HubRecentSends'
  *   4. HubToolsGrid — Recover / Train / Ask coach
  *   5. HubRecentSends — last 5 sends with XP earned per row
  */
-export default function HubTab() {
+export default function HubTab({ user }) {
   return (
     <div className="min-h-screen bg-ct-forest text-ct-cream p-4 pb-24 max-w-md mx-auto">
-      <HubHero />
+      <HubHero user={user} />
       <TodaysQuestCard />
       <HubProjectTile />
       <HubToolsGrid />

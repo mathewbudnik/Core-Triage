@@ -3,7 +3,9 @@ import TierBadge from '../ui/TierBadge'
 import StatRadar from '../ui/StatRadar'
 import LevelMeter from '../ui/LevelMeter'
 import StatStrip from '../ui/StatStrip'
+import HubStyleStrip from './HubStyleStrip'
 import { useRewardEngine } from '../../lib/rewardEngine'
+import { useHubData } from '../../hooks/useHubData'
 import { vGradeToTier, TIER_NAMES, TIER_TOKENS } from '../../lib/tier'
 import { levelFromTotalXP } from '../../lib/xp'
 import { deriveStatShape } from '../../lib/stats'
@@ -12,8 +14,9 @@ import { deriveStatShape } from '../../lib/stats'
  * Top hero panel — greeting + name + V-grade tier badge.
  * Stat radar + level meter + streak + style strip added in Tasks 10-11.
  */
-export default function HubHero() {
+export default function HubHero({ user }) {
   const { state } = useRewardEngine()
+  const { styleProfile } = useHubData(user)
 
   // Highest grade across all styles drives the tier badge.
   // bestPerStyle values are numbers 0-10 (or null); -1 sentinel means no sends.
@@ -61,6 +64,10 @@ export default function HubHero() {
 
       <div className="mt-4">
         <StatStrip stats={shape} />
+      </div>
+
+      <div className="mt-5 pt-4 border-t border-ct-hairline">
+        <HubStyleStrip profile={styleProfile} />
       </div>
     </Surface>
   )
