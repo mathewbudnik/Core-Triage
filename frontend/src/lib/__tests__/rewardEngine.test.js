@@ -6,6 +6,7 @@ import {
   STORAGE_KEY,
   STATE_VERSION,
 } from '../rewardEngine.js'
+import { addSend } from '../rewardEngine.js'
 
 // Minimal in-memory localStorage shim for Node test env
 class MemoryStorage {
@@ -72,5 +73,101 @@ describe('saveState / loadState', () => {
     s.totalXP = 100
     saveState(s)
     expect(globalThis.localStorage.getItem(STORAGE_KEY)).toContain('"totalXP":100')
+  })
+})
+
+describe('addSend', () => {
+  beforeEach(() => {
+    globalThis.localStorage = new MemoryStorage()
+  })
+
+  const baseSend = {
+    grade: 'V6',
+    modality: 'indoor',
+    outcome: 'redpoint',
+    stylePrimary: 'crimpy',
+    isDeepLog: false,
+    ts: Date.parse('2026-05-20T18:00:00Z'),
+  }
+
+  it('returns xpEarned > 0 for a valid send', () => {
+    const state = getInitialState()
+    const { events, state: next } = addSend(state, baseSend)
+    expect(events.xpEarned).toBeGreaterThan(0)
+    expect(next.totalXP).toBe(events.xpEarned)
+  })
+
+  it('detects a personal record on first send at a grade', () => {
+    const state = getInitialState()
+    const { events } = addSend(state, baseSend)
+    expect(events.isPersonalRecord).toBe(true)
+  })
+
+  it('does NOT mark a PR when the grade was already ticked', () => {
+    let state = getInitialState()
+    state = addSend(state, baseSend).state
+    const second = addSend(state, baseSend)
+    expect(second.events.isPersonalRecord).toBe(false)
+  })
+
+  it('updates bestPerStyle to track max grade per style', () => {
+    let state = getInitialState()
+    state = addSend(state, { ...baseSend, grade: 'V3' }).state
+    state = addSend(state, { ...baseSend, grade: 'V6' }).state
+    state = addSend(state, { ...baseSend, grade: 'V4' }).state
+    expect(state.bestPerStyle.crimpy).toBe(6)
+  })
+
+  it('detects level-up when XP crosses the threshold', () => {
+    let state = getInitialState()
+    state.totalXP = 95  // 5 XP below level 2 threshold (100)
+    const { events } = addSend(state, baseSend)
+    expect(events.leveledUp).toBe(true)
+    expect(events.level).toBeGreaterThanOrEqual(2)
+  })
+
+  it('does NOT mark level-up when XP stays in the same level', () => {
+    let state = getInitialState()
+    state.totalXP = 100  // start of level 2; earning ~234 XP stays within level 2 (needs 273 to advance)
+    const { events } = addSend(state, baseSend)
+    expect(events.leveledUp).toBe(false)
+  })
+
+  it('appends the send to the sends array', () => {
+    const state = getInitialState()
+    const { state: next } = addSend(state, baseSend)
+    expect(next.sends).toHaveLength(1)
+    expect(next.sends[0].stylePrimary).toBe('crimpy')
+    expect(next.sends[0].gradeNum).toBe(6)
+  })
+
+  it('rejects sends with missing or invalid grade gracefully', () => {
+    const state = getInitialState()
+    const result = addSend(state, { ...baseSend, grade: 'garbage' })
+    expect(result.events.xpEarned).toBe(0)
+    expect(result.state).toEqual(state)
+  })
+
+  it('initializes streak on first send', () => {
+    const state = getInitialState()
+    const { state: next } = addSend(state, baseSend)
+    expect(next.streak.days).toBe(1)
+    expect(next.streak.best).toBe(1)
+    expect(next.streak.lastActiveDate).toBeTruthy()
+  })
+
+  it('does not increment streak for multiple sends on the same day', () => {
+    let state = getInitialState()
+    state = addSend(state, baseSend).state
+    state = addSend(state, { ...baseSend, ts: baseSend.ts + 3600 * 1000 }).state
+    expect(state.streak.days).toBe(1)
+  })
+
+  it('increments streak on next-day sends', () => {
+    let state = getInitialState()
+    state = addSend(state, baseSend).state
+    const nextDay = baseSend.ts + 24 * 60 * 60 * 1000
+    state = addSend(state, { ...baseSend, ts: nextDay }).state
+    expect(state.streak.days).toBe(2)
   })
 })
