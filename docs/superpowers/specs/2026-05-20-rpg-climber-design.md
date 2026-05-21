@@ -590,5 +590,23 @@ What did NOT ship (deferred):
 
 **No subagent dispatches needed for Phase 5.** All three tasks were small enough to execute inline without polluting the parent agent's context. Single commit covered all the implementation.
 
+## Phase 6 retrospective (added after implementation)
+
+Phase 6 shipped on 2026-05-20 — 4 commits on `redesign/rpg-climber` since the Phase 6 plan, build green, 80/80 tests passing. ~18 files modified.
+
+- **Guardrails held cleanly.** `BillingReturnPage.jsx` was NOT modified (`git diff` confirmed 0 lines). AuthModal's auth submit handlers (`authLogin`, `authRegister`), session storage writes, OAuth flows, magic-link triggers, success redirects — all preserved exactly. Only CSS classes and inline styles moved. The strict separation between chrome and behavior worked.
+- **`Logo.jsx` was a no-op.** It's a plain `<img src="/logo.png">` with no palette tokens. Implementer correctly skipped it and noted the skip — no false commit was made.
+- **TipCard's multi-color rotating tips got flattened to one terracotta color.** Pre-Phase 6, each tip had its own accent (teal / amber / coral / violet). Phase 6 collapsed these to a single `ct-terra-soft` for visual coherence. This loses some category differentiation — worth revisiting if users want categorical color cues back. Captured as a follow-up.
+- **Coachmark's arrow border** needed inline-style override because Tailwind doesn't have a `border-l-ct-terracotta/40` shorthand for the triangle CSS-border trick. Set via `style={{ borderRightColor: 'rgba(217,119,87,0.40)' }}`. Worked, but slightly inconsistent with the rest of the file. Acceptable.
+- **TrialStatusBanner's per-state semantic colors preserved.** Active = ct-terracotta (was teal). Expired = red-400 (was already red). Expiring soon = amber. Implementer correctly recognized these are status indicators, not chrome, and only refreshed the surrounding surface.
+- **AwardUnlockToast removed an inline backdrop-blur** in favor of class-based blur. Visually identical, cleaner code.
+- **`btn-primary` and `btn-secondary` class references** existed throughout the auth + identity modals and got replaced with explicit `bg-ct-terracotta` / `bg-ct-hairline` patterns. These two utility classes are still defined in `index.css` (or wherever — they might be defined now but only used in non-RPG-touched code). Worth a follow-up grep to see if any consumers remain and either fix-up or delete the classes.
+- **`AboutTab.jsx` had a hero-gradient that was previously coral-toned** (#ff7a3d → #fbbf24 → #f0f5ed). Phase 6 unified it to terracotta (#d97757 → #f0a875 → #f0f5ed). The visual change is subtle (both warm), but the new palette is consistent with the rest of the app.
+- **`PlausibilityConfirmModal`'s "Confirm" button had used `var(--tier-c)`** — confirming a high-grade send was being themed by the tier the user was reaching. Felt like a clever touch but inconsistent with the unified palette decision. Swapped to terracotta per spec direction.
+- **AccountMenu correctly preserved the "Manage subscription" billing portal trigger.** `handleBilling()` calls `openBillingPortal()` from `api.js`. Implementer touched ONLY the CSS class on the button, not the handler. Verified clean.
+
+Phase 6 closes out the chrome re-skin pass started in Phase 3. Hub, Progress, Triage, Recover, Train, Chat, Landing, Auth, Account, About — all now read as one design.
+
+
 
 
