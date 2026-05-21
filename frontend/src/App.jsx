@@ -389,11 +389,14 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-bg flex" style={tierVars}>
-      {/* Ambient background orbs */}
+      {/* Ambient background orbs — warm forest-on-forest with a faint
+          terracotta lift up top. Replaces the legacy teal+pink+gold trio
+          that was the dominant source of the cold/blue cast across the
+          app. Subtle so the page surfaces (forest gradients) still read. */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
-        <div className="absolute top-0 right-1/4 w-80 h-80 bg-accent2/8 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-1/2 w-72 h-72 bg-accent3/6 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-ct-terracotta/10 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-1/4 w-80 h-80 bg-ct-moss/8 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-1/2 w-72 h-72 bg-ct-terra-soft/6 rounded-full blur-3xl" />
       </div>
 
       {/* Disclaimer (read-only terms view) */}
