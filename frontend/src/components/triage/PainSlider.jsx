@@ -88,10 +88,10 @@ export default function PainSlider({ value, onChange, onCommit }) {
   return (
     <div>
       <div className="flex items-baseline justify-between mb-2">
-        <p className="text-sm font-bold text-text">Pain right now</p>
+        <p className="text-sm font-bold text-ct-cream">Pain right now</p>
         <p className="text-[22px] font-extrabold tabular-nums -tracking-[0.02em]"
            style={{ color }}>
-          {value}<span className="text-xs font-bold text-muted">/10</span>
+          {value}<span className="text-xs font-bold text-ct-cream/60">/10</span>
         </p>
       </div>
 
@@ -129,9 +129,9 @@ export default function PainSlider({ value, onChange, onCommit }) {
       </div>
 
       <div className="flex justify-between mt-2">
-        <span className="text-[10px] text-muted">No pain</span>
+        <span className="text-[10px] text-ct-cream/60">No pain</span>
         <span className="text-[10px] font-bold" style={{ color }}>{painLabel(value)}</span>
-        <span className="text-[10px] text-muted">Worst</span>
+        <span className="text-[10px] text-ct-cream/60">Worst</span>
       </div>
     </div>
   )

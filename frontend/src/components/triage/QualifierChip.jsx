@@ -66,7 +66,7 @@ export default function QualifierChip({ qualifier, size = 'md' }) {
       {open && (
         <span
           role="tooltip"
-          className="absolute left-1/2 -translate-x-1/2 top-full mt-1.5 z-30 w-52 p-2.5 rounded-lg shadow-xl border border-outline bg-panel2 text-[11px] text-text/90 leading-snug normal-case font-normal tracking-normal"
+          className="absolute left-1/2 -translate-x-1/2 top-full mt-1.5 z-30 w-52 p-2.5 rounded-lg shadow-xl border border-ct-hairline bg-ct-forest-deep text-[11px] text-ct-cream leading-snug normal-case font-normal tracking-normal"
         >
           <span className="block font-bold mb-1" style={{ color: tone.text }}>
             {meta.label}

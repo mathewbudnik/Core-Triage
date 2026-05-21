@@ -24,8 +24,8 @@ function submitHaptic() {
  *   error:         string | null            — inline error above the bar
  */
 const PRIMARY_BG = {
-  teal:  'bg-[var(--tier-c)] text-bg',
-  coral: 'bg-[#fb7185] text-bg',
+  teal:  'bg-ct-terracotta text-ct-cream',
+  coral: 'bg-[#fb7185] text-ct-cream',
 }
 
 export default function TriageActionsBar({
@@ -47,7 +47,7 @@ export default function TriageActionsBar({
       )}
       <div className="sticky bottom-0 left-0 right-0 -mx-4 px-4
                       pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]
-                      bg-bg/85 backdrop-blur-md border-t-[0.5px] border-white/[0.08]
+                      bg-ct-forest-deep/90 backdrop-blur-md border-t border-ct-hairline
                       flex gap-2 z-20">
         <motion.button
           type="button"
@@ -60,7 +60,7 @@ export default function TriageActionsBar({
                       tracking-[-0.01em] transition-colors
                       ${enabled && !loading
                         ? PRIMARY_BG[primaryTone] || PRIMARY_BG.teal
-                        : 'bg-panel2/70 text-muted/70 border-[0.5px] border-white/[0.08] cursor-not-allowed'}`}
+                        : 'bg-ct-forest text-ct-cream/30 border border-ct-hairline cursor-not-allowed'}`}
         >
           {loading ? (
             <><Loader2 size={16} className="animate-spin" /> Reading your screening…</>
@@ -74,8 +74,8 @@ export default function TriageActionsBar({
             type="button"
             onClick={onOverflow}
             className="w-12 h-12 rounded-2xl flex items-center justify-center
-                       bg-white/[0.04] border-[0.5px] border-white/12
-                       text-muted hover:text-text transition-colors"
+                       bg-ct-terra-tint border border-ct-terracotta/30
+                       text-ct-terra-soft hover:text-ct-cream transition-colors"
             aria-label="More actions"
           >
             <Download size={16} strokeWidth={2.2} />

@@ -41,11 +41,11 @@ export default function BucketSources({ reasoningBasis = '', sources = [], defau
         aria-expanded={open}
         className="w-full flex items-center justify-between gap-2 text-left hover:opacity-90 transition-opacity"
       >
-        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted font-semibold">
+        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-ct-cream/60 font-semibold">
           <BookOpen size={11} />
           <span>Sources &amp; reasoning</span>
           {hasSources && (
-            <span className="ml-1 text-[9px] font-bold text-muted/70 tabular-nums">
+            <span className="ml-1 text-[9px] font-bold text-ct-cream/50 tabular-nums">
               · {sourceCount}
             </span>
           )}
@@ -53,7 +53,7 @@ export default function BucketSources({ reasoningBasis = '', sources = [], defau
         <motion.span
           animate={{ rotate: open ? 180 : 0 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
-          className="text-muted/60"
+          className="text-ct-cream/30"
         >
           <ChevronDown size={12} strokeWidth={2.4} />
         </motion.span>
@@ -72,10 +72,10 @@ export default function BucketSources({ reasoningBasis = '', sources = [], defau
             <div className="pt-3 space-y-3.5">
               {hasReasoning && (
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted/80 mb-1.5">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-ct-cream/50 mb-1.5">
                     Why this diagnosis
                   </p>
-                  <p className="text-xs text-text/85 leading-relaxed">
+                  <p className="text-xs text-ct-cream leading-relaxed">
                     {reasoningBasis}
                   </p>
                 </div>
@@ -83,7 +83,7 @@ export default function BucketSources({ reasoningBasis = '', sources = [], defau
 
               {hasSources && (
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted/80 mb-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-ct-cream/50 mb-2">
                     References
                   </p>
                   <ul className="space-y-2">
@@ -91,7 +91,7 @@ export default function BucketSources({ reasoningBasis = '', sources = [], defau
                       <SourceRow key={i} source={s} />
                     ))}
                   </ul>
-                  <p className="text-[10px] text-muted/50 mt-2.5 leading-snug italic">
+                  <p className="text-[10px] text-ct-cream/30 mt-2.5 leading-snug italic">
                     Educational summaries drawn from these references. Not a substitute for evaluation by a qualified clinician.
                   </p>
                 </div>
@@ -118,14 +118,14 @@ function SourceRow({ source }) {
     <>
       <Icon size={11} className={`${iconColor} shrink-0 mt-0.5`} strokeWidth={2.4} />
       <div className="min-w-0 flex-1">
-        <p className="text-[11.5px] text-text/90 leading-snug font-medium">
+        <p className="text-[11.5px] text-ct-cream leading-snug font-medium">
           {source.title}
           {source.url && (
-            <ExternalLink size={9} className="inline ml-1 -mt-0.5 text-muted/60" />
+            <ExternalLink size={9} className="inline ml-1 -mt-0.5 text-ct-cream/30" />
           )}
         </p>
         {meta && (
-          <p className="text-[10px] text-muted/70 leading-snug mt-0.5">
+          <p className="text-[10px] text-ct-cream/50 leading-snug mt-0.5">
             {meta}
           </p>
         )}
@@ -140,7 +140,7 @@ function SourceRow({ source }) {
           href={source.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-start gap-2 rounded-md px-2 py-1.5 -mx-2 hover:bg-white/[0.04] transition-colors"
+          className="flex items-start gap-2 rounded-md px-2 py-1.5 -mx-2 hover:bg-ct-terra-tint transition-colors"
         >
           {inner}
         </a>

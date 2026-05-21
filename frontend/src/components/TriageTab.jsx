@@ -254,10 +254,10 @@ export default function TriageTab({ k, user }) {
           <div className="mb-8 space-y-3">
             <div className="text-center">
               <div className="flex items-center justify-center gap-2">
-                <h2 className="text-xl font-bold text-text">Where does it hurt?</h2>
+                <h2 className="text-xl font-bold text-ct-cream">Where does it hurt?</h2>
                 <TourReplayButton onReplay={tour.replay} />
               </div>
-              <p className="text-sm text-muted mt-1">Tap the area that is bothering you</p>
+              <p className="text-sm text-ct-cream/60 mt-1">Tap the area that is bothering you</p>
             </div>
           </div>
           <div ref={tour.anchor('region-diagram')}>

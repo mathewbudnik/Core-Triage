@@ -4,6 +4,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import BucketSources from './BucketSources'
 import QualifierChip from './QualifierChip'
 import { splitBucketTitle } from '../../lib/qualifierGlossary'
+import Surface from '../ui/Surface'
+import Eyebrow from '../ui/Eyebrow'
 
 /**
  * Ranked list of differential diagnoses below the primary hero.
@@ -32,12 +34,8 @@ export default function TriageDifferentials({ items = [], severity = 'moderate' 
   const t = RANK_TONE[severity] || RANK_TONE.moderate
 
   return (
-    <section className="bg-black/35 backdrop-blur-md rounded-2xl p-4 mb-3
-                        border-[0.5px] border-white/[0.10]">
-      <p className="text-[10px] font-extrabold uppercase tracking-[0.10em]
-                    text-[var(--tier-light)] mb-2.5">
-        Other possibilities
-      </p>
+    <Surface tier="default" padding="md" rounded="rounded-2xl" as="section" className="mb-3">
+      <Eyebrow className="mb-2.5">Other possibilities</Eyebrow>
       <ul className="space-y-1.5">
         {items.map((item, i) => {
           const isOpen = openIdx === i
@@ -77,7 +75,7 @@ export default function TriageDifferentials({ items = [], severity = 'moderate' 
                         )
                       })()}
                       {item.subtitle && !isOpen && (
-                        <p className="text-[10px] text-muted font-semibold mt-0.5 truncate">
+                        <p className="text-[10px] text-ct-cream/60 font-semibold mt-0.5 truncate">
                           {item.subtitle}
                         </p>
                       )}
@@ -86,7 +84,7 @@ export default function TriageDifferentials({ items = [], severity = 'moderate' 
                   <motion.span
                     animate={{ rotate: isOpen ? 180 : 0 }}
                     transition={{ duration: 0.18, ease: 'easeOut' }}
-                    className="shrink-0 text-white/35"
+                    className="shrink-0 text-ct-cream/30"
                   >
                     <ChevronDown size={16} strokeWidth={2.4} />
                   </motion.span>
@@ -102,9 +100,9 @@ export default function TriageDifferentials({ items = [], severity = 'moderate' 
                       transition={{ duration: 0.22, ease: 'easeOut' }}
                       className="overflow-hidden"
                     >
-                      <div className="px-3.5 pb-3.5 pt-1 space-y-3 border-t-[0.5px] border-white/[0.06]">
+                      <div className="px-3.5 pb-3.5 pt-1 space-y-3 border-t border-ct-hairline">
                         {item.subtitle && (
-                          <p className="text-[11.5px] text-muted leading-snug mt-2">
+                          <p className="text-[11.5px] text-ct-cream/60 leading-snug mt-2">
                             {item.subtitle}
                           </p>
                         )}
@@ -145,7 +143,7 @@ export default function TriageDifferentials({ items = [], severity = 'moderate' 
 
                         {item.quick_test && (
                           <Block
-                            icon={<Stethoscope size={12} strokeWidth={2.4} className="text-[var(--tier-light)]" />}
+                            icon={<Stethoscope size={12} strokeWidth={2.4} className="text-ct-terra-soft" />}
                             label="Quick self-check"
                           >
                             <p className="text-[11.5px] text-text/85 leading-snug">
@@ -171,7 +169,7 @@ export default function TriageDifferentials({ items = [], severity = 'moderate' 
           )
         })}
       </ul>
-    </section>
+    </Surface>
   )
 }
 
@@ -180,7 +178,7 @@ function Block({ icon, label, children }) {
     <div>
       <div className="flex items-center gap-1.5 mb-1.5">
         {icon}
-        <p className="text-[9.5px] font-extrabold uppercase tracking-[0.08em] text-white/55">
+        <p className="text-[9.5px] font-extrabold uppercase tracking-[0.08em] text-ct-cream/50">
           {label}
         </p>
       </div>

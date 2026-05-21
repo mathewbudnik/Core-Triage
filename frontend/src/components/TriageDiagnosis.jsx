@@ -4,6 +4,8 @@ import { ChevronDown, CheckCircle2, XCircle, Hand, AlertTriangle, Activity } fro
 import BucketSources from './triage/BucketSources'
 import QualifierChip from './triage/QualifierChip'
 import { splitBucketTitle } from '../lib/qualifierGlossary'
+import Surface from './ui/Surface'
+import Eyebrow from './ui/Eyebrow'
 
 // Section-name → icon + tone. Lets us treat the API's plan dict generically
 // while still giving each section a recognisable feel. Unknown sections fall
@@ -105,7 +107,7 @@ function BucketDetail({ bucket, isPrimary = false }) {
           </div>
           <ul className="space-y-1">
             {bucket.matches_if.map((m, mi) => (
-              <li key={mi} className="text-xs text-muted leading-relaxed flex items-start gap-1.5">
+              <li key={mi} className="text-xs text-ct-cream/60 leading-relaxed flex items-start gap-1.5">
                 <span className="text-accent mt-0.5">•</span>
                 <span>{m}</span>
               </li>
@@ -115,13 +117,13 @@ function BucketDetail({ bucket, isPrimary = false }) {
       )}
       {hasNotLikely && (
         <div>
-          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted font-semibold mb-1.5">
+          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-ct-cream/60 font-semibold mb-1.5">
             <XCircle size={11} /> Probably not this if
           </div>
           <ul className="space-y-1">
             {bucket.not_likely_if.map((m, mi) => (
-              <li key={mi} className="text-xs text-muted/80 leading-relaxed flex items-start gap-1.5">
-                <span className="text-muted/60 mt-0.5">•</span>
+              <li key={mi} className="text-xs text-ct-cream/50 leading-relaxed flex items-start gap-1.5">
+                <span className="text-ct-cream/30 mt-0.5">•</span>
                 <span>{m}</span>
               </li>
             ))}
@@ -133,7 +135,7 @@ function BucketDetail({ bucket, isPrimary = false }) {
           <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-accent3 font-semibold mb-1.5">
             <Hand size={11} /> Quick self-check
           </div>
-          <p className="text-xs text-muted leading-relaxed">{bucket.quick_test}</p>
+          <p className="text-xs text-ct-cream/60 leading-relaxed">{bucket.quick_test}</p>
         </div>
       )}
       {/* Sources & reasoning — collapsed by default for differentials,
@@ -191,13 +193,13 @@ export function ResultsHero({ result, form }) {
       {(() => {
         const { baseTitle, qualifier } = splitBucketTitle(title)
         return (
-          <h3 className="text-base sm:text-lg font-bold text-text leading-snug flex items-baseline flex-wrap gap-x-2 gap-y-1">
+          <h3 className="text-base sm:text-lg font-bold text-ct-cream leading-snug flex items-baseline flex-wrap gap-x-2 gap-y-1">
             <span>{baseTitle}</span>
             {qualifier && <QualifierChip qualifier={qualifier} />}
           </h3>
         )
       })()}
-      <p className="text-xs sm:text-sm text-muted mt-1.5 leading-relaxed">{lead}</p>
+      <p className="text-xs sm:text-sm text-ct-cream/60 mt-1.5 leading-relaxed">{lead}</p>
 
       {chips.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mt-3.5">
@@ -213,7 +215,7 @@ export function ResultsHero({ result, form }) {
               }`}>
                 {c.kind === 'do' ? '✓' : '✗'}
               </span>
-              <span className="text-[11px] text-text leading-tight">{c.text}</span>
+              <span className="text-[11px] text-ct-cream leading-tight">{c.text}</span>
             </div>
           ))}
         </div>
@@ -224,7 +226,7 @@ export function ResultsHero({ result, form }) {
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="mt-4 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted hover:text-text transition-colors"
+            className="mt-4 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-ct-cream/60 hover:text-ct-cream transition-colors"
             aria-expanded={expanded}
           >
             <span>{expanded ? 'Hide self-check' : 'Why this might be you'}</span>
@@ -267,7 +269,7 @@ export function OtherPossibilities({ buckets }) {
   }
   return (
     <div className="space-y-2">
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted/70">Also possible</p>
+      <Eyebrow>Also possible</Eyebrow>
       <div className="space-y-2">
         {others.map((b, i) => {
           const hasDetail = (b.matches_if && b.matches_if.length > 0)
@@ -275,9 +277,12 @@ export function OtherPossibilities({ buckets }) {
             || (b.quick_test && b.quick_test.trim().length > 0)
           const isExpanded = expandedIdx.has(i)
           return (
-            <div
+            <Surface
               key={i}
-              className={`rounded-xl border border-outline bg-panel2/40 p-3 ${hasDetail ? 'cursor-pointer hover:border-accent/40 transition-colors' : ''}`}
+              tier="flat"
+              padding="sm"
+              rounded="rounded-xl"
+              className={`p-3 ${hasDetail ? 'cursor-pointer hover:border-ct-terracotta/30 transition-colors' : ''}`}
               onClick={hasDetail ? () => toggle(i) : undefined}
               role={hasDetail ? 'button' : undefined}
               tabIndex={hasDetail ? 0 : undefined}
@@ -293,20 +298,20 @@ export function OtherPossibilities({ buckets }) {
                   {(() => {
                     const { baseTitle, qualifier } = splitBucketTitle(b.title)
                     return (
-                      <p className="text-sm font-semibold text-text/90 leading-snug flex items-baseline flex-wrap gap-x-1.5 gap-y-1">
+                      <p className="text-sm font-semibold text-ct-cream leading-snug flex items-baseline flex-wrap gap-x-1.5 gap-y-1">
                         <span>{baseTitle}</span>
                         {qualifier && <QualifierChip qualifier={qualifier} size="sm" />}
                       </p>
                     )
                   })()}
                   {b.why && (
-                    <p className="text-xs text-muted mt-1 leading-relaxed">{b.why}</p>
+                    <p className="text-xs text-ct-cream/60 mt-1 leading-relaxed">{b.why}</p>
                   )}
                 </div>
                 {hasDetail && (
                   <ChevronDown
                     size={14}
-                    className={`text-muted shrink-0 mt-0.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                    className={`text-ct-cream/60 shrink-0 mt-0.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                   />
                 )}
               </div>
@@ -324,7 +329,7 @@ export function OtherPossibilities({ buckets }) {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div>
+            </Surface>
           )
         })}
       </div>
@@ -343,8 +348,8 @@ export function ActionPlan({ plan }) {
   const entries = Object.entries(plan).filter(([, items]) => Array.isArray(items) && items.length > 0)
   if (entries.length === 0) return null
   return (
-    <div className="rounded-2xl border border-outline bg-panel2/40 p-4 sm:p-5 space-y-4">
-      <p className="text-[10px] font-bold uppercase tracking-wider text-muted">Your action plan</p>
+    <Surface tier="default" padding="md" rounded="rounded-2xl" className="sm:p-5 space-y-4">
+      <Eyebrow>Your action plan</Eyebrow>
       <div className="space-y-4">
         {entries.map(([section, items]) => {
           const theme = PLAN_SECTION_THEMES[section] ?? PLAN_SECTION_THEMES.default
@@ -357,7 +362,7 @@ export function ActionPlan({ plan }) {
               </div>
               <ul className="space-y-1.5">
                 {items.map((item, i) => (
-                  <li key={i} className="flex items-start gap-2 text-[13px] text-text/85 leading-relaxed">
+                  <li key={i} className="flex items-start gap-2 text-[13px] text-ct-cream leading-relaxed">
                     <span className={`mt-1.5 w-1 h-1 rounded-full shrink-0 ${theme.color.replace('text-', 'bg-')}`} />
                     <span>{item}</span>
                   </li>
@@ -367,7 +372,7 @@ export function ActionPlan({ plan }) {
           )
         })}
       </div>
-    </div>
+    </Surface>
   )
 }
 

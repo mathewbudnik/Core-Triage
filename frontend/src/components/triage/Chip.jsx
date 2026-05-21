@@ -29,8 +29,8 @@ export default function Chip({ active, onClick, children, ariaLabel }) {
       className={`text-xs font-semibold px-3 py-1.5 rounded-full border-[0.5px]
                   transition-colors
                   ${active
-                    ? 'bg-[rgba(20,184,166,0.18)] border-[rgba(20,184,166,0.50)] text-[var(--tier-light)]'
-                    : 'bg-white/[0.04] border-white/12 text-muted hover:text-text'}`}
+                    ? 'bg-ct-terra-tint border-ct-terracotta/50 text-ct-terra-soft'
+                    : 'bg-ct-forest border-ct-hairline text-ct-cream/60 hover:text-ct-cream'}`}
     >
       {children}
     </motion.button>

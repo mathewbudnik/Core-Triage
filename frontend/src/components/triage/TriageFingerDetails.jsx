@@ -32,7 +32,7 @@ export default function TriageFingerDetails({
   return (
     <div className="space-y-3">
       <div>
-        <p className="text-xs font-semibold text-muted mb-1.5">Which finger?</p>
+        <p className="text-xs font-semibold text-ct-cream/60 mb-1.5">Which finger?</p>
         <ChipGroup
           options={fingerChips}
           value={whichFinger}
@@ -41,8 +41,8 @@ export default function TriageFingerDetails({
       </div>
 
       <div>
-        <p className="text-xs font-semibold text-muted mb-1">Where on the finger?</p>
-        <p className="text-[11px] text-muted/70 mb-2 leading-snug">
+        <p className="text-xs font-semibold text-ct-cream/60 mb-1">Where on the finger?</p>
+        <p className="text-[11px] text-ct-cream/50 mb-2 leading-snug">
           Press lightly along your finger to find the tender spot — pick the area closest to it.
         </p>
         <ChipGroup
@@ -53,7 +53,7 @@ export default function TriageFingerDetails({
       </div>
 
       <div>
-        <p className="text-xs font-semibold text-muted mb-1.5">Grip at injury</p>
+        <p className="text-xs font-semibold text-ct-cream/60 mb-1.5">Grip at injury</p>
         <ChipGroup
           options={gripChips}
           value={gripMode}
@@ -65,7 +65,7 @@ export default function TriageFingerDetails({
         <button
           type="button"
           onClick={onSkip}
-          className="text-[11px] font-semibold text-muted hover:text-text transition-colors"
+          className="text-[11px] font-semibold text-ct-cream/60 hover:text-ct-cream transition-colors"
         >
           Skip this — not sure ›
         </button>
