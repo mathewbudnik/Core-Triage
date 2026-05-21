@@ -5,6 +5,7 @@ import { STYLE_CHIP_TO_STATS, deriveStatShape, AXES } from '../lib/stats'
 import { generateDailyQuest } from '../lib/quests'
 import { useRewardEngine, getInitialState } from '../lib/rewardEngine'
 import LogSendQuick from './ui/LogSendQuick'
+import LogSendDeep from './ui/LogSendDeep'
 import CelebrationOverlay from './ui/CelebrationOverlay'
 import Surface from './ui/Surface'
 import Eyebrow from './ui/Eyebrow'
@@ -255,14 +256,25 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
 
       <section className="mb-12">
         <h2 className="ct-title mb-4">Logging UX</h2>
-        <Surface tier="default" padding="lg" className="max-w-sm">
-          <Eyebrow divider className="mb-4">LogSendQuick</Eyebrow>
-          <LogSendQuick
-            sessionType="bouldering"
-            engineState={getInitialState()}
-            onCommit={console.log}
-          />
-        </Surface>
+        <div className="space-y-3">
+          <Surface tier="default" padding="lg" className="max-w-sm">
+            <Eyebrow divider className="mb-4">LogSendQuick</Eyebrow>
+            <LogSendQuick
+              sessionType="bouldering"
+              engineState={getInitialState()}
+              onCommit={console.log}
+            />
+          </Surface>
+          <Surface tier="default" padding="lg" className="max-w-sm">
+            <Eyebrow divider className="mb-4">LogSendDeep</Eyebrow>
+            <LogSendDeep
+              value={{boulder:{V3:{s:1,f:0,p:0}}}}
+              onChange={console.log}
+              sessionType="bouldering"
+              engineState={getInitialState()}
+            />
+          </Surface>
+        </div>
       </section>
 
       <section className="mb-12">
