@@ -1,11 +1,12 @@
-import { Zap, Wind, Compass, Timer } from 'lucide-react'
+import { Zap, Grip, Wind, Compass, StretchHorizontal } from 'lucide-react'
 import { STYLE_ORDER, STYLE_COLOR, getStyleLabel } from '../lib/styleColors'
 
 const STYLE_ICON = {
-  power:     Zap,
+  powerful:  Zap,
+  crimpy:    Grip,
   dynamic:   Wind,
   technical: Compass,
-  endurance: Timer,
+  mobility:  StretchHorizontal,
 }
 
 /**
@@ -14,7 +15,7 @@ const STYLE_ICON = {
  * climb-log section will attribute to whichever style is active here.
  *
  * Props:
- *   value:     'power' | 'dynamic' | 'technical' | 'endurance'
+ *   value:     'powerful' | 'crimpy' | 'dynamic' | 'technical' | 'mobility'
  *   onChange:  (next: string) => void
  */
 export default function StyleChipStrip({ value, onChange }) {
@@ -26,7 +27,7 @@ export default function StyleChipStrip({ value, onChange }) {
                     text-text/45 mb-2 px-0.5">
         Style of these climbs
       </p>
-      <div className="grid grid-cols-4 gap-1.5">
+      <div className="grid grid-cols-5 gap-1">
         {STYLE_ORDER.map((s) => {
           const Icon = STYLE_ICON[s]
           const active = s === value
