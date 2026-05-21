@@ -11,7 +11,7 @@ function isPersonalRecordFor(grade, stylePrimary, state) {
   const num = gradeStringToNum(grade)
   if (num === null) return false
   const best = state?.bestPerStyle?.[stylePrimary]
-  if (best === null || best === undefined) return false
+  if (best === null || best === undefined) return true
   return num > best
 }
 
@@ -21,11 +21,7 @@ export function previewSendXP(draft, state) {
 
   const modality = modalityFromSessionType(sessionType)
   const isPersonalRecord = isPersonalRecordFor(grade, stylePrimary, state)
-  const sends = state?.sends ?? []
-  let climberStatShape = null
-  if (sends.length > 0 || Object.values(state?.bestPerStyle || {}).some(v => v !== null)) {
-    climberStatShape = deriveStatShape(sends)
-  }
+  const climberStatShape = deriveStatShape(state?.sends ?? [])
   const xp = calculateSendXP({
     grade, modality, outcome, stylePrimary, isPersonalRecord,
     climberStatShape, isDeepLog, sessionPosition: 0,

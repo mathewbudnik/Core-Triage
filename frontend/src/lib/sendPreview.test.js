@@ -27,16 +27,17 @@ describe('previewSendXP', () => {
     expect(breakdown).toBe('')
   })
 
-  it('matches calculateSendXP for a V3 flash indoor', () => {
+  it('matches calculateSendXP for a V3 flash indoor (first send → PR + gap)', () => {
     const { xp, breakdown } = previewSendXP({
       grade: 'V3', outcome: 'flash', stylePrimary: 'powerful',
       sessionType: 'bouldering',
     }, state)
-    // V3 base 55, indoor 1.0, flash 2.0, no PR (no prior sends), gap 1.0, deep 1.0
-    expect(xp).toBe(110)
+    // V3 base 55, indoor 1.0, flash 2.0, PR 1.5 (first send), gap 1.5 (fresh shape), deep 1.0
+    expect(xp).toBe(247)
     expect(breakdown).toContain('V3')
     expect(breakdown).toContain('flash')
     expect(breakdown).toContain('indoor')
+    expect(breakdown).toContain('PR')
   })
 
   it('flags PR multiplier when grade exceeds bestPerStyle', () => {
