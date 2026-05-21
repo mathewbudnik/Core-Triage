@@ -7,11 +7,11 @@ import { STYLE_ORDER } from './styleColors.js'
  *
  * Returns:
  *   {
- *     counts:     { power, dynamic, technical, endurance },
- *     pct:        { power, dynamic, technical, endurance },   // 0..100 ints
+ *     counts:     Record<style, number>,
+ *     pct:        Record<style, number>,                      // 0..100 ints
  *     total:      number,
- *     dominant:   'power' | 'dynamic' | ... | null,
- *     weakest:    'power' | 'dynamic' | ... | null,           // only when total >= 6
+ *     dominant:   style | null,
+ *     weakest:    style | null,                               // only when total >= 6
  *     confidence: 'low' | 'medium' | 'high',
  *   }
  *
@@ -20,11 +20,10 @@ import { STYLE_ORDER } from './styleColors.js'
  *   medium — 6 <= total < 20
  *   high   — total >= 20
  *
- * Ties broken in STYLE_ORDER (power → dynamic → technical → endurance) for
- * dominant, and reverse STYLE_ORDER for weakest.
+ * Ties broken in STYLE_ORDER for dominant; first wins on equal counts.
  */
 export function deriveStyleProfile(trainingLogs) {
-  const counts = { power: 0, dynamic: 0, technical: 0, endurance: 0 }
+  const counts = Object.fromEntries(STYLE_ORDER.map((s) => [s, 0]))
 
   for (const log of trainingLogs || []) {
     const climbs = log?.climbs || {}
@@ -48,7 +47,7 @@ export function deriveStyleProfile(trainingLogs) {
     total >= 6  ? 'medium' :
                   'low'
 
-  const pct = { power: 0, dynamic: 0, technical: 0, endurance: 0 }
+  const pct = Object.fromEntries(STYLE_ORDER.map((s) => [s, 0]))
   if (total > 0) {
     const rawPcts = {}
     for (const s of STYLE_ORDER) {

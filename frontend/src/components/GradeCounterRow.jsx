@@ -18,7 +18,7 @@ function normalizeStyles(styles) {
  * Props:
  *   grade:        string
  *   counters:     { s: number, f: number, p: number, styles?: {...} }
- *   activeStyle:  'power' | 'dynamic' | 'technical' | 'endurance'
+ *   activeStyle:  'powerful' | 'crimpy' | 'dynamic' | 'technical' | 'mobility'
  *   onChange:     (next) => void  — receives { s, f, p, styles }
  */
 export default function GradeCounterRow({ grade, counters, activeStyle, onChange }) {
