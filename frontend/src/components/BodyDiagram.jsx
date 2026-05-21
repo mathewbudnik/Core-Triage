@@ -296,13 +296,13 @@ function BodyDiagram({ selected, onSelect }) {
         <p style={{ margin: 0, fontSize: 14 }}>
           {preview ? (
             <>
-              <span style={{ color: '#CC3333', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <span style={{ color: '#d97757', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 {preview.label}
               </span>
-              <span style={{ color: 'rgba(255,255,255,0.4)' }}> · {preview.desc}</span>
+              <span style={{ color: 'rgba(240,245,237,0.4)' }}> · {preview.desc}</span>
             </>
           ) : (
-            <span style={{ color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em' }}>
+            <span style={{ color: 'rgba(240,245,237,0.35)', letterSpacing: '0.06em' }}>
               Tap the area that is bothering you
             </span>
           )}
@@ -348,20 +348,20 @@ function BodyDiagram({ selected, onSelect }) {
                   type="button"
                   onClick={handleCancel}
                   aria-label="Close"
-                  className="absolute top-3 right-3 w-10 h-10 rounded-full bg-panel border border-outline flex items-center justify-center text-muted hover:text-text hover:bg-panel2 active:bg-outline transition-colors"
+                  className="absolute top-3 right-3 w-10 h-10 rounded-full bg-panel border border-outline flex items-center justify-center text-ct-cream/60 hover:text-ct-cream hover:bg-panel2 active:bg-outline transition-colors"
                   style={{ touchAction: 'manipulation' }}
                 >
                   <X size={18} />
                 </button>
 
                 <div className="text-center space-y-1.5">
-                  <p className="text-[11px] font-semibold text-muted/70 uppercase tracking-widest">
+                  <p className="text-[11px] font-semibold text-ct-cream/50 uppercase tracking-widest">
                     You selected
                   </p>
-                  <h3 className="text-3xl font-bold text-text tracking-tight">
+                  <h3 className="text-3xl font-bold text-ct-cream tracking-tight">
                     {zone.label}
                   </h3>
-                  <p className="text-sm text-muted">{zone.desc}</p>
+                  <p className="text-sm text-ct-cream/60">{zone.desc}</p>
                 </div>
 
                 <div className="space-y-2">
@@ -390,8 +390,8 @@ function BodyDiagram({ selected, onSelect }) {
       document.body)}
 
       {/* ── Back-side region pills ────────────────────────────────────────── */}
-      <div style={{ width: '100%', maxWidth: 360, margin: '20px auto 0', paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-        <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 12px' }}>
+      <div style={{ width: '100%', maxWidth: 360, margin: '20px auto 0', paddingTop: 16, borderTop: '1px solid rgba(230,237,228,0.10)' }}>
+        <p style={{ fontSize: 10, color: 'rgba(149,166,152,1)', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 12px' }}>
           Or pick from the back side
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 6 }}>
