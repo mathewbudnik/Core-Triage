@@ -85,6 +85,29 @@ const SESSION_TYPES = ['bouldering', 'routes', 'outdoor', 'hangboard', 'strength
 // the "grades sent" free-text field, leaving only date/duration/intensity/notes.
 const CLIMB_SESSION_TYPES = new Set(['bouldering', 'routes', 'outdoor'])
 
+// Plan templates emit types like 'power', 'project', 'endurance' that aren't
+// in SESSION_TYPES. Map them to the closest real session_type so the form
+// defaults sensibly and the climbs section actually renders.
+const PREFILL_TO_SESSION_TYPE = {
+  bouldering: 'bouldering',
+  routes:     'routes',
+  outdoor:    'outdoor',
+  hangboard:  'hangboard',
+  strength:   'strength',
+  rest:       'rest',
+  power:      'bouldering',
+  limit:      'bouldering',
+  project:    'bouldering',
+  technique:  'bouldering',
+  endurance:  'routes',
+  mobility:   'rest',
+}
+
+function normalizeSessionType(input) {
+  if (!input) return 'bouldering'
+  return PREFILL_TO_SESSION_TYPE[input.toString().toLowerCase()] ?? 'bouldering'
+}
+
 const INTENSITY_LABELS = {
   1: 'Very easy', 2: 'Easy', 3: 'Easy-moderate',
   4: 'Moderate', 5: 'Moderate', 6: 'Moderate-hard',
@@ -158,7 +181,7 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
 
   const [form, setForm] = useState({
     date: today,
-    session_type: prefillType || 'bouldering',
+    session_type: normalizeSessionType(prefillType),
     duration_min: 90,
     intensity: 7,
     grades_sent: '',
