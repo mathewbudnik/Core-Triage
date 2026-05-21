@@ -67,7 +67,7 @@ function ProgressBar({ pct }) {
     <div className="h-[3px] bg-white/[0.06] rounded-full overflow-hidden">
       <motion.div
         className="h-full rounded-full"
-        style={{ background: 'var(--tier-c)' }}
+        style={{ background: '#d97757' }}
         initial={false}
         animate={{ width: `${Math.max(0, Math.min(100, pct))}%` }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
@@ -79,14 +79,14 @@ function ProgressBar({ pct }) {
 function StepHeader({ stepIndex, totalSteps, title, subtitle }) {
   return (
     <div className="mb-6">
-      <p className="text-[11px] font-extrabold uppercase tracking-[0.13em] text-muted">
+      <p className="text-[11px] font-extrabold uppercase tracking-[0.13em] text-ct-cream/60">
         Step {stepIndex + 1} of {totalSteps}
       </p>
       <h2 className="mt-2 text-[28px] sm:text-[30px] font-extrabold -tracking-[0.025em] leading-[1.1]">
         {title}
       </h2>
       {subtitle && (
-        <p className="mt-2 text-[13px] font-semibold text-text/55 leading-snug">
+        <p className="mt-2 text-[13px] font-semibold text-ct-cream/60 leading-snug">
           {subtitle}
         </p>
       )}
@@ -106,12 +106,12 @@ function SelectRow({ label, sub, selected, onClick }) {
                  hover:bg-white/[0.02] transition-colors"
     >
       <div className="min-w-0">
-        <p className={`text-[15px] font-extrabold leading-tight ${selected ? '' : 'text-text'}`}
-           style={selected ? { color: 'var(--tier-light)' } : {}}>
+        <p className={`text-[15px] font-extrabold leading-tight ${selected ? '' : 'text-ct-cream'}`}
+           style={selected ? { color: '#f0a875' } : {}}>
           {label}
         </p>
         {sub && (
-          <p className="text-[12px] font-semibold text-text/50 leading-snug mt-1">
+          <p className="text-[12px] font-semibold text-ct-cream/50 leading-snug mt-1">
             {sub}
           </p>
         )}
@@ -121,7 +121,7 @@ function SelectRow({ label, sub, selected, onClick }) {
         className="w-6 h-6 rounded-full inline-flex items-center justify-center shrink-0
                    border-[1.5px]"
         style={selected
-          ? { background: 'var(--tier-c)', borderColor: 'var(--tier-c)', color: 'var(--bg, #06120f)' }
+          ? { background: '#d97757', borderColor: '#d97757', color: '#f0f5ed' }
           : { borderColor: 'rgba(255,255,255,0.18)' }
         }
       >
@@ -141,9 +141,9 @@ function MultiPill({ label, selected, onClick }) {
       className="px-3.5 py-2 rounded-full border-[0.5px] text-[12px] font-bold transition-colors"
       style={selected
         ? {
-            background: 'color-mix(in srgb, var(--tier-c) 14%, transparent)',
-            borderColor: 'color-mix(in srgb, var(--tier-c) 45%, transparent)',
-            color: 'var(--tier-light)',
+            background: 'rgba(217,119,87,0.14)',
+            borderColor: 'rgba(217,119,87,0.45)',
+            color: '#f0a875',
           }
         : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.10)', color: '#e8e8ec' }
       }
@@ -160,10 +160,10 @@ function GradeSlider({ value, options, onChange }) {
     <div className="px-1">
       <div className="flex items-baseline justify-between mb-4">
         <p className="text-[28px] font-extrabold tabular-nums -tracking-[0.025em]"
-           style={{ color: 'var(--tier-light)' }}>
+           style={{ color: '#f0a875' }}>
           {value}
         </p>
-        <p className="text-[11px] font-bold uppercase tracking-[0.10em] text-text/45">
+        <p className="text-[11px] font-bold uppercase tracking-[0.10em] text-ct-cream/40">
           {idx + 1} of {options.length}
         </p>
       </div>
@@ -174,9 +174,9 @@ function GradeSlider({ value, options, onChange }) {
         value={idx}
         onChange={(e) => onChange(options[+e.target.value])}
         className="w-full"
-        style={{ accentColor: 'var(--tier-c)' }}
+        style={{ accentColor: '#d97757' }}
       />
-      <div className="flex justify-between mt-2 text-[11px] font-bold text-text/40 tabular-nums">
+      <div className="flex justify-between mt-2 text-[11px] font-bold text-ct-cream/40 tabular-nums">
         <span>{options[0]}</span>
         <span>{options[Math.floor(options.length / 2)]}</span>
         <span>{options[options.length - 1]}</span>
@@ -201,18 +201,18 @@ function WeekdayPicker({ value, onToggle }) {
                        border-[0.5px] min-h-[60px] transition-colors"
             style={selected
               ? {
-                  background: 'linear-gradient(180deg, color-mix(in srgb, var(--tier-c) 18%, transparent), color-mix(in srgb, var(--tier-c) 4%, transparent))',
-                  borderColor: 'color-mix(in srgb, var(--tier-c) 42%, transparent)',
+                  background: 'linear-gradient(180deg, rgba(217,119,87,0.18), rgba(217,119,87,0.04))',
+                  borderColor: 'rgba(217,119,87,0.42)',
                 }
               : { borderColor: 'transparent', background: 'transparent' }
             }
           >
             <span className="text-[10px] font-extrabold uppercase tracking-[0.06em]"
-                  style={{ color: selected ? 'var(--tier-light)' : 'rgba(255,255,255,0.35)' }}>
+                  style={{ color: selected ? '#f0a875' : 'rgba(240,245,237,0.35)' }}>
               {d.short}
             </span>
             <span className="text-[13px] font-bold mt-1"
-                  style={{ color: selected ? 'var(--tier-light)' : 'rgba(255,255,255,0.7)' }}>
+                  style={{ color: selected ? '#f0a875' : 'rgba(240,245,237,0.7)' }}>
               {d.long}
             </span>
           </button>
@@ -228,8 +228,8 @@ function NumberSlider({ value, min, max, step = 5, unit, onChange, hint }) {
     <div className="px-1">
       <div className="flex items-baseline justify-between mb-4">
         <p className="text-[28px] font-extrabold tabular-nums -tracking-[0.025em]"
-           style={{ color: 'var(--tier-light)' }}>
-          {value} <span className="text-[14px] font-bold text-text/55">{unit}</span>
+           style={{ color: '#f0a875' }}>
+          {value} <span className="text-[14px] font-bold text-ct-cream/60">{unit}</span>
         </p>
       </div>
       <input
@@ -240,14 +240,14 @@ function NumberSlider({ value, min, max, step = 5, unit, onChange, hint }) {
         value={value}
         onChange={(e) => onChange(+e.target.value)}
         className="w-full"
-        style={{ accentColor: 'var(--tier-c)' }}
+        style={{ accentColor: '#d97757' }}
       />
-      <div className="flex justify-between mt-2 text-[11px] font-bold text-text/40 tabular-nums">
+      <div className="flex justify-between mt-2 text-[11px] font-bold text-ct-cream/40 tabular-nums">
         <span>{min} {unit}</span>
         <span>{Math.round((min + max) / 2)} {unit}</span>
         <span>{max} {unit}</span>
       </div>
-      {hint && <p className="text-[11px] font-semibold text-text/45 mt-3 leading-snug">{hint}</p>}
+      {hint && <p className="text-[11px] font-semibold text-ct-cream/40 mt-3 leading-snug">{hint}</p>}
     </div>
   )
 }
@@ -402,7 +402,7 @@ export default function ProfileSetup({ onComplete }) {
           <WeekdayPicker value={form.training_days}
                          onToggle={(v) => toggleList('training_days', v)} />
           <p className="text-[12px] font-bold mt-4"
-             style={{ color: 'var(--tier-light)' }}>
+             style={{ color: '#f0a875' }}>
             {form.training_days.length} day{form.training_days.length === 1 ? '' : 's'} / week
           </p>
         </>
@@ -443,11 +443,11 @@ export default function ProfileSetup({ onComplete }) {
 
             {conf === 'medium' && weakLabel && (
               <div className="mb-4 px-3.5 py-3 rounded-2xl
-                              bg-[color:color-mix(in_srgb,var(--tier-c)_8%,transparent)]
-                              border-[0.5px] border-[color:color-mix(in_srgb,var(--tier-c)_22%,transparent)]">
-                <p className="text-[11.5px] font-semibold text-text/85 leading-snug">
+                              bg-[rgba(217,119,87,0.08)]
+                              border-[0.5px] border-[rgba(217,119,87,0.22)]">
+                <p className="text-[11.5px] font-semibold text-ct-cream/80 leading-snug">
                   Based on <b className="tabular-nums">{styleProfile.total}</b> tagged climbs, your
-                  weakest style looks like <b style={{ color: 'var(--tier-light)' }}>{weakLabel}</b>.
+                  weakest style looks like <b style={{ color: '#f0a875' }}>{weakLabel}</b>.
                   We've pre-checked it — adjust if you disagree.
                 </p>
               </div>
@@ -455,12 +455,12 @@ export default function ProfileSetup({ onComplete }) {
 
             {conf === 'high' && weakLabel && domLabel && (
               <div className="mb-4 px-3.5 py-3 rounded-2xl
-                              bg-[color:color-mix(in_srgb,var(--tier-c)_8%,transparent)]
-                              border-[0.5px] border-[color:color-mix(in_srgb,var(--tier-c)_22%,transparent)]">
-                <p className="text-[11.5px] font-semibold text-text/85 leading-snug mb-2">
+                              bg-[rgba(217,119,87,0.08)]
+                              border-[0.5px] border-[rgba(217,119,87,0.22)]">
+                <p className="text-[11.5px] font-semibold text-ct-cream/80 leading-snug mb-2">
                   From <b className="tabular-nums">{styleProfile.total}</b> tagged climbs:
-                  <b style={{ color: 'var(--tier-light)' }}> {domLabel}</b>-heavy,
-                  <b style={{ color: 'var(--tier-light)' }}> {weakLabel}</b> is your gap.
+                  <b style={{ color: '#f0a875' }}> {domLabel}</b>-heavy,
+                  <b style={{ color: '#f0a875' }}> {weakLabel}</b> is your gap.
                 </p>
               </div>
             )}
@@ -489,7 +489,7 @@ export default function ProfileSetup({ onComplete }) {
           </div>
           {form.primary_goal === 'grade_progression' && (
             <div className="mt-5">
-              <p className="text-[11px] font-bold uppercase tracking-[0.10em] text-text/45 mb-2">
+              <p className="text-[11px] font-bold uppercase tracking-[0.10em] text-ct-cream/40 mb-2">
                 Target grade
               </p>
               <input
@@ -499,7 +499,7 @@ export default function ProfileSetup({ onComplete }) {
                 onChange={(e) => setField('goal_grade', e.target.value)}
                 className="w-full bg-transparent border-b-[0.5px] border-white/[0.10]
                            text-base sm:text-[15px] font-bold py-2 outline-none transition-colors
-                           focus:border-[var(--tier-c)]"
+                           focus:border-[#d97757]"
               />
             </div>
           )}
@@ -513,21 +513,21 @@ export default function ProfileSetup({ onComplete }) {
     <div className="relative max-w-lg mx-auto px-4 py-6 md:py-10 min-h-[calc(100vh-4rem)] flex flex-col"
          style={{
            background:
-             'radial-gradient(circle at 50% -10%, color-mix(in srgb, var(--tier-c) 22%, transparent) 0%, transparent 55%)',
+             'radial-gradient(circle at 50% -10%, rgba(217,119,87,0.22) 0%, transparent 55%)',
          }}>
       {/* Top progress + Train title */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-3 px-1">
           <p className="text-[20px] font-extrabold -tracking-[0.025em]"
-             style={{ textShadow: '0 0 14px var(--tier-glow)' }}>
+             style={{ textShadow: '0 0 14px rgba(217,119,87,0.45)' }}>
             Train.
           </p>
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
                            text-[10.5px] font-extrabold uppercase tracking-[0.06em]"
                 style={{
-                  background: 'color-mix(in srgb, var(--tier-c) 12%, transparent)',
-                  border: '0.5px solid color-mix(in srgb, var(--tier-c) 35%, transparent)',
-                  color: 'var(--tier-light)',
+                  background: 'rgba(217,119,87,0.12)',
+                  border: '0.5px solid rgba(217,119,87,0.35)',
+                  color: '#f0a875',
                 }}>
             <Sparkles size={11} strokeWidth={2.6} />
             Build my plan
@@ -570,11 +570,11 @@ export default function ProfileSetup({ onComplete }) {
                          px-5 py-3.5 rounded-2xl font-extrabold text-[13.5px] -tracking-[0.01em]
                          transition-colors"
               style={ready
-                ? { background: 'var(--tier-c)', color: 'var(--bg, #06120f)' }
+                ? { background: '#d97757', color: '#f0f5ed' }
                 : {
-                    background: 'color-mix(in srgb, var(--tier-c) 14%, transparent)',
-                    border: '0.5px solid color-mix(in srgb, var(--tier-c) 32%, transparent)',
-                    color: 'color-mix(in srgb, var(--tier-light) 55%, transparent)',
+                    background: 'rgba(217,119,87,0.14)',
+                    border: '0.5px solid rgba(217,119,87,0.32)',
+                    color: 'rgba(240,168,117,0.55)',
                     cursor: 'not-allowed',
                   }
               }
@@ -594,7 +594,7 @@ export default function ProfileSetup({ onComplete }) {
           disabled={step === 0 || saving}
           className="mt-3 w-full inline-flex items-center justify-center gap-1
                      text-[11px] font-extrabold uppercase tracking-[0.10em]
-                     text-muted hover:text-text transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                     text-ct-cream/60 hover:text-ct-cream transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <ChevronLeft size={12} strokeWidth={2.6} />
           Back
