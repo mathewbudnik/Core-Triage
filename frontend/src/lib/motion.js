@@ -20,6 +20,7 @@ export const TRANSITIONS = {
   chip_tap:     { duration: DURATIONS.snap,  ease: EASE.out },
   celebrate:    { duration: DURATIONS.celebrate, ease: EASE.spring },
   route:        { duration: DURATIONS.glide, ease: EASE.decel },
+  dialog_in:    { duration: DURATIONS.glide, ease: EASE.out },
 }
 
 const INSTANT = { duration: 0 }

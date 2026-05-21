@@ -7,6 +7,7 @@ import { useRewardEngine, getInitialState } from '../lib/rewardEngine'
 import LogSendQuick from './ui/LogSendQuick'
 import LogSendDeep from './ui/LogSendDeep'
 import CelebrationOverlay from './ui/CelebrationOverlay'
+import SessionSummaryOverlay from './ui/SessionSummaryOverlay'
 import Surface from './ui/Surface'
 import Eyebrow from './ui/Eyebrow'
 import TierBadge from './ui/TierBadge'
@@ -81,6 +82,7 @@ function ThemeDemoBody() {
  */
 export default function DesignSystem() {
   const [celebrate, setCelebrate] = useState(false)
+  const [demoOpen, setDemoOpen] = useState(false)
   return (
     <main className="min-h-screen bg-ct-forest text-ct-cream p-10">
       <header className="mb-12 flex items-baseline justify-between">
@@ -240,6 +242,26 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
             onClose={() => setCelebrate(false)}
             title="Clean send. V6."
             subtitle="+180 XP"
+          />
+        </Surface>
+      </section>
+
+      <section className="mb-12">
+        <h2 className="ct-title mb-4">SessionSummaryOverlay</h2>
+        <Surface tier="default" padding="lg" className="max-w-sm">
+          <Eyebrow divider className="mb-4">Multi-event celebration</Eyebrow>
+          <button onClick={() => setDemoOpen(true)} className="px-3 py-2 bg-ct-terracotta rounded text-ct-forest font-bold text-sm">
+            Demo summary
+          </button>
+          <SessionSummaryOverlay
+            open={demoOpen}
+            onClose={() => setDemoOpen(false)}
+            totalXP={420}
+            events={[
+              { kind: 'send', label: 'V4 flash', sublabel: 'powerful', xp: 247 },
+              { kind: 'pr', label: 'New powerful PR · V4' },
+              { kind: 'levelUp', label: 'Reached Lv 2' },
+            ]}
           />
         </Surface>
       </section>
