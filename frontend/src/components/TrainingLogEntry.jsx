@@ -4,9 +4,11 @@ import { Check, X } from 'lucide-react'
 import { logTraining } from '../api'
 import { useTrainingBaseline } from '../hooks/useTrainingBaseline'
 import { vGradeToTier, ydsToTier, V_TIERS } from '../lib/tier'
+import { useRewardEngine } from '../lib/rewardEngine'
 import DatePicker from './DatePicker'
 import ClimbLogSection from './ClimbLogSection'
 import PlausibilityConfirmModal from './PlausibilityConfirmModal'
+import CelebrationOverlay from './ui/CelebrationOverlay'
 
 // Plausibility-check thresholds. Tier diffs are computed using V_TIERS
 // indices (V0..V10) — for routes the YDS grade is first mapped to a
@@ -162,6 +164,9 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+  const [celebration, setCelebration] = useState(null) // { title, subtitle } | null
+
+  const { logSend } = useRewardEngine()
 
   // Plausibility check state. When `pending` is set, a modal blocks the
   // save until the user confirms or edits the grade. The baseline hook
@@ -205,6 +210,58 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
           window.dispatchEvent(new CustomEvent('ct:tier-promotion', { detail: res.tier_change }))
         }
         baseline.refresh()
+
+        // Route each logged send through the reward engine so XP, stats,
+        // streak, and quest progress update client-side (Phase 1 additive).
+        // form.climbs shape: { boulder?: { 'V5': { s, f, p }, ... }, route?: { ... } }
+        // s = sends, f = flashes — both earn XP; projects (p) are not sends.
+        const isOutdoor = payload.session_type === 'outdoor'
+        const modality = isOutdoor ? 'outdoor' : 'indoor'
+        // Style is tracked locally in ClimbLogSection and persisted in localStorage.
+        let stylePrimary = 'powerful'
+        try {
+          const storedStyle = localStorage.getItem('ct_climb_style')
+          if (storedStyle) stylePrimary = storedStyle
+        } catch { /* ignore */ }
+
+        const climbsSent = [] // { grade, outcome } pairs to process
+        for (const discipline of ['boulder', 'route']) {
+          const gradeMap = payload.climbs?.[discipline] || {}
+          for (const [grade, counters] of Object.entries(gradeMap)) {
+            if (!counters) continue
+            // Each flash is also a send — represent as 'flash' outcome
+            for (let i = 0; i < (counters.f || 0); i++) {
+              climbsSent.push({ grade, outcome: 'flash' })
+            }
+            // Regular sends
+            for (let i = 0; i < (counters.s || 0); i++) {
+              climbsSent.push({ grade, outcome: 'redpoint' })
+            }
+          }
+        }
+
+        let lastEvents = null
+        let lastGrade = null
+        const now = Date.now()
+        for (const { grade, outcome } of climbsSent) {
+          const events = logSend({ grade, modality, outcome, stylePrimary, isDeepLog: false, ts: now })
+          if (events.xpEarned > 0) {
+            lastEvents = events
+            lastGrade = grade
+          }
+        }
+
+        if (lastEvents?.leveledUp) {
+          setCelebration({
+            title:    `Lv ${lastEvents.level}. Keep moving.`,
+            subtitle: `+${lastEvents.xpEarned} XP`,
+          })
+        } else if (lastEvents?.isPersonalRecord) {
+          setCelebration({
+            title:    `Clean send. ${lastGrade ?? ''}.`,
+            subtitle: `+${lastEvents.xpEarned} XP`,
+          })
+        }
       } catch (err) {
         // Modal already closed — surface via the global toast channel so the
         // failure isn't silent.
@@ -235,11 +292,18 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
   const defaultTab = form.session_type === 'routes' ? 'route' : 'boulder'
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="rounded-xl border border-accent/30 bg-accent/5 p-4 space-y-4"
-    >
+    <>
+      <CelebrationOverlay
+        open={!!celebration}
+        title={celebration?.title}
+        subtitle={celebration?.subtitle}
+        onClose={() => setCelebration(null)}
+      />
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-xl border border-accent/30 bg-accent/5 p-4 space-y-4"
+      >
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-text">Log this session</p>
         {onCancel && (
@@ -374,5 +438,6 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
         />
       )}
     </motion.div>
+    </>
   )
 }
