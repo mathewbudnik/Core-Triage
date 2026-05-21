@@ -607,6 +607,73 @@ Phase 6 shipped on 2026-05-20 — 4 commits on `redesign/rpg-climber` since the 
 
 Phase 6 closes out the chrome re-skin pass started in Phase 3. Hub, Progress, Triage, Recover, Train, Chat, Landing, Auth, Account, About — all now read as one design.
 
+## Overnight wake-up summary (2026-05-20 → 2026-05-21)
+
+Three phases shipped overnight: **Phase 4, Phase 5, Phase 6**. 27 commits on `redesign/rpg-climber` total. 80/80 tests passing, build clean throughout, no remote pushes, dev server not restarted. All guardrails respected.
+
+**What you'll see on first open:**
+
+- Hub and Progress: same as before bed (Phase 3 was already done).
+- **Triage tab** → re-chromed (forest surface + terracotta accents). Smart card, region pills, action chips, severity slider all updated.
+- **Recover + Rehab tabs** → re-chromed. Exercise cards, status pills, rehab protocol steps.
+- **Body diagram** → outer chrome refreshed; region severity colors preserved as data viz.
+- **Train tab** → re-chromed end-to-end. Header, hero card, plan-arc chip, streak chip, calendar, month grid, week strip, SessionDetailSheet, ExerciseTimer.
+- **Chat tab** → re-chromed. AI view, Coach view, picker, inbox, message bubbles.
+- **Auth modals** (sign-in, sign-up, display name, avatar, disclaimer, legal, plausibility) → re-chromed. **Auth behavior identical** — no functional changes.
+- **Account menu** → re-chromed drawer with terracotta accents.
+- **About tab** → re-chromed hero, feature cards, coach bio.
+- **Landing page** → re-chromed marketing hero with terracotta CTAs.
+- **Banners + toasts** (verification, trial, saved-to-history, award-unlock) → re-chromed.
+- **Tier promotion celebration** → setter-voice copy: "You climbed clean into {name}. Keep moving."
+- **TierThemeProvider** infrastructure available app-wide for future opt-in use.
+
+**Things worth a look first thing:**
+
+1. **Auth flow.** Open the app in an incognito window and try logging in. Chrome should look new (forest surface, terracotta button), behavior should be identical. If sign-in breaks, the issue is in commit `c38f73d` (Phase 6 Task 1) — revert that one commit to restore.
+2. **`BillingReturnPage.jsx` was NOT modified** per guardrail. It'll look out of sync with the new chrome until you give the go-ahead.
+3. **Landing page** got a real visual change (was previously coral-toned, now terracotta). Make sure the marketing read still lands the way you want.
+4. **TipCard** lost its per-tip categorical colors (all terracotta now). If you wanted to keep the variety, that's a one-line revert.
+5. **Two `useTierTheme` hooks** exist with different APIs (one in `hooks/`, one in `ui/TierThemeProvider.jsx`). Documented as a naming hazard in Phase 5 retro. Not blocking, but worth a future rename.
+
+**Out of scope from spec (deliberate deferrals, all documented in retros):**
+
+- Per-tier app-wide chrome themes (spec §11) — you chose unified palette in Phase 3/4 and stuck with it.
+- BillingReturnPage chrome — guardrail.
+- ProfileSetup's lingering 4-chip references — still on the Phase 6 follow-up list (it doesn't break anything; just visibly stale on that one surface).
+
+**Run state when you wake up:**
+
+- Backend (uvicorn) at http://localhost:8000 — STILL RUNNING (was already up; guardrail said don't restart).
+- Frontend (vite) at http://localhost:5174 — STILL RUNNING.
+- Both will hot-reload to the new state when you refresh the browser.
+- Bearer-of-my-grace project still on :5173, untouched.
+
+**Phases 4, 5, 6 commit list** (newest → oldest):
+
+```
+5f682e2 docs(spec): Phase 6 retrospective
+2157fec feat(landing): re-chrome Landing + TipCard + Coachmark + CrashFallback
+ad9cb5a feat(notify): re-chrome banners + AwardUnlockToast on RPG palette
+f50e67f feat(account): re-chrome AccountMenu + About + Logo on RPG palette
+c38f73d feat(auth): re-chrome auth + identity modals on RPG palette
+7a2bd7a docs(plan): Phase 6 — auth/modals/landing re-chrome
+babd113 docs(spec): Phase 5 retrospective
+29eae65 feat(theme): Phase 5 — TierThemeProvider wired + promotion copy refresh
+30329f3 docs(plan): Phase 5 — TierThemeProvider + tier-unlock celebration
+fc84f5a docs(spec): Phase 4 retrospective
+21eb555 feat(chat): re-chrome Chat tab + AI + Coach views on RPG palette
+5859e22 feat(train): re-chrome SessionDetailSheet + ExerciseTimer
+8ff7d6b feat(train): re-chrome calendar + month grid + plan arc sheet
+4d9d5a2 feat(train): re-chrome outer shell + hero card + chips on RPG palette
+e32dcc7 feat(body): re-chrome Body tab — region colors preserved
+c8b6b74 feat(recover): re-chrome Recover + Rehab on Surface + Eyebrow + RPG palette
+f78a9d6 feat(triage): re-chrome on Surface + Eyebrow + RPG palette
+0930d73 docs(plan): Phase 4 — re-chrome Triage/Recover/Train/Chat tabs
+```
+
+Nothing pushed. Everything local on `redesign/rpg-climber`. You can `git reset --soft` any commit you want to redo.
+
+
 
 
 
