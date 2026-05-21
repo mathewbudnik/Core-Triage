@@ -570,4 +570,25 @@ Phase 4 shipped on 2026-05-20 — 7 commits on `redesign/rpg-climber` since the 
 - **TrainStreakChip needed zero changes.** Already used gold/fire palette which is a separate "streak" indicator language, not the chrome palette. Worth a one-liner in the spec acknowledging this is intentional (separate identity for streak rewards vs grade tiers vs RPG chrome).
 - **Several files had Surface imported but not directly used after conversion** (AIChatView, CoachInbox) because user/assistant bubbles needed inline `bg-ct-terra-tint` classes rather than full Surface wraps. The import is harmless but not strictly necessary. Cleanup opportunity for the next sweep.
 
+## Phase 5 retrospective (added after implementation)
+
+Phase 5 shipped on 2026-05-20 — 2 commits on `redesign/rpg-climber` since the Phase 5 plan, build green, 80/80 tests passing.
+
+**Scope reduction documented:** spec §11 called for per-tier app-wide chrome themes ("Frost"/"Slatehold"/"Ember"/"Phoenix" palettes swapping the entire chrome layer on tier promotion). User explicitly chose a unified RPG palette during Phase 3 ("top stack only") and Phase 4 (whole-app chrome unification). Per-tier chrome theming was DELIBERATELY deferred.
+
+What shipped:
+- `<TierThemeProvider>` extended (not rewritten — the Phase 0 stub already existed with a `themeKey/setThemeKey/CSS-var` machinery). Now also accepts a `tier` prop and exposes `{ tier, tierTokens, tierName }` via the same context. Legacy consumers (DesignSystem) keep working without changes.
+- Provider wired at App root inside the authenticated route tree. Any descendant of any tab can `useTierTheme()` to read the climber's current working tier without prop drilling.
+- `TierPromotionTakeover` copy refresh to setter voice. The tier-colored radial splash itself stays unchanged — that's a celebration moment where the tier color IS the data being revealed, not chrome.
+
+What did NOT ship (deferred):
+- Per-tier CSS variable swap on chrome surfaces — would undo Phases 3 + 4 palette unification.
+- A "themes unlocked" picker UI — deferred indefinitely.
+- Tier-themed celebration sound effects.
+
+**Naming clash hazard noted:** there are now TWO `useTierTheme` hooks in the codebase — one in `components/ui/TierThemeProvider.jsx` (no args, returns the context value) and one in `hooks/useTierTheme.js` (takes a `hardest` arg, returns `{ tokens }` — used by `TierThemeRoot`). They have unrelated APIs. Calling code disambiguates via import path. Worth renaming the older one to `useTierTokens(hardest)` next time we touch it — the name better reflects what it does.
+
+**No subagent dispatches needed for Phase 5.** All three tasks were small enough to execute inline without polluting the parent agent's context. Single commit covered all the implementation.
+
+
 
