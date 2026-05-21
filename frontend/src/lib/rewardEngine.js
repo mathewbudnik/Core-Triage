@@ -4,7 +4,7 @@
  * backend sync is deferred to a later phase per spec.
  */
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { calculateSendXP, levelFromTotalXP } from './xp.js'
 import { gradeStringToNum } from './gradeUtil.js'
 import { deriveStatShape } from './stats.js'
@@ -248,12 +248,6 @@ export function useRewardEngine() {
     return withQuest
   })
 
-  // Re-load if storage is cleared externally (e.g., devtools, theme reset).
-  // No-op safety so hot reload during dev doesn't lose state.
-  useEffect(() => {
-    // initial mount: state already loaded above
-  }, [])
-
   const logSend = useCallback((send) => {
     const { state: next, events } = addSend(state, send)
     if (events.xpEarned > 0) {
@@ -263,11 +257,35 @@ export function useRewardEngine() {
     return events
   }, [state])
 
+  /**
+   * Log multiple sends in a single batch. Accumulates state across all
+   * sends sequentially (each send sees the state mutated by prior sends
+   * in the same batch — so PR detection, sessionPosition, and stat-shape
+   * derivation are all correct). Persists once at the end.
+   *
+   * Returns an array of events objects (one per send, in order).
+   */
+  const logSends = useCallback((sends) => {
+    if (!Array.isArray(sends) || sends.length === 0) return []
+    let current = state
+    const allEvents = []
+    for (const send of sends) {
+      const { state: next, events } = addSend(current, send)
+      if (events.xpEarned > 0) current = next
+      allEvents.push(events)
+    }
+    if (current !== state) {
+      setState(current)
+      saveState(current)
+    }
+    return allEvents
+  }, [state])
+
   const reset = useCallback(() => {
     const fresh = getInitialState()
     setState(fresh)
     saveState(fresh)
   }, [])
 
-  return { state, logSend, reset }
+  return { state, logSend, logSends, reset }
 }

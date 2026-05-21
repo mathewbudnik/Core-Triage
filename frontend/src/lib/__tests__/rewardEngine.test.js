@@ -170,4 +170,14 @@ describe('addSend', () => {
     state = addSend(state, { ...baseSend, ts: nextDay }).state
     expect(state.streak.days).toBe(2)
   })
+
+  it('chained addSend preserves PR/streak/best across multi-send', () => {
+    let state = getInitialState()
+    state = addSend(state, { grade: 'V5', modality: 'indoor', outcome: 'redpoint', stylePrimary: 'crimpy', isDeepLog: false, ts: Date.parse('2026-05-20T18:00:00Z') }).state
+    state = addSend(state, { grade: 'V5', modality: 'indoor', outcome: 'redpoint', stylePrimary: 'crimpy', isDeepLog: false, ts: Date.parse('2026-05-20T18:30:00Z') }).state
+    const third = addSend(state, { grade: 'V6', modality: 'indoor', outcome: 'redpoint', stylePrimary: 'crimpy', isDeepLog: false, ts: Date.parse('2026-05-20T19:00:00Z') })
+    expect(third.events.isPersonalRecord).toBe(true)  // V6 is new
+    expect(third.state.sends).toHaveLength(3)
+    expect(third.state.bestPerStyle.crimpy).toBe(6)
+  })
 })

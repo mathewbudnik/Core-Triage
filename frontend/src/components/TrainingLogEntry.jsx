@@ -166,7 +166,7 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
   const [error, setError] = useState(null)
   const [celebration, setCelebration] = useState(null) // { title, subtitle } | null
 
-  const { logSend } = useRewardEngine()
+  const { logSends } = useRewardEngine()
 
   // Plausibility check state. When `pending` is set, a modal blocks the
   // save until the user confirms or edits the grade. The baseline hook
@@ -224,41 +224,51 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
           if (storedStyle) stylePrimary = storedStyle
         } catch { /* ignore */ }
 
-        const climbsSent = [] // { grade, outcome } pairs to process
+        // Build all sends from form.climbs (the two-level dict)
+        const allSends = []
+        const now = Date.now()
         for (const discipline of ['boulder', 'route']) {
           const gradeMap = payload.climbs?.[discipline] || {}
           for (const [grade, counters] of Object.entries(gradeMap)) {
             if (!counters) continue
-            // Each flash is also a send — represent as 'flash' outcome
-            for (let i = 0; i < (counters.f || 0); i++) {
-              climbsSent.push({ grade, outcome: 'flash' })
-            }
-            // Regular sends
             for (let i = 0; i < (counters.s || 0); i++) {
-              climbsSent.push({ grade, outcome: 'redpoint' })
+              allSends.push({
+                grade,
+                modality,
+                outcome:      'redpoint',
+                stylePrimary: stylePrimary,
+                isDeepLog:    false,
+                ts:           now,
+              })
+            }
+            for (let i = 0; i < (counters.f || 0); i++) {
+              allSends.push({
+                grade,
+                modality,
+                outcome:      'flash',
+                stylePrimary: stylePrimary,
+                isDeepLog:    false,
+                ts:           now,
+              })
             }
           }
         }
 
+        // Single-batch dispatch — accumulates state correctly across sends
+        const allEvents = logSends(allSends)
         let lastEvents = null
-        let lastGrade = null
-        const now = Date.now()
-        for (const { grade, outcome } of climbsSent) {
-          const events = logSend({ grade, modality, outcome, stylePrimary, isDeepLog: false, ts: now })
-          if (events.xpEarned > 0) {
-            lastEvents = events
-            lastGrade = grade
-          }
+        for (const events of allEvents) {
+          if (events.xpEarned > 0) lastEvents = events
         }
-
         if (lastEvents?.leveledUp) {
           setCelebration({
             title:    `Lv ${lastEvents.level}. Keep moving.`,
             subtitle: `+${lastEvents.xpEarned} XP`,
           })
         } else if (lastEvents?.isPersonalRecord) {
+          const lastSend = allSends[allSends.length - 1]
           setCelebration({
-            title:    `Clean send. ${lastGrade ?? ''}.`,
+            title:    `Clean send. ${lastSend?.grade ?? ''}.`,
             subtitle: `+${lastEvents.xpEarned} XP`,
           })
         }
