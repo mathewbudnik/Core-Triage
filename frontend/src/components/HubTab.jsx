@@ -1,74 +1,27 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Loader2 } from 'lucide-react'
-import { useHubData } from '../hooks/useHubData'
-import { useHubTip } from '../hooks/useHubTip'
-import { workingTierFromHardest } from '../lib/tier'
-import TierThemeRoot from './TierThemeRoot'
-import HubGreeting from './HubGreeting'
-import HubRingsCard from './HubRingsCard'
-import HubStyleMixCard from './HubStyleMixCard'
-import HubTipCard from './HubTipCard'
-import HubProjectCard from './HubProjectCard'
-import HubWeekStrip from './HubWeekStrip'
-import HubFeedCard from './HubFeedCard'
-import StyleMixSheet from './StyleMixSheet'
+import HubHero from './hub/HubHero'
+import TodaysQuestCard from './hub/TodaysQuestCard'
+import HubToolsGrid from './hub/HubToolsGrid'
+import HubProjectTile from './hub/HubProjectTile'
+import HubRecentSends from './hub/HubRecentSends'
 
-export default function HubTab({ user }) {
-  const navigate = useNavigate()
-  const data = useHubData(user)
-  const { tip, dismiss } = useHubTip(user)
-  const tierId = workingTierFromHardest(data.hardestSends)
-  const today = new Date().toISOString().slice(0,10)
-  const [styleSheetOpen, setStyleSheetOpen] = useState(false)
-
-  if (data.loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 size={20} className="text-accent animate-spin" />
-      </div>
-    )
-  }
-
+/**
+ * Hub — the climber's home screen. Identity + reward-engine surface.
+ *
+ * Layout (top to bottom):
+ *   1. HubHero — greeting + name + tier badge + stat radar + level meter + streak + style strip
+ *   2. TodaysQuestCard — today's daily quest with progress
+ *   3. HubProjectTile — your active project (the boss climb)
+ *   4. HubToolsGrid — Recover / Train / Ask coach
+ *   5. HubRecentSends — last 5 sends with XP earned per row
+ */
+export default function HubTab() {
   return (
-    <TierThemeRoot hardest={data.hardestSends} global>
-      <div className="relative px-4 py-6 md:py-8 max-w-2xl mx-auto"
-           style={{
-             background:
-               'radial-gradient(circle at 50% -10%, color-mix(in srgb, var(--tier-c) 28%, transparent) 0%, transparent 55%)',
-           }}>
-        <HubGreeting user={user} data={data} tierId={tierId} />
-
-        <div className="space-y-3">
-          <HubRingsCard
-            sends={data.ringSends}
-            climbDays={data.ringClimbDays}
-            pushAttempts={data.ringPushAttempts}
-            streakDays={data.streakDays}
-          />
-          <HubStyleMixCard
-            profile={data.styleProfile}
-            onOpen={() => setStyleSheetOpen(true)}
-          />
-          <HubTipCard tip={tip} onDismiss={dismiss} />
-          {data.currentProject && (
-            <HubProjectCard
-              project={data.currentProject}
-              onContinue={() => navigate('/train')}
-            />
-          )}
-          <HubWeekStrip
-            loggedDates={data.weekLoggedDates}
-            todayIso={today}
-          />
-          <HubFeedCard items={data.feedItems} />
-        </div>
-        <StyleMixSheet
-          open={styleSheetOpen}
-          profile={data.styleProfile}
-          onClose={() => setStyleSheetOpen(false)}
-        />
-      </div>
-    </TierThemeRoot>
+    <div className="min-h-screen bg-ct-forest text-ct-cream p-4 pb-24 max-w-md mx-auto">
+      <HubHero />
+      <TodaysQuestCard />
+      <HubProjectTile />
+      <HubToolsGrid />
+      <HubRecentSends />
+    </div>
   )
 }
