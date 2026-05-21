@@ -10,6 +10,7 @@ import ProgressTierHero from './ProgressTierHero'
 import GradePyramidCard from './GradePyramidCard'
 import AwardsStrip from './AwardsStrip'
 import ProgressTrendGraph from './ProgressTrendGraph'
+import StatTrends7Day from './progress/StatTrends7Day'
 import DisplayNamePromptModal from './DisplayNamePromptModal'
 
 function EmptyState({ icon: Icon, title, body, action }) {
@@ -135,8 +136,8 @@ export default function ProgressTab({ user, onUserChange, onLoginClick }) {
         }}>
 
         <div className="px-1 pt-1 pb-2">
-          <h1 className="text-2xl sm:text-[28px] font-bold text-text -tracking-[0.025em]">Progress</h1>
-          <p className="text-xs text-muted mt-1">Leaderboard, grade pyramid, and your stats</p>
+          <h1 className="ct-display">Progress</h1>
+          <p className="ct-meta mt-1">Grade pyramid, awards, and your XP trend</p>
         </div>
 
         <AnimatePresence mode="wait">
@@ -168,6 +169,7 @@ export default function ProgressTab({ user, onUserChange, onLoginClick }) {
         />
         <GradePyramidCard key={refreshKey} />
         <AwardsStrip user={user} />
+        <StatTrends7Day />
         <ProgressTrendGraph />
       </motion.div>
     </TierThemeRoot>
