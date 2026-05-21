@@ -20,7 +20,7 @@ export default function AwardsStrip({ user, maxLocked = 4 }) {
   const { loading, earned, locked } = useAwards(user)
 
   return (
-    <Surface tier="default" padding="md" rounded="rounded-2xl">
+    <Surface tier="default" padding="md" rounded="rounded-2xl" className="!overflow-visible">
       <div className="flex items-center justify-between mb-3">
         <Eyebrow>Awards</Eyebrow>
         <button

@@ -69,7 +69,7 @@ export default function StyleMixSheet({ open, profile, onClose }) {
             <div className="flex items-start justify-between gap-3 mb-3 px-1">
               <div>
                 <p className="ct-eyebrow" style={{ color: 'var(--tier-light)' }}>Style mix</p>
-                <h3 className="ct-display mt-0.5">Last 30 days</h3>
+                <h3 className="text-[19px] font-extrabold -tracking-[0.02em] mt-0.5">Last 30 days</h3>
                 <p className="text-[11.5px] font-bold text-muted mt-1 tabular-nums">
                   {profile?.total || 0} tagged climb{(profile?.total || 0) === 1 ? '' : 's'}
                 </p>

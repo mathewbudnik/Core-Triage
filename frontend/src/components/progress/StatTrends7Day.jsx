@@ -39,7 +39,7 @@ export default function StatTrends7Day() {
         </p>
       </div>
       <div className="flex items-end gap-1.5 h-[64px]">
-        {buckets.map((b, i) => {
+        {buckets.map((b) => {
           const heightPct = b.totalXP > 0 ? Math.max(6, (b.totalXP / maxXP) * 100) : 4
           const color = b.dominantStyle ? STYLE_COLOR[b.dominantStyle]?.c : NEUTRAL_BAR
           const today = new Date(b.date + 'T00:00:00')
