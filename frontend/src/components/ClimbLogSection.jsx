@@ -1,11 +1,10 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import GradeCounterRow from './GradeCounterRow'
 import StyleChipStrip from './StyleChipStrip'
 import { STYLE_ORDER } from '../lib/styleColors'
-
-const STYLE_STORAGE_KEY = 'ct_climb_style'
+import { getActiveStyle, setActiveStyle } from '../lib/styleStore'
 
 const V_GRADES   = Array.from({ length: 18 }, (_, i) => `V${i}`)
 const YDS_GRADES = [
@@ -34,16 +33,12 @@ export default function ClimbLogSection({ value, onChange, defaultTab = 'boulder
   const [extraBoulder, setExtraBoulder] = useState(0)  // how many "+ harder" clicks
   const [extraRoute, setExtraRoute]     = useState(0)
 
-  const [activeStyle, setActiveStyle] = useState(() => {
-    try {
-      const v = localStorage.getItem(STYLE_STORAGE_KEY)
-      return STYLE_ORDER.includes(v) ? v : 'power'
-    } catch { return 'power' }
-  })
+  const [activeStyle, _setActiveStyle] = useState(getActiveStyle)
 
-  useEffect(() => {
-    try { localStorage.setItem(STYLE_STORAGE_KEY, activeStyle) } catch {}
-  }, [activeStyle])
+  function changeStyle(next) {
+    _setActiveStyle(next)
+    setActiveStyle(next)
+  }
 
   const boulderGrades = useMemo(
     () => V_GRADES.slice(0, BOULDER_DEFAULT_VISIBLE + extraBoulder),
@@ -99,7 +94,7 @@ export default function ClimbLogSection({ value, onChange, defaultTab = 'boulder
           >
             <div className="px-3 pb-3 space-y-3">
               {/* Style chip strip */}
-              <StyleChipStrip value={activeStyle} onChange={setActiveStyle} />
+              <StyleChipStrip value={activeStyle} onChange={changeStyle} />
 
               {/* Tab strip */}
               <div className="flex gap-1 bg-bg/40 rounded-lg p-1">
