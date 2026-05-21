@@ -3,6 +3,8 @@ import { ChevronRight } from 'lucide-react'
 import { useAwards } from '../hooks/useAwards'
 import { AWARD_META } from '../lib/awardCatalog'
 import AwardMedal from './AwardMedal'
+import Surface from './ui/Surface'
+import Eyebrow from './ui/Eyebrow'
 
 /**
  * Horizontal-scroll awards strip on the Progress page.
@@ -18,12 +20,9 @@ export default function AwardsStrip({ user, maxLocked = 4 }) {
   const { loading, earned, locked } = useAwards(user)
 
   return (
-    <div className="rounded-2xl p-4"
-         style={{ background: 'rgba(0,0,0,0.35)', border: '0.5px solid rgba(255,255,255,0.1)' }}>
+    <Surface tier="default" padding="md" rounded="rounded-2xl">
       <div className="flex items-center justify-between mb-3">
-        <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
-          Awards
-        </div>
+        <Eyebrow>Awards</Eyebrow>
         <button
           type="button"
           onClick={() => navigate('/progress/awards')}
@@ -51,7 +50,7 @@ export default function AwardsStrip({ user, maxLocked = 4 }) {
           })}
         </div>
       )}
-    </div>
+    </Surface>
   )
 }
 

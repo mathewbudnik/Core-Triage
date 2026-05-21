@@ -68,12 +68,8 @@ export default function StyleMixSheet({ open, profile, onClose }) {
             )}
             <div className="flex items-start justify-between gap-3 mb-3 px-1">
               <div>
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--tier-light)]">
-                  Style mix
-                </p>
-                <h3 className="text-[19px] font-extrabold -tracking-[0.02em] mt-0.5">
-                  Last 30 days
-                </h3>
+                <p className="ct-eyebrow" style={{ color: 'var(--tier-light)' }}>Style mix</p>
+                <h3 className="ct-display mt-0.5">Last 30 days</h3>
                 <p className="text-[11.5px] font-bold text-muted mt-1 tabular-nums">
                   {profile?.total || 0} tagged climb{(profile?.total || 0) === 1 ? '' : 's'}
                 </p>
@@ -102,9 +98,7 @@ export default function StyleMixSheet({ open, profile, onClose }) {
                   const tone = STYLE_COLOR[s]
                   return (
                     <li key={s}
-                        className="flex items-center justify-between gap-3 px-3.5 py-3
-                                   rounded-2xl bg-black/35 backdrop-blur-md
-                                   border-[0.5px] border-white/[0.10]">
+                        className="ct-surface-flat flex items-center justify-between gap-3 px-3.5 py-3 rounded-2xl">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <span className="w-2.5 h-2.5 rounded-full shrink-0"
                               style={{ background: tone.c }} />

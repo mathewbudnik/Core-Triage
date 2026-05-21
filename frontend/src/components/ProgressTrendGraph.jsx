@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { getTrainingLogs } from '../api'
 import { vGradeToTier, TIER_TOKENS, V_TIERS } from '../lib/tier'
+import Surface from './ui/Surface'
+import Eyebrow from './ui/Eyebrow'
 
 /**
  * 8-week trend graph. Each column is a stacked bar where every segment
@@ -20,11 +22,8 @@ export default function ProgressTrendGraph() {
   }, [])
 
   return (
-    <div className="rounded-2xl p-4"
-         style={{ background: 'rgba(0,0,0,0.35)', border: '0.5px solid rgba(255,255,255,0.1)' }}>
-      <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted mb-2">
-        Last 8 weeks
-      </div>
+    <Surface tier="default" padding="md" rounded="rounded-2xl">
+      <Eyebrow className="mb-2">Last 8 weeks · climbing volume</Eyebrow>
       {loading ? (
         <div className="py-6 flex justify-center"><Loader2 size={16} className="animate-spin text-accent"/></div>
       ) : (
@@ -37,7 +36,7 @@ export default function ProgressTrendGraph() {
           </p>
         </>
       )}
-    </div>
+    </Surface>
   )
 }
 
