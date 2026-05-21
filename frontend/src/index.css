@@ -64,31 +64,31 @@
   }
 
   .btn-primary {
-    @apply px-5 py-2.5 rounded-lg font-semibold text-sm text-bg
-           bg-gradient-to-r from-accent2 to-accent3
+    @apply px-5 py-2.5 rounded-lg font-semibold text-sm text-ct-cream
+           bg-ct-terracotta
            hover:brightness-110 active:brightness-95
-           transition-all duration-200 shadow-glow-coral
+           transition-all duration-200
            disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-secondary {
-    @apply px-4 py-2 rounded-lg font-medium text-sm text-text
-           bg-panel border border-outline
-           hover:border-accent hover:text-accent
+    @apply px-4 py-2 rounded-lg font-medium text-sm text-ct-cream
+           bg-ct-hairline border border-ct-rim
+           hover:border-ct-terracotta/50 hover:text-ct-terra-soft
            transition-all duration-200;
   }
 
   .btn-danger {
-    @apply px-4 py-2 rounded-lg font-medium text-sm text-accent2
-           bg-panel border border-outline
-           hover:border-accent2 hover:bg-accent2/10
+    @apply px-4 py-2 rounded-lg font-medium text-sm text-red-400
+           bg-ct-hairline border border-ct-rim
+           hover:border-red-500/40 hover:bg-red-500/10
            transition-all duration-200;
   }
 
   .card {
-    @apply bg-panel border border-outline rounded-xl p-5
+    @apply ct-surface p-5
            transition-all duration-300
-           hover:border-accent/30 hover:shadow-glow;
+           hover:border-ct-terracotta/30;
   }
 
   .label {

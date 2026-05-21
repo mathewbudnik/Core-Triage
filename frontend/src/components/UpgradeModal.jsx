@@ -27,9 +27,9 @@ const PLAN_META = {
     headline: 'Keep your full access',
     sub: 'New accounts get 14 days of unlimited access. Subscribe to keep AI training plans, full rehab progressions, and unlimited AI chat after your trial ends.',
     benefits: PRO_BENEFITS,
-    color: 'text-accent',
-    bg: 'bg-accent/10',
-    border: 'border-accent/25',
+    color: 'text-ct-terra-soft',
+    bg: 'bg-ct-terra-tint',
+    border: 'border-ct-terracotta/30',
     icon: Lock,
     note: 'Cancel anytime from your account settings.',
   },
@@ -90,11 +90,11 @@ export default function UpgradeModal({ onClose, trigger = 'feature', user, onSig
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.08 }}
-        className="relative w-full max-w-sm mx-4 bg-panel2 border border-outline rounded-2xl shadow-xl p-6 space-y-5"
+        className="relative w-full max-w-sm mx-4 bg-ct-forest-deep border border-ct-hairline rounded-2xl shadow-xl p-6 space-y-5"
       >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-muted hover:text-text transition-colors"
+          className="absolute top-4 right-4 text-ct-cream/60 hover:text-ct-cream transition-colors"
         >
           <X size={18} />
         </button>
@@ -105,15 +105,15 @@ export default function UpgradeModal({ onClose, trigger = 'feature', user, onSig
             <Icon size={22} className={meta.color} />
           </div>
           <div>
-            <h2 className="text-base font-bold text-text">{meta.headline}</h2>
-            <p className="text-xs text-muted mt-1 max-w-[260px] mx-auto">{meta.sub}</p>
+            <h2 className="text-base font-bold text-ct-cream">{meta.headline}</h2>
+            <p className="text-xs text-ct-cream/60 mt-1 max-w-[260px] mx-auto">{meta.sub}</p>
           </div>
         </div>
 
         {/* Price */}
         <div className="text-center">
           <span className={`text-2xl font-bold ${meta.color}`}>{meta.price}</span>
-          <span className="text-sm text-muted"> {meta.cadence}</span>
+          <span className="text-sm text-ct-cream/60"> {meta.cadence}</span>
         </div>
 
         {/* Benefits */}
@@ -123,7 +123,7 @@ export default function UpgradeModal({ onClose, trigger = 'feature', user, onSig
               <div className={`w-5 h-5 rounded-md ${meta.bg} border ${meta.border} flex items-center justify-center shrink-0 mt-0.5`}>
                 <BenefitIcon size={11} className={meta.color} />
               </div>
-              <span className="text-xs text-muted leading-relaxed">{text}</span>
+              <span className="text-xs text-ct-cream/80 leading-relaxed">{text}</span>
             </li>
           ))}
         </ul>
@@ -151,7 +151,7 @@ export default function UpgradeModal({ onClose, trigger = 'feature', user, onSig
             </a>
           )}
           {checkoutError && (
-            <p className="text-xs text-accent2 text-center">{checkoutError}</p>
+            <p className="text-xs text-red-400 text-center">{checkoutError}</p>
           )}
           <button
             onClick={onClose}
@@ -164,14 +164,14 @@ export default function UpgradeModal({ onClose, trigger = 'feature', user, onSig
         {/* Cross-sell to the other product */}
         <button
           onClick={() => setActiveView(otherView)}
-          className="w-full flex items-center justify-center gap-1 text-[11px] text-muted/60 hover:text-muted transition-colors"
+          className="w-full flex items-center justify-center gap-1 text-[11px] text-ct-cream/50 hover:text-ct-cream/80 transition-colors"
         >
           {otherView === 'coaching' ? 'Want personal 1:1 coaching?' : 'Just want the app?'}
-          <span className="font-medium text-muted">{otherMeta.label} ({otherMeta.price}{otherView === 'coaching' ? '/mo' : '/mo'})</span>
+          <span className="font-medium text-ct-cream/80">{otherMeta.label} ({otherMeta.price}{otherView === 'coaching' ? '/mo' : '/mo'})</span>
           <ChevronRight size={10} />
         </button>
 
-        <p className="text-[10px] text-center text-muted/50 -mt-2">{meta.note}</p>
+        <p className="text-[10px] text-center text-ct-cream/40 -mt-2">{meta.note}</p>
       </motion.div>
     </div>
   )
