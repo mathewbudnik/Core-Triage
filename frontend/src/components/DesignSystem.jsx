@@ -3,7 +3,8 @@ import { TRANSITIONS, DURATIONS, EASE } from '../lib/motion'
 import { calculateSendXP, levelFromTotalXP } from '../lib/xp'
 import { STYLE_CHIP_TO_STATS, deriveStatShape, AXES } from '../lib/stats'
 import { generateDailyQuest } from '../lib/quests'
-import { useRewardEngine } from '../lib/rewardEngine'
+import { useRewardEngine, getInitialState } from '../lib/rewardEngine'
+import LogSendQuick from './ui/LogSendQuick'
 import CelebrationOverlay from './ui/CelebrationOverlay'
 import Surface from './ui/Surface'
 import Eyebrow from './ui/Eyebrow'
@@ -250,6 +251,18 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
             <ThemeDemoBody />
           </Surface>
         </TierThemeProvider>
+      </section>
+
+      <section className="mb-12">
+        <h2 className="ct-title mb-4">Logging UX</h2>
+        <Surface tier="default" padding="lg" className="max-w-sm">
+          <Eyebrow divider className="mb-4">LogSendQuick</Eyebrow>
+          <LogSendQuick
+            sessionType="bouldering"
+            engineState={getInitialState()}
+            onCommit={console.log}
+          />
+        </Surface>
       </section>
 
       <section className="mb-12">
