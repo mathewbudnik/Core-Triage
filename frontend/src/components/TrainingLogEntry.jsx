@@ -5,6 +5,7 @@ import { logTraining } from '../api'
 import { useTrainingBaseline } from '../hooks/useTrainingBaseline'
 import { vGradeToTier, ydsToTier, V_TIERS } from '../lib/tier'
 import { useRewardEngine } from '../lib/rewardEngine'
+import { getActiveStyle } from '../lib/styleStore'
 import DatePicker from './DatePicker'
 import ClimbLogSection from './ClimbLogSection'
 import PlausibilityConfirmModal from './PlausibilityConfirmModal'
@@ -218,11 +219,7 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
         const isOutdoor = payload.session_type === 'outdoor'
         const modality = isOutdoor ? 'outdoor' : 'indoor'
         // Style is tracked locally in ClimbLogSection and persisted in localStorage.
-        let stylePrimary = 'powerful'
-        try {
-          const storedStyle = localStorage.getItem('ct_climb_style')
-          if (storedStyle) stylePrimary = storedStyle
-        } catch { /* ignore */ }
+        const stylePrimary = getActiveStyle()
 
         // Build all sends from form.climbs (the two-level dict)
         const allSends = []
