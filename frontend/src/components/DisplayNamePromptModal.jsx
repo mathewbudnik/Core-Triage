@@ -63,15 +63,15 @@ export default function DisplayNamePromptModal({ onDone }) {
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.12 }}
-        className="relative w-full max-w-sm my-auto bg-panel2 border border-outline rounded-2xl shadow-xl p-5 sm:p-6 space-y-5"
+        className="relative w-full max-w-sm my-auto bg-ct-forest-deep border border-ct-hairline rounded-2xl shadow-xl p-5 sm:p-6 space-y-5"
       >
         <div className="flex flex-col items-center text-center space-y-3">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-[rgba(247,187,81,0.15)] border border-[rgba(247,187,81,0.3)]">
-            <Trophy size={22} className="text-accent3" />
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-ct-terracotta/10 border border-ct-terracotta/25">
+            <Trophy size={22} className="text-ct-terracotta" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-text">Pick a display name</h2>
-            <p className="text-xs text-muted mt-1 leading-relaxed max-w-[260px] mx-auto">
+            <h2 className="text-base font-bold text-ct-cream">Pick a display name</h2>
+            <p className="text-xs text-ct-cream/60 mt-1 leading-relaxed max-w-[260px] mx-auto">
               Your training shows up on leaderboards alongside other climbers. This is the name they'll see — pick something you're happy with. You can change it later.
             </p>
           </div>
@@ -79,7 +79,7 @@ export default function DisplayNamePromptModal({ onDone }) {
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-1.5">
+            <label className="text-[10px] font-bold text-ct-moss uppercase tracking-wider block mb-1.5">
               Display name
             </label>
             <input
@@ -88,23 +88,23 @@ export default function DisplayNamePromptModal({ onDone }) {
               value={name}
               onChange={(e) => setName(e.target.value.slice(0, 24))}
               placeholder="e.g. SnowyCrimper42"
-              className="input-base w-full text-base sm:text-sm"
+              className="w-full bg-ct-forest-deep border border-ct-hairline text-ct-cream placeholder:text-ct-cream/40 focus:border-ct-terracotta/50 rounded-lg px-3 py-2 text-base sm:text-sm outline-none transition-colors"
               disabled={submitting}
               maxLength={24}
             />
-            <p className="text-[10px] text-muted/60 mt-1.5">
+            <p className="text-[10px] text-ct-cream/50 mt-1.5">
               3–20 characters · letters, digits, underscore, dash
             </p>
           </div>
 
           {(localError || error) && (
-            <p className="text-xs text-accent2">{localError || error}</p>
+            <p className="text-xs text-red-400">{localError || error}</p>
           )}
 
           <button
             type="submit"
             disabled={submitting || !!localError || !name}
-            className="btn-primary w-full flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 h-11 px-5 rounded-lg text-sm font-semibold bg-ct-terracotta text-ct-cream hover:brightness-110 active:brightness-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? (
               <><Loader2 size={14} className="animate-spin" /> Saving…</>

@@ -86,12 +86,12 @@ function AuthModal({ onClose, onAuth }) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 8 }}
         transition={{ duration: 0.12 }}
-        className="relative w-full max-w-sm mx-3 sm:mx-4 my-auto bg-panel2 border border-outline rounded-2xl shadow-xl p-5 sm:p-6 space-y-4 sm:space-y-5"
+        className="relative w-full max-w-sm mx-3 sm:mx-4 my-auto bg-ct-forest-deep border border-ct-hairline rounded-2xl shadow-xl p-5 sm:p-6 space-y-4 sm:space-y-5"
       >
         {/* Close */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 sm:top-4 sm:right-4 text-muted hover:text-text transition-colors p-1"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 text-ct-cream/60 hover:text-ct-cream transition-colors p-1"
           aria-label="Close"
         >
           <X size={18} />
@@ -100,11 +100,11 @@ function AuthModal({ onClose, onAuth }) {
         {/* Logo */}
         <div className="flex items-center gap-2">
           <Logo size={24} dark />
-          <span className="font-bold text-text text-sm">CoreTriage</span>
+          <span className="font-bold text-ct-cream text-sm">CoreTriage</span>
         </div>
 
         {/* Mode tabs */}
-        <div className="flex border-b border-outline -mx-5 sm:-mx-6 px-5 sm:px-6">
+        <div className="flex border-b border-ct-hairline -mx-5 sm:-mx-6 px-5 sm:px-6">
           {[
             { id: 'login', label: 'Log In' },
             { id: 'register', label: 'Create Account' },
@@ -114,8 +114,8 @@ function AuthModal({ onClose, onAuth }) {
               onClick={() => switchMode(m.id)}
               className={`flex-1 pb-2.5 text-sm font-medium transition-colors ${
                 mode === m.id
-                  ? 'text-accent border-b-2 border-accent'
-                  : 'text-muted hover:text-text'
+                  ? 'text-ct-terracotta border-b-2 border-ct-terracotta'
+                  : 'text-ct-cream/60 hover:text-ct-cream'
               }`}
             >
               {m.label}
@@ -125,54 +125,56 @@ function AuthModal({ onClose, onAuth }) {
 
         <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
           <div>
-            <label className="label">Email</label>
+            <label className="block text-[10px] font-bold text-ct-moss uppercase tracking-wider mb-1.5">Email</label>
             <input
               ref={emailRef}
               type="email"
               defaultValue=""
-              className="input-base"
+              className="w-full bg-ct-forest-deep border border-ct-hairline text-ct-cream placeholder:text-ct-cream/40 focus:border-ct-terracotta/50 rounded-lg px-3 py-2 text-base sm:text-sm outline-none transition-colors"
               placeholder="you@example.com"
               required
               autoFocus
             />
           </div>
           <div>
-            <label className="label">Password</label>
+            <label className="block text-[10px] font-bold text-ct-moss uppercase tracking-wider mb-1.5">Password</label>
             <input
               ref={passwordRef}
               type="password"
               defaultValue=""
-              className="input-base"
+              className="w-full bg-ct-forest-deep border border-ct-hairline text-ct-cream placeholder:text-ct-cream/40 focus:border-ct-terracotta/50 rounded-lg px-3 py-2 text-base sm:text-sm outline-none transition-colors"
               placeholder="••••••••"
               required
               minLength={8}
             />
             {mode === 'register' && (
-              <p className="text-xs text-muted mt-1">Minimum 8 characters, include at least one symbol</p>
+              <p className="text-xs text-ct-cream/60 mt-1">Minimum 8 characters, include at least one symbol</p>
             )}
           </div>
 
           {mode === 'register' && (
             <div>
-              <label className="label">Display name <span className="text-muted/60 font-normal">(optional)</span></label>
+              <label className="block text-[10px] font-bold text-ct-moss uppercase tracking-wider mb-1.5">
+                Display name <span className="text-ct-cream/50 font-normal normal-case tracking-normal">(optional)</span>
+              </label>
               <input
                 ref={displayNameRef}
                 type="text"
                 defaultValue=""
-                className="input-base"
+                className="w-full bg-ct-forest-deep border border-ct-hairline text-ct-cream placeholder:text-ct-cream/40 focus:border-ct-terracotta/50 rounded-lg px-3 py-2 text-base sm:text-sm outline-none transition-colors"
                 placeholder="e.g. SnowyCrimper42"
                 maxLength={20}
                 pattern={DISPLAY_NAME_RE.source}
                 title="3-20 characters, letters, digits, underscore, dash."
               />
-              <p className="text-xs text-muted mt-1">
+              <p className="text-xs text-ct-cream/60 mt-1">
                 Shown on the climbing-hours leaderboard. You can pick or change it later.
               </p>
             </div>
           )}
 
           {error && (
-            <div className="flex items-center gap-2 text-accent2 text-sm bg-accent2/10 border border-accent2/30 rounded-lg px-3 py-2">
+            <div className="flex items-center gap-2 text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
               <AlertTriangle size={14} className="shrink-0" />
               {error}
             </div>
@@ -182,9 +184,8 @@ function AuthModal({ onClose, onAuth }) {
             type="submit"
             disabled={loading}
             className="w-full flex items-center justify-center gap-2
-                       h-11 px-5 rounded-lg text-sm font-semibold text-bg
-                       bg-gradient-to-r from-accent2 to-accent3
-                       shadow-[0_0_14px_rgba(251,113,133,0.22)]
+                       h-11 px-5 rounded-lg text-sm font-semibold
+                       bg-ct-terracotta text-ct-cream
                        hover:brightness-110 active:brightness-95
                        transition-all duration-200
                        disabled:opacity-50 disabled:cursor-not-allowed"
@@ -194,17 +195,17 @@ function AuthModal({ onClose, onAuth }) {
           </button>
         </form>
 
-        <p className="text-xs text-center text-muted">
+        <p className="text-xs text-center text-ct-cream/60">
           {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
           <button
             onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}
-            className="text-accent hover:underline"
+            className="text-ct-terracotta hover:underline"
           >
             {mode === 'login' ? 'Create one' : 'Log in'}
           </button>
         </p>
 
-        <p className="text-xs text-center text-muted/50">
+        <p className="text-xs text-center text-ct-cream/30">
           Your history is private and only visible to you.
         </p>
       </motion.div>

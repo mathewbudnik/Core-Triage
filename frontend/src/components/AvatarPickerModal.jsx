@@ -83,11 +83,11 @@ export default function AvatarPickerModal({ user, onClose, onUserChange, onToast
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.12 }}
-        className="relative w-full max-w-md bg-panel2 border border-outline rounded-2xl shadow-xl p-5 space-y-5 max-h-[90vh] overflow-y-auto"
+        className="relative w-full max-w-md bg-ct-forest-deep border border-ct-hairline rounded-2xl shadow-xl p-5 space-y-5 max-h-[90vh] overflow-y-auto"
       >
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-muted hover:text-text p-1"
+          className="absolute top-3 right-3 text-ct-cream/60 hover:text-ct-cream p-1"
           aria-label="Close"
         >
           <X size={16} />
@@ -96,7 +96,7 @@ export default function AvatarPickerModal({ user, onClose, onUserChange, onToast
         {/* Live preview — keyed on (icon,color) so any state change forces a
             clean re-mount of the chip. Fixes a stale-render case where the
             preview wasn't reflecting the picked shape after rapid cycling. */}
-        <div className="flex items-center gap-3 pb-4 border-b border-outline">
+        <div className="flex items-center gap-3 pb-4 border-b border-ct-hairline">
           <AvatarChip
             key={`preview-${icon || 'none'}-${color || 'none'}`}
             icon={icon}
@@ -105,8 +105,8 @@ export default function AvatarPickerModal({ user, onClose, onUserChange, onToast
             size={64}
           />
           <div className="min-w-0 flex-1">
-            <h2 className="text-base font-bold text-text">Customize avatar</h2>
-            <p className="text-xs text-muted leading-snug mt-0.5">
+            <h2 className="text-base font-bold text-ct-cream">Customize avatar</h2>
+            <p className="text-xs text-ct-cream/60 leading-snug mt-0.5">
               Pick a shape and an optional color. This shows next to your name on leaderboards.
             </p>
           </div>
@@ -117,7 +117,7 @@ export default function AvatarPickerModal({ user, onClose, onUserChange, onToast
             padding so the selection ring + check badge never clip against
             the modal's overflow boundary. */}
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-muted/80 mb-2">Shape</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-ct-cream/60 mb-2">Shape</p>
           <div className="grid grid-cols-4 gap-3 px-0.5 py-0.5">
             {AVATAR_PRESETS.map((preset) => {
               const selected = icon === preset.key
@@ -128,7 +128,7 @@ export default function AvatarPickerModal({ user, onClose, onUserChange, onToast
                   onClick={() => setIcon(preset.key)}
                   className={`relative aspect-square rounded-xl flex items-center justify-center transition-shadow duration-100 ${
                     selected
-                      ? 'ring-2 ring-accent ring-offset-2 ring-offset-panel2'
+                      ? 'ring-2 ring-ct-terracotta ring-offset-2 ring-offset-ct-forest-deep'
                       : 'hover:brightness-110'
                   }`}
                   style={{
@@ -145,7 +145,7 @@ export default function AvatarPickerModal({ user, onClose, onUserChange, onToast
                       was getting clipped by the modal's overflow boundary
                       on edge cells. */}
                   {selected && (
-                    <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-accent border border-panel2 flex items-center justify-center shadow">
+                    <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-ct-terracotta border border-ct-forest-deep flex items-center justify-center shadow">
                       <Check size={9} color="#0d1117" strokeWidth={3} />
                     </span>
                   )}
@@ -158,11 +158,11 @@ export default function AvatarPickerModal({ user, onClose, onUserChange, onToast
         {/* Color overrides */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-muted/80">Color</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-ct-cream/60">Color</p>
             {color && (
               <button
                 onClick={() => setColor(null)}
-                className="text-[10px] text-muted hover:text-accent flex items-center gap-1"
+                className="text-[10px] text-ct-cream/60 hover:text-ct-terracotta flex items-center gap-1"
               >
                 <RotateCcw size={9} />
                 Use default
@@ -181,7 +181,7 @@ export default function AvatarPickerModal({ user, onClose, onUserChange, onToast
                   onClick={() => setColor(swatch.key)}
                   className={`relative aspect-square rounded-lg transition-shadow duration-100 ${
                     selected
-                      ? 'ring-2 ring-accent ring-offset-2 ring-offset-panel2'
+                      ? 'ring-2 ring-ct-terracotta ring-offset-2 ring-offset-ct-forest-deep'
                       : 'hover:brightness-110'
                   }`}
                   style={{
@@ -194,7 +194,7 @@ export default function AvatarPickerModal({ user, onClose, onUserChange, onToast
                   title={swatch.key}
                 >
                   {selected && (
-                    <span className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-accent border border-panel2 flex items-center justify-center shadow">
+                    <span className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-ct-terracotta border border-ct-forest-deep flex items-center justify-center shadow">
                       <Check size={8} color="#0d1117" strokeWidth={3} />
                     </span>
                   )}
@@ -202,7 +202,7 @@ export default function AvatarPickerModal({ user, onClose, onUserChange, onToast
               )
             })}
           </div>
-          <p className="text-[10px] text-muted/60 mt-1.5">
+          <p className="text-[10px] text-ct-cream/50 mt-1.5">
             Top row = solid tones. Bottom row = multi-color combos. Leave unset to use the shape's default.
           </p>
         </div>
@@ -212,7 +212,7 @@ export default function AvatarPickerModal({ user, onClose, onUserChange, onToast
           <button
             onClick={handleClear}
             disabled={saving || (!icon && !color)}
-            className="text-xs text-muted hover:text-text px-3 py-2 rounded-lg disabled:opacity-40"
+            className="text-xs text-ct-cream/60 hover:text-ct-cream px-3 py-2 rounded-lg disabled:opacity-40"
           >
             Clear
           </button>
@@ -220,14 +220,14 @@ export default function AvatarPickerModal({ user, onClose, onUserChange, onToast
           <button
             onClick={onClose}
             disabled={saving}
-            className="btn-secondary text-sm py-2"
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-ct-hairline text-ct-cream/80 border border-ct-rim hover:brightness-110 transition-all duration-200"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving || !dirty}
-            className="btn-primary text-sm py-2 flex items-center gap-2 disabled:opacity-50"
+            className="px-5 py-2 rounded-lg text-sm font-semibold bg-ct-terracotta text-ct-cream hover:brightness-110 active:brightness-95 transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
             Save

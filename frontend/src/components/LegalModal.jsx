@@ -29,17 +29,17 @@ export default function LegalModal({ document, onClose }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.08 }}
-        className="w-full max-w-2xl max-h-[calc(100dvh-2rem)] bg-panel2 border border-outline rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+        className="w-full max-w-2xl max-h-[calc(100dvh-2rem)] bg-ct-forest-deep border border-ct-hairline rounded-2xl shadow-2xl overflow-hidden flex flex-col"
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-outline flex items-center justify-between bg-panel">
+        <div className="px-6 py-4 border-b border-ct-hairline flex items-center justify-between bg-ct-forest">
           <div>
-            <h2 className="text-base font-bold text-text">{document.title}</h2>
-            <p className="text-xs text-muted mt-0.5">Effective {document.effective}</p>
+            <h2 className="text-base font-bold text-ct-cream">{document.title}</h2>
+            <p className="text-xs text-ct-cream/60 mt-0.5">Effective {document.effective}</p>
           </div>
           <button
             onClick={onClose}
-            className="text-muted hover:text-text transition-colors"
+            className="text-ct-cream/60 hover:text-ct-cream transition-colors"
             aria-label="Close"
           >
             <X size={18} />
@@ -48,18 +48,18 @@ export default function LegalModal({ document, onClose }) {
 
         {/* Body — scrollable */}
         <div className="px-6 py-5 overflow-y-auto flex-1">
-          <p className="text-sm text-muted leading-relaxed mb-5">
+          <p className="text-sm text-ct-cream/60 leading-relaxed mb-5">
             {document.intro}
           </p>
 
           {document.sections.map((section, i) => (
             <div key={i} className="mb-5">
-              <h3 className="text-sm font-semibold text-text mb-2">
+              <h3 className="text-sm font-semibold text-ct-cream mb-2">
                 {section.heading}
               </h3>
               <div className="space-y-2">
                 {section.body.map((para, j) => (
-                  <p key={j} className="text-xs text-muted leading-relaxed">
+                  <p key={j} className="text-xs text-ct-cream/60 leading-relaxed">
                     {para}
                   </p>
                 ))}
@@ -70,10 +70,10 @@ export default function LegalModal({ document, onClose }) {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 border-t border-outline bg-panel flex justify-end">
+        <div className="px-6 py-3 border-t border-ct-hairline bg-ct-forest flex justify-end">
           <button
             onClick={onClose}
-            className="btn-secondary text-sm"
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-ct-hairline text-ct-cream/80 border border-ct-rim hover:brightness-110 transition-all duration-200"
           >
             Close
           </button>
