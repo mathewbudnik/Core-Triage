@@ -185,27 +185,38 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
     setForm((f) => ({ ...f, [key]: val }))
   }
 
-  // Optimistic save: dismiss the modal immediately so the user is freed up
-  // and fire the POST in the background. The cascading side-effects (new
-  // PR toast, award unlock, tier promotion takeover) still fire from the
-  // background promise — they're event-driven and don't require the modal
-  // to be mounted. On failure we surface a toast since the originating
-  // modal is already gone.
+  // Save the session. The modal stays open while the API call is in flight
+  // (1–3 s) so the SessionSummaryOverlay can render on the mounted component.
+  // onSave?.() is called from exactly two places:
+  //   1. The overlay's onClose (after the user dismisses the celebration).
+  //   2. Early-return paths (no sends to celebrate, non-climb sessions, errors).
   function performSave(extraNote) {
     setPending(null)
     setError(null)
-    // Snapshot the payload now; we still need it inside the async call
-    // even though we're closing the modal first.
+    // Snapshot form + quickSends now before any async work.
     const payload = extraNote
       ? { ...form, notes: form.notes ? `${form.notes}\n${extraNote}` : extraNote }
       : form
-    // Close the modal *first* — the user perceives the save as instant.
-    onSave?.()
-    // Fire the network call in the background. Returning the promise lets
-    // callers await if they need to (none currently do).
+
+    // --- Critical fix 2: merge Quick sends into the API payload so the
+    // backend sees them. Quick mode is V-grades only (boulder discipline).
+    const mergedClimbs = JSON.parse(JSON.stringify(payload.climbs || {}))
+    for (const s of quickSends) {
+      const discipline = 'boulder'
+      mergedClimbs[discipline] = mergedClimbs[discipline] || {}
+      const counters = mergedClimbs[discipline][s.grade] || { s: 0, f: 0, p: 0 }
+      if (s.outcome === 'flash')        counters.f += 1
+      else if (s.outcome === 'project') counters.p += 1
+      else                              counters.s += 1
+      mergedClimbs[discipline][s.grade] = counters
+    }
+    const apiPayload = { ...payload, climbs: mergedClimbs }
+
+    // Fire the network call. We stay mounted so setSummaryOpen(true) reaches
+    // the overlay that's already rendered inside our JSX tree.
     return (async () => {
       try {
-        const res = await logTraining(payload)
+        const res = await logTraining(apiPayload)
         if (res?.new_prs && (res.new_prs.boulder || res.new_prs.route)) {
           window.dispatchEvent(new CustomEvent('ct:new-pr', { detail: res.new_prs }))
         }
@@ -220,7 +231,16 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
         const defaultStyle = getActiveStyle()
         const modality = modalityFromSessionType(form.session_type)
 
-        // Quick sends (already individual entries) + Deep sends (walked from climbs dict)
+        // For non-climb sessions (hangboard/strength/rest) there are no sends
+        // to celebrate — close immediately after the API resolves.
+        if (!CLIMB_SESSION_TYPES.has(form.session_type)) {
+          onSave?.()
+          return
+        }
+
+        // Engine walk: Quick sends (isDeepLog: false) + Deep sends from
+        // form.climbs only (isDeepLog: true). Do NOT walk mergedClimbs here
+        // to avoid double-counting Quick sends that were merged for the API.
         const allSends = []
         const now = Date.now()
         for (const s of quickSends) {
@@ -243,7 +263,9 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
         }
 
         if (allSends.length === 0) {
+          // Nothing to celebrate — close the drawer now.
           setQuickSends([])
+          onSave?.()
           return
         }
 
@@ -273,11 +295,11 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
         setSummaryOpen(true)
         setQuickSends([])
       } catch (err) {
-        // Modal already closed — surface via the global toast channel so the
-        // failure isn't silent.
+        // Surface the failure via the global toast channel and close the drawer.
         window.dispatchEvent(new CustomEvent('ct:toast', {
           detail: { kind: 'error', message: err?.message || 'Could not log your session. Try again.' },
         }))
+        onSave?.()
       }
     })()
   }
@@ -427,6 +449,7 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
               onChange={(next) => set('climbs', next)}
               sessionType={form.session_type}
               engineState={engineState}
+              defaultTab={form.session_type === 'routes' ? 'route' : 'boulder'}
             />
           )}
         </div>

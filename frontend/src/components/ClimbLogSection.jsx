@@ -25,7 +25,7 @@ const ROUTE_DEFAULT_VISIBLE   = 6  // 5.6–5.11a
  *   onChange:    (next) => void                       — receives a fully replaced climbs dict
  *   defaultTab:  'boulder' | 'route'                  — initial tab; overridden by localStorage if present
  */
-export default function ClimbLogSection({ value, onChange, defaultTab = 'boulder' }) {
+export default function ClimbLogSection({ value, onChange, defaultTab = 'boulder', onStyleChange }) {
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState(() => {
     try { return localStorage.getItem('ct_climb_tab') || defaultTab } catch { return defaultTab }
@@ -38,6 +38,7 @@ export default function ClimbLogSection({ value, onChange, defaultTab = 'boulder
   function changeStyle(next) {
     _setActiveStyle(next)
     setActiveStyle(next)
+    onStyleChange?.(next)
   }
 
   const boulderGrades = useMemo(
