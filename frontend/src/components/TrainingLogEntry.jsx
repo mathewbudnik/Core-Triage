@@ -7,9 +7,12 @@ import { vGradeToTier, ydsToTier, V_TIERS } from '../lib/tier'
 import { useRewardEngine } from '../lib/rewardEngine'
 import { getActiveStyle } from '../lib/styleStore'
 import DatePicker from './DatePicker'
-import ClimbLogSection from './ClimbLogSection'
 import PlausibilityConfirmModal from './PlausibilityConfirmModal'
-import CelebrationOverlay from './ui/CelebrationOverlay'
+import LogModeToggle from './ui/LogModeToggle'
+import LogSendQuick from './ui/LogSendQuick'
+import LogSendDeep from './ui/LogSendDeep'
+import SessionSummaryOverlay from './ui/SessionSummaryOverlay'
+import { modalityFromSessionType } from '../lib/sendPreview'
 
 // Plausibility-check thresholds. Tier diffs are computed using V_TIERS
 // indices (V0..V10) — for routes the YDS grade is first mapped to a
@@ -81,7 +84,6 @@ const SESSION_TYPES = ['bouldering', 'routes', 'outdoor', 'hangboard', 'strength
 // strength / rest are training sessions — they hide the climb section AND
 // the "grades sent" free-text field, leaving only date/duration/intensity/notes.
 const CLIMB_SESSION_TYPES = new Set(['bouldering', 'routes', 'outdoor'])
-const TRAINING_SESSION_TYPES = new Set(['hangboard', 'strength', 'rest'])
 
 const INTENSITY_LABELS = {
   1: 'Very easy', 2: 'Easy', 3: 'Easy-moderate',
@@ -163,11 +165,14 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
     notes: '',
     climbs: {},
   })
+  const [logMode, setLogMode] = useState('quick')  // 'quick' | 'deep'
+  const [quickSends, setQuickSends] = useState([]) // [{ grade, outcome, stylePrimary }]
+  const [summaryOpen, setSummaryOpen] = useState(false)
+  const [summary, setSummary] = useState({ totalXP: 0, events: [] })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
-  const [celebration, setCelebration] = useState(null) // { title, subtitle } | null
 
-  const { logSends } = useRewardEngine()
+  const { logSends, state: engineState } = useRewardEngine()
 
   // Plausibility check state. When `pending` is set, a modal blocks the
   // save until the user confirms or edits the grade. The baseline hook
@@ -212,63 +217,61 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
         }
         baseline.refresh()
 
-        // Route each logged send through the reward engine so XP, stats,
-        // streak, and quest progress update client-side (Phase 1 additive).
-        // form.climbs shape: { boulder?: { 'V5': { s, f, p }, ... }, route?: { ... } }
-        // s = sends, f = flashes — both earn XP; projects (p) are not sends.
-        const isOutdoor = payload.session_type === 'outdoor'
-        const modality = isOutdoor ? 'outdoor' : 'indoor'
-        // Style is tracked locally in ClimbLogSection and persisted in localStorage.
-        const stylePrimary = getActiveStyle()
+        const defaultStyle = getActiveStyle()
+        const modality = modalityFromSessionType(form.session_type)
 
-        // Build all sends from form.climbs (the two-level dict)
+        // Quick sends (already individual entries) + Deep sends (walked from climbs dict)
         const allSends = []
         const now = Date.now()
+        for (const s of quickSends) {
+          allSends.push({
+            grade: s.grade, modality, outcome: s.outcome,
+            stylePrimary: s.stylePrimary, isDeepLog: false, ts: now,
+          })
+        }
         for (const discipline of ['boulder', 'route']) {
           const gradeMap = payload.climbs?.[discipline] || {}
           for (const [grade, counters] of Object.entries(gradeMap)) {
             if (!counters) continue
             for (let i = 0; i < (counters.s || 0); i++) {
-              allSends.push({
-                grade,
-                modality,
-                outcome:      'redpoint',
-                stylePrimary: stylePrimary,
-                isDeepLog:    false,
-                ts:           now,
-              })
+              allSends.push({ grade, modality, outcome: 'redpoint', stylePrimary: defaultStyle, isDeepLog: true, ts: now })
             }
             for (let i = 0; i < (counters.f || 0); i++) {
-              allSends.push({
-                grade,
-                modality,
-                outcome:      'flash',
-                stylePrimary: stylePrimary,
-                isDeepLog:    false,
-                ts:           now,
-              })
+              allSends.push({ grade, modality, outcome: 'flash', stylePrimary: defaultStyle, isDeepLog: true, ts: now })
             }
           }
         }
 
-        // Single-batch dispatch — accumulates state correctly across sends
+        if (allSends.length === 0) {
+          setQuickSends([])
+          return
+        }
+
         const allEvents = logSends(allSends)
-        let lastEvents = null
-        for (const events of allEvents) {
-          if (events.xpEarned > 0) lastEvents = events
+        const summaryEvents = []
+        let totalXP = 0
+        for (let i = 0; i < allEvents.length; i++) {
+          const ev = allEvents[i]
+          const send = allSends[i]
+          if (ev.xpEarned > 0) {
+            summaryEvents.push({
+              kind: 'send',
+              label: `${send.grade} ${send.outcome}`,
+              sublabel: send.stylePrimary,
+              xp: ev.xpEarned,
+            })
+            totalXP += ev.xpEarned
+          }
+          if (ev.isPersonalRecord) {
+            summaryEvents.push({ kind: 'pr', label: `New ${send.stylePrimary} PR · ${send.grade}` })
+          }
+          if (ev.leveledUp) {
+            summaryEvents.push({ kind: 'levelUp', label: `Reached Lv ${ev.level}` })
+          }
         }
-        if (lastEvents?.leveledUp) {
-          setCelebration({
-            title:    `Lv ${lastEvents.level}. Keep moving.`,
-            subtitle: `+${lastEvents.xpEarned} XP`,
-          })
-        } else if (lastEvents?.isPersonalRecord) {
-          const lastSend = allSends[allSends.length - 1]
-          setCelebration({
-            title:    `Clean send. ${lastSend?.grade ?? ''}.`,
-            subtitle: `+${lastEvents.xpEarned} XP`,
-          })
-        }
+        setSummary({ totalXP, events: summaryEvents })
+        setSummaryOpen(true)
+        setQuickSends([])
       } catch (err) {
         // Modal already closed — surface via the global toast channel so the
         // failure isn't silent.
@@ -296,15 +299,14 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
   }
 
   const showClimbSection = CLIMB_SESSION_TYPES.has(form.session_type)
-  const defaultTab = form.session_type === 'routes' ? 'route' : 'boulder'
 
   return (
     <>
-      <CelebrationOverlay
-        open={!!celebration}
-        title={celebration?.title}
-        subtitle={celebration?.subtitle}
-        onClose={() => setCelebration(null)}
+      <SessionSummaryOverlay
+        open={summaryOpen}
+        onClose={() => { setSummaryOpen(false); onSave?.() }}
+        events={summary.events}
+        totalXP={summary.totalXP}
       />
       <motion.div
         initial={{ opacity: 0, y: 8 }}
@@ -393,23 +395,41 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
       {/* Climbing-only fields: free-text grades + structured climb counters.
           Hidden entirely for training sessions (hangboard/strength/rest). */}
       {showClimbSection && (
-        <>
-          <div>
-            <p className="text-xs text-muted mb-1">Grades sent (free-form, optional)</p>
-            <input
-              type="text"
-              placeholder="e.g. V5×3, V6×1, V7 attempt"
-              value={form.grades_sent}
-              onChange={(e) => set('grades_sent', e.target.value)}
-              className="w-full bg-panel border border-outline rounded-lg px-3 py-1.5 text-base sm:text-sm text-text placeholder:text-muted/50 outline-none focus:border-accent"
+        <div className="space-y-3">
+          <LogModeToggle value={logMode} onChange={setLogMode} />
+          {logMode === 'quick' && (
+            <>
+              <LogSendQuick
+                sessionType={form.session_type}
+                engineState={engineState}
+                onCommit={(s) => setQuickSends((prev) => [...prev, s])}
+              />
+              {quickSends.length > 0 && (
+                <div className="rounded-xl border border-ct-hairline p-3 space-y-1">
+                  <p className="ct-eyebrow">Pending</p>
+                  {quickSends.map((s, i) => (
+                    <p key={i} className="text-xs text-ct-cream/80 flex justify-between">
+                      <span>{s.grade} · {s.outcome} · {s.stylePrimary}</span>
+                      <button
+                        type="button"
+                        onClick={() => setQuickSends((prev) => prev.filter((_, j) => j !== i))}
+                        className="text-ct-cream/40 hover:text-ct-cream"
+                      >×</button>
+                    </p>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+          {logMode === 'deep' && (
+            <LogSendDeep
+              value={form.climbs}
+              onChange={(next) => set('climbs', next)}
+              sessionType={form.session_type}
+              engineState={engineState}
             />
-          </div>
-          <ClimbLogSection
-            value={form.climbs}
-            onChange={(v) => set('climbs', v)}
-            defaultTab={defaultTab}
-          />
-        </>
+          )}
+        </div>
       )}
 
       {/* Notes */}
