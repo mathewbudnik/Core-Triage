@@ -77,23 +77,23 @@ export default function TrainCalendar({ weekDates, plan, loggedDates, selectedDa
               onClick={prevMonth}
               aria-label="Previous month"
               className="w-7 h-7 rounded-full inline-flex items-center justify-center
-                         text-muted hover:text-text hover:bg-white/[0.06] transition-colors"
+                         text-ct-cream/60 hover:text-ct-cream hover:bg-white/[0.06] transition-colors"
             >
               <ChevronLeft size={14} strokeWidth={2.4} />
             </button>
-            <p className="text-[12.5px] font-extrabold tabular-nums px-1">{monthLabel}</p>
+            <p className="text-[12.5px] font-extrabold tabular-nums px-1 text-ct-cream">{monthLabel}</p>
             <button
               type="button"
               onClick={nextMonth}
               aria-label="Next month"
               className="w-7 h-7 rounded-full inline-flex items-center justify-center
-                         text-muted hover:text-text hover:bg-white/[0.06] transition-colors"
+                         text-ct-cream/60 hover:text-ct-cream hover:bg-white/[0.06] transition-colors"
             >
               <ChevronRight size={14} strokeWidth={2.4} />
             </button>
           </div>
         ) : (
-          <p className="text-[12.5px] font-extrabold tabular-nums px-1">{monthLabel}</p>
+          <p className="text-[12.5px] font-extrabold tabular-nums px-1 text-ct-cream">{monthLabel}</p>
         )}
         <button
           type="button"
@@ -102,7 +102,7 @@ export default function TrainCalendar({ weekDates, plan, loggedDates, selectedDa
           aria-expanded={expanded}
           className="inline-flex items-center gap-1 px-2 py-1 rounded-full
                      text-[10px] font-extrabold uppercase tracking-[0.08em]
-                     text-muted hover:text-text hover:bg-white/[0.04] transition-colors"
+                     text-ct-cream/60 hover:text-ct-cream hover:bg-white/[0.04] transition-colors"
         >
           {expanded ? 'Week' : 'Month'}
           <ChevronDown

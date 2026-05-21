@@ -66,7 +66,7 @@ export default function TrainMonthGrid({ year, monthIndex, plan, loggedDates, se
       <div className="grid grid-cols-7 gap-1 mb-1.5 px-0.5">
         {DAY_LETTER.map((l, i) => (
           <span key={i} className="text-[9.5px] font-bold uppercase tracking-[0.06em]
-                                   text-text/30 text-center">
+                                   text-ct-cream/40 text-center">
             {l}
           </span>
         ))}
@@ -82,37 +82,37 @@ export default function TrainMonthGrid({ year, monthIndex, plan, loggedDates, se
           const isRest     = !hasSession && !logged
 
           const numClass = cell.outside
-            ? 'text-text/20'
+            ? 'text-ct-cream/20'
             : isSelected
-              ? 'text-white'
+              ? 'text-ct-cream'
               : isToday
-                ? 'text-text'
+                ? 'text-ct-cream'
                 : past
-                  ? 'text-text/55'
+                  ? 'text-ct-cream/55'
                   : isRest
-                    ? 'text-text/45'
-                    : 'text-text/85'
+                    ? 'text-ct-cream/45'
+                    : 'text-ct-cream/85'
 
-          // Today gets a tier-c border + soft glow even when not selected.
+          // Today gets a terracotta border + soft glow even when not selected.
           // Selected wins the tile-bg gradient; today-style falls through.
           const tileClass = [
             'flex flex-col items-center justify-center py-1.5 rounded-xl',
             'border-[0.5px] min-h-[44px] transition-colors',
             isSelected
-              ? 'border-[color:color-mix(in_srgb,var(--tier-c)_42%,transparent)]'
+              ? 'border-ct-terracotta/40'
               : (isToday && !cell.outside)
-                ? 'border-[color:color-mix(in_srgb,var(--tier-c)_48%,transparent)]'
+                ? 'border-ct-terracotta/45'
                 : 'border-transparent hover:bg-white/[0.03]',
           ].join(' ')
 
           const tileBg = isSelected
-            ? { background: 'linear-gradient(180deg, color-mix(in srgb, var(--tier-c) 18%, transparent), color-mix(in srgb, var(--tier-c) 4%, transparent))' }
+            ? { background: 'linear-gradient(180deg, rgba(217,119,87,0.18), rgba(217,119,87,0.04))' }
             : (isToday && !cell.outside)
-              ? { boxShadow: '0 0 10px color-mix(in srgb, var(--tier-c) 16%, transparent)' }
+              ? { boxShadow: '0 0 10px rgba(217,119,87,0.16)' }
               : undefined
 
           const todayStyle = (isToday && !isSelected && !cell.outside)
-            ? { color: 'var(--tier-light)' }
+            ? { color: '#f0a875' }
             : undefined
 
           const indicator = (() => {
@@ -120,15 +120,14 @@ export default function TrainMonthGrid({ year, monthIndex, plan, loggedDates, se
               return <span className="w-2 h-2" />
             }
             if (logged) {
-              return <Check size={11} strokeWidth={3} style={{ color: 'var(--tier-c)' }} />
+              return <Check size={11} strokeWidth={3} className="text-ct-moss" />
             }
             if (isSelected) {
-              return <span className="w-2 h-2 rounded-full" style={{ background: 'var(--tier-light)' }} />
+              return <span className="w-2 h-2 rounded-full bg-ct-terra-soft" />
             }
             if (!isRest) {
               return (
-                <span className="w-2 h-2 rounded-full"
-                      style={{ border: '1.5px solid color-mix(in srgb, var(--tier-c) 55%, transparent)' }} />
+                <span className="w-2 h-2 rounded-full border-[1.5px] border-ct-terracotta/55" />
               )
             }
             if (past && isRest) {

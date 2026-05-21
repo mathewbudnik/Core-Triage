@@ -92,13 +92,13 @@ export default function PlanArcSheet({ open, plan, onClose, onSelectWeek }) {
               </div>
             )}
             <div className="flex items-center justify-between mb-3 px-1">
-              <h3 className="text-[15px] font-extrabold -tracking-[0.01em]">Your plan</h3>
+              <h3 className="text-[15px] font-extrabold -tracking-[0.01em] text-ct-cream">Your plan</h3>
               <button onClick={onClose} aria-label="Close" className="p-1.5 -mr-1 rounded-full hover:bg-white/[0.06]">
-                <X size={16} className="text-muted" />
+                <X size={16} className="text-ct-cream/60" />
               </button>
             </div>
             {plan?.phase && (
-              <p className="text-[11px] font-bold uppercase tracking-[0.10em] text-muted mb-3 px-1">
+              <p className="text-[11px] font-bold uppercase tracking-[0.10em] text-ct-cream/60 mb-3 px-1">
                 {plan.duration_weeks}-week {plan.phase} phase
               </p>
             )}
@@ -107,11 +107,11 @@ export default function PlanArcSheet({ open, plan, onClose, onSelectWeek }) {
                 const status = weekStatus(plan, wi, todayIso)
                 const weekStartIso = isoFromWeekStart(plan.start_date, wi)
                 const icon = status === 'past'
-                  ? <Check size={14} strokeWidth={2.8} className="text-[var(--tier-light)]" />
+                  ? <Check size={14} strokeWidth={2.8} className="text-ct-moss" />
                   : status === 'current'
-                    ? <span className="w-2.5 h-2.5 rounded-full"
-                            style={{ background: 'var(--tier-c)', boxShadow: '0 0 8px var(--tier-c)' }} />
-                    : <Circle size={12} strokeWidth={2.2} className="text-white/30" />
+                    ? <span className="w-2.5 h-2.5 rounded-full bg-ct-terracotta"
+                            style={{ boxShadow: '0 0 8px rgba(217,119,87,0.60)' }} />
+                    : <Circle size={12} strokeWidth={2.2} className="text-ct-cream/30" />
                 const isDeload = (wi + 1) === totalWeeks
                 return (
                   <li key={wi}>
@@ -120,18 +120,18 @@ export default function PlanArcSheet({ open, plan, onClose, onSelectWeek }) {
                       onClick={() => { onSelectWeek(weekStartIso); onClose() }}
                       className={`w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-2xl
                                   bg-black/35 backdrop-blur-md border-[0.5px] border-white/[0.08]
-                                  hover:bg-white/[0.04] transition-colors text-left ${status === 'current' ? 'ring-1 ring-[color:color-mix(in_srgb,var(--tier-c)_32%,transparent)]' : ''}`}
+                                  hover:bg-white/[0.04] transition-colors text-left ${status === 'current' ? 'ring-1 ring-ct-terracotta/30' : ''}`}
                     >
                       <div className="flex items-center gap-3">
                         <span className="inline-flex items-center justify-center w-6 h-6">{icon}</span>
                         <div>
-                          <p className="text-[13.5px] font-extrabold leading-tight">Week {wi + 1}</p>
-                          <p className="text-[10.5px] font-bold text-muted mt-0.5 uppercase tracking-[0.08em]">
+                          <p className="text-[13.5px] font-extrabold leading-tight text-ct-cream">Week {wi + 1}</p>
+                          <p className="text-[10.5px] font-bold text-ct-cream/60 mt-0.5 uppercase tracking-[0.08em]">
                             {isDeload ? 'Deload week' : status === 'current' ? 'This week' : status === 'past' ? 'Complete' : 'Upcoming'}
                           </p>
                         </div>
                       </div>
-                      <span className="text-[10.5px] font-bold text-muted tabular-nums">
+                      <span className="text-[10.5px] font-bold text-ct-cream/60 tabular-nums">
                         {new Date(weekStartIso + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                       </span>
                     </button>

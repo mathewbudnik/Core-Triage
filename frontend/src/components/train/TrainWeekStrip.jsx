@@ -42,34 +42,34 @@ export default function TrainWeekStrip({ weekDates, plan, loggedDates, selectedD
         const isRest   = !hasSess && !logged
 
         const dayNumClass =
-          active ? 'text-white' :
-          today  ? 'text-text' :
-          past   ? 'text-text/55' :
-          isRest ? 'text-text/30' :
-                   'text-text/85'
+          active ? 'text-ct-cream' :
+          today  ? 'text-ct-cream' :
+          past   ? 'text-ct-cream/55' :
+          isRest ? 'text-ct-cream/30' :
+                   'text-ct-cream/85'
 
-        // Tile border + bg by state. Today gets its own tier-c outline so the
+        // Tile border + bg by state. Today gets a terracotta outline so the
         // "now" tile reads even when the user has selected a different day.
         const tileClass = [
           'flex flex-col items-center gap-1.5 py-2.5 rounded-2xl',
           'border-[0.5px] transition-colors min-h-[56px] relative',
-          active ? 'border-[color:color-mix(in_srgb,var(--tier-c)_42%,transparent)]'
+          active ? 'border-ct-terracotta/40'
                  : today
-                   ? 'border-[color:color-mix(in_srgb,var(--tier-c)_48%,transparent)]'
+                   ? 'border-ct-terracotta/45'
                    : 'border-transparent hover:bg-white/[0.03]',
         ].join(' ')
 
         const tileBg = active
-          ? { background: 'linear-gradient(180deg, color-mix(in srgb, var(--tier-c) 18%, transparent), color-mix(in srgb, var(--tier-c) 4%, transparent))' }
+          ? { background: 'linear-gradient(180deg, rgba(217,119,87,0.18), rgba(217,119,87,0.04))' }
           : today
-            ? { boxShadow: '0 0 12px color-mix(in srgb, var(--tier-c) 18%, transparent)' }
+            ? { boxShadow: '0 0 12px rgba(217,119,87,0.18)' }
             : {}
 
         const dayLetterClass = (today || active)
           ? 'font-extrabold' : 'font-bold'
         const dayLetterStyle = (today || active)
-          ? { color: 'var(--tier-light)' }
-          : { color: 'rgba(255,255,255,0.35)' }
+          ? { color: '#f0a875' }
+          : { color: 'rgba(240,245,237,0.35)' }
 
         const session = sessionForDay(plan, iso)
         const typeLabel = getSessionTypeLabel(session?.type || session?.session_type)
@@ -86,20 +86,18 @@ export default function TrainWeekStrip({ weekDates, plan, loggedDates, selectedD
         const indicator = (() => {
           if (logged) {
             return (
-              <Check size={12} strokeWidth={3} style={{ color: 'var(--tier-c)' }} />
+              <Check size={12} strokeWidth={3} className="text-ct-moss" />
             )
           }
           if (active) {
             return (
-              <span className="w-2 h-2 rounded-full"
-                    style={{ background: 'var(--tier-light)' }} />
+              <span className="w-2 h-2 rounded-full bg-ct-terra-soft" />
             )
           }
           if (!isRest) {
             // Future-or-today scheduled session that hasn't been logged yet
             return (
-              <span className="w-2 h-2 rounded-full"
-                    style={{ border: '1.5px solid color-mix(in srgb, var(--tier-c) 55%, transparent)' }} />
+              <span className="w-2 h-2 rounded-full border-[1.5px] border-ct-terracotta/55" />
             )
           }
           if (past && isRest) {
