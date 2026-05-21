@@ -40,11 +40,11 @@ export default function TrainHeader({ tierId, plan, streakDays }) {
           <div className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-full
                           text-[11px] font-bold text-ct-cream"
                style={{
-                 background: 'color-mix(in srgb, var(--tier-c) 12%, transparent)',
-                 border: '0.5px solid color-mix(in srgb, var(--tier-c) 35%, transparent)',
+                 background: 'rgba(217,119,87,0.12)',
+                 border: '0.5px solid rgba(217,119,87,0.35)',
                }}>
             <span className="w-1.5 h-1.5 rounded-full"
-                  style={{ background: 'var(--tier-c)', boxShadow: '0 0 6px var(--tier-c)' }} />
+                  style={{ background: '#d97757', boxShadow: '0 0 6px rgba(217,119,87,0.55)' }} />
             <span className="tabular-nums">{tierLabel}</span>
             {tierName && <><span className="text-white/30">·</span><span>{tierName}</span></>}
             {phaseLabel && <><span className="text-white/30">·</span><span>{phaseLabel}</span></>}

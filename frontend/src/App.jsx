@@ -453,13 +453,13 @@ export default function App() {
                 toast.kind === 'error'
                   ? 'bg-accent3/10 border-accent3/30 text-accent3'
                   : toast.kind === 'celebration'
-                    ? 'cursor-pointer text-text'
-                    : 'bg-panel2 border-outline text-text'
+                    ? 'cursor-pointer text-ct-cream'
+                    : 'bg-ct-forest-deep border-ct-hairline text-ct-cream'
               }`}
               style={toast.kind === 'celebration' ? {
-                background: 'linear-gradient(135deg, color-mix(in srgb, var(--tier-c) 25%, transparent), rgba(251,113,133,0.15))',
-                border: '0.5px solid color-mix(in srgb, var(--tier-c) 45%, transparent)',
-                boxShadow: '0 8px 24px color-mix(in srgb, var(--tier-c) 30%, transparent)',
+                background: 'linear-gradient(135deg, rgba(217,119,87,0.25), rgba(217,119,87,0.10))',
+                border: '0.5px solid rgba(217,119,87,0.45)',
+                boxShadow: '0 8px 24px rgba(217,119,87,0.30)',
               } : undefined}
               onClick={() => {
                 if (toast.link) {
@@ -473,26 +473,26 @@ export default function App() {
                   <span
                     className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
                     style={{
-                      background: 'color-mix(in srgb, var(--tier-c) 28%, transparent)',
-                      color: 'var(--tier-light)',
+                      background: 'rgba(217,119,87,0.28)',
+                      color: '#f0a875',
                     }}
                   >
                     <Trophy size={14} />
                   </span>
                   <span className="flex-1 leading-snug">
                     {toast.message}
-                    {toast.link && <span className="ml-2 text-accent font-semibold">Tap to view ›</span>}
+                    {toast.link && <span className="ml-2 text-ct-terra-soft font-semibold">Tap to view ›</span>}
                   </span>
                 </>
               ) : (
                 <span className="flex-1 leading-snug">
                   {toast.message}
-                  {toast.link && <span className="ml-2 text-accent font-bold">Tap to view ›</span>}
+                  {toast.link && <span className="ml-2 text-ct-terra-soft font-bold">Tap to view ›</span>}
                 </span>
               )}
               <button
                 onClick={(e) => { e.stopPropagation(); setToast(null) }}
-                className="text-muted hover:text-text shrink-0"
+                className="text-ct-cream/60 hover:text-ct-cream shrink-0"
                 aria-label="Dismiss"
               >
                 <X size={14} />
@@ -530,12 +530,12 @@ export default function App() {
       <aside className={`
         fixed md:sticky md:top-0 inset-y-0 md:inset-y-auto left-0 z-40
         md:h-screen
-        w-64 shrink-0 flex flex-col border-r border-outline bg-panel2/95 backdrop-blur-sm
+        w-64 shrink-0 flex flex-col border-r border-ct-hairline bg-ct-forest/95 backdrop-blur-sm
         transition-transform duration-150 ease-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
         {/* Logo */}
-        <div className="shrink-0 px-6 pt-8 pb-6 border-b border-outline">
+        <div className="shrink-0 px-6 pt-8 pb-6 border-b border-ct-hairline">
           <div className="flex items-center justify-between">
             <NavLink
               to="/hub"
@@ -546,20 +546,20 @@ export default function App() {
               <Logo size={32} dark />
               <span
                 className="text-lg font-bold bg-clip-text text-transparent"
-                style={{ backgroundImage: 'linear-gradient(90deg, var(--tier-c, #7dd3c0), #e7eaf0, #f47272)' }}
+                style={{ backgroundImage: 'linear-gradient(90deg, #d97757, #f0a875, #f0f5ed)' }}
               >
                 CoreTriage
               </span>
             </NavLink>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="md:hidden text-muted hover:text-text"
+              className="md:hidden text-ct-cream/60 hover:text-ct-cream"
               aria-label="Close menu"
             >
               <X size={18} />
             </button>
           </div>
-          <p className="text-xs text-muted leading-relaxed mt-1">
+          <p className="text-xs text-ct-cream/60 leading-relaxed mt-1">
             Training, rehab &amp; coaching for climbers
           </p>
         </div>
@@ -575,13 +575,13 @@ export default function App() {
               to={`/${id}`}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) => `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-100 border ${
-                isActive ? '' : 'text-muted hover:text-text hover:bg-panel border-transparent'
+                isActive ? '' : 'text-ct-cream/60 hover:text-ct-cream hover:bg-ct-hairline border-transparent'
               }`}
               style={({ isActive }) => isActive ? {
-                background: 'color-mix(in srgb, var(--tier-c, #14b8a6) 18%, transparent)',
-                color: 'var(--tier-light, #5eead4)',
-                borderColor: 'color-mix(in srgb, var(--tier-c, #14b8a6) 28%, transparent)',
-                boxShadow: '0 0 12px var(--tier-glow, rgba(20,184,166,0.18))',
+                background: 'rgba(217,119,87,0.12)',
+                color: '#f0a875',
+                borderColor: 'rgba(217,119,87,0.30)',
+                boxShadow: '0 0 12px rgba(217,119,87,0.18)',
               } : undefined}
             >
               {({ isActive }) => (
@@ -597,8 +597,8 @@ export default function App() {
                       transition={{ duration: 0.12, ease: 'easeOut' }}
                       className="ml-auto w-1.5 h-1.5 rounded-full"
                       style={{
-                        background: 'var(--tier-c, #14b8a6)',
-                        boxShadow: '0 0 6px var(--tier-glow, rgba(20,184,166,0.55))',
+                        background: '#d97757',
+                        boxShadow: '0 0 6px rgba(217,119,87,0.55)',
                       }}
                     />
                   )}
@@ -608,20 +608,20 @@ export default function App() {
           ))}
           {SECONDARY_TABS.length > 0 && (
             <>
-              <div className="h-px bg-outline/60 mx-3 my-3" />
+              <div className="h-px bg-ct-hairline mx-3 my-3" />
               {SECONDARY_TABS.map(({ id, label, icon: Icon }) => (
                 <NavLink
                   key={id}
                   to={`/${id}`}
                   onClick={() => setSidebarOpen(false)}
                   className={({ isActive }) => `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-100 border ${
-                    isActive ? '' : 'text-muted hover:text-text hover:bg-panel border-transparent'
+                    isActive ? '' : 'text-ct-cream/60 hover:text-ct-cream hover:bg-ct-hairline border-transparent'
                   }`}
                   style={({ isActive }) => isActive ? {
-                    background: 'color-mix(in srgb, var(--tier-c, #14b8a6) 18%, transparent)',
-                    color: 'var(--tier-light, #5eead4)',
-                    borderColor: 'color-mix(in srgb, var(--tier-c, #14b8a6) 28%, transparent)',
-                    boxShadow: '0 0 12px var(--tier-glow, rgba(20,184,166,0.18))',
+                    background: 'rgba(217,119,87,0.12)',
+                    color: '#f0a875',
+                    borderColor: 'rgba(217,119,87,0.30)',
+                    boxShadow: '0 0 12px rgba(217,119,87,0.18)',
                   } : undefined}
                 >
                   {({ isActive }) => (
@@ -633,7 +633,10 @@ export default function App() {
                           layoutId="nav-indicator"
                           transition={{ duration: 0.12, ease: 'easeOut' }}
                           className="ml-auto w-1.5 h-1.5 rounded-full"
-                          style={{ background: 'var(--tier-c, #14b8a6)' }}
+                          style={{
+                            background: '#d97757',
+                            boxShadow: '0 0 6px rgba(217,119,87,0.55)',
+                          }}
                         />
                       )}
                     </>
@@ -672,10 +675,10 @@ export default function App() {
 
         </div>
         {/* Sidebar footer */}
-        <div className="shrink-0 px-4 py-4 border-t border-outline space-y-2">
+        <div className="shrink-0 px-4 py-4 border-t border-ct-hairline space-y-2">
           <div className="flex items-start gap-2">
             <AlertTriangle size={11} className="text-accent3 shrink-0 mt-0.5" />
-            <p className="text-[10px] text-muted/70 leading-relaxed">
+            <p className="text-[10px] text-ct-cream/50 leading-relaxed">
               Severe symptoms or major trauma: seek professional evaluation.
             </p>
           </div>
@@ -689,7 +692,7 @@ export default function App() {
                   setToast({ kind: 'error', message: err.message || 'Could not open billing portal.' })
                 }
               }}
-              className="flex items-center gap-1 text-[10px] text-muted/50 hover:text-accent transition-colors"
+              className="flex items-center gap-1 text-[10px] text-ct-cream/40 hover:text-ct-cream/80 transition-colors"
             >
               <ChevronRight size={9} />
               Manage subscription
@@ -697,7 +700,7 @@ export default function App() {
           ) : (
             <button
               onClick={() => { setUpgradeTrigger('feature'); setShowUpgrade(true) }}
-              className="flex items-center gap-1 text-[10px] text-muted/50 hover:text-accent transition-colors"
+              className="flex items-center gap-1 text-[10px] text-ct-cream/40 hover:text-ct-cream/80 transition-colors"
             >
               <ChevronRight size={9} />
               View plans &amp; pricing
@@ -705,28 +708,28 @@ export default function App() {
           )}
           <button
             onClick={() => navigate('/about')}
-            className="flex items-center gap-1 text-[10px] text-muted/50 hover:text-muted transition-colors"
+            className="flex items-center gap-1 text-[10px] text-ct-cream/40 hover:text-ct-cream/80 transition-colors"
           >
             <Info size={9} />
             About CoreTriage
           </button>
           <button
             onClick={() => setShowTerms(true)}
-            className="flex items-center gap-1 text-[10px] text-muted/50 hover:text-muted transition-colors"
+            className="flex items-center gap-1 text-[10px] text-ct-cream/40 hover:text-ct-cream/80 transition-colors"
           >
             <FileText size={9} />
             Medical Disclaimer
           </button>
           <button
             onClick={() => setLegalDoc(PRIVACY_POLICY)}
-            className="flex items-center gap-1 text-[10px] text-muted/50 hover:text-muted transition-colors"
+            className="flex items-center gap-1 text-[10px] text-ct-cream/40 hover:text-ct-cream/80 transition-colors"
           >
             <FileText size={9} />
             Privacy Policy
           </button>
           <button
             onClick={() => setLegalDoc(TERMS_OF_SERVICE)}
-            className="flex items-center gap-1 text-[10px] text-muted/50 hover:text-muted transition-colors"
+            className="flex items-center gap-1 text-[10px] text-ct-cream/40 hover:text-ct-cream/80 transition-colors"
           >
             <FileText size={9} />
             Terms of Service
@@ -741,7 +744,7 @@ export default function App() {
                 window.location.href = 'mailto:mathewbudnik@gmail.com?subject=CoreTriage%20bug%20report'
               }
             }}
-            className="flex items-center gap-1 text-[10px] text-muted/50 hover:text-accent2 transition-colors"
+            className="flex items-center gap-1 text-[10px] text-ct-cream/40 hover:text-red-400 transition-colors"
           >
             <Bug size={9} />
             Report a bug
@@ -767,19 +770,19 @@ export default function App() {
         {/* Top bar — tier-themed accent: a hairline gradient at the bottom
             edge and a small filled icon in the active tab's tier color keep
             mobile chrome from reading as flat grey. */}
-        <header className="border-b border-outline px-4 md:px-8 py-4 flex items-center justify-between bg-panel2/40 backdrop-blur-sm sticky top-0 z-20 relative">
+        <header className="border-b border-ct-hairline px-4 md:px-8 py-4 flex items-center justify-between bg-ct-forest/40 backdrop-blur-sm sticky top-0 z-20 relative">
           <span
             aria-hidden
             className="pointer-events-none absolute left-0 right-0 bottom-[-1px] h-px"
             style={{
-              background: 'linear-gradient(90deg, transparent 0%, var(--tier-c, #14b8a6) 50%, transparent 100%)',
+              background: 'linear-gradient(90deg, transparent 0%, #d97757 50%, transparent 100%)',
               opacity: 0.45,
             }}
           />
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="md:hidden text-muted hover:text-text p-1"
+              className="md:hidden text-ct-cream/60 hover:text-ct-cream p-1"
               aria-label="Open menu"
             >
               <Menu size={20} />
@@ -794,10 +797,10 @@ export default function App() {
                   aria-hidden
                   className="shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-lg flex items-center justify-center"
                   style={{
-                    background: 'color-mix(in srgb, var(--tier-c, #14b8a6) 16%, transparent)',
-                    border: '0.5px solid color-mix(in srgb, var(--tier-c, #14b8a6) 30%, transparent)',
-                    boxShadow: '0 0 10px var(--tier-glow, rgba(20,184,166,0.25))',
-                    color: 'var(--tier-light, #5eead4)',
+                    background: 'rgba(217,119,87,0.16)',
+                    border: '0.5px solid rgba(217,119,87,0.30)',
+                    boxShadow: '0 0 10px rgba(217,119,87,0.25)',
+                    color: '#f0a875',
                   }}
                 >
                   <activeTab.icon size={14} strokeWidth={2.25} />
@@ -808,7 +811,7 @@ export default function App() {
                   {activeTabLabel}
                 </h1>
                 {activeTabSubtitle && (
-                  <p className="text-xs text-muted hidden sm:block mt-0.5">
+                  <p className="text-xs text-ct-cream/60 hidden sm:block mt-0.5">
                     {activeTabSubtitle}
                   </p>
                 )}
@@ -893,7 +896,7 @@ export default function App() {
 
       {/* Bottom nav — mobile only. pb-[env(safe-area-inset-bottom)] keeps
           tap targets above the iPhone home-indicator strip. */}
-      <nav className="fixed bottom-0 left-0 right-0 z-20 md:hidden bg-panel2/95 backdrop-blur-sm border-t border-outline pb-[env(safe-area-inset-bottom)]">
+      <nav className="fixed bottom-0 left-0 right-0 z-20 md:hidden bg-ct-forest/95 backdrop-blur-sm border-t border-ct-hairline pb-[env(safe-area-inset-bottom)]">
         <div className="flex">
           {/* Mobile bottom nav: primary 5 only — Chat / History / About are
               reachable via the sidebar drawer (hamburger), Account menu, and
@@ -903,9 +906,9 @@ export default function App() {
               key={id}
               to={`/${id}`}
               className={({ isActive }) => `relative flex-1 min-w-0 flex flex-col items-center gap-1 pt-2.5 pb-3 text-[10px] sm:text-xs font-medium leading-tight transition-colors duration-100 active:scale-[0.92] [transition:transform_120ms_ease,color_100ms_ease] ${
-                isActive ? '' : 'text-muted'
+                isActive ? '' : 'text-ct-cream/60'
               }`}
-              style={({ isActive }) => isActive ? { color: 'var(--tier-light, #5eead4)' } : undefined}
+              style={({ isActive }) => isActive ? { color: '#f0a875' } : undefined}
             >
               {({ isActive }) => (
                 <>
@@ -919,8 +922,8 @@ export default function App() {
                         aria-hidden
                         className="absolute inset-0 rounded-full"
                         style={{
-                          background: 'color-mix(in srgb, var(--tier-c, #14b8a6) 22%, transparent)',
-                          boxShadow: '0 0 12px var(--tier-glow, rgba(20,184,166,0.35))',
+                          background: 'rgba(217,119,87,0.22)',
+                          boxShadow: '0 0 12px rgba(217,119,87,0.35)',
                         }}
                       />
                     )}
@@ -937,8 +940,8 @@ export default function App() {
                       transition={{ duration: 0.18, ease: 'easeOut' }}
                       className="absolute bottom-0 w-10 h-1 rounded-full"
                       style={{
-                        background: 'var(--tier-c, #14b8a6)',
-                        boxShadow: '0 0 10px var(--tier-glow, rgba(20,184,166,0.55))',
+                        background: '#d97757',
+                        boxShadow: '0 0 10px rgba(217,119,87,0.55)',
                       }}
                     />
                   )}
