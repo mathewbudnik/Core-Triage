@@ -3,6 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { X, ArrowRight, Sparkles, Timer, Snowflake, PlayCircle, ExternalLink } from 'lucide-react'
 import TrainingLogEntry from '../TrainingLogEntry'
 import ExerciseTimer from './ExerciseTimer'
+import Surface from '../ui/Surface'
+import Eyebrow from '../ui/Eyebrow'
 import { useIsDesktop } from '../../hooks/useIsDesktop'
 import { getSessionTypeLabel } from '../../lib/sessionType'
 import { buildExerciseVideoUrl } from '../../data/exercises'
@@ -26,40 +28,39 @@ function MainExerciseCard({ block, index }) {
   const canTime = !!sets
 
   return (
-    <li className="px-4 py-3.5 rounded-2xl bg-black/35 backdrop-blur-md
-                   border-[0.5px] border-white/[0.10]">
+    <Surface as="li" tier="flat" padding="sm" rounded="rounded-2xl" className="px-4 py-3.5">
       <div className="flex items-baseline justify-between gap-3 mb-1">
-        <p className="text-[13.5px] font-extrabold leading-tight">
-          <span className="text-text/40 tabular-nums mr-1.5">{index + 1}.</span>
+        <p className="text-[13.5px] font-extrabold leading-tight text-ct-cream">
+          <span className="text-ct-cream/30 tabular-nums mr-1.5">{index + 1}.</span>
           {block.exercise || 'Exercise'}
         </p>
         {(sets || reps) && (
-          <p className="text-[11px] font-bold text-[var(--tier-light)] tabular-nums shrink-0">
+          <p className="text-[11px] font-bold text-ct-terracotta tabular-nums shrink-0">
             {[sets ? `${sets}×` : null, reps].filter(Boolean).join(' ')}
           </p>
         )}
       </div>
       {block.detail && (
-        <p className="text-[11.5px] font-semibold text-text/65 leading-snug mb-1.5">
+        <p className="text-[11.5px] font-semibold text-ct-cream/60 leading-snug mb-1.5">
           {block.detail}
         </p>
       )}
       <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5">
         {rest != null && (
-          <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-muted tabular-nums">
+          <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-ct-cream/60 tabular-nums">
             <Timer size={11} strokeWidth={2.4} />
             {rest >= 60 ? `${Math.round(rest / 60)} min rest` : `${rest}s rest`}
           </span>
         )}
       </div>
       {block.effort_note && (
-        <p className="text-[11px] font-semibold text-text/50 italic leading-snug mt-2">
+        <p className="text-[11px] font-semibold text-ct-cream/50 italic leading-snug mt-2">
           {block.effort_note}
         </p>
       )}
       {block.benchmark && (
-        <p className="text-[10.5px] font-semibold text-text/40 leading-snug mt-1.5
-                      pt-1.5 border-t-[0.5px] border-white/[0.06]">
+        <p className="text-[10.5px] font-semibold text-ct-cream/30 leading-snug mt-1.5
+                      pt-1.5 border-t-[0.5px] border-ct-hairline">
           {block.benchmark}
         </p>
       )}
@@ -71,9 +72,7 @@ function MainExerciseCard({ block, index }) {
             onClick={() => setTimerOpen(true)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
                        text-[10.5px] font-extrabold uppercase tracking-[0.06em]
-                       bg-[color:color-mix(in_srgb,var(--tier-c)_12%,transparent)]
-                       border-[0.5px] border-[color:color-mix(in_srgb,var(--tier-c)_32%,transparent)]"
-            style={{ color: 'var(--tier-light)' }}
+                       bg-ct-terracotta text-ct-cream"
           >
             <Timer size={11} strokeWidth={2.6} />
             Timer
@@ -86,8 +85,8 @@ function MainExerciseCard({ block, index }) {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
                        text-[10.5px] font-extrabold uppercase tracking-[0.06em]
-                       bg-white/[0.04] border-[0.5px] border-white/[0.10]
-                       text-text/85 hover:text-text hover:bg-white/[0.06] transition-colors"
+                       bg-ct-hairline border-[0.5px] border-ct-rim
+                       text-ct-cream/80 hover:text-ct-cream hover:bg-white/[0.06] transition-colors"
           >
             <PlayCircle size={11} strokeWidth={2.6} />
             Watch demo
@@ -102,7 +101,7 @@ function MainExerciseCard({ block, index }) {
           onClose={() => setTimerOpen(false)}
         />
       )}
-    </li>
+    </Surface>
   )
 }
 
@@ -111,15 +110,13 @@ function PhaseList({ title, items, icon: Icon }) {
   return (
     <div>
       <div className="flex items-center gap-1.5 mb-2 px-1">
-        {Icon && <Icon size={12} strokeWidth={2.4} className="text-text/45" />}
-        <p className="text-[9.5px] font-extrabold uppercase tracking-[0.12em] text-text/45">
-          {title}
-        </p>
+        {Icon && <Icon size={12} strokeWidth={2.4} className="text-ct-cream/45" />}
+        <Eyebrow className="px-0">{title}</Eyebrow>
       </div>
       <ul className="space-y-1 px-1 mb-1">
         {items.map((line, i) => (
-          <li key={i} className="text-[11.5px] font-semibold text-text/70 leading-snug flex gap-2">
-            <span className="text-text/30 shrink-0">·</span>
+          <li key={i} className="text-[11.5px] font-semibold text-ct-cream/60 leading-snug flex gap-2">
+            <span className="text-ct-cream/30 shrink-0">·</span>
             <span>{line}</span>
           </li>
         ))}
@@ -166,12 +163,12 @@ export default function SessionDetailSheet({ open, session, onClose, onLogged })
   const sheetClass = isDesktop
     ? `fixed top-[6vh] left-1/2 -translate-x-1/2 z-50
        w-full max-w-md max-h-[88vh] flex flex-col overflow-hidden
-       bg-[#0a0a0c] border-[0.5px] border-white/[0.10]
+       bg-[#0a0a0c] border-[0.5px] border-ct-hairline
        rounded-3xl px-4 pt-3`
     // Mobile: bottom edge sits ABOVE the h-16 bottom nav + safe-area inset,
     // so the sticky CTA inside the sheet is never hidden behind the nav bar.
     : `fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] inset-x-0 z-50
-       bg-[#0a0a0c] border-t-[0.5px] border-white/[0.10]
+       bg-[#0a0a0c] border-t-[0.5px] border-ct-hairline
        rounded-t-3xl px-4 pt-3 flex flex-col
        max-h-[calc(88vh-4rem-env(safe-area-inset-bottom))]`
   const enter = isDesktop ? { opacity: 1, scale: 1 } : { y: 0 }
@@ -207,26 +204,26 @@ export default function SessionDetailSheet({ open, session, onClose, onLogged })
           >
             {!isDesktop && (
               <div className="flex justify-center pb-2">
-                <div className="w-10 h-1 rounded-full bg-white/15" />
+                <div className="w-10 h-1 rounded-full bg-ct-hairline" />
               </div>
             )}
             <div className="flex items-start justify-between gap-3 mb-3 px-1">
               <div>
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--tier-light)]">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-ct-terracotta">
                   {typeLabel}
                 </p>
-                <h3 className="text-[19px] font-extrabold -tracking-[0.02em] mt-0.5">
+                <h3 className="text-[19px] font-extrabold -tracking-[0.02em] mt-0.5 text-ct-cream">
                   {typeLabel} session
                 </h3>
                 {dur && (
-                  <p className="text-[11.5px] font-bold text-muted mt-1 tabular-nums">
+                  <p className="text-[11.5px] font-bold text-ct-cream/60 mt-1 tabular-nums">
                     {dur} min
                   </p>
                 )}
               </div>
               <button onClick={onClose} aria-label="Close"
                       className="p-1.5 -mr-1 rounded-full hover:bg-white/[0.06]">
-                <X size={16} className="text-muted" />
+                <X size={16} className="text-ct-cream/60" />
               </button>
             </div>
 
@@ -238,28 +235,24 @@ export default function SessionDetailSheet({ open, session, onClose, onLogged })
               {!logging && (
                 <div className="space-y-5">
                   {coachNote && (
-                    <div className="px-3.5 py-3 rounded-2xl
-                                    bg-[color:color-mix(in_srgb,var(--tier-c)_8%,transparent)]
-                                    border-[0.5px] border-[color:color-mix(in_srgb,var(--tier-c)_22%,transparent)]">
+                    <Surface tier="default" padding="sm" rounded="rounded-2xl" className="px-3.5 py-3">
                       <div className="flex items-center gap-1.5 mb-1">
-                        <Sparkles size={11} strokeWidth={2.4} className="text-[var(--tier-light)]" />
-                        <p className="text-[9.5px] font-extrabold uppercase tracking-[0.12em] text-[var(--tier-light)]">
-                          Coach note
-                        </p>
+                        <Sparkles size={11} strokeWidth={2.4} className="text-ct-terracotta" />
+                        <Eyebrow>Coach note</Eyebrow>
                       </div>
-                      <p className="text-[12px] font-semibold text-text/85 leading-snug">
+                      <p className="text-[12px] font-semibold text-ct-cream/85 leading-snug">
                         {coachNote}
                       </p>
-                    </div>
+                    </Surface>
                   )}
 
                   <PhaseList title="Warm-up" items={warmUp} icon={Sparkles} />
 
                   {main.length > 0 && (
                     <div>
-                      <p className="text-[9.5px] font-extrabold uppercase tracking-[0.12em] text-text/45 mb-2 px-1">
-                        Main work
-                      </p>
+                      <div className="mb-2 px-1">
+                        <Eyebrow>Main work</Eyebrow>
+                      </div>
                       <ul className="space-y-1.5">
                         {main.map((block, i) => (
                           <MainExerciseCard key={i} block={block} index={i} />
@@ -271,7 +264,7 @@ export default function SessionDetailSheet({ open, session, onClose, onLogged })
                   <PhaseList title="Cool-down" items={coolDown} icon={Snowflake} />
 
                   {!hasAnyDetail && (
-                    <p className="px-1 py-6 text-center text-[12px] font-semibold text-muted">
+                    <p className="px-1 py-6 text-center text-[12px] font-semibold text-ct-cream/60">
                       No exercise detail captured for this session.
                     </p>
                   )}
@@ -290,15 +283,15 @@ export default function SessionDetailSheet({ open, session, onClose, onLogged })
               <div className="sticky bottom-0 inset-x-0 -mx-4 px-4 pt-3
                               pb-[calc(0.75rem+env(safe-area-inset-bottom))]
                               bg-[#0a0a0c]/95 backdrop-blur-md
-                              border-t-[0.5px] border-white/[0.08]">
+                              border-t-[0.5px] border-ct-hairline">
                 <motion.button
                   type="button"
                   whileTap={{ scale: 0.97 }}
                   onClick={() => setLogging(true)}
                   className="w-full inline-flex items-center justify-center gap-2
                              px-5 py-3.5 rounded-2xl
-                             font-extrabold text-[13px] -tracking-[0.01em]"
-                  style={{ background: 'var(--tier-c)', color: 'var(--bg, #06120f)' }}
+                             font-extrabold text-[13px] -tracking-[0.01em]
+                             bg-ct-terracotta text-ct-cream"
                 >
                   Log this session
                   <ArrowRight size={14} strokeWidth={2.4} />
