@@ -18,6 +18,7 @@ import StatStrip from './ui/StatStrip'
 import StatRadar from './ui/StatRadar'
 import QuestCard from './ui/QuestCard'
 import { TierThemeProvider, useTierTheme } from './ui/TierThemeProvider'
+import StatTrends7Day from './progress/StatTrends7Day'
 
 function EngineLiveDemo() {
   const { state, logSend, reset } = useRewardEngine()
@@ -297,6 +298,11 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
             />
           </Surface>
         </div>
+      </section>
+
+      <section className="mb-12">
+        <h2 className="ct-eyebrow mb-2">StatTrends7Day</h2>
+        <StatTrends7Day />
       </section>
 
       <section className="mb-12">
