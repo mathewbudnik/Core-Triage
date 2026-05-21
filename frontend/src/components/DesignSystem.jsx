@@ -173,10 +173,16 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
 
       <section className="mb-12">
         <h2 className="ct-title mb-4">StatStrip</h2>
-        <Surface tier="default" padding="lg" className="max-w-sm">
-          <Eyebrow divider className="mb-3">Sample stats</Eyebrow>
-          <StatStrip stats={{ power: 7, crimpy: 6, dynamic: 4, technical: 5, mobility: 3 }} />
-        </Surface>
+        <div className="grid grid-cols-2 gap-4">
+          <Surface tier="default" padding="lg">
+            <Eyebrow divider className="mb-3">Sample stats</Eyebrow>
+            <StatStrip stats={{ power: 7, crimpy: 6, dynamic: 4, technical: 5, mobility: 3 }} />
+          </Surface>
+          <Surface tier="default" padding="lg">
+            <Eyebrow divider className="mb-3">Brand new — no sends yet</Eyebrow>
+            <StatStrip stats={{ power: null, crimpy: null, dynamic: null, technical: null, mobility: null }} />
+          </Surface>
+        </div>
       </section>
 
       <section className="mb-12">
