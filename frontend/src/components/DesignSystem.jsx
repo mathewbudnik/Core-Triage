@@ -193,12 +193,12 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
             <StatRadar stats={{ power: 7, crimpy: 6, dynamic: 4, technical: 5, mobility: 3 }} size={130} />
           </Surface>
           <Surface tier="default" padding="lg">
-            <Eyebrow divider className="mb-3">Balanced</Eyebrow>
-            <StatRadar stats={{ power: 5, crimpy: 5, dynamic: 5, technical: 5, mobility: 5 }} size={130} />
+            <Eyebrow divider className="mb-3">Mixed — some null</Eyebrow>
+            <StatRadar stats={{ power: 6, crimpy: 4, dynamic: null, technical: 3, mobility: null }} size={130} />
           </Surface>
           <Surface tier="default" padding="lg">
-            <Eyebrow divider className="mb-3">Brand new</Eyebrow>
-            <StatRadar stats={{ power: 1, crimpy: 1, dynamic: 0, technical: 1, mobility: 0 }} size={130} />
+            <Eyebrow divider className="mb-3">Brand new — all null</Eyebrow>
+            <StatRadar stats={{ power: null, crimpy: null, dynamic: null, technical: null, mobility: null }} size={130} />
           </Surface>
         </div>
       </section>

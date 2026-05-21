@@ -40,15 +40,17 @@ export default function StatRadar({ stats, size = 130, className = '', animate =
   const cx = size / 2
   const cy = size / 2
   const radius = size * 0.42
-  // Starter pentagon for brand-new climbers — a clean small uniform pentagon
-  // at value 3 (~half the size of balanced) so very-low-stat climbers don't
-  // see a jagged near-zero spike. Threshold is mean < 1.5 so anyone with
-  // real activity sees their real shape.
-  const total = AXES.reduce((sum, axis) => sum + (stats[axis] ?? 0), 0)
-  const isStarter = total / AXES.length < 1.5
-  const renderStats = isStarter
+  // Starter pentagon for brand-new climbers: when every axis is null
+  // (no sends logged in any style), render a uniform pentagon at value 3
+  // so the radar looks intentional, not broken. Otherwise honor real values
+  // and treat null as 0 in the polygon path so the vertex sits at center.
+  const allNull = AXES.every((axis) => stats[axis] === null || stats[axis] === undefined)
+  const renderStats = allNull
     ? { power: 3, crimpy: 3, dynamic: 3, technical: 3, mobility: 3 }
-    : stats
+    : AXES.reduce((acc, axis) => {
+        acc[axis] = stats[axis] === null || stats[axis] === undefined ? 0 : stats[axis]
+        return acc
+      }, {})
   const points = statPolygon(renderStats, cx, cy, radius)
   const transition = useReducedTransition(TRANSITIONS.surface_rise)
   return (
@@ -77,10 +79,12 @@ export default function StatRadar({ stats, size = 130, className = '', animate =
         transition={transition}
         style={{ transformOrigin: `${cx}px ${cy}px` }}
       />
-      {/* Vertex dots */}
+      {/* Vertex dots: skip null axes on real climbers; show all 5 in starter mode */}
       <g fill="#f0a875">
         {AXES.map((axis, i) => {
-          const [x, y] = pointAt(renderStats[axis] ?? 0, AXIS_ANGLES[i], cx, cy, radius)
+          const isNull = stats[axis] === null || stats[axis] === undefined
+          if (isNull && !allNull) return null
+          const [x, y] = pointAt(renderStats[axis], AXIS_ANGLES[i], cx, cy, radius)
           return <circle key={axis} cx={x} cy={y} r="2.5" />
         })}
       </g>
