@@ -19,7 +19,7 @@ export default function HubTab({ user }) {
     <div className="min-h-screen bg-ct-forest text-ct-cream p-4 pb-24 max-w-md mx-auto">
       <HubHero user={user} />
       <TodaysQuestCard />
-      <HubProjectTile />
+      <HubProjectTile user={user} />
       <HubToolsGrid />
       <HubRecentSends />
     </div>
