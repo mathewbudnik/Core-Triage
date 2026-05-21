@@ -46,14 +46,14 @@ export default function SavedToHistoryBanner({ sessionId }) {
     state === 'undone' ? 'muted' :
                          'teal'
   const styles = {
-    teal:  { border: 'rgba(125,211,192,0.30)', bg: 'rgba(125,211,192,0.08)', icon: '#7dd3c0' },
-    muted: { border: 'rgba(138,147,166,0.30)', bg: 'rgba(138,147,166,0.08)', icon: '#8a93a6' },
+    teal:  { border: 'rgba(217,119,87,0.30)', bg: 'rgba(217,119,87,0.08)', icon: '#d97757' },
+    muted: { border: 'rgba(200,211,196,0.30)', bg: 'rgba(200,211,196,0.08)', icon: '#c8d3c4' },
     rose:  { border: 'rgba(244,114,114,0.35)', bg: 'rgba(244,114,114,0.08)', icon: '#f47272' },
   }[tone]
 
   return (
     <div
-      className="flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl border text-xs"
+      className="flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl border text-xs bg-ct-forest-deep border-ct-hairline"
       style={{ borderColor: styles.border, background: styles.bg }}
     >
       <div className="flex items-center gap-2 min-w-0">
@@ -64,7 +64,7 @@ export default function SavedToHistoryBanner({ sessionId }) {
         ) : (
           <Check size={13} className="shrink-0" style={{ color: styles.icon }} strokeWidth={2.6} />
         )}
-        <span className="truncate text-text/90">
+        <span className="truncate text-ct-cream/90">
           {state === 'saved'   && 'Saved to your history.'}
           {state === 'undoing' && 'Removing from history…'}
           {state === 'undone'  && 'Removed from history.'}
@@ -76,7 +76,7 @@ export default function SavedToHistoryBanner({ sessionId }) {
         <button
           type="button"
           onClick={handleUndo}
-          className="flex items-center gap-1 text-[11px] font-bold whitespace-nowrap text-text/85 hover:text-text px-2 py-0.5 rounded"
+          className="flex items-center gap-1 text-[11px] font-bold whitespace-nowrap text-ct-cream/85 hover:text-ct-cream px-2 py-0.5 rounded"
         >
           <RotateCcw size={10} strokeWidth={2.4} />
           Undo
@@ -86,7 +86,7 @@ export default function SavedToHistoryBanner({ sessionId }) {
         <button
           type="button"
           onClick={handleUndo}
-          className="text-[11px] font-bold whitespace-nowrap text-accent2 hover:text-text"
+          className="text-[11px] font-bold whitespace-nowrap text-accent2 hover:text-ct-cream"
         >
           Try again
         </button>
@@ -95,7 +95,7 @@ export default function SavedToHistoryBanner({ sessionId }) {
         <button
           type="button"
           onClick={() => setState('hidden')}
-          className="text-[11px] font-bold whitespace-nowrap text-muted hover:text-text"
+          className="text-[11px] font-bold whitespace-nowrap text-ct-cream/60 hover:text-ct-cream"
           aria-label="Dismiss"
         >
           Dismiss

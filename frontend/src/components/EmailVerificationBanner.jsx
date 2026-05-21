@@ -23,27 +23,27 @@ export default function EmailVerificationBanner({ user, onDismiss }) {
   }
 
   return (
-    <div className="bg-accent3/10 border-b border-accent3/30 px-4 md:px-8 py-2.5 flex items-center justify-center gap-3 text-xs flex-wrap">
-      <div className="flex items-center gap-2 text-accent3">
+    <div className="bg-ct-terra-tint border-y border-ct-terracotta/30 px-4 md:px-8 py-2.5 flex items-center justify-center gap-3 text-xs flex-wrap">
+      <div className="flex items-center gap-2 text-ct-terracotta">
         <Mail size={14} className="shrink-0" />
         <span className="font-medium">
           Verify your email
         </span>
       </div>
-      <span className="text-muted hidden sm:inline">
-        We sent a verification link to <strong className="text-text">{user.email}</strong>.
+      <span className="text-ct-cream/60 hidden sm:inline">
+        We sent a verification link to <strong className="text-ct-cream">{user.email}</strong>.
       </span>
 
       {state === 'sent' ? (
         <span className="text-accent font-medium">✓ Email sent — check your inbox</span>
       ) : state === 'sending' ? (
-        <span className="text-muted flex items-center gap-1">
+        <span className="text-ct-cream/60 flex items-center gap-1">
           <Loader2 size={11} className="animate-spin" /> Sending…
         </span>
       ) : (
         <button
           onClick={handleResend}
-          className="text-accent3 font-semibold hover:text-accent3/80 transition-colors underline-offset-2 hover:underline"
+          className="bg-ct-terracotta text-ct-cream font-semibold hover:brightness-110 transition-colors px-3 py-1 rounded-md"
         >
           Resend
         </button>
@@ -55,7 +55,7 @@ export default function EmailVerificationBanner({ user, onDismiss }) {
 
       <button
         onClick={onDismiss}
-        className="ml-auto text-muted hover:text-text transition-colors"
+        className="ml-auto text-ct-cream/60 hover:text-ct-cream transition-colors"
         aria-label="Dismiss"
       >
         <X size={13} />
