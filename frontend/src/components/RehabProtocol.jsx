@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Lock, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, Clock, Repeat, Zap, PlayCircle } from 'lucide-react'
 import { getExercises, buildExerciseVideoUrl } from '../data/exercises'
 import UpgradeModal from './UpgradeModal'
+import Surface from './ui/Surface'
 
 const PHASE_LABELS = {
   1: { name: 'Phase 1', sub: 'Start here — gentle movement while healing', weeks: 'Weeks 1–2' },
@@ -23,32 +24,32 @@ function ExerciseCard({ exercise, index }) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04 }}
-      className="bg-panel border border-outline rounded-xl overflow-hidden"
+      className="ct-surface-flat rounded-md overflow-hidden"
     >
       {/* Card header */}
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-panel2/50 transition-colors"
+        className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-ct-forest-soft/50 transition-colors"
       >
         <div className="w-6 h-6 rounded-full bg-accent/15 border border-accent/25 flex items-center justify-center shrink-0 mt-0.5 text-[10px] font-bold text-accent">
           {index + 1}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-text leading-tight">{exercise.name}</p>
-          <p className="text-[11px] text-muted mt-0.5">{exercise.area}</p>
+          <p className="text-sm font-semibold text-ct-cream leading-tight">{exercise.name}</p>
+          <p className="text-[11px] text-ct-cream/60 mt-0.5">{exercise.area}</p>
           {/* Quick stats row */}
           <div className="flex flex-wrap gap-3 mt-2">
-            <span className="flex items-center gap-1 text-[10px] text-muted">
+            <span className="flex items-center gap-1 text-[10px] text-ct-cream/60">
               <Repeat size={9} className="text-accent/60" />
               {exercise.sets} sets · {exercise.reps}
             </span>
-            <span className="flex items-center gap-1 text-[10px] text-muted">
+            <span className="flex items-center gap-1 text-[10px] text-ct-cream/60">
               <Clock size={9} className="text-accent2/60" />
               {exercise.frequency}
             </span>
           </div>
         </div>
-        <div className="shrink-0 text-muted mt-1">
+        <div className="shrink-0 text-ct-cream/40 mt-1">
           {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </div>
       </button>
@@ -63,8 +64,8 @@ function ExerciseCard({ exercise, index }) {
             transition={{ duration: 0.18 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 space-y-3 border-t border-outline pt-3">
-              <p className="text-xs text-muted leading-relaxed italic">{exercise.rationale}</p>
+            <div className="px-4 pb-4 space-y-3 border-t border-ct-hairline pt-3">
+              <p className="text-xs text-ct-cream/60 leading-relaxed italic">{exercise.rationale}</p>
 
               <a
                 href={buildExerciseVideoUrl(exercise)}
@@ -82,7 +83,7 @@ function ExerciseCard({ exercise, index }) {
                   <CheckCircle2 size={12} className="text-accent shrink-0 mt-0.5" />
                   <div>
                     <p className="text-[10px] font-semibold text-accent uppercase tracking-wide mb-0.5">What it should feel like</p>
-                    <p className="text-xs text-muted">{exercise.feel}</p>
+                    <p className="text-xs text-ct-cream/60">{exercise.feel}</p>
                   </div>
                 </div>
 
@@ -90,7 +91,7 @@ function ExerciseCard({ exercise, index }) {
                   <AlertTriangle size={12} className="text-accent2 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-[10px] font-semibold text-accent2 uppercase tracking-wide mb-0.5">Stop if</p>
-                    <p className="text-xs text-muted">{exercise.red_flags}</p>
+                    <p className="text-xs text-ct-cream/60">{exercise.red_flags}</p>
                   </div>
                 </div>
 
@@ -98,7 +99,7 @@ function ExerciseCard({ exercise, index }) {
                   <Zap size={12} className="text-accent3 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-[10px] font-semibold text-accent3 uppercase tracking-wide mb-0.5">Progress when</p>
-                    <p className="text-xs text-muted">{exercise.progression_trigger}</p>
+                    <p className="text-xs text-ct-cream/60">{exercise.progression_trigger}</p>
                   </div>
                 </div>
               </div>
@@ -117,8 +118,8 @@ function PhaseLockGate({ onUpgrade }) {
         <Lock size={20} className="text-accent" />
       </div>
       <div>
-        <p className="text-sm font-semibold text-text">Subscription required</p>
-        <p className="text-xs text-muted mt-1 max-w-xs">
+        <p className="text-sm font-semibold text-ct-cream">Subscription required</p>
+        <p className="text-xs text-ct-cream/60 mt-1 max-w-xs">
           Phase 2 &amp; 3 progressions are part of the subscription — full periodized protocols mapped to your injury. Free 14-day trial, then $7.99/mo.
         </p>
       </div>
@@ -158,11 +159,11 @@ export default function RehabProtocol({ region, severity, user, compact = false 
       {/* Header */}
       {!compact && (
         <div>
-          <h3 className="text-sm font-bold text-text">
+          <h3 className="text-sm font-bold text-ct-cream">
             Rehab Protocol — {region}
           </h3>
           {severity && (
-            <p className="text-xs text-muted mt-0.5">Based on: {severity} presentation</p>
+            <p className="text-xs text-ct-cream/60 mt-0.5">Based on: {severity} presentation</p>
           )}
         </div>
       )}
@@ -176,7 +177,7 @@ export default function RehabProtocol({ region, severity, user, compact = false 
       )}
 
       {/* Phase tabs */}
-      <div className="flex gap-1 bg-panel rounded-xl p-1 border border-outline">
+      <div className="flex gap-1 ct-surface-flat rounded-xl p-1">
         {[1, 2, 3].map((phase) => {
           const { name, weeks } = PHASE_LABELS[phase]
           const active = activePhase === phase
@@ -187,10 +188,10 @@ export default function RehabProtocol({ region, severity, user, compact = false 
               onClick={() => handlePhaseClick(phase)}
               className={`flex-1 flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
                 active
-                  ? 'bg-panel2 text-accent shadow border border-accent/20'
+                  ? 'ct-surface text-accent shadow border border-accent/20'
                   : locked
-                  ? 'text-muted/50 hover:text-muted'
-                  : 'text-muted hover:text-text'
+                  ? 'text-ct-cream/30 hover:text-ct-cream/60'
+                  : 'text-ct-cream/60 hover:text-ct-cream'
               }`}
             >
               <span className="flex items-center gap-1">
@@ -205,8 +206,8 @@ export default function RehabProtocol({ region, severity, user, compact = false 
 
       {/* Phase subtitle */}
       <div>
-        <p className="text-xs font-semibold text-text">{PHASE_LABELS[activePhase].sub}</p>
-        <p className="text-[11px] text-muted">{PHASE_LABELS[activePhase].weeks} · {exercises.length} exercises</p>
+        <p className="text-xs font-semibold text-ct-cream">{PHASE_LABELS[activePhase].sub}</p>
+        <p className="text-[11px] text-ct-cream/60">{PHASE_LABELS[activePhase].weeks} · {exercises.length} exercises</p>
       </div>
 
       {/* Content */}

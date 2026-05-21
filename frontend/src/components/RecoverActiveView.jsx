@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, LogIn } from 'lucide-react'
+import Eyebrow from './ui/Eyebrow'
 import { EXERCISES } from '../data/exercises'
 import { rehabProgress } from '../lib/rehabHeuristic'
 import RecoverStatusPills from './RecoverStatusPills'
@@ -75,11 +76,11 @@ export default function RecoverActiveView({
       <div className="sticky top-0 z-10 -mt-px
                       bg-[linear-gradient(180deg,rgba(11,18,32,1)_0%,rgba(11,18,32,0.96)_70%,rgba(11,18,32,0.85)_100%)]
                       backdrop-blur-md border-b border-outline/60 px-4 pt-5 pb-3">
-        <p className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-accent mb-1">Recover</p>
-        <h1 className="text-[22px] font-extrabold leading-tight tracking-tight mb-1">
+        <Eyebrow className="mb-1">Recover</Eyebrow>
+        <h1 className="text-[22px] font-extrabold leading-tight tracking-tight mb-1 text-ct-cream">
           {region}{hasExercises ? ` · Phase ${phase}` : ''}
         </h1>
-        <p className="text-xs text-muted mb-3">
+        <p className="text-xs text-ct-cream/60 mb-3">
           {hasExercises
             ? `Day ${rp?.dayInPhase ?? 1} of ${rp?.phaseLength ?? 14} · pain at or below 3/10.`
             : 'Read your guidance below and follow the action plan.'}
@@ -89,9 +90,9 @@ export default function RecoverActiveView({
 
         {hasExercises && (
           <div className="mt-3 px-3 py-2.5 rounded-xl bg-panel2/60 border border-outline/60">
-            <div className="flex justify-between text-[11px] text-muted mb-1.5">
+            <div className="flex justify-between text-[11px] text-ct-cream/60 mb-1.5">
               <span>Today's progress</span>
-              <strong className="text-text font-bold">{doneCount} / {exercises.length}</strong>
+              <strong className="text-ct-cream font-bold">{doneCount} / {exercises.length}</strong>
             </div>
             <div className="w-full h-[5px] rounded-full bg-text/10 overflow-hidden">
               <motion.div
@@ -109,9 +110,7 @@ export default function RecoverActiveView({
       {/* Diagnosis (present after a fresh submit, persisted via sessionStorage) */}
       {diagnosis && (
         <div className="px-4 pt-4">
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-accent2 mb-2.5">
-            Your guidance
-          </p>
+          <Eyebrow className="mb-2.5">Your guidance</Eyebrow>
           <TriageDiagnosis result={diagnosis} form={diagnosisForm} />
 
           {/* Saved-to-history confirmation with Undo. Renders only for
@@ -134,8 +133,8 @@ export default function RecoverActiveView({
               <span className="flex items-start gap-2.5 min-w-0">
                 <LogIn size={14} className="text-accent shrink-0 mt-0.5" strokeWidth={2.4} />
                 <span className="min-w-0">
-                  <span className="block text-[12px] font-bold text-text">Save this plan</span>
-                  <span className="block text-[11px] text-muted mt-0.5 leading-snug">
+                  <span className="block text-[12px] font-bold text-ct-cream">Save this plan</span>
+                  <span className="block text-[11px] text-ct-cream/60 mt-0.5 leading-snug">
                     Sign in to track progress, daily check-offs, and history.
                   </span>
                 </span>
@@ -149,9 +148,7 @@ export default function RecoverActiveView({
       {/* Exercise list — only when we have something to list */}
       {hasExercises && (
         <div className="px-4 pt-4">
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-muted mb-2.5">
-            Today · resets at midnight
-          </p>
+          <Eyebrow className="mb-2.5">Today · resets at midnight</Eyebrow>
           <div className="space-y-2">
             {exercises.map((ex) => (
               <RecoverExerciseCard
@@ -181,8 +178,8 @@ export default function RecoverActiveView({
                        hover:bg-accent2/[0.14] transition text-left"
           >
             <span>
-              <span className="block text-[13px] font-bold text-text">Something new hurts?</span>
-              <span className="block text-[11px] text-muted mt-0.5">
+              <span className="block text-[13px] font-bold text-ct-cream">Something new hurts?</span>
+              <span className="block text-[11px] text-ct-cream/60 mt-0.5">
                 Quick screen — keeps your current plan.
               </span>
             </span>

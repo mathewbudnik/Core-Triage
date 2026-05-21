@@ -33,7 +33,7 @@ export default function RecoverExerciseCard({ exercise, checked, onToggle }) {
                     ? 'opacity-55 bg-accent/[0.04] border-accent/20'
                     : open
                       ? 'bg-[linear-gradient(180deg,rgba(20,184,166,0.06),rgba(20,184,166,0.02))] border-accent/35'
-                      : 'bg-panel/45 border-outline'}`}
+                      : 'ct-surface-flat border-ct-hairline'}`}
     >
       {/* Checkbox */}
       <button
@@ -45,7 +45,7 @@ export default function RecoverExerciseCard({ exercise, checked, onToggle }) {
                     border-[1.5px] transition-all
                     ${checked
                       ? 'bg-accent border-accent shadow-[0_0_10px_rgba(20,184,166,0.5)]'
-                      : 'bg-panel/60 border-text/25'}`}
+                      : 'bg-ct-forest border-ct-rim/50'}`}
       >
         {checked && <Check size={14} strokeWidth={3} className="text-bg" />}
       </button>
@@ -53,11 +53,11 @@ export default function RecoverExerciseCard({ exercise, checked, onToggle }) {
       {/* Body */}
       <div className="flex-1 min-w-0">
         <p className={`text-sm font-bold leading-tight ${
-          checked ? 'text-text line-through decoration-text/40' : 'text-text'
+          checked ? 'text-ct-cream/60 line-through decoration-ct-cream/30' : 'text-ct-cream'
         }`}>
           {exercise.name}
         </p>
-        <p className="text-[12px] text-muted mt-1">
+        <p className="text-[12px] text-ct-cream/60 mt-1">
           {exercise.sets} sets × {exercise.reps}{exercise.frequency ? ` · ${exercise.frequency}` : ''}
         </p>
 
@@ -84,7 +84,7 @@ export default function RecoverExerciseCard({ exercise, checked, onToggle }) {
                 </a>
 
                 {exercise.feel && (
-                  <p className="flex items-start gap-2 text-[12px] text-muted leading-snug">
+                  <p className="flex items-start gap-2 text-[12px] text-ct-cream/60 leading-snug">
                     <Check size={12} strokeWidth={2.4} className="text-accent shrink-0 mt-0.5" />
                     <span>
                       <span className="text-accent font-bold uppercase text-[10px] tracking-[0.08em] mr-1">Should feel:</span>
@@ -93,7 +93,7 @@ export default function RecoverExerciseCard({ exercise, checked, onToggle }) {
                   </p>
                 )}
                 {exercise.red_flags && (
-                  <p className="flex items-start gap-2 text-[12px] text-muted leading-snug">
+                  <p className="flex items-start gap-2 text-[12px] text-ct-cream/60 leading-snug">
                     <AlertTriangle size={12} strokeWidth={2.4} className="text-accent2 shrink-0 mt-0.5" />
                     <span>
                       <span className="text-accent2 font-bold uppercase text-[10px] tracking-[0.08em] mr-1">Stop if:</span>
@@ -102,7 +102,7 @@ export default function RecoverExerciseCard({ exercise, checked, onToggle }) {
                   </p>
                 )}
                 {exercise.progression_trigger && (
-                  <p className="flex items-start gap-2 text-[12px] text-muted leading-snug">
+                  <p className="flex items-start gap-2 text-[12px] text-ct-cream/60 leading-snug">
                     <Zap size={12} strokeWidth={2.4} className="text-accent3 shrink-0 mt-0.5" />
                     <span>
                       <span className="text-accent3 font-bold uppercase text-[10px] tracking-[0.08em] mr-1">Progress when:</span>
