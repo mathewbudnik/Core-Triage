@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { calculateSendXP, levelFromTotalXP } from './xp.js'
 import { gradeStringToNum } from './gradeUtil.js'
 import { deriveStatShape } from './stats.js'
+import { generateDailyQuest } from './quests.js'
 
 export const STORAGE_KEY = 'ct_reward_engine_v1'
 export const STATE_VERSION = 1
@@ -193,6 +194,45 @@ export function addSend(state, send) {
   }
 }
 
+function todayDateString() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/**
+ * Ensure today's quest is generated. If state.quest.generatedDate is
+ * already today's date, returns state unchanged. Otherwise generates a
+ * fresh quest using the climber's current stat shape, replaces the
+ * quest field, and returns the new state.
+ */
+export function ensureDailyQuest(state) {
+  const today = todayDateString()
+  if (state.quest.generatedDate === today && state.quest.id) return state
+  const shape = deriveStatShape(state.sends)
+  const lastSend = state.sends[state.sends.length - 1]
+  const lastTrainingType = lastSend ? 'climbing' : null
+  const lastTrainingDaysAgo = lastSend
+    ? Math.floor((Date.now() - lastSend.ts) / (24 * 60 * 60 * 1000))
+    : 99
+  const quest = generateDailyQuest({
+    statShape: shape,
+    lastTrainingType,
+    lastTrainingDaysAgo,
+    hasOutdoorIn30d: state.sends.some((s) => s.modality === 'outdoor'),
+    averageSendGrade: lastSend ? lastSend.grade : 'V0',
+    recentSendsAtGrade: false,
+    seed: Date.parse(today),
+  })
+  return {
+    ...state,
+    quest: {
+      id: quest.id,
+      generatedDate: today,
+      progress: { current: 0, target: quest.target },
+    },
+  }
+}
+
 /**
  * React hook returning current engine state plus a stable logSend(send)
  * function that applies addSend and persists. logSend returns the events
@@ -201,7 +241,12 @@ export function addSend(state, send) {
  * Loads state from localStorage on mount; persists on every successful logSend.
  */
 export function useRewardEngine() {
-  const [state, setState] = useState(() => loadState())
+  const [state, setState] = useState(() => {
+    const loaded = loadState()
+    const withQuest = ensureDailyQuest(loaded)
+    if (withQuest !== loaded) saveState(withQuest)
+    return withQuest
+  })
 
   // Re-load if storage is cleared externally (e.g., devtools, theme reset).
   // No-op safety so hot reload during dev doesn't lose state.
