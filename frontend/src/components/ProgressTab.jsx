@@ -151,12 +151,9 @@ export default function ProgressTab({ user, onUserChange, onLoginClick }) {
           ) : (
             <motion.button key="log-button" initial={{opacity:0}} animate={{opacity:1}}
               onClick={() => setLogOpen(true)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-sm font-bold"
-              style={{
-                background: 'color-mix(in srgb, var(--tier-c) 14%, transparent)',
-                border: '0.5px solid color-mix(in srgb, var(--tier-c) 40%, transparent)',
-                color: 'var(--tier-light)',
-              }}>
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-sm font-bold
+                         bg-ct-terra-tint border border-ct-terracotta/30 text-ct-terra-soft
+                         hover:bg-ct-terracotta/15 transition-colors">
               <Plus size={15} /> Log a session
             </motion.button>
           )}

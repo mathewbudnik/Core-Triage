@@ -33,46 +33,35 @@ export default function ProgressTierHero({ tierId, metaLine, promotionProgress }
       type="button"
       onClick={() => navigate('/progress/awards')}
       aria-label="View all tiers and achievements"
-      className="w-full text-left transition-transform hover:scale-[1.005] active:scale-[0.995]"
-      style={{
-        background: 'linear-gradient(135deg, color-mix(in srgb, var(--tier-c) 22%, transparent), color-mix(in srgb, var(--tier-c) 6%, transparent))',
-        borderColor: 'color-mix(in srgb, var(--tier-c) 45%, transparent)',
-        boxShadow: 'inset 0 0 32px color-mix(in srgb, var(--tier-c) 18%, transparent)',
-      }}>
+      className="w-full text-left transition-transform hover:scale-[1.005] active:scale-[0.995]">
       {tierId === 'v10' && <DiamondShimmer size="lg" intensity="soft" />}
       <div className="flex items-center justify-between mb-0 relative z-10">
-        <p className="ct-eyebrow" style={{ color: 'var(--tier-light)' }}>Current tier</p>
-        <ChevronRight size={14} className="text-muted/60" />
+        <p className="ct-eyebrow text-ct-terra-soft">Current tier</p>
+        <ChevronRight size={14} className="text-ct-cream/40" />
       </div>
-      <div className="text-2xl font-bold text-text -tracking-[0.025em] mt-1 mb-0.5"
-           style={{ textShadow: '0 0 14px var(--tier-glow)' }}>
+      <div className="text-2xl font-bold text-ct-cream -tracking-[0.025em] mt-1 mb-0.5">
         {tierId === 'v10' ? 'V10+' : tierId.toUpperCase()} · {tierName}
       </div>
-      <div className="text-xs text-muted/80 mb-3">{metaLine}</div>
+      <div className="text-xs text-ct-cream/60 mb-3">{metaLine}</div>
 
       {isApex ? (
-        <div className="text-xs text-muted/70 italic">Apex tier — V10+ {tierName}.</div>
+        <div className="text-xs text-ct-cream/50 italic">Apex tier — V10+ {tierName}.</div>
       ) : (
         <>
           <div className="flex items-baseline justify-between text-[11px] mb-1.5">
-            <span className="text-muted uppercase tracking-[0.05em] font-semibold">
+            <span className="text-ct-cream/60 uppercase tracking-[0.05em] font-semibold">
               Promotion to {nextId.toUpperCase()} · {nextName}
             </span>
-            <span className="text-text font-bold tabular-nums -tracking-[0.01em]">
+            <span className="text-ct-cream font-bold tabular-nums -tracking-[0.01em]">
               {promotionProgress.current}
-              <span className="text-muted/40 font-medium">/{promotionProgress.goal}</span>
+              <span className="text-ct-cream/30 font-medium">/{promotionProgress.goal}</span>
             </span>
           </div>
-          <div className="h-[5px] rounded-full overflow-hidden"
-               style={{ background: 'rgba(255,255,255,0.1)' }}>
-            <div className="h-full rounded-full"
-                 style={{
-                   width: `${Math.round(frac * 100)}%`,
-                   background: 'linear-gradient(90deg, var(--tier-c), var(--tier-light))',
-                   boxShadow: '0 0 8px var(--tier-c)',
-                 }} />
+          <div className="h-[5px] rounded-full overflow-hidden bg-ct-hairline">
+            <div className="h-full rounded-full bg-gradient-to-r from-ct-terracotta to-ct-terra-soft"
+                 style={{ width: `${Math.round(frac * 100)}%` }} />
           </div>
-          <div className="text-[11px] text-muted/70 mt-2">
+          <div className="text-[11px] text-ct-cream/50 mt-2">
             {remaining} more {nextId.toUpperCase()} send{remaining === 1 ? '' : 's'} within 30 days to advance to {nextName}
           </div>
         </>
