@@ -464,10 +464,17 @@ Payload format:
 }
 ```
 
-**Topic 2: streak about to break.** New script `scripts/streak_about_to_break_push.py` runs daily at 18:00 UTC via Railway scheduled task. Queries users with `current_streak > 0` (read from the existing streak calculation in the awards/streak system) who have not logged a training session today, dispatches push:
+**Topic 2: streak about to break.** New script `scripts/streak_about_to_break_push.py` runs hourly via Railway scheduled task (`0 * * * *`). On each run, queries users with `current_streak > 0` (read from the existing streak calculation in the awards/streak system) who:
+- have not logged a training session today (local to the user's timezone)
+- have not already been pushed today (`streak_push_dispatched_at` < today's local midnight)
+- are currently in their 20:00 local hour, computed from `users.timezone`
+
+Users with `users.timezone IS NULL` fall back to 20:00 UTC dispatch. Push payload:
 
 > **Your streak is on the line.**
 > Log a climb today to keep your 5-day streak alive.
+
+The 20:00 local time mirrors Duolingo / Strava / Apple Fitness convention — late-afternoon-to-evening windows convert best on this kind of habit nudge.
 
 **Action handler.** `App.jsx` adds:
 
@@ -547,16 +554,17 @@ Added in this sprint:
 - `frontend/ios/StoreKitConfig.storekit` (sandbox config for Simulator)
 - `alembic/versions/0002_subscription_source.py`
 - `alembic/versions/0003_push_devices.py`
+- `alembic/versions/0004_user_timezone.py` (adds `users.timezone TEXT` and `users.streak_push_dispatched_at TIMESTAMPTZ`)
 - `scripts/streak_about_to_break_push.py`
 
 **Modified:**
-- `frontend/src/App.jsx` — status bar setup, push action listener, safe-area var install
+- `frontend/src/App.jsx` — status bar setup, push action listener, safe-area var install, timezone PUT on mount
 - `frontend/src/components/UpgradeModal.jsx` — native paywall branch
 - `frontend/src/components/HubTab.jsx` — render PushPermissionPrompt conditionally
 - `frontend/index.html` — `viewport-fit=cover`
 - `frontend/package.json` — Capacitor + RevenueCat + plugin deps
-- `main.py` — RevenueCat webhook endpoint, push register endpoint, push dispatch on coach message
-- `database.py` — `update_subscription_from_revenuecat`, `register_push_device`, `get_push_tokens` helpers, `subscription_source` + `subscription_updated_at` columns, `push_devices` and `revenuecat_webhook_events` tables
+- `main.py` — RevenueCat webhook endpoint, push register endpoint, push dispatch on coach message, `PUT /api/user/timezone` endpoint
+- `database.py` — `update_subscription_from_revenuecat`, `register_push_device`, `get_push_tokens`, `set_user_timezone`, `get_streak_push_candidates` helpers; `subscription_source`, `subscription_updated_at`, `timezone`, `streak_push_dispatched_at` columns; `push_devices` and `revenuecat_webhook_events` tables
 - `requirements.txt` — add `aioapns`
 - `.env.example` — six new env vars documented
 
@@ -583,10 +591,20 @@ This sprint adds:
 
 Component tests for `UpgradeModal` native branch are out of scope — verified manually in TestFlight builds. (The native code path can't run in vitest without mocking RevenueCat heavily; that mocking has historically produced false-confidence tests.)
 
-## Open questions
+## Resolved decisions
 
-1. **APNs key vs certificate auth.** Apple supports both. Token-based (`.p8` key) is recommended for new apps and what this spec assumes. If Budnik already has APNs certificates from a prior app, we can use those instead — same backend code path, different env var setup. Defer to implementation: implementer checks Apple Developer → Keys and uses whichever is already provisioned.
+1. **APNs auth: token-based `.p8` key.** Budnik has the Apple Developer account but no existing APNs certificates. New `.p8` key generated in Apple Developer → Keys → "+" → enable APNs. Free, doesn't expire (vs certificates which roll annually), and is Apple's recommended path for new apps. Implementer downloads the `.p8` once at setup, stores at `APNS_KEY_PATH`, records the 10-char `APNS_KEY_ID` and the team's `APPLE_TEAM_ID` as env vars.
 
-2. **RevenueCat plan tier.** Free tier covers $2.5K MRR with no overage. Starter ($8/mo flat) adds webhooks-with-signature-verification and integrations. The above spec assumes Starter so signature verification works. If Budnik wants to launch on Free, the webhook handler accepts the unsigned HMAC fallback (RevenueCat sends a shared-secret header on Free too). Decide at implementation time based on which plan is active.
+2. **RevenueCat plan: Free tier at launch.** Free covers up to $2.5K MRR (≈300 Pro subscribers) with no overage fee. Webhooks work on Free and ship with a shared-secret Authorization header that our handler verifies via `hmac.compare_digest` — no advanced signature verification needed. Upgrade to a paid tier only if/when MRR crosses the threshold and the 1% take starts to matter. This is the cheapest path: $0 to RevenueCat at launch, then 1% above the threshold.
 
-3. **Streak push timing.** 18:00 UTC is reasonable as a global default but ignores time zones. A per-user-local dispatch would require storing each user's timezone and a more complex scheduler. Stay with 18:00 UTC for v1; revisit if engagement data shows the timing is off.
+3. **Streak push timing: 8 PM local to each user.** Duolingo, Strava, and Apple Fitness all converge on late-afternoon-to-evening local time for streak/activity reminders — Duolingo specifically targets ~8 PM. Mimic the pattern: dispatch each user's streak push at 20:00 in their own IANA timezone, not 18:00 UTC.
+
+   Implementation deltas vs the 18:00 UTC version originally drafted:
+   - New `users.timezone` column (Alembic migration `0004_user_timezone.py`), TEXT, nullable, IANA name like `America/Chicago`.
+   - Frontend sets it at app boot via a new `PUT /api/user/timezone` endpoint, reading `Intl.DateTimeFormat().resolvedOptions().timeZone` from the browser. The request is fire-and-forget; failure to set is benign (users default to UTC).
+   - `scripts/streak_about_to_break_push.py` becomes an hourly cron (Railway scheduled task at `0 * * * *`) instead of daily-at-18-UTC. Each run computes the current local hour for each candidate user and dispatches only to those currently in their 20:00 window. Users with no stored timezone fall back to a 20:00 UTC dispatch.
+   - Idempotency: a `streak_push_dispatched_at` column on the user row prevents double-pushing in the same calendar day. Cleared on next-day midnight (UTC; close enough — users won't get two pushes in 24h).
+
+## Post-launch optimizations (deferred but worth noting)
+
+- **External Link Account Entitlement.** Apple permits qualifying apps to direct users to web sign-up instead of using IAP — savings of the full 30% Apple cut per Pro subscription. CoreTriage's "Health & Fitness" category isn't auto-eligible but can apply. Application is reviewed by Apple separately from the app itself. Recommended timing: ship via IAP, get App Review approval, apply for the entitlement once the app is live and stable. At $7.99/mo × 100 subscribers = $240/mo in savings if granted — material for an indie. The IAP architecture in this spec doesn't preclude future migration; the existing Stripe web flow stays operational throughout.
