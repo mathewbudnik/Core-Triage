@@ -14,7 +14,28 @@ __pycache__/
 # Frontend
 frontend/node_modules/
 frontend/dist/
+# MediaPipe WASM is copied from node_modules by scripts/copy-mediapipe-wasm.mjs
+# on postinstall — keep it out of git (~32 MB across 3 variants)
+frontend/public/mp-wasm/
 
 # Database
 *.sqlite3
+
+# Brainstorming companion (visual mockups) — local-only working files
 .superpowers/
+
+# Claude Code harness — local config, locally-installed skills, and
+# live worktrees (each worktree is a full clone of the repo)
+.claude/settings.local.json
+.claude/skills/
+.claude/worktrees/
+
+# Accidental typo'd dir (Claude → Claire) — keep it out of git
+.claire/
+
+# Obsidian per-vault config (themes, hotkeys, plugin state) — local-only
+.obsidian/
+.trash/
+
+# Motion-audit reports (one-off design audit HTMLs, not source)
+motion-audits/
