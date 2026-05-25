@@ -30,8 +30,8 @@ export default function ChatPicker({ user, onSelectCoach, onSelectAI }) {
         transition={{ duration: 0.2 }}
         className="text-center mb-8"
       >
-        <h2 className="text-xl font-bold text-text">How do you want to chat?</h2>
-        <p className="text-sm text-muted mt-1.5 max-w-md mx-auto">
+        <h2 className="text-xl font-bold text-ct-cream">How do you want to chat?</h2>
+        <p className="text-sm text-ct-cream/60 mt-1.5 max-w-md mx-auto">
           Both options stay available — pick whichever fits right now.
         </p>
       </motion.div>
@@ -47,26 +47,26 @@ export default function ChatPicker({ user, onSelectCoach, onSelectAI }) {
         <button
           type="button"
           onClick={onSelectCoach}
-          className="group flex flex-col items-center text-center gap-3 px-5 py-6 rounded-xl border bg-[linear-gradient(180deg,rgba(247,187,81,0.08),rgba(244,114,114,0.04))] border-[rgba(247,187,81,0.25)] hover:border-[rgba(247,187,81,0.5)] hover:shadow-glow transition-all duration-150"
+          className="group flex flex-col items-center text-center gap-3 px-5 py-6 rounded-xl border bg-[linear-gradient(180deg,rgba(217,119,87,0.10),rgba(217,119,87,0.04))] border-ct-terracotta/25 hover:border-ct-terracotta/50 hover:shadow-glow transition-all duration-150"
         >
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-base font-bold bg-[rgba(247,187,81,0.15)] border border-[rgba(247,187,81,0.4)] text-accent3">
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-base font-bold bg-ct-terra-tint border border-ct-terracotta/40 text-ct-terra-soft">
             M
           </div>
           <div>
             <div className="flex items-center justify-center gap-2 flex-wrap">
-              <h3 className="text-sm font-bold text-text">Talk to Budnik</h3>
-              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[rgba(247,187,81,0.15)] text-accent3 border border-[rgba(247,187,81,0.3)]">
+              <h3 className="text-sm font-bold text-ct-cream">Talk to Budnik</h3>
+              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-ct-terra-tint text-ct-terra-soft border border-ct-terracotta/30">
                 Coaching
               </span>
             </div>
-            <p className="text-xs text-muted mt-1.5 leading-relaxed">
+            <p className="text-xs text-ct-cream/60 mt-1.5 leading-relaxed">
               Send video of your project — get a beta breakdown and training feedback from an outdoor V13 boulderer and USAC-certified routesetter with a decade in the sport. Plus direct messaging for return-to-climb and load-management calls.
             </p>
-            <p className="text-[10px] text-muted/70 mt-2">
+            <p className="text-[10px] text-ct-cream/50 mt-2">
               Replies in 24–48h
             </p>
           </div>
-          <span className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-accent2 to-accent3 text-bg group-hover:opacity-90 transition-opacity">
+          <span className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-ct-terracotta text-ct-cream group-hover:opacity-90 transition-opacity">
             {coachCtaLabel}
             <ArrowRight size={12} />
           </span>
@@ -76,30 +76,30 @@ export default function ChatPicker({ user, onSelectCoach, onSelectAI }) {
         <button
           type="button"
           onClick={onSelectAI}
-          className="group flex flex-col items-center text-center gap-3 px-5 py-6 rounded-xl border bg-[linear-gradient(180deg,rgba(125,211,192,0.08),rgba(125,211,192,0.02))] border-[rgba(125,211,192,0.25)] hover:border-[rgba(125,211,192,0.5)] hover:shadow-glow transition-all duration-150"
+          className="group flex flex-col items-center text-center gap-3 px-5 py-6 rounded-xl border bg-[linear-gradient(180deg,rgba(217,119,87,0.06),rgba(217,119,87,0.02))] border-ct-terracotta/20 hover:border-ct-terracotta/40 hover:shadow-glow transition-all duration-150"
         >
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-[rgba(125,211,192,0.15)] border border-[rgba(125,211,192,0.4)] text-accent">
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-ct-terra-tint border border-ct-terracotta/30 text-ct-terra-soft">
             <Bot size={20} />
           </div>
           <div>
             <div className="flex items-center justify-center gap-2 flex-wrap">
-              <h3 className="text-sm font-bold text-text">Ask the AI</h3>
-              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[rgba(125,211,192,0.15)] text-accent border border-[rgba(125,211,192,0.3)]">
+              <h3 className="text-sm font-bold text-ct-cream">Ask the AI</h3>
+              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-ct-terra-tint text-ct-terra-soft border border-ct-terracotta/20">
                 Free trial
               </span>
             </div>
-            <p className="text-xs text-muted mt-1.5 leading-relaxed">
+            <p className="text-xs text-ct-cream/60 mt-1.5 leading-relaxed">
               Climbing-trained assistant — technique, training, movement, and injury triage. 5 free answers, then unlimited during your 14-day trial and with a subscription.
             </p>
           </div>
-          <span className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-accent/40 text-accent bg-[rgba(125,211,192,0.1)] group-hover:bg-[rgba(125,211,192,0.18)] transition-colors">
+          <span className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-ct-terracotta/30 text-ct-terra-soft bg-ct-terra-tint group-hover:bg-[rgba(217,119,87,0.12)] transition-colors">
             Start chatting
             <ArrowRight size={12} />
           </span>
         </button>
       </motion.div>
 
-      <p className="text-[10px] text-muted/50 mt-6 text-center max-w-md">
+      <p className="text-[10px] text-ct-cream/30 mt-6 text-center max-w-md">
         Educational only — not a medical diagnosis. If symptoms are severe or worsening, seek professional evaluation.
       </p>
     </div>

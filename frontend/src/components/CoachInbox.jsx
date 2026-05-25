@@ -2,32 +2,33 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Send, Loader2, Inbox, ChevronLeft } from 'lucide-react'
 import { adminGetThreads, adminGetMessages, adminReply } from '../api'
+import Surface from './ui/Surface'
 
 function ThreadRow({ thread, selected, onClick }) {
   const hasUnread = thread.unread_count > 0
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left px-4 py-3 border-b border-outline transition-colors ${
-        selected ? 'bg-accent/8' : 'hover:bg-panel'
+      className={`w-full text-left px-4 py-3 border-b border-ct-hairline transition-colors ${
+        selected ? 'bg-ct-terra-tint' : 'hover:bg-ct-forest-deep/60'
       }`}
     >
       <div className="flex items-center justify-between gap-2">
-        <p className={`text-sm truncate ${hasUnread ? 'font-semibold text-text' : 'text-text/70'}`}>
+        <p className={`text-sm truncate ${hasUnread ? 'font-semibold text-ct-cream' : 'text-ct-cream/60'}`}>
           {thread.email}
         </p>
         {hasUnread > 0 && (
-          <span className="shrink-0 text-[10px] font-bold bg-accent2 text-bg rounded-full w-4 h-4 flex items-center justify-center">
+          <span className="shrink-0 text-[10px] font-bold bg-ct-terracotta text-ct-cream rounded-full w-4 h-4 flex items-center justify-center">
             {thread.unread_count}
           </span>
         )}
       </div>
       {thread.last_msg && (
-        <p className="text-xs text-muted truncate mt-0.5">
+        <p className="text-xs text-ct-cream/60 truncate mt-0.5">
           {thread.last_sender === 'coach' ? 'You: ' : ''}{thread.last_msg}
         </p>
       )}
-      <p className="text-[10px] text-muted/50 mt-0.5">
+      <p className="text-[10px] text-ct-cream/30 mt-0.5">
         {new Date(thread.updated_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
       </p>
     </button>
@@ -44,11 +45,11 @@ function Message({ msg }) {
     >
       <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
         isCoach
-          ? 'bg-gradient-to-br from-accent/25 to-accent3/15 border border-accent/25 text-text rounded-tr-sm'
-          : 'bg-panel border border-outline text-muted rounded-tl-sm'
+          ? 'bg-ct-terra-tint border border-ct-terracotta/20 text-ct-cream rounded-tr-sm'
+          : 'ct-surface-flat text-ct-cream/60 rounded-tl-sm'
       }`}>
         <p className="whitespace-pre-wrap">{msg.content}</p>
-        <p className="text-[10px] text-muted/50 mt-1.5">
+        <p className="text-[10px] text-ct-cream/30 mt-1.5">
           {new Date(msg.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
         </p>
       </div>
@@ -131,14 +132,14 @@ export default function CoachInbox() {
     <div className="h-full flex">
       {/* Thread list — sidebar */}
       <div className={`
-        w-full md:w-72 shrink-0 border-r border-outline flex flex-col bg-panel2/40
+        w-full md:w-72 shrink-0 border-r border-ct-hairline flex flex-col bg-ct-forest-deep/40
         ${mobileShowThread ? 'hidden md:flex' : 'flex'}
       `}>
-        <div className="px-4 py-3 border-b border-outline flex items-center gap-2">
-          <Inbox size={15} className="text-accent" />
-          <p className="text-sm font-semibold text-text">Inbox</p>
+        <div className="px-4 py-3 border-b border-ct-hairline flex items-center gap-2">
+          <Inbox size={15} className="text-ct-terra-soft" />
+          <p className="text-sm font-semibold text-ct-cream">Inbox</p>
           {threads.some(t => t.unread_count > 0) && (
-            <span className="ml-auto text-[10px] font-bold bg-accent2 text-bg rounded-full px-1.5 py-0.5">
+            <span className="ml-auto text-[10px] font-bold bg-ct-terracotta text-ct-cream rounded-full px-1.5 py-0.5">
               {threads.reduce((s, t) => s + t.unread_count, 0)} new
             </span>
           )}
@@ -147,11 +148,11 @@ export default function CoachInbox() {
         <div className="flex-1 overflow-y-auto">
           {loading && (
             <div className="flex justify-center py-8">
-              <Loader2 size={18} className="animate-spin text-accent" />
+              <Loader2 size={18} className="animate-spin text-ct-terracotta" />
             </div>
           )}
           {!loading && threads.length === 0 && (
-            <p className="text-sm text-muted text-center py-12 px-4">No messages yet.</p>
+            <p className="text-sm text-ct-cream/60 text-center py-12 px-4">No messages yet.</p>
           )}
           {threads.map(t => (
             <ThreadRow
@@ -170,22 +171,22 @@ export default function CoachInbox() {
         ${!mobileShowThread ? 'hidden md:flex' : 'flex'}
       `}>
         {!selectedThread ? (
-          <div className="flex flex-col items-center justify-center h-full text-center px-8 space-y-3 text-muted">
-            <Inbox size={32} className="text-outline" />
+          <div className="flex flex-col items-center justify-center h-full text-center px-8 space-y-3 text-ct-cream/60">
+            <Inbox size={32} className="text-ct-hairline" />
             <p className="text-sm">Select a conversation</p>
           </div>
         ) : (
           <>
             {/* Thread header */}
-            <div className="border-b border-outline px-4 py-3 flex items-center gap-3 bg-panel2/40">
+            <div className="border-b border-ct-hairline px-4 py-3 flex items-center gap-3 bg-ct-forest-deep/40">
               <button
                 onClick={() => setMobileShowThread(false)}
-                className="md:hidden text-muted hover:text-text"
+                className="md:hidden text-ct-cream/60 hover:text-ct-cream"
               >
                 <ChevronLeft size={18} />
               </button>
               <div>
-                <p className="text-sm font-semibold text-text">{selectedThread.email}</p>
+                <p className="text-sm font-semibold text-ct-cream">{selectedThread.email}</p>
               </div>
             </div>
 
@@ -200,9 +201,9 @@ export default function CoachInbox() {
             </div>
 
             {/* Reply input */}
-            <div className="border-t border-outline p-4 bg-panel2/40">
+            <div className="border-t border-ct-hairline p-4 bg-ct-forest-deep/40">
               {error && (
-                <p className="text-xs text-accent2 mb-2 text-center">{error}</p>
+                <p className="text-xs text-ct-terracotta mb-2 text-center">{error}</p>
               )}
               <form onSubmit={handleReply} className="flex gap-3">
                 <input
@@ -210,13 +211,13 @@ export default function CoachInbox() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={`Reply to ${selectedThread.email}…`}
-                  className="input-base flex-1"
+                  className="flex-1 bg-ct-forest-deep border border-ct-hairline rounded-lg px-3 py-2 text-ct-cream text-base sm:text-sm placeholder:text-ct-cream/40 focus:outline-none focus:ring-1 focus:ring-ct-terracotta focus:border-ct-terracotta transition-colors duration-200"
                   disabled={sending}
                 />
                 <button
                   type="submit"
                   disabled={sending || !input.trim()}
-                  className="btn-primary flex items-center gap-2 shrink-0 disabled:opacity-40"
+                  className="flex items-center gap-2 shrink-0 px-5 py-2.5 rounded-lg font-semibold text-sm bg-ct-terracotta text-ct-cream hover:opacity-90 active:opacity-80 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
                   Send
