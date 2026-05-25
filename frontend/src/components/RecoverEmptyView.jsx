@@ -17,7 +17,7 @@ export default function RecoverEmptyView({ pastTriage = [] }) {
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.18, ease: 'easeOut' }}
+      transition={{ duration: 0.18, ease: [0, 0, 0.2, 1] }}
       className="px-4 pt-6 pb-24 max-w-2xl mx-auto"
     >
       {/* Header */}

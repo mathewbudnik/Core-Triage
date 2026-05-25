@@ -28,7 +28,7 @@ export default function TriageSectionCard({ state, eyebrow, children, innerRef }
     <motion.section
       ref={innerRef}
       layout
-      transition={{ duration: 0.2, ease: 'easeOut' }}
+      transition={{ duration: 0.2, ease: [0, 0, 0.2, 1] }}
       initial={false}
       animate={{ opacity: isDim ? 0.45 : 1 }}
     >

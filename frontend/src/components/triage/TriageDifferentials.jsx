@@ -83,7 +83,7 @@ export default function TriageDifferentials({ items = [], severity = 'moderate' 
                   </div>
                   <motion.span
                     animate={{ rotate: isOpen ? 180 : 0 }}
-                    transition={{ duration: 0.18, ease: 'easeOut' }}
+                    transition={{ duration: 0.18, ease: [0, 0, 0.2, 1] }}
                     className="shrink-0 text-ct-cream/30"
                   >
                     <ChevronDown size={16} strokeWidth={2.4} />
@@ -97,7 +97,7 @@ export default function TriageDifferentials({ items = [], severity = 'moderate' 
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.22, ease: 'easeOut' }}
+                      transition={{ duration: 0.22, ease: [0, 0, 0.2, 1] }}
                       className="overflow-hidden"
                     >
                       <div className="px-3.5 pb-3.5 pt-1 space-y-3 border-t border-ct-hairline">

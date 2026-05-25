@@ -98,7 +98,7 @@ export default function RecoverActiveView({
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.round(pctDone * 100)}%` }}
-                transition={{ duration: 0.3, ease: 'easeOut' }}
+                transition={{ duration: 0.3, ease: [0, 0, 0.2, 1] }}
                 className="h-full rounded-full bg-gradient-to-r from-accent to-[#7dd3c0]
                            shadow-[0_0_12px_rgba(20,184,166,0.6)]"
               />

@@ -597,7 +597,7 @@ export default function App() {
                   {isActive && (
                     <motion.div
                       layoutId="nav-indicator"
-                      transition={{ duration: 0.12, ease: 'easeOut' }}
+                      transition={{ duration: 0.12, ease: [0, 0, 0.2, 1] }}
                       className="ml-auto w-1.5 h-1.5 rounded-full"
                       style={{
                         background: '#d97757',
@@ -634,7 +634,7 @@ export default function App() {
                       {isActive && (
                         <motion.div
                           layoutId="nav-indicator"
-                          transition={{ duration: 0.12, ease: 'easeOut' }}
+                          transition={{ duration: 0.12, ease: [0, 0, 0.2, 1] }}
                           className="ml-auto w-1.5 h-1.5 rounded-full"
                           style={{
                             background: '#d97757',
@@ -794,9 +794,9 @@ export default function App() {
               {activeTab?.icon && (
                 <motion.span
                   key={activeTab.id}
-                  initial={{ scale: 0.7, opacity: 0 }}
+                  initial={{ scale: 0.92, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: 'spring', stiffness: 360, damping: 22 }}
+                  transition={{ duration: 0.18, ease: [0, 0, 0.2, 1] }}
                   aria-hidden
                   className="shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-lg flex items-center justify-center"
                   style={{
@@ -940,7 +940,7 @@ export default function App() {
                   {isActive && (
                     <motion.div
                       layoutId="bottom-nav-indicator"
-                      transition={{ duration: 0.18, ease: 'easeOut' }}
+                      transition={{ duration: 0.18, ease: [0, 0, 0.2, 1] }}
                       className="absolute bottom-0 w-10 h-1 rounded-full"
                       style={{
                         background: '#d97757',

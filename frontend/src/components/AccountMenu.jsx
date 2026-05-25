@@ -150,8 +150,9 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
           <motion.div
             initial={{ opacity: 0, y: -4, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -4, scale: 0.98 }}
-            transition={{ duration: 0.12 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18, ease: [0.2, 0.7, 0.2, 1] }}
+            style={{ transformOrigin: 'top right' }}
             role="menu"
             className="absolute right-0 top-full mt-2 w-72 max-w-[calc(100vw-1rem)] bg-[#1a1f1e] border border-ct-rim rounded-xl shadow-xl z-50 overflow-hidden"
           >

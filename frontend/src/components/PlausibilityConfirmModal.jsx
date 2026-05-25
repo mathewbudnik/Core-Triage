@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { AlertTriangle, ArrowRight, X } from 'lucide-react'
+import { TRANSITIONS } from '../lib/motion'
 
 /**
  * Plausibility check shown before saving a training log that contains a
@@ -33,7 +34,7 @@ export default function PlausibilityConfirmModal({
       <motion.div
         initial={{ opacity: 0, y: 8, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.16 }}
+        transition={TRANSITIONS.dialog_in}
         className="w-full max-w-sm rounded-2xl p-5 relative"
         style={{
           background: 'linear-gradient(180deg, #243530 0%, #1c2520 100%)',

@@ -195,7 +195,7 @@ export default function SessionDetailSheet({ open, session, onClose, onLogged })
             initial={init}
             animate={enter}
             exit={exit}
-            transition={{ duration: REDUCE_MOTION ? 0 : 0.22, ease: 'easeOut' }}
+            transition={{ duration: REDUCE_MOTION ? 0 : 0.22, ease: [0, 0, 0.2, 1] }}
             drag={enableDrag ? 'y' : false}
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.4 }}

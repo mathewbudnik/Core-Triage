@@ -17,8 +17,8 @@ export default function AwardUnlockToast({ award, onTap, onClose }) {
     <motion.div
       initial={{ y: -12, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      exit={{ y: -12, opacity: 0 }}
-      transition={{ duration: 0.25 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.25, ease: [0.2, 0.7, 0.2, 1] }}
       role="button"
       onClick={onTap}
       className="rounded-xl px-3 py-3 flex items-center gap-3 cursor-pointer bg-ct-forest-deep border border-ct-terracotta/40"

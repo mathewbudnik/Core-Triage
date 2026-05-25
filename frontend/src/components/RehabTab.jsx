@@ -139,7 +139,7 @@ function PhaseCard({ phase, label, short, free, feel, examples, progress, expand
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
+            transition={{ duration: 0.18, ease: [0, 0, 0.2, 1] }}
             className="overflow-hidden border-t border-ct-hairline"
           >
             <div className="px-4 pt-3 pb-4 space-y-3 bg-ct-forest/30">
@@ -274,7 +274,7 @@ export default function RehabTab({ user, onLoginClick }) {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.18, ease: 'easeOut' }}
+              transition={{ duration: 0.18, ease: [0, 0, 0.2, 1] }}
               className="overflow-hidden"
             >
               <div className="space-y-3 pt-3">

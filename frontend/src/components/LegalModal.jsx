@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
+import { TRANSITIONS } from '../lib/motion'
 
 /**
  * Generic full-screen modal for long-form legal text (Privacy Policy,
@@ -26,9 +27,9 @@ export default function LegalModal({ document, onClose }) {
       onClick={handleOverlayClick}
     >
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.08 }}
+        initial={{ opacity: 0, scale: 0.96, filter: 'blur(6px)' }}
+        animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+        transition={TRANSITIONS.dialog_in}
         className="w-full max-w-2xl max-h-[calc(100dvh-2rem)] bg-ct-forest-deep border border-ct-hairline rounded-2xl shadow-2xl overflow-hidden flex flex-col"
       >
         {/* Header */}

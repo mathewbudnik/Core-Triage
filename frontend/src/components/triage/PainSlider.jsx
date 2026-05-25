@@ -115,7 +115,7 @@ export default function PainSlider({ value, onChange, onCommit }) {
           <motion.div
             className="absolute inset-y-0 left-0 rounded-full"
             animate={{ width: `${pct}%` }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
+            transition={{ duration: 0.18, ease: [0, 0, 0.2, 1] }}
             style={{ background: painGradient(value) }}
           />
         </div>
@@ -123,7 +123,7 @@ export default function PainSlider({ value, onChange, onCommit }) {
           className="absolute top-1/2 w-6 h-6 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.35)]
                      border-[0.5px] border-white/40 pointer-events-none"
           animate={{ left: `${pct}%` }}
-          transition={{ duration: 0.12, ease: 'easeOut' }}
+          transition={{ duration: 0.12, ease: [0, 0, 0.2, 1] }}
           style={{ translateX: '-50%', translateY: '-50%' }}
         />
       </div>

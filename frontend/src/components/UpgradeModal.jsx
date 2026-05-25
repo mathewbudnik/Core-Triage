@@ -86,10 +86,10 @@ export default function UpgradeModal({ onClose, trigger = 'feature', user, onSig
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        initial={{ opacity: 0, scale: 0.96, filter: 'blur(6px)' }}
+        animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.08 }}
+        transition={{ duration: 0.30, ease: [0.2, 0.7, 0.2, 1] }}
         className="relative w-full max-w-sm mx-4 bg-ct-forest-deep border border-ct-hairline rounded-2xl shadow-xl p-6 space-y-5"
       >
         <button

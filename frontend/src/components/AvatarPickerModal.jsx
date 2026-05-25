@@ -5,6 +5,7 @@ import { X, Loader2, Check, RotateCcw } from 'lucide-react'
 import { setAvatar as apiSetAvatar, getMe } from '../api'
 import { AVATAR_PRESETS, AVATAR_COLORS, resolveAvatar } from '../data/avatars'
 import AvatarChip from './AvatarChip'
+import { TRANSITIONS } from '../lib/motion'
 
 /**
  * Picker modal for the user's avatar icon + optional color override.
@@ -82,7 +83,7 @@ export default function AvatarPickerModal({ user, onClose, onUserChange, onToast
       <motion.div
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.12 }}
+        transition={TRANSITIONS.dialog_in}
         className="relative w-full max-w-md bg-ct-forest-deep border border-ct-hairline rounded-2xl shadow-xl p-5 space-y-5 max-h-[90vh] overflow-y-auto"
       >
         <button

@@ -70,7 +70,7 @@ function ProgressBar({ pct }) {
         style={{ background: '#d97757' }}
         initial={false}
         animate={{ width: `${Math.max(0, Math.min(100, pct))}%` }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
+        transition={{ duration: 0.4, ease: [0, 0, 0.2, 1] }}
       />
     </div>
   )
@@ -544,7 +544,7 @@ export default function ProfileSetup({ onComplete }) {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.20, ease: 'easeOut' }}
+            transition={{ duration: 0.20, ease: [0, 0, 0.2, 1] }}
           >
             {stepBody}
           </motion.div>

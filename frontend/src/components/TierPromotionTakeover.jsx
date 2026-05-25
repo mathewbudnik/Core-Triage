@@ -37,7 +37,7 @@ export default function TierPromotionTakeover({ from, to, onClose }) {
         `,
       }}>
       <motion.div initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.5, ease: 'easeOut' }}
+                  transition={{ duration: 0.5, ease: [0, 0, 0.2, 1] }}
                   className="mb-7">
         <AwardMedal size="lg" light={t.light} mid={t.c} deep={t.deep}
                     icon={Mountain} label={to === 'v10' ? 'V10+' : to.toUpperCase()} />

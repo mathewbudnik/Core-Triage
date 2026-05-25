@@ -120,3 +120,19 @@
     background-color: theme(colors.ct.forest);
   }
 }
+
+/* Global reduced-motion guard. Pairs with <MotionConfig reducedMotion="user">
+   in main.jsx — framer-motion handles its own transforms; this rule catches
+   everything else: Tailwind animate-spin / animate-pulse, CSS transitions on
+   utility classes, scroll-behavior, the keyframes defined in tailwind.config.
+   Effectively disables motion while preserving final states. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

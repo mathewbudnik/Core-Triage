@@ -152,7 +152,7 @@ function GradientSlider({
         className="absolute inset-y-0 left-0 rounded-full"
         style={{ width: `${pct}%`, background: gradient }}
         animate={{ width: `${pct}%` }}
-        transition={{ duration: 0.18, ease: 'easeOut' }}
+        transition={{ duration: 0.18, ease: [0, 0, 0.2, 1] }}
       />
       {/* Visible draggable pill — non-interactive; the input below catches drags */}
       <motion.div
@@ -160,7 +160,7 @@ function GradientSlider({
                    ring-2 -translate-y-1/2 -translate-x-1/2 pointer-events-none"
         style={{ left: `${pct}%`, '--tw-ring-color': thumbRingColor }}
         animate={{ left: `${pct}%` }}
-        transition={{ duration: 0.18, ease: 'easeOut' }}
+        transition={{ duration: 0.18, ease: [0, 0, 0.2, 1] }}
       />
       <input
         type="range"

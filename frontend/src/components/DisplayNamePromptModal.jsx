@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Trophy, Loader2 } from 'lucide-react'
 import { setDisplayName } from '../api'
+import { TRANSITIONS } from '../lib/motion'
 
 const RULES_RE = /^[A-Za-z0-9_-]{3,20}$/
 
@@ -62,7 +63,7 @@ export default function DisplayNamePromptModal({ onDone }) {
       <motion.div
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.12 }}
+        transition={TRANSITIONS.dialog_in}
         className="relative w-full max-w-sm my-auto bg-ct-forest-deep border border-ct-hairline rounded-2xl shadow-xl p-5 sm:p-6 space-y-5"
       >
         <div className="flex flex-col items-center text-center space-y-3">

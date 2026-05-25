@@ -119,7 +119,7 @@ export default function TrainCalendar({ weekDates, plan, loggedDates, selectedDa
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: REDUCE_MOTION ? 0 : 0.20, ease: 'easeOut' }}
+            transition={{ duration: REDUCE_MOTION ? 0 : 0.20, ease: [0, 0, 0.2, 1] }}
             className="overflow-hidden"
           >
             <TrainMonthGrid

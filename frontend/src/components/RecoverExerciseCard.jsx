@@ -68,7 +68,7 @@ export default function RecoverExerciseCard({ exercise, checked, onToggle }) {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.16, ease: 'easeOut' }}
+              transition={{ duration: 0.16, ease: [0, 0, 0.2, 1] }}
               className="overflow-hidden"
             >
               <div className="mt-2.5 pt-2.5 border-t border-outline/60 space-y-2">
