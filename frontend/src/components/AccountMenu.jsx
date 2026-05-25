@@ -127,8 +127,8 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
         onClick={() => setOpen((o) => !o)}
         className={`flex items-center gap-2 text-xs px-2 py-1 rounded-full border transition-colors ${
           open
-            ? 'bg-accent/10 border-accent/40 text-text'
-            : 'bg-panel border-outline text-muted hover:text-text hover:border-accent/30'
+            ? 'bg-ct-terra-tint border-ct-terracotta/40 text-ct-cream'
+            : 'bg-ct-hairline border-ct-rim text-ct-cream/60 hover:text-ct-cream hover:border-ct-terracotta/30'
         }`}
         aria-haspopup="menu"
         aria-expanded={open}
@@ -153,10 +153,10 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={{ duration: 0.12 }}
             role="menu"
-            className="absolute right-0 top-full mt-2 w-72 max-w-[calc(100vw-1rem)] bg-panel2 border border-outline rounded-xl shadow-xl z-50 overflow-hidden"
+            className="absolute right-0 top-full mt-2 w-72 max-w-[calc(100vw-1rem)] bg-[#1a1f1e] border border-ct-rim rounded-xl shadow-xl z-50 overflow-hidden"
           >
             {/* Header */}
-            <div className="px-4 py-3.5 border-b border-outline bg-panel/50">
+            <div className="px-4 py-3.5 border-b border-ct-hairline bg-ct-terra-tint">
               <div className="flex items-start gap-3">
                 <button
                   onClick={() => { setPickerOpen(true); setOpen(false) }}
@@ -169,13 +169,13 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
                     name={avatarName}
                     size={44}
                   />
-                  <span className="absolute inset-0 rounded-xl bg-bg/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Pencil size={14} className="text-text" />
+                  <span className="absolute inset-0 rounded-xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Pencil size={14} className="text-ct-cream" />
                   </span>
                 </button>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <p className="text-sm font-bold text-text truncate">
+                    <p className="text-sm font-bold text-ct-cream truncate">
                       {user.display_name || 'No display name'}
                     </p>
                     {tierBadge && (
@@ -199,7 +199,7 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
                       Trial ended — subscribe to unlock
                     </p>
                   )}
-                  <p className="text-[11px] text-muted truncate flex items-center gap-1 mt-0.5">
+                  <p className="text-[11px] text-ct-cream/50 truncate flex items-center gap-1 mt-0.5">
                     <Mail size={10} />
                     {user.email}
                   </p>
@@ -208,9 +208,9 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
             </div>
 
             {/* Display name editor */}
-            <div className="px-2 py-2 border-b border-outline">
+            <div className="px-2 py-2 border-b border-ct-hairline">
               <div className="px-2 py-1.5">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted/70 mb-1.5 flex items-center gap-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-ct-cream/50 mb-1.5 flex items-center gap-1.5">
                   <Trophy size={9} />
                   Display name
                 </p>
@@ -242,7 +242,7 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
                       <button
                         onClick={() => { setEditingName(false); setDraftName(user.display_name || '') }}
                         disabled={savingName}
-                        className="p-1.5 rounded-md bg-panel border border-outline text-muted hover:text-text"
+                        className="p-1.5 rounded-md bg-ct-hairline border border-ct-rim text-ct-cream/60 hover:text-ct-cream"
                         aria-label="Cancel"
                       >
                         <X size={12} />
@@ -253,27 +253,27 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
                 ) : (
                   <button
                     onClick={() => setEditingName(true)}
-                    className="w-full flex items-center justify-between text-left text-sm text-text hover:text-accent group"
+                    className="w-full flex items-center justify-between text-left text-sm text-ct-cream hover:text-ct-terracotta group"
                   >
                     <span className="truncate font-medium">
-                      {user.display_name || <span className="italic text-muted">Set a display name</span>}
+                      {user.display_name || <span className="italic text-ct-cream/50">Set a display name</span>}
                     </span>
-                    <Pencil size={11} className="text-muted/60 group-hover:text-accent flex-shrink-0 ml-2" />
+                    <Pencil size={11} className="text-ct-cream/30 group-hover:text-ct-terracotta flex-shrink-0 ml-2" />
                   </button>
                 )}
               </div>
             </div>
 
             {/* Customize avatar */}
-            <div className="py-1 border-b border-outline">
+            <div className="py-1 border-b border-ct-hairline">
               <button
                 onClick={() => { setPickerOpen(true); setOpen(false) }}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-panel transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-ct-terra-tint transition-colors"
                 role="menuitem"
               >
-                <Palette size={14} className="text-accent flex-shrink-0" />
-                <span className="text-xs font-semibold text-text flex-1">Customize avatar</span>
-                <span className="text-[10px] text-muted">
+                <Palette size={14} className="text-ct-terracotta flex-shrink-0" />
+                <span className="text-xs font-semibold text-ct-cream flex-1">Customize avatar</span>
+                <span className="text-[10px] text-ct-cream/50">
                   {user.avatar_icon ? 'Edit' : 'Pick one'}
                 </span>
               </button>
@@ -281,49 +281,49 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
 
             {/* History — moved here from the top nav so the bottom nav can
                 stay focused on the 5 primary climbing surfaces. */}
-            <div className="py-1 border-b border-outline">
+            <div className="py-1 border-b border-ct-hairline">
               <button
                 onClick={() => { setOpen(false); navigate('/history') }}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-panel transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-ct-terra-tint transition-colors"
                 role="menuitem"
               >
-                <Clock size={14} className="text-muted flex-shrink-0" />
-                <span className="text-xs font-semibold text-text flex-1">History</span>
-                <span className="text-[10px] text-muted">Your past sessions</span>
+                <Clock size={14} className="text-ct-cream/50 flex-shrink-0" />
+                <span className="text-xs font-semibold text-ct-cream flex-1">History</span>
+                <span className="text-[10px] text-ct-cream/50">Your past sessions</span>
               </button>
             </div>
 
             {/* Billing */}
-            <div className="py-1 border-b border-outline">
+            <div className="py-1 border-b border-ct-hairline">
               {isPaid ? (
                 <button
                   onClick={handleBilling}
                   disabled={billingLoading}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-panel transition-colors disabled:opacity-60"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-ct-terra-tint transition-colors disabled:opacity-60"
                   role="menuitem"
                 >
                   {billingLoading
-                    ? <Loader2 size={14} className="animate-spin text-muted flex-shrink-0" />
-                    : <CreditCard size={14} className="text-muted flex-shrink-0" />}
-                  <span className="text-xs font-semibold text-text">Manage subscription</span>
+                    ? <Loader2 size={14} className="animate-spin text-ct-cream/50 flex-shrink-0" />
+                    : <CreditCard size={14} className="text-ct-cream/50 flex-shrink-0" />}
+                  <span className="text-xs font-semibold text-ct-cream">Manage subscription</span>
                 </button>
               ) : (
                 <button
                   onClick={() => { setOpen(false); onUpgradeClick?.() }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-panel transition-colors"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-ct-terra-tint transition-colors"
                   role="menuitem"
                 >
-                  <Sparkles size={14} className="text-accent flex-shrink-0" />
-                  <span className="text-xs font-semibold text-text">Upgrade to Pro</span>
+                  <Sparkles size={14} className="text-ct-terracotta flex-shrink-0" />
+                  <span className="text-xs font-semibold text-ct-cream">Upgrade to Pro</span>
                 </button>
               )}
             </div>
 
             {/* Coach badge row (read-only — for coaches only) */}
             {user.is_coach && (
-              <div className="px-4 py-2 border-b border-outline flex items-center gap-2 bg-accent3/5">
-                <Shield size={12} className="text-accent3" />
-                <span className="text-[11px] font-semibold text-accent3">Coach access</span>
+              <div className="px-4 py-2 border-b border-ct-hairline flex items-center gap-2 bg-ct-terra-tint">
+                <Shield size={12} className="text-ct-terracotta" />
+                <span className="text-[11px] font-semibold text-ct-terracotta">Coach access</span>
               </div>
             )}
 
@@ -331,7 +331,7 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
             <div className="py-1">
               <button
                 onClick={() => { setOpen(false); onLogout() }}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-accent2/10 text-accent2 transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-red-500/10 text-red-400 transition-colors"
                 role="menuitem"
               >
                 <LogOut size={14} className="flex-shrink-0" />
