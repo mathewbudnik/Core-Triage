@@ -7,9 +7,9 @@ import UpgradeModal from './UpgradeModal'
 const FEATURES = [
   {
     icon: Dumbbell,
-    color: 'text-accent',
-    bg: 'bg-accent/10 border-accent/20',
-    glow: 'hover:border-accent/50 hover:bg-accent/15',
+    color: 'text-ct-terra-soft',
+    bg: 'bg-ct-terracotta/10 border-ct-terracotta/20',
+    glow: 'hover:border-ct-terracotta/50 hover:bg-ct-terracotta/15',
     title: 'Training Plans',
     desc: 'Personalised 4-week climbing plans built around your goals, current grades, available days, and injury history. Adapts as you progress — from base-building to projecting.',
     tab: 'train',
@@ -17,9 +17,9 @@ const FEATURES = [
   },
   {
     icon: Stethoscope,
-    color: 'text-accent2',
-    bg: 'bg-accent2/10 border-accent2/20',
-    glow: 'hover:border-accent2/50 hover:bg-accent2/15',
+    color: 'text-ct-terra-soft',
+    bg: 'bg-ct-terracotta/10 border-ct-terracotta/20',
+    glow: 'hover:border-ct-terracotta/50 hover:bg-ct-terracotta/15',
     title: 'Recover',
     desc: 'Quick injury screen and phase-based rehab in one place. Daily-reset checkoffs so the plan stays alive between sessions — open the app, see today\'s exercises, tick them off.',
     tab: 'recover',
@@ -27,9 +27,9 @@ const FEATURES = [
   },
   {
     icon: MessageSquare,
-    color: 'text-accent3',
-    bg: 'bg-accent3/10 border-accent3/20',
-    glow: 'hover:border-accent3/40 hover:bg-accent3/12',
+    color: 'text-ct-terra-soft',
+    bg: 'bg-ct-terracotta/10 border-ct-terracotta/20',
+    glow: 'hover:border-ct-terracotta/40 hover:bg-ct-terracotta/12',
     title: 'AI Assistant',
     desc: 'Ask anything about training, climbing injuries, load management, or recovery — backed by a curated climbing-specific knowledge base.',
     tab: 'chat',
@@ -61,23 +61,23 @@ export default function Landing({ onEnter }) {
   const [showCoaching, setShowCoaching] = useState(false)
 
   return (
-    <div className="min-h-screen bg-bg flex flex-col relative overflow-hidden">
+    <div className="min-h-screen bg-ct-forest-deep flex flex-col relative overflow-hidden">
       {/* Ambient orbs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
-        <div className="absolute top-0 right-1/4 w-80 h-80 bg-accent2/8 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-1/2 w-72 h-72 bg-accent3/6 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-ct-terracotta/10 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-1/4 w-80 h-80 bg-ct-terra-soft/8 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-1/2 w-72 h-72 bg-ct-moss/6 rounded-full blur-3xl" />
       </div>
 
       {/* Nav bar */}
-      <nav className="relative z-10 flex items-center justify-between px-6 md:px-12 py-5 border-b border-outline bg-panel2/40 backdrop-blur-sm">
+      <nav className="relative z-10 flex items-center justify-between px-6 md:px-12 py-5 border-b border-ct-hairline bg-ct-forest/40 backdrop-blur-sm">
         <div className="flex items-center gap-2">
           <Logo size={32} dark />
-          <span className="font-bold text-text">CoreTriage</span>
+          <span className="font-bold text-ct-cream">CoreTriage</span>
         </div>
         <button
           onClick={() => onEnter()}
-          className="btn-primary flex items-center gap-1.5 text-sm"
+          className="bg-ct-terracotta text-ct-cream flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg font-semibold hover:bg-ct-terracotta/90 transition-colors"
         >
           Open App <ChevronRight size={15} />
         </button>
@@ -92,7 +92,7 @@ export default function Landing({ onEnter }) {
       >
         {/* Badge */}
         <motion.div variants={item} className="mb-6">
-          <span className="inline-flex items-center gap-2 text-xs font-medium px-4 py-1.5 rounded-full border border-accent/30 bg-accent/10 text-accent">
+          <span className="inline-flex items-center gap-2 text-xs font-medium px-4 py-1.5 rounded-full border border-ct-terracotta/30 bg-ct-terracotta/10 text-ct-terra-soft">
             <Mountain size={12} />
             Built for climbers, by climbers
           </span>
@@ -101,29 +101,28 @@ export default function Landing({ onEnter }) {
         {/* Headline */}
         <motion.h1
           variants={item}
-          className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight tracking-tight mb-4"
+          className="ct-display text-4xl sm:text-5xl md:text-6xl font-bold leading-tight tracking-tight mb-4"
         >
           <span
             className="bg-clip-text text-transparent"
-            style={{ backgroundImage: 'linear-gradient(90deg, var(--tier-c, #7dd3c0), #e7eaf0, #f47272)' }}
+            style={{ backgroundImage: 'linear-gradient(90deg, #f0a875, #f0f5ed, #d97757)' }}
           >
             Train. Recover. Progress.
           </span>
           <br />
-          <span className="text-text">Built for climbing.</span>
+          <span className="text-ct-cream">Built for climbing.</span>
         </motion.h1>
 
         {/* Subheading */}
         <motion.p
           variants={item}
-          className="text-muted text-base md:text-lg max-w-xl leading-relaxed mb-3"
+          className="text-ct-cream/80 text-base md:text-lg max-w-xl leading-relaxed mb-3"
         >
           Personalised training plans, injury triage and rehab, and 1:1 coaching from an outdoor V13 boulderer — three tools every climber needs, in one app.
         </motion.p>
 
-        {/* Tagline pill — full medical disclaimer lives in the modal users
-            accept on entry and in the dedicated section lower on this page. */}
-        <motion.p variants={item} className="text-xs text-muted/60 mb-10">
+        {/* Tagline pill */}
+        <motion.p variants={item} className="text-xs text-ct-cream/50 mb-10">
           Plans · Triage · Rehab · Coaching · Built by an outdoor V13 boulderer
         </motion.p>
 
@@ -131,11 +130,11 @@ export default function Landing({ onEnter }) {
         <motion.div variants={item} className="flex flex-col sm:flex-row gap-3 items-center mb-16">
           <button
             onClick={() => onEnter('triage')}
-            className="btn-primary flex items-center gap-2 text-base px-8 py-3"
+            className="bg-ct-terracotta text-ct-cream flex items-center gap-2 text-base px-8 py-3 rounded-lg font-semibold hover:bg-ct-terracotta/90 transition-colors"
           >
             Start Triage <ChevronRight size={16} />
           </button>
-          <p className="text-xs text-muted">Free to use · No account needed</p>
+          <p className="text-xs text-ct-cream/60">Free to use · No account needed</p>
         </motion.div>
 
         {/* Feature cards — clickable */}
@@ -147,17 +146,17 @@ export default function Landing({ onEnter }) {
             <button
               key={f.title}
               onClick={() => onEnter(f.tab)}
-              className={`card flex flex-col gap-3 text-left transition-all duration-200 cursor-pointer group border border-outline ${f.glow}`}
+              className={`ct-surface p-4 flex flex-col gap-3 text-left transition-all duration-200 cursor-pointer group border border-ct-hairline ${f.glow}`}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 ${f.bg}`}>
                   <f.icon size={16} className={f.color} />
                 </div>
-                <ArrowRight size={14} className="text-muted/40 group-hover:text-muted group-hover:translate-x-0.5 transition-all mt-1 shrink-0" />
+                <ArrowRight size={14} className="text-ct-cream/30 group-hover:text-ct-cream/60 group-hover:translate-x-0.5 transition-all mt-1 shrink-0" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-text">{f.title}</p>
-                <p className="text-xs text-muted mt-1 leading-relaxed">{f.desc}</p>
+                <p className="text-sm font-semibold text-ct-cream">{f.title}</p>
+                <p className="text-xs text-ct-cream/60 mt-1 leading-relaxed">{f.desc}</p>
               </div>
               <p className={`text-xs font-medium ${f.color} flex items-center gap-1`}>
                 {f.cta} <ChevronRight size={11} />
@@ -168,33 +167,33 @@ export default function Landing({ onEnter }) {
 
         {/* Coaching section */}
         <motion.div variants={item} className="mt-10 max-w-3xl w-full">
-          <div className="relative rounded-2xl border border-accent3/30 bg-gradient-to-br from-accent3/8 to-accent/5 p-6 md:p-8 text-left overflow-hidden">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-accent3/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative rounded-2xl border border-ct-terracotta/30 bg-gradient-to-br from-ct-terracotta/8 to-ct-forest/5 p-6 md:p-8 text-left overflow-hidden">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-ct-terracotta/10 rounded-full blur-3xl pointer-events-none" />
             <div className="relative">
               <div className="flex items-center gap-2 mb-3 flex-wrap">
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-accent3/15 text-accent3 border border-accent3/25">
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-ct-terracotta/15 text-ct-terra-soft border border-ct-terracotta/25">
                   <UserCircle2 size={11} />
                   1:1 Coaching · $89/mo
                 </span>
-                <span className="text-[11px] text-muted/70">application only</span>
+                <span className="text-[11px] text-ct-cream/50">application only</span>
               </div>
-              <h2 className="text-lg md:text-xl font-bold text-text mb-2">
+              <h2 className="text-lg md:text-xl font-bold text-ct-cream mb-2">
                 Inside knowledge, climber to climber
               </h2>
-              <p className="text-sm text-muted leading-relaxed mb-5 max-w-lg">
-                Send video of your project and get the kind of feedback that only comes from years inside the sport — a <span className="text-text font-medium">beta breakdown</span> with technique fixes and sequence ideas, plus a <span className="text-text font-medium">training plan shaped around your weaknesses</span>. Direct messaging covers everything an AI can't help with. Budnik climbs V13 outdoors, sets at Momentum Houston, and has spent a decade figuring out what actually works on the wall.
+              <p className="text-sm text-ct-cream/60 leading-relaxed mb-5 max-w-lg">
+                Send video of your project and get the kind of feedback that only comes from years inside the sport — a <span className="text-ct-cream font-medium">beta breakdown</span> with technique fixes and sequence ideas, plus a <span className="text-ct-cream font-medium">training plan shaped around your weaknesses</span>. Direct messaging covers everything an AI can't help with. Budnik climbs V13 outdoors, sets at Momentum Houston, and has spent a decade figuring out what actually works on the wall.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-6">
                 {COACHING_INCLUDES.map((point) => (
-                  <div key={point} className="flex items-start gap-2 text-xs text-muted">
-                    <CheckCircle size={12} className="text-accent3 shrink-0 mt-0.5" />
+                  <div key={point} className="flex items-start gap-2 text-xs text-ct-cream/60">
+                    <CheckCircle size={12} className="text-ct-terra-soft shrink-0 mt-0.5" />
                     <span>{point}</span>
                   </div>
                 ))}
               </div>
               <button
                 onClick={() => setShowCoaching(true)}
-                className="flex items-center gap-2 text-sm font-semibold text-accent3 hover:text-accent3/80 transition-colors group"
+                className="flex items-center gap-2 text-sm font-semibold text-ct-terra-soft hover:text-ct-terra-soft/80 transition-colors group"
               >
                 Apply for coaching
                 <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
@@ -213,17 +212,17 @@ export default function Landing({ onEnter }) {
             <button
               key={area}
               onClick={() => onEnter('recover')}
-              className="text-xs bg-panel border border-outline rounded-full px-3 py-1.5 text-muted hover:text-accent hover:border-accent/40 transition-colors"
+              className="text-xs bg-ct-forest border border-ct-hairline rounded-full px-3 py-1.5 text-ct-cream/60 hover:text-ct-terra-soft hover:border-ct-terracotta/40 transition-colors"
             >
               {area}
             </button>
           ))}
-          <span className="text-xs text-muted/50 self-center">injury areas covered</span>
+          <span className="text-xs text-ct-cream/30 self-center">injury areas covered</span>
         </motion.div>
       </motion.div>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-outline px-6 py-4 text-center text-xs text-muted/50">
+      <footer className="relative z-10 border-t border-ct-hairline px-6 py-4 text-center text-xs text-ct-cream/30">
         CoreTriage is an educational tool and does not provide medical diagnosis or treatment.
       </footer>
 

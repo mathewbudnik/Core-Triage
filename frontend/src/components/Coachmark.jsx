@@ -148,13 +148,13 @@ export default function Coachmark({ tour }) {
         exit={{ opacity: 0, y: isMobileBottom ? 16 : (pos.placement === 'below' ? -8 : 8) }}
         transition={{ duration: 0.24, ease: [0.2, 0.7, 0.2, 1] }}
         style={wrapperStyle}
-        className="bg-panel/95 backdrop-blur-md border border-accent/30 rounded-lg shadow-lg text-text"
+        className="bg-ct-forest-deep border border-ct-terracotta/40 rounded-lg shadow-lg text-ct-cream backdrop-blur-md"
       >
         {/* Arrow — desktop anchored only */}
         {!isMobileBottom && (
           <span
             aria-hidden
-            className="absolute w-2.5 h-2.5 bg-panel border-accent/30 rotate-45"
+            className="absolute w-2.5 h-2.5 bg-ct-forest-deep rotate-45"
             style={{
               left: Math.max(10, Math.min(pos.arrowX - 5, pos.width - 14)),
               top: pos.placement === 'below' ? -6 : 'auto',
@@ -164,6 +164,7 @@ export default function Coachmark({ tour }) {
               borderRightWidth: pos.placement === 'above' ? 1 : 0,
               borderBottomWidth: pos.placement === 'above' ? 1 : 0,
               borderStyle: 'solid',
+              borderColor: 'rgba(217,119,87,0.40)',
             }}
           />
         )}
@@ -171,15 +172,15 @@ export default function Coachmark({ tour }) {
         <div className="px-3 py-2.5">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <span className="text-[9px] uppercase tracking-wider font-semibold text-accent">
+              <span className="text-[9px] uppercase tracking-wider font-semibold text-ct-terra-soft">
                 {tip.label}
               </span>
-              <p className="text-xs text-text/90 leading-snug mt-0.5">{tip.body}</p>
+              <p className="text-xs text-ct-cream/90 leading-snug mt-0.5">{tip.body}</p>
             </div>
             <button
               onClick={skip}
               aria-label="Skip tour"
-              className="text-muted/60 hover:text-text transition-colors -mt-0.5 -mr-0.5 p-0.5 shrink-0"
+              className="text-ct-cream/40 hover:text-ct-cream transition-colors -mt-0.5 -mr-0.5 p-0.5 shrink-0"
             >
               <X size={12} />
             </button>
@@ -191,16 +192,16 @@ export default function Coachmark({ tour }) {
                 <span
                   key={i}
                   className={`rounded-full transition-all ${
-                    i === tip.index ? 'w-3 h-1 bg-accent' :
-                    i <  tip.index ? 'w-1 h-1 bg-accent/50' :
-                                     'w-1 h-1 bg-outline'
+                    i === tip.index ? 'w-3 h-1 bg-ct-terracotta' :
+                    i <  tip.index ? 'w-1 h-1 bg-ct-terracotta/50' :
+                                     'w-1 h-1 bg-ct-hairline'
                   }`}
                 />
               ))}
             </div>
             <button
               onClick={dismiss}
-              className="text-[11px] font-semibold text-accent hover:text-accent/80 transition-colors px-2 py-0.5"
+              className="text-[11px] font-semibold text-ct-terra-soft hover:text-ct-terra-soft/80 transition-colors px-2 py-0.5"
             >
               Got it
             </button>
