@@ -1021,15 +1021,19 @@ def bucket_possibilities(i: Intake) -> List[Bucket]:
             out.append(Bucket.from_id("boutonniere", qualifier="urgent"))
 
         # ── PULLEY patterns ───────────────────────────────────────────────
+        # Phase 1 broadened: A2 spans palm_base→palm_mid (per Miro/Schöffl 2021),
+        # open_hand can damage it under high load, Pinky/Thumb A2 ruptures do occur.
         if (
-            loc == "palm_mid"
-            and grip in {"full_crimp", "half_crimp"}
-            and wf in {"Ring", "Middle", "Index"}
+            loc in {"palm_base", "palm_mid"}
+            and grip in {"full_crimp", "half_crimp", "open_hand"}
         ):
-            out.append(Bucket.from_id("pulley_a2", qualifier="most likely"))
-        elif loc == "palm_tip" and grip in {"full_crimp", "half_crimp"}:
+            if wf in {"Pinky", "Thumb", "Multiple"} or grip == "open_hand":
+                out.append(Bucket.from_id("pulley_a2", qualifier="possible"))
+            else:
+                out.append(Bucket.from_id("pulley_a2", qualifier="most likely"))
+        if loc == "palm_tip" and grip in {"full_crimp", "half_crimp"}:
             out.append(Bucket.from_id("pulley_a4", qualifier="likely"))
-        elif loc == "palm_mid" and grip in {"half_crimp", "open_hand"}:
+        if loc == "palm_mid" and grip in {"half_crimp", "open_hand"}:
             out.append(Bucket.from_id("pulley_a3", qualifier="possible"))
 
         # ── LUMBRICAL — pocket grip on the palmar lumbrical region ───────

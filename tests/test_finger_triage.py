@@ -159,13 +159,14 @@ class FingerFallbackTests(unittest.TestCase):
                       "legacy fallback should always surface generic tenosynovitis")
 
     def test_tail_catch_all_for_unmatched_specific_combo(self):
-        # Pinky + palm_mid + full_crimp — no specific pulley rule matches
-        # (A2 needs Ring/Middle/Index; A4 needs palm_tip; A3 needs half/open).
-        # Tail catch-all should ensure flexor_tenosynovitis still surfaces.
+        # Pinky + palm_mid + full_crimp — after Phase 1 broadening, A2 now matches
+        # (broadened to include Pinky with "possible" qualifier).
+        # This test verifies that A2 surfaces as a specific match rather than
+        # requiring the tail catch-all fallback.
         i = _intake(which_finger="Pinky", finger_location="palm_mid", grip_mode="full_crimp")
         ids = [b.id for b in bucket_possibilities(i)]
-        self.assertIn("flexor_tenosynovitis", ids,
-                      "tail catch-all should surface generic bucket when no pattern matches")
+        self.assertIn("pulley_a2", ids,
+                      "A2 should surface for Pinky at palm_mid + full_crimp (Phase 1 broadened)")
 
 
 class FingerFollowupTests(unittest.TestCase):
@@ -241,3 +242,35 @@ class FingerFollowupTests(unittest.TestCase):
             which_finger="Not sure",
         )
         self.assertEqual(req.which_finger, "Not sure")
+
+
+class TestPulleyA2Broadening(unittest.TestCase):
+    """Per spec §2.1: A2 covers palm_base + palm_mid, allows open_hand,
+    surfaces for Pinky/Thumb/Multiple at downgraded qualifier."""
+
+    def test_a2_palm_base_full_crimp_ring_still_most_likely(self):
+        i = _intake(region="Finger", which_finger="Ring",
+                    finger_location="palm_base", grip_mode="full_crimp")
+        a2 = next((b for b in bucket_possibilities(i) if b.id == "pulley_a2"), None)
+        self.assertIsNotNone(a2)
+        self.assertIn("most likely", a2.title.lower())
+
+    def test_a2_palm_mid_full_crimp_pinky_downgraded(self):
+        i = _intake(region="Finger", which_finger="Pinky",
+                    finger_location="palm_mid", grip_mode="full_crimp")
+        a2 = next((b for b in bucket_possibilities(i) if b.id == "pulley_a2"), None)
+        self.assertIsNotNone(a2, "A2 should fire for Pinky at palm_mid + full_crimp")
+        self.assertIn("possible", a2.title.lower())
+
+    def test_a2_palm_mid_open_hand_downgraded(self):
+        i = _intake(region="Finger", which_finger="Ring",
+                    finger_location="palm_mid", grip_mode="open_hand")
+        a2 = next((b for b in bucket_possibilities(i) if b.id == "pulley_a2"), None)
+        self.assertIsNotNone(a2, "A2 should fire for open_hand at palm_mid")
+        self.assertIn("possible", a2.title.lower())
+
+    def test_a2_does_not_fire_for_palm_tip(self):
+        i = _intake(region="Finger", which_finger="Ring",
+                    finger_location="palm_tip", grip_mode="full_crimp")
+        ids = [b.id for b in bucket_possibilities(i)]
+        self.assertNotIn("pulley_a2", ids)
