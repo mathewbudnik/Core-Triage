@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Optional, Tuple
 
 import stripe
 
@@ -31,7 +30,7 @@ _PRODUCT_PRICE_ENV = {
 
 # Map a Stripe price ID back to (product_name, tier_to_assign).
 # Tier is what we set on the user's record so existing tier-gating code keeps working.
-def _price_to_product_tier(price_id: str) -> Tuple[Optional[str], Optional[str]]:
+def _price_to_product_tier(price_id: str) -> tuple[str | None, str | None]:
     pro = os.getenv("STRIPE_PRICE_ID_PRO")
     coaching = os.getenv("STRIPE_PRICE_ID_COACHING")
     if pro and price_id == pro:
@@ -53,7 +52,7 @@ def is_configured() -> bool:
     return bool(os.getenv("STRIPE_SECRET_KEY"))
 
 
-def get_or_create_customer(email: str, existing_customer_id: Optional[str] = None) -> str:
+def get_or_create_customer(email: str, existing_customer_id: str | None = None) -> str:
     """Return a Stripe customer ID for this email, creating one if needed."""
     _configure_stripe()
     if not is_configured():
@@ -125,7 +124,7 @@ def create_portal_session(*, customer_id: str, return_url: str) -> str:
     return session["url"]
 
 
-def parse_webhook_event(payload: bytes, signature_header: str) -> Optional[stripe.Event]:
+def parse_webhook_event(payload: bytes, signature_header: str) -> stripe.Event | None:
     """Verify the webhook signature and return the parsed Event.
 
     Returns None and logs if verification fails. Never raises into the caller —
@@ -144,7 +143,7 @@ def parse_webhook_event(payload: bytes, signature_header: str) -> Optional[strip
         return None
 
 
-def extract_subscription_state(subscription) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+def extract_subscription_state(subscription) -> tuple[str | None, str | None, str | None]:
     """Pull (status, product_name, tier) out of a Stripe Subscription object.
 
     Accepts either a dict or a Stripe SDK object — normalises internally.
@@ -161,7 +160,7 @@ def extract_subscription_state(subscription) -> Tuple[Optional[str], Optional[st
     return (status, product, tier)
 
 
-def is_active_status(status: Optional[str]) -> bool:
+def is_active_status(status: str | None) -> bool:
     """A subscription that grants paid access. 'past_due' is intentionally OK to
     avoid abruptly cutting off users during a card retry; Stripe sends a separate
     cancellation event when retries are exhausted."""

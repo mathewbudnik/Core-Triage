@@ -14,8 +14,8 @@ from itertools import product
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.triage import Intake, bucket_possibilities  # noqa: E402
 from src.bucket_content import BUCKET_CONTENT  # noqa: E402
+from src.triage import Intake, bucket_possibilities  # noqa: E402
 
 REGIONS = [
     "Finger", "Wrist", "Elbow", "Shoulder", "Knee", "Hip", "Tricep",

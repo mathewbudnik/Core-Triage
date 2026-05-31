@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import List, Tuple
-
 from .triage import Intake
 
 
@@ -26,9 +24,9 @@ def build_query(i: Intake) -> str:
 
 
 # Format retrieved DocChunk results into readable citation strings for the UI
-def format_citations(results: List[Tuple[object, float]]) -> List[str]:
+def format_citations(results: list[tuple[object, float]]) -> list[str]:
     # Each result contains a document chunk and its similarity score
-    cites: List[str] = []
+    cites: list[str] = []
     for chunk, score in results:
         cites.append(f"{chunk.source} (relevance {score:.2f})")
     # Return list of citation strings (filename + relevance)

@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Optional
 
 import requests
 
@@ -24,7 +23,7 @@ _DEFAULT_FROM = "CoreTriage <onboarding@resend.dev>"
 _DEFAULT_TIMEOUT = 10  # seconds
 
 
-def _api_key() -> Optional[str]:
+def _api_key() -> str | None:
     return os.getenv("RESEND_API_KEY")
 
 
@@ -32,7 +31,7 @@ def _from_address() -> str:
     return os.getenv("RESEND_FROM_EMAIL", _DEFAULT_FROM)
 
 
-def send_email(to: str, subject: str, html: str, text: Optional[str] = None) -> bool:
+def send_email(to: str, subject: str, html: str, text: str | None = None) -> bool:
     """Send a transactional email via Resend. Returns True on success.
 
     Failures are logged but never raised — email failures should not break the

@@ -19,25 +19,24 @@ import unittest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.triage import (  # noqa: E402
-    Intake,
+    CLIMBING_SITUATIONS,
+    TONE_INFORMATIVE,
+    TONE_REASSURING,
+    TONE_URGENT,
     Bucket,
+    Intake,
+    ToneValidationError,
     classify_severity,
     classify_severity_v2,
     classify_tone,
-    get_urgent_flags,
-    get_emergency_flags,  # back-compat alias
-    red_flags,
-    validate_tone_text,
-    ToneValidationError,
-    TONE_REASSURING,
-    TONE_INFORMATIVE,
-    TONE_URGENT,
-    TONE_EMERGENCY,
     format_differentials_for_tone,
     format_red_flags_for_tone,
     format_rehab_for_tone,
+    get_emergency_flags,  # back-compat alias
+    get_urgent_flags,
+    red_flags,
     situation_weight,
-    CLIMBING_SITUATIONS,
+    validate_tone_text,
 )
 
 

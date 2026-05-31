@@ -11,9 +11,9 @@ See docs/superpowers/specs/2026-05-13-leaderboard-seed-climbers-design.md
 from __future__ import annotations
 
 import json
+import os
 import secrets
 import sys
-import os
 from datetime import datetime, timedelta
 
 # Make the project root importable when running as `python -m`

@@ -31,16 +31,17 @@ Training/Coaching:
 
 import json
 import os
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any, Dict, Generator, List, Optional, Tuple
+from datetime import UTC
+from typing import Any
 
 from psycopg2 import pool
 
+_pool: pool.ThreadedConnectionPool | None = None
 
-_pool: Optional[pool.ThreadedConnectionPool] = None
 
-
-def _db_params() -> Dict[str, Any]:
+def _db_params() -> dict[str, Any]:
     return {
         "host": os.getenv("CORETRIAGE_DB_HOST", "localhost"),
         "port": int(os.getenv("CORETRIAGE_DB_PORT", "5432")),
@@ -450,36 +451,34 @@ def create_user(email: str, password_hash: str) -> int:
     return int(new_id)
 
 
-def get_user_by_email(email: str) -> Optional[Tuple[Any, ...]]:
+def get_user_by_email(email: str) -> tuple[Any, ...] | None:
     """Returns (id, email, password_hash, failed_login_attempts, locked_until, disclaimer_accepted) or None."""
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT id, email, password_hash,
                        COALESCE(failed_login_attempts, 0),
                        locked_until,
                        COALESCE(disclaimer_accepted, FALSE)
                 FROM users WHERE email = %s;
                 """,
-                (email,),
-            )
-            return cur.fetchone()
+            (email,),
+        )
+        return cur.fetchone()
 
 
-def get_user_by_id(user_id: int) -> Optional[Tuple[Any, ...]]:
+def get_user_by_id(user_id: int) -> tuple[Any, ...] | None:
     """Returns (id, email, disclaimer_accepted, tier) or None — used to enrich /api/auth/me."""
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT id, email, COALESCE(disclaimer_accepted, FALSE),
                        COALESCE(tier, 'free')
                 FROM users WHERE id = %s;
                 """,
-                (int(user_id),),
-            )
-            return cur.fetchone()
+            (int(user_id),),
+        )
+        return cur.fetchone()
 
 
 def increment_failed_login(email: str) -> None:
@@ -581,19 +580,18 @@ def get_user_tier(user_id: int) -> str:
     working without modification — the trial just makes new accounts
     look like paid Pro accounts for 14 days.
     """
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT
                     COALESCE(tier, 'free'),
                     subscription_status,
                     created_at
                 FROM users WHERE id = %s;
                 """,
-                (int(user_id),),
-            )
-            row = cur.fetchone()
+            (int(user_id),),
+        )
+        row = cur.fetchone()
     if not row:
         return "free"
     stored_tier, sub_status, created_at = row
@@ -603,14 +601,14 @@ def get_user_tier(user_id: int) -> str:
         return str(stored_tier)
     # Free trial window — treat them as Pro so gates pass.
     if created_at is not None:
-        from datetime import datetime, timezone, timedelta
-        now = datetime.now(timezone.utc)
+        from datetime import datetime, timedelta
+        now = datetime.now(UTC)
         if now - created_at < timedelta(days=TRIAL_DAYS):
             return "pro"
     return str(stored_tier)
 
 
-def get_subscription_state(user_id: int) -> Dict[str, Any]:
+def get_subscription_state(user_id: int) -> dict[str, Any]:
     """Return the user-facing subscription state for the /me payload.
 
     Shape:
@@ -622,20 +620,19 @@ def get_subscription_state(user_id: int) -> Dict[str, Any]:
     upgrade-CTA copy. The numeric tier field stays for backwards-compat with
     existing gating code.
     """
-    from datetime import datetime, timezone, timedelta
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+    from datetime import datetime, timedelta
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT
                     subscription_status,
                     subscription_product,
                     created_at
                 FROM users WHERE id = %s;
                 """,
-                (int(user_id),),
-            )
-            row = cur.fetchone()
+            (int(user_id),),
+        )
+        row = cur.fetchone()
     if not row:
         return {"state": "expired", "days_remaining": None, "trial_ends_at": None}
     sub_status, sub_product, created_at = row
@@ -648,7 +645,7 @@ def get_subscription_state(user_id: int) -> Dict[str, Any]:
     if created_at is None:
         return {"state": "expired", "days_remaining": None, "trial_ends_at": None}
     trial_end = created_at + timedelta(days=TRIAL_DAYS)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if now < trial_end:
         delta = trial_end - now
         return {
@@ -672,13 +669,12 @@ def set_user_tier(user_id: int, tier: str) -> None:
 
 def get_user_role(user_id: int) -> str:
     """Return 'user' | 'coach' | 'admin' for the given user."""
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT COALESCE(role, 'user') FROM users WHERE id = %s;",
-                (int(user_id),),
-            )
-            row = cur.fetchone()
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT COALESCE(role, 'user') FROM users WHERE id = %s;",
+            (int(user_id),),
+        )
+        row = cur.fetchone()
     return str(row[0]) if row else "user"
 
 
@@ -709,7 +705,7 @@ def set_email_verification_token(user_id: int, token: str) -> None:
         conn.commit()
 
 
-def verify_email_with_token(token: str) -> Optional[int]:
+def verify_email_with_token(token: str) -> int | None:
     """If the token matches an unverified user, mark them verified and return user_id.
     Returns None if no match or already verified. Tokens never expire (kept simple);
     if you want expiration, add an `email_verification_sent_at < NOW() - INTERVAL '24 hours'` clause."""
@@ -734,26 +730,24 @@ def verify_email_with_token(token: str) -> Optional[int]:
 
 
 def is_email_verified(user_id: int) -> bool:
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT COALESCE(email_verified, FALSE) FROM users WHERE id = %s;",
-                (int(user_id),),
-            )
-            row = cur.fetchone()
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT COALESCE(email_verified, FALSE) FROM users WHERE id = %s;",
+            (int(user_id),),
+        )
+        row = cur.fetchone()
     return bool(row and row[0])
 
 
 # ── Stripe billing state ───────────────────────────────────────────────────
 
-def get_stripe_customer_id(user_id: int) -> Optional[str]:
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT stripe_customer_id FROM users WHERE id = %s;",
-                (int(user_id),),
-            )
-            row = cur.fetchone()
+def get_stripe_customer_id(user_id: int) -> str | None:
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT stripe_customer_id FROM users WHERE id = %s;",
+            (int(user_id),),
+        )
+        row = cur.fetchone()
     return row[0] if row and row[0] else None
 
 
@@ -796,10 +790,10 @@ def record_webhook_event(event_id: str, event_type: str) -> bool:
 
 def update_subscription_state(
     customer_id: str,
-    subscription_id: Optional[str],
-    status: Optional[str],
-    product: Optional[str],
-    tier: Optional[str],
+    subscription_id: str | None,
+    status: str | None,
+    product: str | None,
+    tier: str | None,
 ) -> None:
     """Webhook-driven update of subscription state for a Stripe customer.
     Sets stripe_subscription_id, subscription_status, subscription_product, and tier
@@ -832,26 +826,24 @@ def update_subscription_state(
         conn.commit()
 
 
-def get_user_email(user_id: int) -> Optional[str]:
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT email FROM users WHERE id = %s;",
-                (int(user_id),),
-            )
-            row = cur.fetchone()
+def get_user_email(user_id: int) -> str | None:
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT email FROM users WHERE id = %s;",
+            (int(user_id),),
+        )
+        row = cur.fetchone()
     return row[0] if row else None
 
 
 def get_chat_used(user_id: int) -> int:
     """Return how many free AI chat messages this user has sent."""
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT COALESCE(free_chat_used, 0) FROM users WHERE id = %s;",
-                (int(user_id),),
-            )
-            row = cur.fetchone()
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT COALESCE(free_chat_used, 0) FROM users WHERE id = %s;",
+            (int(user_id),),
+        )
+        row = cur.fetchone()
     return int(row[0]) if row else 0
 
 
@@ -870,13 +862,12 @@ def increment_chat_used(user_id: int) -> int:
 
 def get_session_count(user_id: int) -> int:
     """Return the number of saved sessions for a user."""
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT COUNT(*) FROM sessions WHERE user_id = %s;",
-                (int(user_id),),
-            )
-            row = cur.fetchone()
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT COUNT(*) FROM sessions WHERE user_id = %s;",
+            (int(user_id),),
+        )
+        row = cur.fetchone()
     return int(row[0]) if row else 0
 
 
@@ -885,7 +876,7 @@ def get_session_count(user_id: int) -> int:
 # ---------------------------------------------------------------------------
 
 
-def save_session(row: Dict[str, Any]) -> int:
+def save_session(row: dict[str, Any]) -> int:
     injury_area = row.get("injury_area")
     pain_level = row.get("pain_level")
     pain_type = row.get("pain_type")
@@ -913,7 +904,7 @@ def save_session(row: Dict[str, Any]) -> int:
     return int(new_id)
 
 
-def get_session(session_id: int) -> Optional[Tuple[Any, ...]]:
+def get_session(session_id: int) -> tuple[Any, ...] | None:
     """Returns (id, injury_area, pain_level, pain_type, onset, created_at, user_id, intake_json) or None."""
     with _connect() as conn:
         with conn.cursor() as cur:
@@ -928,20 +919,19 @@ def get_session(session_id: int) -> Optional[Tuple[Any, ...]]:
             return cur.fetchone()
 
 
-def list_sessions(user_id: int, limit: int = 50) -> List[Tuple[Any, ...]]:
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+def list_sessions(user_id: int, limit: int = 50) -> list[tuple[Any, ...]]:
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT id, injury_area, pain_level, pain_type, onset, created_at
                 FROM sessions
                 WHERE user_id = %s
                 ORDER BY created_at DESC
                 LIMIT %s;
                 """,
-                (int(user_id), int(limit)),
-            )
-            return cur.fetchall()
+            (int(user_id), int(limit)),
+        )
+        return cur.fetchall()
 
 
 def delete_session(session_id: int, user_id: int) -> None:
@@ -960,7 +950,7 @@ def delete_session(session_id: int, user_id: int) -> None:
 # ---------------------------------------------------------------------------
 
 
-def save_profile(user_id: int, data: Dict[str, Any]) -> None:
+def save_profile(user_id: int, data: dict[str, Any]) -> None:
     """Upsert the athlete profile for a user."""
     with _connect() as conn:
         with conn.cursor() as cur:
@@ -1022,9 +1012,9 @@ def save_profile(user_id: int, data: Dict[str, Any]) -> None:
 def save_body_measurements(
     user_id: int,
     *,
-    height_cm: Optional[int] = None,
-    ape_index_cm: Optional[int] = None,
-    unit_preference: Optional[str] = None,
+    height_cm: int | None = None,
+    ape_index_cm: int | None = None,
+    unit_preference: str | None = None,
 ) -> None:
     """Update ONLY the body-measurement columns on a user's profile row.
 
@@ -1050,21 +1040,20 @@ def save_body_measurements(
         conn.commit()
 
 
-def get_profile(user_id: int) -> Optional[Dict[str, Any]]:
+def get_profile(user_id: int) -> dict[str, Any] | None:
     """Return athlete profile as a dict, or None if not set up."""
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT experience_level, years_climbing, primary_discipline,
                        max_grade_boulder, max_grade_route, days_per_week, session_length_min,
                        equipment, weaknesses, primary_goal, goal_grade, training_days,
                        height_cm, ape_index_cm, unit_preference, updated_at
                 FROM athlete_profiles WHERE user_id = %s;
                 """,
-                (int(user_id),),
-            )
-            row = cur.fetchone()
+            (int(user_id),),
+        )
+        row = cur.fetchone()
     if not row:
         return None
     return {
@@ -1092,7 +1081,7 @@ def get_profile(user_id: int) -> Optional[Dict[str, Any]]:
 # ---------------------------------------------------------------------------
 
 
-def save_plan(user_id: int, plan: Dict[str, Any]) -> int:
+def save_plan(user_id: int, plan: dict[str, Any]) -> int:
     """Deactivate any existing active plan then insert a new one. Returns new plan id."""
     with _connect() as conn:
         with conn.cursor() as cur:
@@ -1120,20 +1109,19 @@ def save_plan(user_id: int, plan: Dict[str, Any]) -> int:
     return int(new_id)
 
 
-def get_active_plan(user_id: int) -> Optional[Dict[str, Any]]:
+def get_active_plan(user_id: int) -> dict[str, Any] | None:
     """Return the active training plan as a dict, or None."""
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT id, name, phase, duration_weeks, start_date, status, plan_data, created_at
                 FROM training_plans
                 WHERE user_id = %s AND status = 'active'
                 ORDER BY created_at DESC LIMIT 1;
                 """,
-                (int(user_id),),
-            )
-            row = cur.fetchone()
+            (int(user_id),),
+        )
+        row = cur.fetchone()
     if not row:
         return None
     plan_data = row[6]
@@ -1156,7 +1144,7 @@ def get_active_plan(user_id: int) -> Optional[Dict[str, Any]]:
 # ---------------------------------------------------------------------------
 
 
-def _merge_climbs(existing: Dict[str, Any], incoming: Dict[str, Any]) -> Dict[str, Any]:
+def _merge_climbs(existing: dict[str, Any], incoming: dict[str, Any]) -> dict[str, Any]:
     """Sum counter values per (discipline, grade) across two climbs dicts.
     Each climbs dict has shape: { boulder|route: { '<grade>': { s, f, p, styles? } } }.
 
@@ -1167,15 +1155,15 @@ def _merge_climbs(existing: Dict[str, Any], incoming: Dict[str, Any]) -> Dict[st
     endurance) is summed per-key so style attribution survives multi-log
     days.
     """
-    out: Dict[str, Dict[str, Dict[str, Any]]] = {}
+    out: dict[str, dict[str, dict[str, Any]]] = {}
     for discipline in ("boulder", "route"):
         a = (existing or {}).get(discipline) or {}
         b = (incoming or {}).get(discipline) or {}
-        grades_merged: Dict[str, Dict[str, Any]] = {}
+        grades_merged: dict[str, dict[str, Any]] = {}
         for grade in set(a.keys()) | set(b.keys()):
             ac = a.get(grade) or {}
             bc = b.get(grade) or {}
-            entry: Dict[str, Any] = {
+            entry: dict[str, Any] = {
                 "s": int(ac.get("s", 0)) + int(bc.get("s", 0)),
                 "f": int(ac.get("f", 0)) + int(bc.get("f", 0)),
                 "p": int(ac.get("p", 0)) + int(bc.get("p", 0)),
@@ -1185,7 +1173,7 @@ def _merge_climbs(existing: Dict[str, Any], incoming: Dict[str, Any]) -> Dict[st
             ac_styles = ac.get("styles") if isinstance(ac.get("styles"), dict) else None
             bc_styles = bc.get("styles") if isinstance(bc.get("styles"), dict) else None
             if ac_styles or bc_styles:
-                merged_styles: Dict[str, int] = {}
+                merged_styles: dict[str, int] = {}
                 for key in set((ac_styles or {}).keys()) | set((bc_styles or {}).keys()):
                     merged_styles[key] = (
                         int((ac_styles or {}).get(key, 0))
@@ -1198,7 +1186,7 @@ def _merge_climbs(existing: Dict[str, Any], incoming: Dict[str, Any]) -> Dict[st
     return out
 
 
-def log_training(user_id: int, data: Dict[str, Any]) -> int:
+def log_training(user_id: int, data: dict[str, Any]) -> int:
     """Insert or merge a training log entry; return its id.
 
     When a row for (user_id, date) already exists, climb counters are
@@ -1279,12 +1267,11 @@ def log_training(user_id: int, data: Dict[str, Any]) -> int:
     return int(new_id)
 
 
-def get_training_logs(user_id: int, limit: int = 30) -> List[Dict[str, Any]]:
+def get_training_logs(user_id: int, limit: int = 30) -> list[dict[str, Any]]:
     """Return recent training log entries for a user, newest first."""
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT id, date, session_type, duration_min, intensity,
                        grades_sent, notes, climbs, created_at
                 FROM training_logs
@@ -1292,9 +1279,9 @@ def get_training_logs(user_id: int, limit: int = 30) -> List[Dict[str, Any]]:
                 ORDER BY date DESC, created_at DESC
                 LIMIT %s;
                 """,
-                (int(user_id), int(limit)),
-            )
-            rows = cur.fetchall()
+            (int(user_id), int(limit)),
+        )
+        rows = cur.fetchall()
     return [
         {
             "id":           r[0],
@@ -1311,7 +1298,7 @@ def get_training_logs(user_id: int, limit: int = 30) -> List[Dict[str, Any]]:
     ]
 
 
-def get_user_hardest(user_id: int, window: str = "all") -> Dict[str, Optional[str]]:
+def get_user_hardest(user_id: int, window: str = "all") -> dict[str, str | None]:
     """Return the user's hardest *sent* grade per discipline.
 
     `window` ∈ {'month', 'all'}. 'month' = last 30 days rolling.
@@ -1323,18 +1310,17 @@ def get_user_hardest(user_id: int, window: str = "all") -> Dict[str, Optional[st
         raise ValueError("window must be 'month' or 'all'")
     where_window = "" if window == "all" else "AND created_at >= NOW() - INTERVAL '30 days'"
 
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                f"""
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            f"""
                 SELECT climbs FROM training_logs
                 WHERE user_id = %s AND climbs <> '{{}}'::jsonb {where_window};
                 """,
-                (int(user_id),),
-            )
-            rows = cur.fetchall()
+            (int(user_id),),
+        )
+        rows = cur.fetchall()
 
-    best: Dict[str, Optional[str]] = {"boulder": None, "route": None}
+    best: dict[str, str | None] = {"boulder": None, "route": None}
     for (climbs,) in rows:
         for discipline in ("boulder", "route"):
             grades = (climbs or {}).get(discipline, {})
@@ -1346,7 +1332,7 @@ def get_user_hardest(user_id: int, window: str = "all") -> Dict[str, Optional[st
     return best
 
 
-def get_pyramid(user_id: int, window: str = "month") -> Dict[str, Any]:
+def get_pyramid(user_id: int, window: str = "month") -> dict[str, Any]:
     """Aggregate the user's climbs JSONB into a discipline-keyed pyramid.
 
     `window` ∈ {'month', 'all'}. Output shape:
@@ -1362,21 +1348,20 @@ def get_pyramid(user_id: int, window: str = "month") -> Dict[str, Any]:
         raise ValueError("window must be 'month' or 'all'")
     where_window = "" if window == "all" else "AND created_at >= NOW() - INTERVAL '30 days'"
 
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                f"""
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            f"""
                 SELECT climbs FROM training_logs
                 WHERE user_id = %s AND climbs <> '{{}}'::jsonb {where_window};
                 """,
-                (int(user_id),),
-            )
-            rows = cur.fetchall()
+            (int(user_id),),
+        )
+        rows = cur.fetchall()
 
-    out: Dict[str, Any] = {"window": window}
+    out: dict[str, Any] = {"window": window}
     for discipline in ("boulder", "route"):
         # accumulate counters per grade
-        agg: Dict[str, Dict[str, int]] = {}
+        agg: dict[str, dict[str, int]] = {}
         for (climbs,) in rows:
             grades = (climbs or {}).get(discipline, {})
             for g, c in grades.items():
@@ -1403,7 +1388,7 @@ def get_pyramid(user_id: int, window: str = "month") -> Dict[str, Any]:
 # ── Awards helpers ────────────────────────────────────────────────────
 
 
-def insert_award(user_id: int, kind: str, payload: Dict[str, Any]) -> Optional[int]:
+def insert_award(user_id: int, kind: str, payload: dict[str, Any]) -> int | None:
     """Insert a new award row, idempotent via UNIQUE (user_id, kind).
 
     Returns the new row id if inserted, None if it already existed.
@@ -1424,19 +1409,18 @@ def insert_award(user_id: int, kind: str, payload: Dict[str, Any]) -> Optional[i
     return int(row[0]) if row else None
 
 
-def list_awards(user_id: int) -> List[Dict[str, Any]]:
+def list_awards(user_id: int) -> list[dict[str, Any]]:
     """Return the user's earned awards, newest first."""
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT id, kind, payload, earned_at
                 FROM awards WHERE user_id = %s
                 ORDER BY earned_at DESC;
                 """,
-                (int(user_id),),
-            )
-            rows = cur.fetchall()
+            (int(user_id),),
+        )
+        rows = cur.fetchall()
     return [
         {
             "id": r[0],
@@ -1451,20 +1435,19 @@ def list_awards(user_id: int) -> List[Dict[str, Any]]:
 # ── Hub tip card helpers ─────────────────────────────────────────────
 
 
-def get_hub_tip(user_id: int, date_iso: str) -> Optional[Dict[str, Any]]:
+def get_hub_tip(user_id: int, date_iso: str) -> dict[str, Any] | None:
     """Return the user's tip row for a given date (or None)."""
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT id, kind, headline, body, cta_label, cta_route, color,
                        dismissed_at, created_at
                 FROM hub_tips
                 WHERE user_id = %s AND date = %s;
                 """,
-                (int(user_id), date_iso),
-            )
-            r = cur.fetchone()
+            (int(user_id), date_iso),
+        )
+        r = cur.fetchone()
     if not r:
         return None
     return {
@@ -1487,10 +1470,10 @@ def insert_hub_tip(
     kind: str,
     headline: str,
     body: str,
-    cta_label: Optional[str],
-    cta_route: Optional[str],
+    cta_label: str | None,
+    cta_route: str | None,
     color: str,
-) -> Optional[int]:
+) -> int | None:
     """Idempotent insert via ON CONFLICT (user_id, date) DO NOTHING.
 
     Returns the new row id if inserted, None if a row already existed.
@@ -1550,16 +1533,15 @@ def dismiss_hub_tip(user_id: int, date_iso: str) -> bool:
 def count_sends(user_id: int) -> int:
     """Total count of sends across all `training_logs.climbs` rows for a user.
     Sums `s` across every grade across both disciplines."""
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT climbs FROM training_logs
                 WHERE user_id = %s AND climbs <> '{}'::jsonb;
                 """,
-                (int(user_id),),
-            )
-            rows = cur.fetchall()
+            (int(user_id),),
+        )
+        rows = cur.fetchall()
     total = 0
     for (climbs,) in rows:
         for discipline in ("boulder", "route"):
@@ -1583,15 +1565,14 @@ def compute_streak(user_id: int, today: str) -> int:
         y, m, d = s.split("-")
         return date(int(y), int(m), int(d))
 
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT DISTINCT date FROM training_logs WHERE user_id = %s;
                 """,
-                (int(user_id),),
-            )
-            dates_set = {r[0] for r in cur.fetchall()}
+            (int(user_id),),
+        )
+        dates_set = {r[0] for r in cur.fetchall()}
 
     cursor_date = parse(today)
     streak = 0
@@ -1614,22 +1595,21 @@ _WINDOW_SQL = {
 }
 
 
-def _hours_in_window(user_id: int, window: str) -> Dict[str, Any]:
+def _hours_in_window(user_id: int, window: str) -> dict[str, Any]:
     """Sum of training-log duration (hours) + session count for one user in
     the given window. Window must be one of: week, month, all."""
     where = _WINDOW_SQL.get(window, _WINDOW_SQL["week"])
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                f"""
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            f"""
                 SELECT COALESCE(SUM(tl.duration_min), 0) / 60.0 AS hours,
                        COUNT(tl.id) AS sessions
                 FROM training_logs tl
                 WHERE tl.user_id = %s AND {where};
                 """,
-                (int(user_id),),
-            )
-            row = cur.fetchone()
+            (int(user_id),),
+        )
+        row = cur.fetchone()
     return {"hours": round(float(row[0]), 1), "sessions": int(row[1])}
 
 
@@ -1637,19 +1617,18 @@ def _current_streak_days(user_id: int) -> int:
     """Count of consecutive calendar days ending today (or yesterday if no
     log today) where the user has at least one training_log entry."""
     from datetime import date, timedelta
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT DISTINCT DATE(created_at AT TIME ZONE 'UTC') AS d
                 FROM training_logs
                 WHERE user_id = %s
                 ORDER BY d DESC
                 LIMIT 365;
                 """,
-                (int(user_id),),
-            )
-            days = [r[0] for r in cur.fetchall()]
+            (int(user_id),),
+        )
+        days = [r[0] for r in cur.fetchall()]
     if not days:
         return 0
     today = date.today()
@@ -1665,7 +1644,7 @@ def _current_streak_days(user_id: int) -> int:
     return streak
 
 
-def _trend_8_weeks(user_id: int, cohort: Optional[str]) -> List[Dict[str, Any]]:
+def _trend_8_weeks(user_id: int, cohort: str | None) -> list[dict[str, Any]]:
     """User hours per week for the last 8 ISO weeks (oldest first) plus the
     cohort's mean hours per user for the same week. Missing weeks → 0."""
     from datetime import date, timedelta
@@ -1676,10 +1655,9 @@ def _trend_8_weeks(user_id: int, cohort: Optional[str]) -> List[Dict[str, Any]]:
         end = start + timedelta(days=7)
         weeks.append((start, end))
 
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT
                     DATE(created_at AT TIME ZONE 'UTC') AS d,
                     SUM(duration_min) / 60.0 AS h
@@ -1689,14 +1667,14 @@ def _trend_8_weeks(user_id: int, cohort: Optional[str]) -> List[Dict[str, Any]]:
                 GROUP BY d
                 ORDER BY d;
                 """,
-                (int(user_id), weeks[0][0]),
-            )
-            user_by_day = {r[0]: float(r[1]) for r in cur.fetchall()}
+            (int(user_id), weeks[0][0]),
+        )
+        user_by_day = {r[0]: float(r[1]) for r in cur.fetchall()}
 
-            peer_avgs = {}
-            if cohort and cohort != "global":
-                cur.execute(
-                    """
+        peer_avgs = {}
+        if cohort and cohort != "global":
+            cur.execute(
+                """
                     SELECT wk, AVG(per_user_hours)
                     FROM (
                         SELECT
@@ -1711,10 +1689,10 @@ def _trend_8_weeks(user_id: int, cohort: Optional[str]) -> List[Dict[str, Any]]:
                     ) sub
                     GROUP BY wk;
                     """,
-                    (cohort, weeks[0][0]),
-                )
-                for r in cur.fetchall():
-                    peer_avgs[r[0]] = float(r[1])
+                (cohort, weeks[0][0]),
+            )
+            for r in cur.fetchall():
+                peer_avgs[r[0]] = float(r[1])
 
     result = []
     for start, end in weeks:
@@ -1728,7 +1706,7 @@ def _trend_8_weeks(user_id: int, cohort: Optional[str]) -> List[Dict[str, Any]]:
     return result
 
 
-def _percentile_in_cohort(user_id: int, cohort: Optional[str], window: str) -> int:
+def _percentile_in_cohort(user_id: int, cohort: str | None, window: str) -> int:
     """User's hours-percentile within their cohort, in the given window.
     0–100 (100 = at top). Returns 0 if cohort is empty / global."""
     where = _WINDOW_SQL.get(window, _WINDOW_SQL["week"])
@@ -1764,33 +1742,32 @@ def _percentile_in_cohort(user_id: int, cohort: Optional[str], window: str) -> i
     return int(round(100 * below / max(total - 1, 1)))
 
 
-def _personal_records(user_id: int) -> Dict[str, Any]:
+def _personal_records(user_id: int) -> dict[str, Any]:
     """All-time records: longest streak, most hours in a calendar week,
     most sessions in a calendar week."""
     from datetime import timedelta
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT DISTINCT DATE(created_at AT TIME ZONE 'UTC') AS d
                 FROM training_logs
                 WHERE user_id = %s
                 ORDER BY d;
                 """,
-                (int(user_id),),
-            )
-            days = [r[0] for r in cur.fetchall()]
-            longest = 0
-            run = 0
-            for i, d in enumerate(days):
-                if i == 0 or d != days[i - 1] + timedelta(days=1):
-                    run = 1
-                else:
-                    run += 1
-                longest = max(longest, run)
+            (int(user_id),),
+        )
+        days = [r[0] for r in cur.fetchall()]
+        longest = 0
+        run = 0
+        for i, d in enumerate(days):
+            if i == 0 or d != days[i - 1] + timedelta(days=1):
+                run = 1
+            else:
+                run += 1
+            longest = max(longest, run)
 
-            cur.execute(
-                """
+        cur.execute(
+            """
                 SELECT
                     DATE_TRUNC('week', created_at AT TIME ZONE 'UTC') AS wk,
                     SUM(duration_min) / 60.0 AS hours,
@@ -1799,11 +1776,11 @@ def _personal_records(user_id: int) -> Dict[str, Any]:
                 WHERE user_id = %s
                 GROUP BY wk;
                 """,
-                (int(user_id),),
-            )
-            rows = cur.fetchall()
-            most_hours    = max((float(r[1]) for r in rows), default=0.0)
-            most_sessions = max((int(r[2])  for r in rows), default=0)
+            (int(user_id),),
+        )
+        rows = cur.fetchall()
+        most_hours    = max((float(r[1]) for r in rows), default=0.0)
+        most_sessions = max((int(r[2])  for r in rows), default=0)
 
     return {
         "longest_streak_days":   int(longest),
@@ -1812,20 +1789,19 @@ def _personal_records(user_id: int) -> Dict[str, Any]:
     }
 
 
-def get_user_cohort(user_id: int) -> Optional[str]:
+def get_user_cohort(user_id: int) -> str | None:
     """The user's experience_level from athlete_profiles, or None if
     they haven't set up a profile yet."""
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT experience_level FROM athlete_profiles WHERE user_id = %s;",
-                (int(user_id),),
-            )
-            row = cur.fetchone()
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT experience_level FROM athlete_profiles WHERE user_id = %s;",
+            (int(user_id),),
+        )
+        row = cur.fetchone()
     return row[0] if row and row[0] else None
 
 
-def get_training_stats(user_id: int) -> Dict[str, Any]:
+def get_training_stats(user_id: int) -> dict[str, Any]:
     """Full personal-dashboard payload — see /api/training/stats."""
     cohort = get_user_cohort(user_id)
     return {
@@ -1866,14 +1842,14 @@ def _sends_sql_expr(alias: str = "tl") -> str:
     )"""
 
 
-def _goal_for_window(window: str) -> Optional[int]:
+def _goal_for_window(window: str) -> int | None:
     """Send goal for the given leaderboard window. None for 'all' — no cap."""
     if window == "week":  return WEEKLY_SEND_GOAL
     if window == "month": return MONTHLY_SEND_GOAL
     return None
 
 
-def _pct_closed(sends: int, goal: Optional[int]) -> Optional[int]:
+def _pct_closed(sends: int, goal: int | None) -> int | None:
     """Pct of goal closed, capped at PCT_CAP. None when no goal (all-time)."""
     if goal is None or goal <= 0:
         return None
@@ -1884,9 +1860,9 @@ def get_leaderboard(
     *,
     viewer_user_id: int,
     window: str = "week",
-    cohort: Optional[str] = None,
+    cohort: str | None = None,
     limit: int = 10,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Top N + the viewer's own row. cohort=None defaults to viewer's
     own experience_level. Pass cohort='global' to skip the cohort filter.
 
@@ -1933,27 +1909,26 @@ def get_leaderboard(
 
     params = {"cohort": effective_cohort}
 
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(base + " LIMIT %(limit)s;", {**params, "limit": int(limit)})
-            top_rows = cur.fetchall()
-            top = [
-                {
-                    "rank":         i + 1,
-                    "user_id":      int(r[0]),
-                    "display_name": "Private climber" if r[2] else r[1],
-                    "is_private":   bool(r[2]),
-                    "sends":        int(r[3]),
-                    "goal":         goal,
-                    "pct":          _pct_closed(int(r[3]), goal),
-                    "avatar_icon":  None if r[2] else r[4],
-                    "avatar_color": None if r[2] else r[5],
-                }
-                for i, r in enumerate(top_rows)
-            ]
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(base + " LIMIT %(limit)s;", {**params, "limit": int(limit)})
+        top_rows = cur.fetchall()
+        top = [
+            {
+                "rank":         i + 1,
+                "user_id":      int(r[0]),
+                "display_name": "Private climber" if r[2] else r[1],
+                "is_private":   bool(r[2]),
+                "sends":        int(r[3]),
+                "goal":         goal,
+                "pct":          _pct_closed(int(r[3]), goal),
+                "avatar_icon":  None if r[2] else r[4],
+                "avatar_color": None if r[2] else r[5],
+            }
+            for i, r in enumerate(top_rows)
+        ]
 
-            cur.execute(
-                f"""
+        cur.execute(
+            f"""
                 WITH {user_sends_cte},
                 ranked AS (
                     SELECT
@@ -1974,9 +1949,9 @@ def get_leaderboard(
                 FROM ranked
                 WHERE id = %(viewer)s;
                 """,
-                {**params, "viewer": int(viewer_user_id)},
-            )
-            mr = cur.fetchone()
+            {**params, "viewer": int(viewer_user_id)},
+        )
+        mr = cur.fetchone()
 
     me = None
     if mr:
@@ -2010,14 +1985,13 @@ def set_display_name(user_id: int, display_name: str) -> bool:
     return updated
 
 
-def get_display_name(user_id: int) -> Optional[str]:
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT display_name FROM users WHERE id = %s;",
-                (int(user_id),),
-            )
-            row = cur.fetchone()
+def get_display_name(user_id: int) -> str | None:
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT display_name FROM users WHERE id = %s;",
+            (int(user_id),),
+        )
+        row = cur.fetchone()
     return row[0] if row else None
 
 
@@ -2033,17 +2007,16 @@ def set_leaderboard_private(user_id: int, private: bool) -> None:
 
 def get_leaderboard_private(user_id: int) -> bool:
     """Whether the user's leaderboard rows show as 'Private climber'."""
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT COALESCE(leaderboard_private, FALSE) FROM users WHERE id = %s;",
-                (int(user_id),),
-            )
-            row = cur.fetchone()
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT COALESCE(leaderboard_private, FALSE) FROM users WHERE id = %s;",
+            (int(user_id),),
+        )
+        row = cur.fetchone()
     return bool(row[0]) if row else False
 
 
-def set_avatar(user_id: int, icon: Optional[str], color: Optional[str]) -> None:
+def set_avatar(user_id: int, icon: str | None, color: str | None) -> None:
     """Save the user's chosen avatar preset + optional color override.
     Caller validates against the allowed sets."""
     with _connect() as conn:
@@ -2055,15 +2028,14 @@ def set_avatar(user_id: int, icon: Optional[str], color: Optional[str]) -> None:
         conn.commit()
 
 
-def get_avatar(user_id: int) -> Tuple[Optional[str], Optional[str]]:
+def get_avatar(user_id: int) -> tuple[str | None, str | None]:
     """Return (avatar_icon, avatar_color) for the user. Either may be None."""
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT avatar_icon, avatar_color FROM users WHERE id = %s;",
-                (int(user_id),),
-            )
-            row = cur.fetchone()
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT avatar_icon, avatar_color FROM users WHERE id = %s;",
+            (int(user_id),),
+        )
+        row = cur.fetchone()
     return (row[0], row[1]) if row else (None, None)
 
 
@@ -2072,20 +2044,19 @@ def get_avatar(user_id: int) -> Tuple[Optional[str], Optional[str]]:
 # ---------------------------------------------------------------------------
 
 
-def get_rehab_progress(user_id: int, date: str) -> List[Dict[str, Any]]:
+def get_rehab_progress(user_id: int, date: str) -> list[dict[str, Any]]:
     """Return rows checked off for the user on a given local date (YYYY-MM-DD)."""
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT exercise_key, region, phase, completed_at
                 FROM rehab_progress
                 WHERE user_id = %s AND completed_date = %s
                 ORDER BY completed_at ASC;
                 """,
-                (int(user_id), date),
-            )
-            rows = cur.fetchall()
+            (int(user_id), date),
+        )
+        rows = cur.fetchall()
     return [
         {
             "exercise_key": r[0],
@@ -2103,7 +2074,7 @@ def check_rehab_exercise(
     region: str,
     phase: int,
     date: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Insert a checkoff event. Idempotent via UNIQUE (user_id, exercise_key,
     completed_date). Returns {id, already_existed}."""
     with _connect() as conn:
@@ -2196,20 +2167,19 @@ def send_coach_message(thread_id: int, sender_type: str, content: str) -> int:
     return int(new_id)
 
 
-def get_thread_messages(thread_id: int) -> List[Dict[str, Any]]:
+def get_thread_messages(thread_id: int) -> list[dict[str, Any]]:
     """Return all messages for a thread ordered oldest first."""
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT id, sender_type, content, created_at
                 FROM coach_messages
                 WHERE thread_id = %s
                 ORDER BY created_at ASC;
                 """,
-                (int(thread_id),),
-            )
-            rows = cur.fetchall()
+            (int(thread_id),),
+        )
+        rows = cur.fetchall()
     return [
         {
             "id":          r[0],
@@ -2221,12 +2191,11 @@ def get_thread_messages(thread_id: int) -> List[Dict[str, Any]]:
     ]
 
 
-def list_coach_threads() -> List[Dict[str, Any]]:
+def list_coach_threads() -> list[dict[str, Any]]:
     """Admin: return all threads with user email and latest message preview."""
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT ct.id, ct.user_id, u.email, ct.status, ct.updated_at,
                        (SELECT content FROM coach_messages
                         WHERE thread_id = ct.id
@@ -2245,8 +2214,8 @@ def list_coach_threads() -> List[Dict[str, Any]]:
                 JOIN users u ON u.id = ct.user_id
                 ORDER BY ct.updated_at DESC;
                 """,
-            )
-            rows = cur.fetchall()
+        )
+        rows = cur.fetchall()
     return [
         {
             "id":           r[0],
@@ -2262,15 +2231,14 @@ def list_coach_threads() -> List[Dict[str, Any]]:
     ]
 
 
-def get_thread_by_user(user_id: int) -> Optional[Dict[str, Any]]:
+def get_thread_by_user(user_id: int) -> dict[str, Any] | None:
     """Return thread metadata for a user, or None if they haven't messaged yet."""
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT id, status, created_at FROM coach_threads WHERE user_id = %s;",
-                (int(user_id),),
-            )
-            row = cur.fetchone()
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT id, status, created_at FROM coach_threads WHERE user_id = %s;",
+            (int(user_id),),
+        )
+        row = cur.fetchone()
     if not row:
         return None
     return {"id": row[0], "status": row[1], "created_at": str(row[2])}

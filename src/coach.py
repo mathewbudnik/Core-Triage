@@ -12,10 +12,8 @@ Plan structure follows the SESSION_SCHEMA defined in the architecture plan:
 
 from __future__ import annotations
 
-import json
 from datetime import date
-from typing import Any, Dict, List, Optional
-
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # Style-profile helpers
@@ -131,11 +129,11 @@ _TAG_KEYS = ("disciplines", "min_experience", "max_experience", "equipment_neede
 
 
 def _filter_exercises(
-    pool: List[Dict],
+    pool: list[dict],
     experience: str,
     discipline: str,
-    equipment: List[str],
-) -> List[Dict]:
+    equipment: list[str],
+) -> list[dict]:
     """Return entries from `pool` that match all four constraints.
 
     Filtering is conjunctive: experience window AND discipline AND equipment.
@@ -144,7 +142,7 @@ def _filter_exercises(
     `_select_with_fallback` if they want a graceful degradation chain.
     """
     user_idx = _EXPERIENCE_LEVELS.index(experience)
-    out: List[Dict] = []
+    out: list[dict] = []
     for ex in pool:
         min_idx = _EXPERIENCE_LEVELS.index(ex["min_experience"])
         max_idx = _EXPERIENCE_LEVELS.index(ex.get("max_experience", "elite"))
@@ -160,12 +158,12 @@ def _filter_exercises(
 
 
 def _select_with_fallback(
-    pool: List[Dict],
+    pool: list[dict],
     experience: str,
     discipline: str,
-    equipment: List[str],
+    equipment: list[str],
     n: int,
-) -> List[Dict]:
+) -> list[dict]:
     """Pick up to `n` exercises from `pool` with graceful fallback.
 
     Tries the strict filter first. If it returns empty:
@@ -182,7 +180,7 @@ def _select_with_fallback(
         return [_strip_tags(ex) for ex in strict[:n]]
     # Step 2: relax equipment — same filter minus the equipment step
     user_idx = _EXPERIENCE_LEVELS.index(experience)
-    relaxed_equipment: List[Dict] = []
+    relaxed_equipment: list[dict] = []
     for ex in pool:
         min_idx = _EXPERIENCE_LEVELS.index(ex["min_experience"])
         max_idx = _EXPERIENCE_LEVELS.index(ex.get("max_experience", "elite"))
@@ -194,7 +192,7 @@ def _select_with_fallback(
     if relaxed_equipment:
         return [_strip_tags(ex) for ex in relaxed_equipment[:n]]
     # Step 3: relax discipline too — only experience window remains
-    relaxed_all: List[Dict] = []
+    relaxed_all: list[dict] = []
     for ex in pool:
         min_idx = _EXPERIENCE_LEVELS.index(ex["min_experience"])
         max_idx = _EXPERIENCE_LEVELS.index(ex.get("max_experience", "elite"))
@@ -204,7 +202,7 @@ def _select_with_fallback(
     return [_strip_tags(ex) for ex in relaxed_all[:n]]
 
 
-def _strip_tags(exercise: Dict) -> Dict:
+def _strip_tags(exercise: dict) -> dict:
     """Return a copy of `exercise` with tag-only fields removed.
 
     The tag fields (`disciplines`, `min_experience`, `max_experience`,
@@ -219,7 +217,7 @@ def _strip_tags(exercise: Dict) -> Dict:
 # Exercise library blocks
 # ---------------------------------------------------------------------------
 
-_HANGBOARD_POOL: List[Dict] = [
+_HANGBOARD_POOL: list[dict] = [
     {
         "exercise": "One-arm lock-off hangs",
         "detail": "Assisted one-arm on 20mm, assistance via pulley or foot loop",
@@ -321,11 +319,11 @@ _HANGBOARD_POOL: List[Dict] = [
 ]
 
 
-def _hangboard_block(experience: str, discipline: str, equipment: List[str]) -> List[Dict]:
+def _hangboard_block(experience: str, discipline: str, equipment: list[str]) -> list[dict]:
     return _select_with_fallback(_HANGBOARD_POOL, experience, discipline, equipment, n=2)
 
 
-_POWER_POOL: List[Dict] = [
+_POWER_POOL: list[dict] = [
     {
         "exercise": "Campus board 1-5-8",
         "detail": "Max-distance campus ladders, both arms",
@@ -426,11 +424,11 @@ _POWER_POOL: List[Dict] = [
 ]
 
 
-def _power_block(experience: str, discipline: str, equipment: List[str]) -> List[Dict]:
+def _power_block(experience: str, discipline: str, equipment: list[str]) -> list[dict]:
     return _select_with_fallback(_POWER_POOL, experience, discipline, equipment, n=2)
 
 
-_ENDURANCE_POOL: List[Dict] = [
+_ENDURANCE_POOL: list[dict] = [
     {
         "exercise": "Boulder power endurance — 6×4 min on routes",
         "detail": "Climb continuously on a route or set sequence for 4 minutes. Rest 4 minutes. Repeat 6 rounds.",
@@ -494,7 +492,7 @@ _ENDURANCE_POOL: List[Dict] = [
 ]
 
 
-def _endurance_block(experience: str, discipline: str, equipment: List[str]) -> List[Dict]:
+def _endurance_block(experience: str, discipline: str, equipment: list[str]) -> list[dict]:
     return _select_with_fallback(_ENDURANCE_POOL, experience, discipline, equipment, n=3)
 
 
@@ -507,7 +505,7 @@ def _pullup_benchmark(experience: str) -> str:
     }.get(experience, "Full ROM, controlled descent")
 
 
-_STRENGTH_POOL: List[Dict] = [
+_STRENGTH_POOL: list[dict] = [
     {
         "exercise": "Weighted lock-offs at 90° / 120°",
         "detail": "Hold the pull-up bar with elbows at 90° (or 120° for the harder version). Add weight via belt.",
@@ -583,7 +581,7 @@ _STRENGTH_POOL: List[Dict] = [
 ]
 
 
-def _strength_block(experience: str, discipline: str, equipment: List[str]) -> List[Dict]:
+def _strength_block(experience: str, discipline: str, equipment: list[str]) -> list[dict]:
     selected = _select_with_fallback(_STRENGTH_POOL, experience, discipline, equipment, n=3)
     # Patch the pull-up entry with experience-specific sets/reps/benchmark
     for ex in selected:
@@ -594,7 +592,7 @@ def _strength_block(experience: str, discipline: str, equipment: List[str]) -> L
     return selected
 
 
-_FOOTWORK_POOL: List[Dict] = [
+_FOOTWORK_POOL: list[dict] = [
     {
         "exercise": "Dual-tex drill",
         "detail": "Climb the same problem twice — once in stiff shoes, once in soft. Notice the difference in foot feel.",
@@ -646,11 +644,11 @@ _FOOTWORK_POOL: List[Dict] = [
 ]
 
 
-def _footwork_block(experience: str, discipline: str, equipment: List[str]) -> List[Dict]:
+def _footwork_block(experience: str, discipline: str, equipment: list[str]) -> list[dict]:
     return _select_with_fallback(_FOOTWORK_POOL, experience, discipline, equipment, n=2)
 
 
-_MENTAL_POOL: List[Dict] = [
+_MENTAL_POOL: list[dict] = [
     {
         "exercise": "Gear-placement drill on toprope",
         "detail": "On toprope, climb your project. Place gear at every reasonable opportunity. Have a partner critique placements.",
@@ -714,7 +712,7 @@ _MENTAL_POOL: List[Dict] = [
 ]
 
 
-def _mental_block(experience: str, discipline: str, equipment: List[str]) -> List[Dict]:
+def _mental_block(experience: str, discipline: str, equipment: list[str]) -> list[dict]:
     return _select_with_fallback(_MENTAL_POOL, experience, discipline, equipment, n=2)
 
 
@@ -790,26 +788,26 @@ SHOULDER_REGIONS = {"shoulder", "rotator cuff", "bicep", "elbow"}
 KNEE_REGIONS = {"knee", "ankle", "hip", "leg"}
 
 
-def _is_injured(region: str, injury_flags: List[str]) -> bool:
+def _is_injured(region: str, injury_flags: list[str]) -> bool:
     region_lower = region.lower()
     return any(region_lower in flag.lower() for flag in injury_flags)
 
 
-def _finger_injured(injury_flags: List[str]) -> bool:
+def _finger_injured(injury_flags: list[str]) -> bool:
     return any(
         any(r in flag.lower() for r in FINGER_REGIONS)
         for flag in injury_flags
     )
 
 
-def _shoulder_injured(injury_flags: List[str]) -> bool:
+def _shoulder_injured(injury_flags: list[str]) -> bool:
     return any(
         any(r in flag.lower() for r in SHOULDER_REGIONS)
         for flag in injury_flags
     )
 
 
-def _knee_injured(injury_flags: List[str]) -> bool:
+def _knee_injured(injury_flags: list[str]) -> bool:
     return any(
         any(r in flag.lower() for r in KNEE_REGIONS)
         for flag in injury_flags
@@ -827,10 +825,10 @@ def _goal_template(
     goal: str,
     days: int,
     experience: str,
-    injury_flags: List[str],
+    injury_flags: list[str],
     discipline: str,
-    equipment: List[str],
-) -> List[Dict]:
+    equipment: list[str],
+) -> list[dict]:
     """
     Build a 4-week plan as a flat list of session dicts.
     Returns sessions ordered by session_index.
@@ -873,10 +871,10 @@ def _pick_session(
     goal: str, day: int, total_days: int,
     week: int, is_deload: bool,
     experience: str, finger_ok: bool, shoulder_ok: bool,
-    injury_flags: List[str],
+    injury_flags: list[str],
     discipline: str,
-    equipment: List[str],
-) -> tuple[str, List[Dict]]:
+    equipment: list[str],
+) -> tuple[str, list[dict]]:
     """Return (session_type, main_blocks) for a given day slot."""
 
     volume_scale = 0.6 if is_deload else 1.0
@@ -970,7 +968,7 @@ GOAL_PHASES = {
 }
 
 # Per-week focus for each goal type (weeks 1–4, week 4 is always deload)
-WEEK_META: Dict[str, List[Dict]] = {
+WEEK_META: dict[str, list[dict]] = {
     "grade_progression": [
         {
             "goal": "Establish baseline",
@@ -1088,7 +1086,7 @@ WEEK_META: Dict[str, List[Dict]] = {
 # GPT-4o coach note enrichment
 # ---------------------------------------------------------------------------
 
-def _enrich_coach_notes(sessions: List[Dict], profile: Dict, openai_client: Any) -> None:
+def _enrich_coach_notes(sessions: list[dict], profile: dict, openai_client: Any) -> None:
     """Replace static coach notes with GPT-4o generated ones (in-place)."""
     if not openai_client:
         return
@@ -1140,11 +1138,11 @@ def _enrich_coach_notes(sessions: List[Dict], profile: Dict, openai_client: Any)
 # ---------------------------------------------------------------------------
 
 def generate_plan(
-    profile: Dict[str, Any],
-    injury_flags: List[str],
+    profile: dict[str, Any],
+    injury_flags: list[str],
     openai_client: Any = None,
-    existing_logs: Optional[List[Dict[str, Any]]] = None,
-) -> Dict[str, Any]:
+    existing_logs: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     """
     Generate a 4-week personalized training plan.
 

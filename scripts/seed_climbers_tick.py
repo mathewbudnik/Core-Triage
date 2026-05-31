@@ -14,8 +14,8 @@ See docs/superpowers/specs/2026-05-13-leaderboard-seed-climbers-design.md
 from __future__ import annotations
 
 import json
-import sys
 import os
+import sys
 from datetime import date
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))

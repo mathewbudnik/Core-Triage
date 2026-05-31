@@ -161,8 +161,12 @@ VALID_EQUIPMENT = {"hangboard", "home_wall", "gym_membership", "outdoor_crag", "
 class ExercisePoolSchemaTests(unittest.TestCase):
     def _collect_pools(self):
         from src.coach import (
-            _HANGBOARD_POOL, _POWER_POOL, _ENDURANCE_POOL,
-            _STRENGTH_POOL, _FOOTWORK_POOL, _MENTAL_POOL,
+            _ENDURANCE_POOL,
+            _FOOTWORK_POOL,
+            _HANGBOARD_POOL,
+            _MENTAL_POOL,
+            _POWER_POOL,
+            _STRENGTH_POOL,
         )
         return {
             "hangboard": _HANGBOARD_POOL,

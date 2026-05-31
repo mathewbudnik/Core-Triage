@@ -7,6 +7,7 @@ Run with: uvicorn main:app --reload
 # is a no-op in production where env vars are already set by the host (Vercel,
 # Render, etc.) — it only fills in missing values, never overwrites.
 from dotenv import load_dotenv
+
 load_dotenv()
 
 import logging
@@ -31,8 +32,9 @@ if _sentry_dsn:
         traces_sample_rate=0.1,  # 10% perf sampling — well under free-tier limits
     )
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Literal, Optional
+from dataclasses import asdict
+from datetime import UTC, datetime, timedelta
+from typing import Any, Literal
 
 import bcrypt
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -53,59 +55,56 @@ from database import (
     create_user,
     delete_session,
     get_active_plan,
+    get_avatar,
     get_chat_used,
+    get_display_name,
+    get_leaderboard,
+    get_leaderboard_private,
     get_or_create_thread,
     get_profile,
     get_rehab_progress,
     get_session,
+    get_stripe_customer_id,
+    get_subscription_state,
     get_thread_by_user,
     get_thread_messages,
     get_training_logs,
     get_training_stats,
-    get_leaderboard,
-    get_display_name,
-    get_leaderboard_private,
-    set_display_name,
-    set_leaderboard_private,
-    set_avatar,
-    get_avatar,
-    get_stripe_customer_id,
     get_user_by_email,
     get_user_by_id,
     get_user_email,
     get_user_role,
     get_user_tier,
-    get_subscription_state,
-    is_email_verified,
-    set_email_verification_token,
-    set_stripe_customer_id,
-    set_user_role_by_email,
-    uncheck_rehab_exercise,
-    update_subscription_state,
-    verify_email_with_token,
     increment_chat_used,
     increment_failed_login,
     init_db,
+    is_email_verified,
     list_coach_threads,
     list_sessions,
     log_security_event,
     log_training,
     record_webhook_event,
     reset_failed_login,
-    save_plan,
     save_body_measurements,
+    save_plan,
     save_profile,
     save_session,
     send_coach_message,
+    set_avatar,
+    set_display_name,
+    set_email_verification_token,
+    set_leaderboard_private,
+    set_stripe_customer_id,
+    set_user_role_by_email,
+    uncheck_rehab_exercise,
     update_last_login,
+    update_subscription_state,
+    verify_email_with_token,
 )
-from dataclasses import asdict
-
 from src import billing
 from src.email import send_verification_email
 from src.render import build_query, format_citations
 from src.retriever import TfidfRetriever, load_kb
-from src.user_context import build_user_context, format_for_prompt
 from src.triage import (
     Intake,
     bucket_possibilities,
@@ -115,6 +114,7 @@ from src.triage import (
     get_training_modifications,
     red_flags,
 )
+from src.user_context import build_user_context, format_for_prompt
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -225,14 +225,14 @@ def create_token(user_id: int, email: str) -> str:
     payload = {
         "sub": str(user_id),
         "email": email,
-        "exp": datetime.now(timezone.utc) + timedelta(hours=TOKEN_EXPIRE_HOURS),
+        "exp": datetime.now(UTC) + timedelta(hours=TOKEN_EXPIRE_HOURS),
     }
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 
 def get_current_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer),
-) -> Dict[str, Any]:
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
+) -> dict[str, Any]:
     if not credentials:
         raise HTTPException(status_code=401, detail="Not authenticated")
     try:
@@ -242,7 +242,7 @@ def get_current_user(
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 
-def _optional_user(request: Request) -> Optional[Dict[str, Any]]:
+def _optional_user(request: Request) -> dict[str, Any] | None:
     """Extract user from Bearer token if present — never raises."""
     auth = request.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):
@@ -387,10 +387,10 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str
-    history: List[ChatMessage] = []
+    history: list[ChatMessage] = []
     # `mode` is deprecated — every chat is now AI-synthesized with KB context
     # injected silently. Kept here so older clients that still send it don't 422.
-    mode: Optional[str] = None
+    mode: str | None = None
     k: int = 4
 
 
@@ -402,7 +402,7 @@ class SaveSessionRequest(BaseModel):
     # Optional full intake snapshot — when provided, GET /api/sessions/{id}
     # re-derives the diagnosis (buckets + severity + plan) at view time so
     # the History detail panel can show what the user originally saw.
-    intake_json: Optional[Dict[str, Any]] = None
+    intake_json: dict[str, Any] | None = None
 
 
 class RegisterRequest(BaseModel):
@@ -425,11 +425,11 @@ class ProfileRequest(BaseModel):
     # training_days is the source of truth from the wizard; days_per_week is
     # derived from len(training_days) in save_profile but the field is kept
     # nullable so older clients that still send a plain int continue to work.
-    training_days: List[str] = []
-    days_per_week: Optional[int] = None
+    training_days: list[str] = []
+    days_per_week: int | None = None
     session_length_min: int
-    equipment: List[str] = []
-    weaknesses: List[str] = []
+    equipment: list[str] = []
+    weaknesses: list[str] = []
     primary_goal: str
     goal_grade: str = ""
     # Body measurements — used by Movement Analyzer for body-relative
@@ -437,9 +437,9 @@ class ProfileRequest(BaseModel):
     # Stored as integer cm; the frontend toggles cm/in display via
     # unit_preference but always sends cm. All three are nullable so an
     # existing climber's onboarding completes without these fields.
-    height_cm: Optional[int] = None
-    ape_index_cm: Optional[int] = None
-    unit_preference: Optional[str] = None
+    height_cm: int | None = None
+    ape_index_cm: int | None = None
+    unit_preference: str | None = None
 
 
 class GeneratePlanRequest(BaseModel):
@@ -447,7 +447,7 @@ class GeneratePlanRequest(BaseModel):
 
 
 class TrainingLogRequest(BaseModel):
-    date: Optional[str] = None
+    date: str | None = None
     session_type: str
     duration_min: int
     intensity: int
@@ -456,7 +456,7 @@ class TrainingLogRequest(BaseModel):
     # Inner dict mixes int counters (s/f/p) with an optional dict-valued
     # `styles` map. Typed as Dict[str, Any] to accept both legacy and styled
     # payloads. Save logic handles the shape; we don't validate further here.
-    climbs: Dict[str, Dict[str, Dict[str, Any]]] = {}
+    climbs: dict[str, dict[str, dict[str, Any]]] = {}
 
 
 # Body / rehab progress
@@ -493,8 +493,8 @@ class LeaderboardPrivacyRequest(BaseModel):
 
 
 class AvatarRequest(BaseModel):
-    icon: Optional[str] = None
-    color: Optional[str] = None
+    icon: str | None = None
+    color: str | None = None
 
 
 # Allowed avatar preset keys + color overrides. Keep in sync with the
@@ -587,18 +587,17 @@ def login(request: Request, req: LoginRequest):
     # but we add an explicit reject in case anyone resets one.
     if user:
         from database import _connect  # local import to avoid cycle on cold start
-        with _connect() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT is_seed FROM users WHERE email = %s;", (req.email,))
-                row = cur.fetchone()
-                if row and row[0] is True:
-                    log_security_event("login_failed_seed", ip, req.email)
-                    raise HTTPException(status_code=401, detail="Invalid email or password")
+        with _connect() as conn, conn.cursor() as cur:
+            cur.execute("SELECT is_seed FROM users WHERE email = %s;", (req.email,))
+            row = cur.fetchone()
+            if row and row[0] is True:
+                log_security_event("login_failed_seed", ip, req.email)
+                raise HTTPException(status_code=401, detail="Invalid email or password")
 
     # user = (id, email, password_hash, failed_login_attempts, locked_until, disclaimer_accepted)
     if user:
         locked_until = user[4]
-        if locked_until and datetime.now(timezone.utc) < locked_until:
+        if locked_until and datetime.now(UTC) < locked_until:
             log_security_event("login_locked", ip, req.email)
             raise HTTPException(
                 status_code=429,
@@ -639,7 +638,7 @@ def login(request: Request, req: LoginRequest):
 
 @app.get("/api/auth/me")
 @limiter.limit("60/minute")
-def me(request: Request, user: Dict = Depends(get_current_user)):
+def me(request: Request, user: dict = Depends(get_current_user)):
     db_user = get_user_by_id(user["id"])
     return {
         "id": user["id"],
@@ -670,7 +669,7 @@ def me(request: Request, user: Dict = Depends(get_current_user)):
 
 @app.post("/api/auth/disclaimer")
 @limiter.limit("10/minute")
-def accept_disclaimer_endpoint(request: Request, user: Dict = Depends(get_current_user)):
+def accept_disclaimer_endpoint(request: Request, user: dict = Depends(get_current_user)):
     accept_disclaimer(user["id"])
     return {"ok": True}
 
@@ -695,7 +694,7 @@ def verify_email_endpoint(request: Request, req: VerifyEmailRequest):
 
 @app.post("/api/auth/resend-verification")
 @limiter.limit("3/minute")
-def resend_verification_endpoint(request: Request, user: Dict = Depends(get_current_user)):
+def resend_verification_endpoint(request: Request, user: dict = Depends(get_current_user)):
     """Re-issue a verification email for the currently signed-in user."""
     if is_email_verified(user["id"]):
         return {"ok": True, "already_verified": True}
@@ -720,10 +719,9 @@ def health(request: Request):
     db_err = db_error
     try:
         from database import _connect  # local import to avoid cycle on cold start
-        with _connect() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT 1;")
-                cur.fetchone()
+        with _connect() as conn, conn.cursor() as cur:
+            cur.execute("SELECT 1;")
+            cur.fetchone()
         db_ok = True
         db_err = None
     except Exception as exc:
@@ -885,7 +883,7 @@ def chat_context(request: Request):
 
 @app.get("/api/sessions")
 @limiter.limit("60/minute")
-def get_sessions(request: Request, limit: int = 50, user: Dict = Depends(get_current_user)):
+def get_sessions(request: Request, limit: int = 50, user: dict = Depends(get_current_user)):
     if not db_ready:
         raise HTTPException(status_code=503, detail=db_error or "Database not ready")
     rows = list_sessions(user["id"], limit)
@@ -904,7 +902,7 @@ def get_sessions(request: Request, limit: int = 50, user: Dict = Depends(get_cur
 
 @app.post("/api/sessions")
 @limiter.limit("60/minute")
-def create_session(request: Request, req: SaveSessionRequest, user: Dict = Depends(get_current_user)):
+def create_session(request: Request, req: SaveSessionRequest, user: dict = Depends(get_current_user)):
     if not db_ready:
         raise HTTPException(status_code=503, detail=db_error or "Database not ready")
     # No tier gating — saved sessions are now how Body remembers a triage,
@@ -925,7 +923,7 @@ def create_session(request: Request, req: SaveSessionRequest, user: Dict = Depen
 
 @app.get("/api/sessions/{session_id}")
 @limiter.limit("60/minute")
-def fetch_session(request: Request, session_id: int, user: Dict = Depends(get_current_user)):
+def fetch_session(request: Request, session_id: int, user: dict = Depends(get_current_user)):
     if not db_ready:
         raise HTTPException(status_code=503, detail="Database not ready")
     r = get_session(session_id)
@@ -1006,7 +1004,7 @@ def _derive_session_diagnosis(intake_json, injury_area, pain_level, pain_type, o
 
 @app.delete("/api/sessions/{session_id}")
 @limiter.limit("60/minute")
-def remove_session(request: Request, session_id: int, user: Dict = Depends(get_current_user)):
+def remove_session(request: Request, session_id: int, user: dict = Depends(get_current_user)):
     if not db_ready:
         raise HTTPException(status_code=503, detail="Database not ready")
     delete_session(session_id, user["id"])
@@ -1026,7 +1024,7 @@ def kb_files(request: Request):
 
 @app.post("/api/profile")
 @limiter.limit("60/minute")
-def upsert_profile(request: Request, req: ProfileRequest, user: Dict = Depends(get_current_user)):
+def upsert_profile(request: Request, req: ProfileRequest, user: dict = Depends(get_current_user)):
     save_profile(
         user["id"],
         {
@@ -1052,7 +1050,7 @@ def upsert_profile(request: Request, req: ProfileRequest, user: Dict = Depends(g
 
 @app.get("/api/profile")
 @limiter.limit("60/minute")
-def fetch_profile(request: Request, user: Dict = Depends(get_current_user)):
+def fetch_profile(request: Request, user: dict = Depends(get_current_user)):
     profile = get_profile(user["id"])
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not set up yet")
@@ -1066,9 +1064,9 @@ class BodyMeasurementsRequest(BaseModel):
     full onboarding payload (Movement Analyzer calibration panel,
     profile settings page, etc).
     """
-    height_cm: Optional[int] = None
-    ape_index_cm: Optional[int] = None
-    unit_preference: Optional[str] = None
+    height_cm: int | None = None
+    ape_index_cm: int | None = None
+    unit_preference: str | None = None
 
 
 @app.post("/api/profile/body")
@@ -1076,7 +1074,7 @@ class BodyMeasurementsRequest(BaseModel):
 def upsert_body_measurements(
     request: Request,
     req: BodyMeasurementsRequest,
-    user: Dict = Depends(get_current_user),
+    user: dict = Depends(get_current_user),
 ):
     save_body_measurements(
         user["id"],
@@ -1094,7 +1092,7 @@ def upsert_body_measurements(
 
 @app.post("/api/plans/generate")
 @limiter.limit("10/minute")
-def generate_plan_endpoint(request: Request, req: GeneratePlanRequest, user: Dict = Depends(get_current_user)):
+def generate_plan_endpoint(request: Request, req: GeneratePlanRequest, user: dict = Depends(get_current_user)):
     from src.coach import generate_plan
 
     is_coach = get_user_role(user["id"]) == "coach"
@@ -1113,7 +1111,7 @@ def generate_plan_endpoint(request: Request, req: GeneratePlanRequest, user: Dic
     if not profile:
         raise HTTPException(status_code=400, detail="Complete your profile before generating a plan")
 
-    injury_flags: List[str] = []
+    injury_flags: list[str] = []
     if req.use_injury_data:
         rows = list_sessions(user["id"], limit=5)
         injury_flags = [r[1] for r in rows]
@@ -1131,7 +1129,7 @@ def generate_plan_endpoint(request: Request, req: GeneratePlanRequest, user: Dic
 
 @app.get("/api/plans/active")
 @limiter.limit("60/minute")
-def get_plan(request: Request, user: Dict = Depends(get_current_user)):
+def get_plan(request: Request, user: dict = Depends(get_current_user)):
     plan = get_active_plan(user["id"])
     if not plan:
         raise HTTPException(status_code=404, detail="No active plan")
@@ -1145,7 +1143,7 @@ def get_plan(request: Request, user: Dict = Depends(get_current_user)):
 
 @app.post("/api/training")
 @limiter.limit("60/minute")
-def log_session(request: Request, req: TrainingLogRequest, user: Dict = Depends(get_current_user)):
+def log_session(request: Request, req: TrainingLogRequest, user: dict = Depends(get_current_user)):
     # Anti-abuse validation — prevent log inflation that would skew leaderboards.
     # Max 12h per single logged session (anything longer is clearly an outlier).
     if req.duration_min is not None and (req.duration_min < 0 or req.duration_min > 720):
@@ -1157,13 +1155,18 @@ def log_session(request: Request, req: TrainingLogRequest, user: Dict = Depends(
     if req.date:
         try:
             session_date = datetime.fromisoformat(req.date).date() if "T" in req.date else datetime.strptime(req.date, "%Y-%m-%d").date()
-            if session_date > datetime.now(timezone.utc).date():
+            if session_date > datetime.now(UTC).date():
                 raise HTTPException(status_code=400, detail="Session date cannot be in the future.")
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
 
     # Validate climbs shape + grades + invariants. 400 on any failure.
-    from src.climb_grades import validate_climbs, compute_hardest, working_tier_from_hardest, grade_order
+    from src.climb_grades import (
+        compute_hardest,
+        grade_order,
+        validate_climbs,
+        working_tier_from_hardest,
+    )
     try:
         validate_climbs(req.climbs)
     except ValueError as e:
@@ -1211,7 +1214,7 @@ def log_session(request: Request, req: TrainingLogRequest, user: Dict = Depends(
 
     # Award engine
     from src.awards_catalog import detect_new_awards
-    today_iso = req.date or datetime.now(timezone.utc).date().isoformat()
+    today_iso = req.date or datetime.now(UTC).date().isoformat()
     new_awards = detect_new_awards(user["id"], today_iso)
 
     return {
@@ -1224,7 +1227,7 @@ def log_session(request: Request, req: TrainingLogRequest, user: Dict = Depends(
 
 @app.get("/api/training")
 @limiter.limit("60/minute")
-def fetch_training_logs(request: Request, limit: int = 30, user: Dict = Depends(get_current_user)):
+def fetch_training_logs(request: Request, limit: int = 30, user: dict = Depends(get_current_user)):
     return get_training_logs(user["id"], limit)
 
 
@@ -1238,7 +1241,7 @@ def fetch_training_logs(request: Request, limit: int = 30, user: Dict = Depends(
 def fetch_rehab_progress(
     request: Request,
     date: str,
-    user: Dict = Depends(get_current_user),
+    user: dict = Depends(get_current_user),
 ):
     """Return today's checked exercises for the current user. `date` must be
     the user's local ISO date (YYYY-MM-DD)."""
@@ -1253,7 +1256,7 @@ def fetch_rehab_progress(
 def post_rehab_check(
     request: Request,
     req: RehabCheckRequest,
-    user: Dict = Depends(get_current_user),
+    user: dict = Depends(get_current_user),
 ):
     """Mark an exercise complete for the user on the given local date.
     Idempotent — re-checking returns the existing row."""
@@ -1276,7 +1279,7 @@ def post_rehab_check(
 def delete_rehab_check(
     request: Request,
     req: RehabUncheckRequest,
-    user: Dict = Depends(get_current_user),
+    user: dict = Depends(get_current_user),
 ):
     """Remove an exercise checkoff. Idempotent — returns {deleted: false} if
     nothing matched."""
@@ -1293,7 +1296,7 @@ def delete_rehab_check(
 
 @app.get("/api/training/stats")
 @limiter.limit("60/minute")
-def fetch_training_stats(request: Request, user: Dict = Depends(get_current_user)):
+def fetch_training_stats(request: Request, user: dict = Depends(get_current_user)):
     """Personal stats payload for the TrainStatsPanel — hero number, tiles,
     trend, percentile, personal records. See design spec for shape."""
     return get_training_stats(user["id"])
@@ -1307,7 +1310,7 @@ CALIBRATION_SESSION_COUNT = 5
 
 @app.get("/api/training/baseline")
 @limiter.limit("60/minute")
-def fetch_training_baseline(request: Request, user: Dict = Depends(get_current_user)):
+def fetch_training_baseline(request: Request, user: dict = Depends(get_current_user)):
     """Return the data the frontend needs to decide whether a logged
     grade is plausible:
       - session_count: how many training_logs rows the user has
@@ -1316,13 +1319,12 @@ def fetch_training_baseline(request: Request, user: Dict = Depends(get_current_u
                        (frontend skips plausibility checks while false)
     """
     from database import _connect, get_user_hardest
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT COUNT(*) FROM training_logs WHERE user_id = %s;",
-                (int(user["id"]),),
-            )
-            count = int(cur.fetchone()[0] or 0)
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT COUNT(*) FROM training_logs WHERE user_id = %s;",
+            (int(user["id"]),),
+        )
+        count = int(cur.fetchone()[0] or 0)
     hardest = get_user_hardest(user["id"], window="all") or {}
     return {
         "session_count":   count,
@@ -1343,9 +1345,9 @@ _LEADERBOARD_COHORTS = {"beginner", "intermediate", "advanced", "elite", "global
 def fetch_leaderboard(
     request: Request,
     window: str = "week",
-    cohort: Optional[str] = None,
+    cohort: str | None = None,
     limit: int = 10,
-    user: Dict = Depends(get_current_user),
+    user: dict = Depends(get_current_user),
 ):
     if window not in _LEADERBOARD_WINDOWS:
         raise HTTPException(status_code=400, detail=f"Invalid window. Use one of: {sorted(_LEADERBOARD_WINDOWS)}")
@@ -1366,7 +1368,7 @@ def fetch_leaderboard(
 def fetch_pyramid(
     request: Request,
     window: str = "month",
-    user: Dict = Depends(get_current_user),
+    user: dict = Depends(get_current_user),
 ):
     if window not in ("month", "all"):
         raise HTTPException(status_code=400, detail="window must be 'month' or 'all'")
@@ -1376,7 +1378,7 @@ def fetch_pyramid(
 
 @app.get("/api/awards")
 @limiter.limit("60/minute")
-def fetch_awards(request: Request, user: Dict = Depends(get_current_user)):
+def fetch_awards(request: Request, user: dict = Depends(get_current_user)):
     from database import list_awards
     from src.awards_catalog import AWARD_CATALOG
     earned = list_awards(user["id"])
@@ -1395,8 +1397,8 @@ def fetch_awards(request: Request, user: Dict = Depends(get_current_user)):
 @limiter.limit("30/minute")
 def fetch_hub_tip(
     request: Request,
-    date: Optional[str] = None,
-    user: Dict = Depends(get_current_user),
+    date: str | None = None,
+    user: dict = Depends(get_current_user),
 ):
     if not date or not _DATE_RE.match(date):
         raise HTTPException(status_code=400, detail="date param required as YYYY-MM-DD")
@@ -1409,8 +1411,8 @@ def fetch_hub_tip(
 @limiter.limit("30/minute")
 def dismiss_hub_tip_endpoint(
     request: Request,
-    date: Optional[str] = None,
-    user: Dict = Depends(get_current_user),
+    date: str | None = None,
+    user: dict = Depends(get_current_user),
 ):
     if not date or not _DATE_RE.match(date):
         raise HTTPException(status_code=400, detail="date param required as YYYY-MM-DD")
@@ -1430,7 +1432,7 @@ _DISPLAY_NAME_RE = re.compile(r"^[A-Za-z0-9_-]{3,20}$")
 
 @app.patch("/api/auth/me/display-name")
 @limiter.limit("10/minute")
-def update_display_name(request: Request, req: DisplayNameRequest, user: Dict = Depends(get_current_user)):
+def update_display_name(request: Request, req: DisplayNameRequest, user: dict = Depends(get_current_user)):
     """Set or update the user's display name. Validated for length, charset,
     profanity, and uniqueness."""
     name = (req.display_name or "").strip()
@@ -1461,7 +1463,7 @@ def update_display_name(request: Request, req: DisplayNameRequest, user: Dict = 
 
 @app.patch("/api/auth/me/leaderboard-private")
 @limiter.limit("10/minute")
-def update_leaderboard_privacy(request: Request, req: LeaderboardPrivacyRequest, user: Dict = Depends(get_current_user)):
+def update_leaderboard_privacy(request: Request, req: LeaderboardPrivacyRequest, user: dict = Depends(get_current_user)):
     """Toggle the user's leaderboard privacy flag. When TRUE, leaderboard
     rows show 'Private climber' instead of their display_name; their stats
     still aggregate into percentiles."""
@@ -1471,7 +1473,7 @@ def update_leaderboard_privacy(request: Request, req: LeaderboardPrivacyRequest,
 
 @app.patch("/api/auth/me/avatar")
 @limiter.limit("20/minute")
-def update_avatar(request: Request, req: AvatarRequest, user: Dict = Depends(get_current_user)):
+def update_avatar(request: Request, req: AvatarRequest, user: dict = Depends(get_current_user)):
     """Save the user's avatar preset + optional color override. Pass {icon: null,
     color: null} to clear and revert to the generated initial chip."""
     icon = req.icon
@@ -1489,7 +1491,7 @@ def update_avatar(request: Request, req: AvatarRequest, user: Dict = Depends(get
 # ---------------------------------------------------------------------------
 
 
-def require_coach(user: Dict = Depends(get_current_user)) -> Dict:
+def require_coach(user: dict = Depends(get_current_user)) -> dict:
     if get_user_role(user["id"]) != "coach":
         raise HTTPException(status_code=403, detail="Coach access only")
     return user
@@ -1497,7 +1499,7 @@ def require_coach(user: Dict = Depends(get_current_user)) -> Dict:
 
 @app.post("/api/coach/message")
 @limiter.limit("20/minute")
-def user_send_message(request: Request, req: CoachMessageRequest, user: Dict = Depends(get_current_user)):
+def user_send_message(request: Request, req: CoachMessageRequest, user: dict = Depends(get_current_user)):
     clean = sanitize_input(req.content)
     if not clean:
         raise HTTPException(status_code=400, detail="Message cannot be empty")
@@ -1511,7 +1513,7 @@ def user_send_message(request: Request, req: CoachMessageRequest, user: Dict = D
 
 @app.get("/api/coach/thread")
 @limiter.limit("60/minute")
-def user_get_thread(request: Request, user: Dict = Depends(get_current_user)):
+def user_get_thread(request: Request, user: dict = Depends(get_current_user)):
     thread = get_thread_by_user(user["id"])
     if not thread:
         return {"messages": [], "thread": None}
@@ -1521,19 +1523,19 @@ def user_get_thread(request: Request, user: Dict = Depends(get_current_user)):
 
 @app.get("/api/admin/coach/threads")
 @limiter.limit("60/minute")
-def admin_list_threads(request: Request, _coach: Dict = Depends(require_coach)):
+def admin_list_threads(request: Request, _coach: dict = Depends(require_coach)):
     return list_coach_threads()
 
 
 @app.get("/api/admin/coach/threads/{thread_id}/messages")
 @limiter.limit("60/minute")
-def admin_get_messages(request: Request, thread_id: int, _coach: Dict = Depends(require_coach)):
+def admin_get_messages(request: Request, thread_id: int, _coach: dict = Depends(require_coach)):
     return get_thread_messages(thread_id)
 
 
 @app.post("/api/admin/coach/reply")
 @limiter.limit("20/minute")
-def admin_reply(request: Request, req: CoachReplyRequest, _coach: Dict = Depends(require_coach)):
+def admin_reply(request: Request, req: CoachReplyRequest, _coach: dict = Depends(require_coach)):
     clean = sanitize_input(req.content)
     if not clean:
         raise HTTPException(status_code=400, detail="Reply cannot be empty")
@@ -1558,7 +1560,7 @@ class CheckoutSessionRequest(BaseModel):
 def create_checkout_session_endpoint(
     request: Request,
     req: CheckoutSessionRequest,
-    user: Dict = Depends(get_current_user),
+    user: dict = Depends(get_current_user),
 ):
     """Create a Stripe Checkout session and return its URL for client redirect."""
     if not billing.is_configured():
@@ -1597,7 +1599,7 @@ def create_checkout_session_endpoint(
 
 @app.post("/api/billing/portal")
 @limiter.limit("10/minute")
-def create_portal_session_endpoint(request: Request, user: Dict = Depends(get_current_user)):
+def create_portal_session_endpoint(request: Request, user: dict = Depends(get_current_user)):
     """Open the Stripe Customer Portal so the user can update card / cancel / view invoices."""
     if not billing.is_configured():
         raise HTTPException(status_code=503, detail="Billing is not configured.")

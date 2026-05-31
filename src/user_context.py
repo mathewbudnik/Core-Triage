@@ -12,7 +12,7 @@ Public API:
 from __future__ import annotations
 
 from datetime import date
-from typing import Any, Dict, Optional
+from typing import Any
 
 from database import (
     compute_streak,
@@ -21,7 +21,6 @@ from database import (
     list_sessions,
 )
 
-
 # Triage regions that imply an active rehab plan. Matches what /body uses.
 _REHAB_REGIONS = {
     "Finger", "Wrist", "Elbow", "Shoulder", "Knee", "Hip", "Ankle",
@@ -29,14 +28,14 @@ _REHAB_REGIONS = {
 }
 
 
-def build_user_context(user_id: int) -> Optional[Dict[str, Any]]:
+def build_user_context(user_id: int) -> dict[str, Any] | None:
     """Return a structured context dict, or None if the user has no usable
     data yet. Each field is independently optional — a brand-new account
     might only have a display name."""
     if not user_id:
         return None
 
-    ctx: Dict[str, Any] = {}
+    ctx: dict[str, Any] = {}
 
     profile = get_profile(user_id) or {}
     name = profile.get("display_name") or profile.get("name")
@@ -88,7 +87,7 @@ def build_user_context(user_id: int) -> Optional[Dict[str, Any]]:
     return ctx or None
 
 
-def format_for_prompt(ctx: Optional[Dict[str, Any]]) -> str:
+def format_for_prompt(ctx: dict[str, Any] | None) -> str:
     """Render the context block for system-prompt injection. Returns ''
     if the context is empty or None."""
     if not ctx:

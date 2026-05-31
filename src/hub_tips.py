@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import date, timedelta
-from typing import Any, Dict, Optional, Tuple
+from datetime import date
+from typing import Any
 
 from database import (
     _connect,
@@ -23,7 +23,6 @@ from database import (
     get_user_hardest,
     insert_hub_tip,
 )
-
 
 REHAB_REGIONS = {
     "Finger", "Wrist", "Elbow", "Shoulder", "Knee", "Hip", "Ankle",
@@ -35,13 +34,12 @@ REHAB_REGIONS = {
 # ── Detection rules ───────────────────────────────────────────────────
 
 
-def _detect_active_rehab(user_id: int, today_iso: str) -> Tuple[bool, Dict[str, Any]]:
+def _detect_active_rehab(user_id: int, today_iso: str) -> tuple[bool, dict[str, Any]]:
     """Match if user has a triage within 90 days where injury_area is in
     REHAB_REGIONS."""
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT injury_area, created_at
                 FROM sessions
                 WHERE user_id = %s
@@ -49,9 +47,9 @@ def _detect_active_rehab(user_id: int, today_iso: str) -> Tuple[bool, Dict[str, 
                 ORDER BY created_at DESC
                 LIMIT 1;
                 """,
-                (int(user_id),),
-            )
-            row = cur.fetchone()
+            (int(user_id),),
+        )
+        row = cur.fetchone()
     if not row:
         return False, {}
     injury_area, created_at = row
@@ -61,7 +59,7 @@ def _detect_active_rehab(user_id: int, today_iso: str) -> Tuple[bool, Dict[str, 
     return True, {"injury_area": injury_area, "days_since": days_since}
 
 
-def _detect_overtraining(user_id: int, today_iso: str) -> Tuple[bool, Dict[str, Any]]:
+def _detect_overtraining(user_id: int, today_iso: str) -> tuple[bool, dict[str, Any]]:
     """Match if compute_streak >= 5 days."""
     streak = compute_streak(user_id, today=today_iso)
     if streak < 5:
@@ -73,14 +71,13 @@ def _detect_overtraining(user_id: int, today_iso: str) -> Tuple[bool, Dict[str, 
     }
 
 
-def _detect_plateau(user_id: int, today_iso: str) -> Tuple[bool, Dict[str, Any]]:
+def _detect_plateau(user_id: int, today_iso: str) -> tuple[bool, dict[str, Any]]:
     """Match if hardest_send_per_week has been the same V-grade for the
     last 4+ calendar weeks. Returns kind 'plateau_4w' or 'plateau_8w'."""
     # Get hardest boulder send per ISO week for the last 12 weeks
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT
                     date_trunc('week', tl.date)::date AS wk,
                     MAX(CAST(SUBSTRING(grade FROM 2) AS INTEGER)) AS max_v
@@ -92,9 +89,9 @@ def _detect_plateau(user_id: int, today_iso: str) -> Tuple[bool, Dict[str, Any]]
                 GROUP BY wk
                 ORDER BY wk DESC;
                 """,
-                (int(user_id),),
-            )
-            rows = cur.fetchall()
+            (int(user_id),),
+        )
+        rows = cur.fetchall()
     if len(rows) < 4:
         return False, {}
     # Check whether the most recent 4 weeks all have the same max V-grade
@@ -112,17 +109,16 @@ def _detect_plateau(user_id: int, today_iso: str) -> Tuple[bool, Dict[str, Any]]
     }
 
 
-def _detect_return_break(user_id: int, today_iso: str) -> Tuple[bool, Dict[str, Any]]:
+def _detect_return_break(user_id: int, today_iso: str) -> tuple[bool, dict[str, Any]]:
     """Match if days_since_last_log >= 7. Bands: 7d / 14d / 30d."""
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT MAX(date) FROM training_logs WHERE user_id = %s;
                 """,
-                (int(user_id),),
-            )
-            r = cur.fetchone()
+            (int(user_id),),
+        )
+        r = cur.fetchone()
     last = r[0] if r else None
     if not last:
         return False, {}
@@ -148,7 +144,7 @@ _PRIORITY = [
 ]
 
 
-def detect_pattern(user_id: int, today_iso: str) -> Tuple[Optional[str], Optional[Dict[str, Any]]]:
+def detect_pattern(user_id: int, today_iso: str) -> tuple[str | None, dict[str, Any] | None]:
     """Run detectors in priority order; return (kind, context) or (None, None).
 
     For plateau, kind is 'plateau_4w' or 'plateau_8w' (refined from context).
@@ -170,7 +166,7 @@ logger = logging.getLogger(__name__)
 
 # Per-kind static metadata: CTA + color. Frontend uses `color` for the
 # card gradient and border.
-TIP_META: Dict[str, Dict[str, Any]] = {
+TIP_META: dict[str, dict[str, Any]] = {
     "active_rehab": {
         "cta_label": "Open Body",
         "cta_route": "/body",
@@ -199,7 +195,7 @@ TIP_META: Dict[str, Dict[str, Any]] = {
 
 # Static fallback copy when OpenAI is unavailable. Quality is lower than
 # the personalized version but the Hub never blank-renders.
-FALLBACK_COPY: Dict[str, Dict[str, str]] = {
+FALLBACK_COPY: dict[str, dict[str, str]] = {
     "active_rehab": {
         "headline": "Today's rehab focus",
         "body":     "Open the Body tab for today's exercises. Keep pain at or below 3/10 and skip anything that aggravates the area.",
@@ -231,7 +227,7 @@ FALLBACK_COPY: Dict[str, Dict[str, str]] = {
 }
 
 
-def _build_prompt(kind: str, context: Dict[str, Any]) -> str:
+def _build_prompt(kind: str, context: dict[str, Any]) -> str:
     """Build the user message describing the situation for OpenAI."""
     if kind == "active_rehab":
         return (
@@ -275,7 +271,7 @@ _SYSTEM_PROMPT = (
 )
 
 
-def generate_tip(kind: str, context: Dict[str, Any], openai_client: Optional[Any]) -> Dict[str, Any]:
+def generate_tip(kind: str, context: dict[str, Any], openai_client: Any | None) -> dict[str, Any]:
     """Personalize a tip via OpenAI; fall back to static copy on any error.
 
     Returns: { headline, body, cta_label, cta_route, color }
@@ -321,8 +317,8 @@ def generate_tip(kind: str, context: Dict[str, Any], openai_client: Optional[Any
 def get_or_create_tip(
     user_id: int,
     today_iso: str,
-    openai_client: Optional[Any],
-) -> Optional[Dict[str, Any]]:
+    openai_client: Any | None,
+) -> dict[str, Any] | None:
     """Cache-aware entry point. Returns the tip dict or None.
 
     1. If `hub_tips` has today's row and it's dismissed → return None.

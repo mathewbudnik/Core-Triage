@@ -17,8 +17,7 @@ from __future__ import annotations
 
 import os
 import sys
-from dataclasses import asdict
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -26,15 +25,13 @@ from src.triage import (  # noqa: E402
     Intake,
     bucket_possibilities,
     classify_severity_v2,
-    classify_tone,
     conservative_plan,
     get_urgent_flags,
     red_flags,
 )
 
-
 # ── Defaults applied to every Intake unless the scenario overrides ──────────
-INTAKE_DEFAULTS: Dict[str, Any] = {
+INTAKE_DEFAULTS: dict[str, Any] = {
     "onset": "Gradual",  # most realistic default; scenarios specify Sudden when relevant
     "pain_type": "Dull/ache",
     "swelling": "No",
@@ -54,14 +51,14 @@ INTAKE_DEFAULTS: Dict[str, Any] = {
 }
 
 
-def _build_intake(kwargs: Dict[str, Any]) -> Intake:
+def _build_intake(kwargs: dict[str, Any]) -> Intake:
     merged = {**INTAKE_DEFAULTS, **kwargs}
     return Intake(**merged)
 
 
 def _joined_output(intake: Intake) -> str:
     """Concatenate all human-visible output strings for must_mention / must_not_mention checks."""
-    parts: List[str] = []
+    parts: list[str] = []
     # Urgent referral flags
     for flag in get_urgent_flags(intake):
         parts.append(flag)
@@ -84,7 +81,7 @@ def _joined_output(intake: Intake) -> str:
 # Scenarios #36 and #38 are chat-only — included here as `skip=True` and
 # excluded from the pass/fail tally.
 
-SCENARIOS: List[Dict[str, Any]] = [
+SCENARIOS: list[dict[str, Any]] = [
     # ── A. Classic single-region patterns (15) ─────────────────────────────
     {
         "id": 1,
@@ -1418,7 +1415,7 @@ SCENARIOS: List[Dict[str, Any]] = [
 
 # ── Runner ──────────────────────────────────────────────────────────────────
 
-def _run_one(scenario: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def _run_one(scenario: dict[str, Any]) -> dict[str, Any] | None:
     """Returns None on pass, or a dict describing the failure."""
     if scenario.get("skip"):
         return None
@@ -1428,7 +1425,7 @@ def _run_one(scenario: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     actual_urgent = bool(actual_urgent_flags)
     output = _joined_output(intake)
 
-    failures: List[str] = []
+    failures: list[str] = []
 
     if actual_severity != scenario["expected_severity"]:
         failures.append(
@@ -1470,7 +1467,7 @@ def main() -> int:
     pass_count = 0
     fail_count = 0
     skip_count = 0
-    failures: List[Dict[str, Any]] = []
+    failures: list[dict[str, Any]] = []
 
     print("=" * 76)
     print("CoreTriage scenario runner — 50 scenarios")

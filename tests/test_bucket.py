@@ -57,7 +57,7 @@ class BucketPossibilitiesShapeTests(unittest.TestCase):
         )
 
     def test_finger_crimp_returns_bucket_instances(self):
-        from src.triage import bucket_possibilities, Bucket
+        from src.triage import Bucket, bucket_possibilities
         buckets = bucket_possibilities(self._make_intake("Finger", "Hard crimp"))
         self.assertGreater(len(buckets), 0)
         for b in buckets:

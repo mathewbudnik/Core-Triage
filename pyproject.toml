@@ -1,0 +1,27 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [".venv", "__pycache__", ".pytest_cache"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+# E501 (line too long) is the only soft rule — many existing lines violate it.
+ignore = [
+    "E501",  # line-too-long
+    "B008",  # TODO Plan C: function-call-in-default-argument — FastAPI Depends() pattern
+    "E402",  # TODO Plan C: module-import-not-at-top-of-file — Sentry init before imports
+    "E701",  # TODO Plan C: multiple-statements-on-one-line-colon
+    "B904",  # TODO Plan C: raise-without-from-inside-except
+    "SIM117",  # TODO Plan C: multiple-with-statements
+    "SIM102",  # TODO Plan C: collapsible-if
+    "SIM105",  # TODO Plan C: suppressible-exception
+    "B905",  # TODO Plan C: zip-without-explicit-strict
+    "F841",  # TODO Plan C: unused-variable
+    "SIM103",  # TODO Plan C: needless-bool
+    "SIM108",  # TODO Plan C: if-else-block-instead-of-if-exp
+    "SIM115",  # TODO Plan C: open-file-with-context-handler
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

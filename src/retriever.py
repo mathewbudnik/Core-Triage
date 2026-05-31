@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Tuple, Dict
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -16,8 +15,8 @@ class DocChunk:
 
 
 # Load all markdown files from the KB directory into DocChunk objects
-def load_kb(kb_dir: str = "kb") -> List[DocChunk]:
-    chunks: List[DocChunk] = []
+def load_kb(kb_dir: str = "kb") -> list[DocChunk]:
+    chunks: list[DocChunk] = []
     # Iterate over all .md files in the KB folder (sorted for consistency)
     for p in sorted(Path(kb_dir).glob("*.md")):
         text = p.read_text(encoding="utf-8").strip()
@@ -31,7 +30,7 @@ def load_kb(kb_dir: str = "kb") -> List[DocChunk]:
 
 # Simple TF-IDF based retriever used for lightweight RAG
 class TfidfRetriever:
-    def __init__(self, chunks: List[DocChunk]):
+    def __init__(self, chunks: list[DocChunk]):
         # Store original document chunks for later lookup
         self.chunks = chunks
         # Convert text into TF-IDF vectors (limit features for speed)
@@ -40,7 +39,7 @@ class TfidfRetriever:
         self.matrix = self.vectorizer.fit_transform([c.text for c in chunks])
 
     # Return top-k most similar KB chunks for a given query string
-    def query(self, q: str, k: int = 4) -> List[Tuple[DocChunk, float]]:
+    def query(self, q: str, k: int = 4) -> list[tuple[DocChunk, float]]:
         # Guard against empty or whitespace-only queries
         if not q.strip():
             return []

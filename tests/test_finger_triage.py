@@ -212,8 +212,9 @@ class FingerFollowupTests(unittest.TestCase):
 
     # ── Fix 3: Pydantic Literal validation ─────────────────────────────────
     def test_intake_request_rejects_garbage_grip_mode(self):
-        from main import IntakeRequest
         from pydantic import ValidationError
+
+        from main import IntakeRequest
         with self.assertRaises(ValidationError):
             IntakeRequest(
                 region="Finger", onset="Sudden", pain_type="Sharp", severity=5,
