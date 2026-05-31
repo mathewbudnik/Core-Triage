@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Check, Loader2, ArrowRight, Sparkles } from 
 import { saveProfile, getTrainingLogs } from '../api'
 import { deriveStyleProfile } from '../lib/styleProfile'
 import { getStyleLabel } from '../lib/styleColors'
+import { UnitToggle, MeasurementField, defaultUnit } from './Measurements'
 
 // ── Static option data ─────────────────────────────────────────────────────
 const EXPERIENCE_LEVELS = [
@@ -253,7 +254,12 @@ function NumberSlider({ value, min, max, step = 5, unit, onChange, hint }) {
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
-const TOTAL_STEPS = 9
+// 10 steps: experience, body, discipline, boulder grade, route grade,
+// training days, session length, equipment, weaknesses, goal. The "body"
+// step (1) collects height + ape index so they're available app-wide —
+// Movement Analyzer uses them for body-relative rule calibration; future
+// training-rec features will use them for grade normalization + reach.
+const TOTAL_STEPS = 10
 
 export default function ProfileSetup({ onComplete }) {
   const [step, setStep] = useState(0)
@@ -296,6 +302,12 @@ export default function ProfileSetup({ onComplete }) {
     weaknesses: [],
     primary_goal: '',
     goal_grade: '',
+    // Body measurements — used by Movement Analyzer + future
+    // training rec features. Stored as integer cm. Optional: the
+    // wizard's body step can be skipped without blocking completion.
+    height_cm: null,
+    ape_index_cm: null,
+    unit_preference: defaultUnit(),
   })
 
   const setField = (key, val) => setForm((f) => ({ ...f, [key]: val }))
@@ -304,18 +316,20 @@ export default function ProfileSetup({ onComplete }) {
     return { ...f, [key]: cur.includes(val) ? cur.filter((v) => v !== val) : [...cur, val] }
   })
 
-  // Per-step gating. Optional steps (equipment, weaknesses) always advance.
+  // Per-step gating. Optional steps (body measurements, equipment,
+  // weaknesses) always advance.
   function canAdvance() {
     switch (step) {
       case 0: return !!form.experience_level
-      case 1: return !!form.primary_discipline
-      case 2: return !!form.max_grade_boulder
-      case 3: return !!form.max_grade_route
-      case 4: return (form.training_days?.length || 0) >= 1
-      case 5: return !!form.session_length_min
-      case 6: return true   // equipment is optional
-      case 7: return true   // weaknesses is optional
-      case 8: return !!form.primary_goal
+      case 1: return true                                                  // body measurements optional
+      case 2: return !!form.primary_discipline
+      case 3: return !!form.max_grade_boulder
+      case 4: return !!form.max_grade_route
+      case 5: return (form.training_days?.length || 0) >= 1
+      case 6: return !!form.session_length_min
+      case 7: return true                                                  // equipment is optional
+      case 8: return true                                                  // weaknesses is optional
+      case 9: return !!form.primary_goal
       default: return false
     }
   }
@@ -365,6 +379,40 @@ export default function ProfileSetup({ onComplete }) {
       case 1: return (
         <>
           <StepHeader stepIndex={step} totalSteps={TOTAL_STEPS}
+                      title="A bit about your body"
+                      subtitle="Used so the Movement Analyzer measures your technique relative to YOUR proportions — and so training reccs can normalize grade ranges to your reach. Optional." />
+          <div className="flex items-center justify-end mb-3">
+            <UnitToggle
+              unit={form.unit_preference || 'cm'}
+              onChange={(u) => setField('unit_preference', u)}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <MeasurementField
+              label={`Height (${form.unit_preference || 'cm'})`}
+              unit={form.unit_preference || 'cm'}
+              valueCm={form.height_cm}
+              placeholder={form.unit_preference === 'in' ? '69' : '175'}
+              onCommitCm={(cm) => setField('height_cm', cm)}
+            />
+            <MeasurementField
+              label={`Ape index (${form.unit_preference || 'cm'})`}
+              hint="Arm span − height. Most climbers know this."
+              unit={form.unit_preference || 'cm'}
+              valueCm={form.ape_index_cm}
+              placeholder="0"
+              onCommitCm={(cm) => setField('ape_index_cm', cm)}
+              allowNegative
+            />
+          </div>
+          <p className="text-[11px] text-ct-cream/45 mt-3 leading-snug">
+            Skip this if you don't have the numbers handy — you can fill them in later from the Movement Analyzer or your profile.
+          </p>
+        </>
+      )
+      case 2: return (
+        <>
+          <StepHeader stepIndex={step} totalSteps={TOTAL_STEPS}
                       title="What's your primary discipline?"
                       subtitle="Plans emphasise the skills your discipline rewards." />
           <div>
@@ -376,7 +424,7 @@ export default function ProfileSetup({ onComplete }) {
           </div>
         </>
       )
-      case 2: return (
+      case 3: return (
         <>
           <StepHeader stepIndex={step} totalSteps={TOTAL_STEPS}
                       title="What's your hardest boulder send?"
@@ -385,7 +433,7 @@ export default function ProfileSetup({ onComplete }) {
                        onChange={(v) => setField('max_grade_boulder', v)} />
         </>
       )
-      case 3: return (
+      case 4: return (
         <>
           <StepHeader stepIndex={step} totalSteps={TOTAL_STEPS}
                       title="What's your hardest route send?"
@@ -394,7 +442,7 @@ export default function ProfileSetup({ onComplete }) {
                        onChange={(v) => setField('max_grade_route', v)} />
         </>
       )
-      case 4: return (
+      case 5: return (
         <>
           <StepHeader stepIndex={step} totalSteps={TOTAL_STEPS}
                       title="Which days can you train?"
@@ -407,7 +455,7 @@ export default function ProfileSetup({ onComplete }) {
           </p>
         </>
       )
-      case 5: return (
+      case 6: return (
         <>
           <StepHeader stepIndex={step} totalSteps={TOTAL_STEPS}
                       title="How long is a typical session?"
@@ -417,7 +465,7 @@ export default function ProfileSetup({ onComplete }) {
                         hint="Includes warm-up and cool-down." />
         </>
       )
-      case 6: return (
+      case 7: return (
         <>
           <StepHeader stepIndex={step} totalSteps={TOTAL_STEPS}
                       title="What gear do you have access to?"
@@ -431,7 +479,7 @@ export default function ProfileSetup({ onComplete }) {
           </div>
         </>
       )
-      case 7: {
+      case 8: {
         const conf = styleProfile?.confidence
         const weakLabel = getStyleLabel(styleProfile?.weakest)
         const domLabel  = getStyleLabel(styleProfile?.dominant)
@@ -475,7 +523,7 @@ export default function ProfileSetup({ onComplete }) {
           </>
         )
       }
-      case 8: return (
+      case 9: return (
         <>
           <StepHeader stepIndex={step} totalSteps={TOTAL_STEPS}
                       title="What's your primary goal?"

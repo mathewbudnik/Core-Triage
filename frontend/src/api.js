@@ -61,6 +61,10 @@ export const resendVerification = () => request('POST', '/api/auth/resend-verifi
 // Profile
 export const saveProfile = (payload) => request('POST', '/api/profile', payload)
 export const getProfile = () => request('GET', '/api/profile')
+// Partial profile update for body-measurement fields only. Used by the
+// Movement Analyzer and future settings pages to save height / ape /
+// unit preference without re-sending the full onboarding wizard payload.
+export const saveBodyMeasurements = (payload) => request('POST', '/api/profile/body', payload)
 
 // Plans
 export const generatePlan = (payload = {}) => request('POST', '/api/plans/generate', payload)

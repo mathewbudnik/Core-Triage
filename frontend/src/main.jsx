@@ -15,7 +15,11 @@ import CrashFallback from './components/CrashFallback.jsx'
 // bundle takes over; the localStorage flag prevents subsequent visits from
 // repeating the cleanup, so VitePWA's normal autoUpdate handles things from
 // then on. Bump the key (v1 → v2) to force another cleanup later.
-const SW_RESET_KEY = 'ct_sw_reset_v1'
+// Bump v1 → v2: old service workers from before MediaPipe shipped were
+// caching the precache manifest and returning 404 for the new
+// /mediapipe-wasm/* and /models/* routes. Forcing one unregister+cache
+// purge gets every existing client onto the new SW cleanly.
+const SW_RESET_KEY = 'ct_sw_reset_v2'
 if (typeof window !== 'undefined'
     && 'serviceWorker' in navigator
     && !localStorage.getItem(SW_RESET_KEY)) {

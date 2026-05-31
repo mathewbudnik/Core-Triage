@@ -93,6 +93,7 @@ from database import (
     record_webhook_event,
     reset_failed_login,
     save_plan,
+    save_body_measurements,
     save_profile,
     save_session,
     send_coach_message,
@@ -431,6 +432,14 @@ class ProfileRequest(BaseModel):
     weaknesses: List[str] = []
     primary_goal: str
     goal_grade: str = ""
+    # Body measurements — used by Movement Analyzer for body-relative
+    # rule calibration and (future) by training rec for grade-normalization.
+    # Stored as integer cm; the frontend toggles cm/in display via
+    # unit_preference but always sends cm. All three are nullable so an
+    # existing climber's onboarding completes without these fields.
+    height_cm: Optional[int] = None
+    ape_index_cm: Optional[int] = None
+    unit_preference: Optional[str] = None
 
 
 class GeneratePlanRequest(BaseModel):
@@ -1033,6 +1042,9 @@ def upsert_profile(request: Request, req: ProfileRequest, user: Dict = Depends(g
             "weaknesses": req.weaknesses,
             "primary_goal": req.primary_goal,
             "goal_grade": req.goal_grade,
+            "height_cm": req.height_cm,
+            "ape_index_cm": req.ape_index_cm,
+            "unit_preference": req.unit_preference,
         },
     )
     return {"ok": True}
@@ -1045,6 +1057,34 @@ def fetch_profile(request: Request, user: Dict = Depends(get_current_user)):
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not set up yet")
     return profile
+
+
+class BodyMeasurementsRequest(BaseModel):
+    """Partial update for body-measurement fields only. All optional;
+    omitted fields are left unchanged. Used by surfaces that need to
+    write height / ape index / unit preference without re-sending the
+    full onboarding payload (Movement Analyzer calibration panel,
+    profile settings page, etc).
+    """
+    height_cm: Optional[int] = None
+    ape_index_cm: Optional[int] = None
+    unit_preference: Optional[str] = None
+
+
+@app.post("/api/profile/body")
+@limiter.limit("60/minute")
+def upsert_body_measurements(
+    request: Request,
+    req: BodyMeasurementsRequest,
+    user: Dict = Depends(get_current_user),
+):
+    save_body_measurements(
+        user["id"],
+        height_cm=req.height_cm,
+        ape_index_cm=req.ape_index_cm,
+        unit_preference=req.unit_preference,
+    )
+    return {"ok": True}
 
 
 # ---------------------------------------------------------------------------

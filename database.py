@@ -199,6 +199,11 @@ def init_db() -> None:
             )
 
             # ── Athlete profile ────────────────────────────────────────────
+            # Body measurements (height_cm, ape_index_cm) and unit display
+            # preference are stored here as the source of truth across the
+            # app — used by the Movement Analyzer for body-relative rule
+            # calibration AND by training-rec features that benefit from
+            # body proportions.
             cur.execute(
                 """
                 CREATE TABLE IF NOT EXISTS athlete_profiles (
@@ -215,6 +220,9 @@ def init_db() -> None:
                     weaknesses TEXT[],
                     primary_goal TEXT,
                     goal_grade TEXT,
+                    height_cm INT,
+                    ape_index_cm INT,
+                    unit_preference TEXT,
                     updated_at TIMESTAMPTZ DEFAULT NOW()
                 );
                 """
@@ -298,6 +306,14 @@ def init_db() -> None:
                 "training_days",
                 "TEXT[]",
             )
+
+            # Body measurements live on the profile so they're shared
+            # across features (Movement Analyzer, training rec). Stored
+            # as INTEGER centimeters (canonical); the frontend toggles
+            # cm/in display via unit_preference but always sends cm.
+            _add_column_if_missing(cur, "athlete_profiles", "height_cm",       "INT")
+            _add_column_if_missing(cur, "athlete_profiles", "ape_index_cm",    "INT")
+            _add_column_if_missing(cur, "athlete_profiles", "unit_preference", "TEXT")
 
             # Seed-climber progression side table — stores per-seed nudges
             # (intensity bump, extra grades) that accumulate over time so
@@ -960,8 +976,9 @@ def save_profile(user_id: int, data: Dict[str, Any]) -> None:
                 INSERT INTO athlete_profiles
                     (user_id, experience_level, years_climbing, primary_discipline,
                      max_grade_boulder, max_grade_route, days_per_week, session_length_min,
-                     equipment, weaknesses, primary_goal, goal_grade, training_days, updated_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                     equipment, weaknesses, primary_goal, goal_grade, training_days,
+                     height_cm, ape_index_cm, unit_preference, updated_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
                 ON CONFLICT (user_id) DO UPDATE SET
                     experience_level   = EXCLUDED.experience_level,
                     years_climbing     = EXCLUDED.years_climbing,
@@ -975,6 +992,9 @@ def save_profile(user_id: int, data: Dict[str, Any]) -> None:
                     primary_goal       = EXCLUDED.primary_goal,
                     goal_grade         = EXCLUDED.goal_grade,
                     training_days      = EXCLUDED.training_days,
+                    height_cm          = COALESCE(EXCLUDED.height_cm, athlete_profiles.height_cm),
+                    ape_index_cm       = COALESCE(EXCLUDED.ape_index_cm, athlete_profiles.ape_index_cm),
+                    unit_preference    = COALESCE(EXCLUDED.unit_preference, athlete_profiles.unit_preference),
                     updated_at         = NOW();
                 """,
                 (
@@ -991,7 +1011,41 @@ def save_profile(user_id: int, data: Dict[str, Any]) -> None:
                     data.get("primary_goal"),
                     data.get("goal_grade"),
                     training_days or None,
+                    data.get("height_cm"),
+                    data.get("ape_index_cm"),
+                    data.get("unit_preference"),
                 ),
+            )
+        conn.commit()
+
+
+def save_body_measurements(
+    user_id: int,
+    *,
+    height_cm: Optional[int] = None,
+    ape_index_cm: Optional[int] = None,
+    unit_preference: Optional[str] = None,
+) -> None:
+    """Update ONLY the body-measurement columns on a user's profile row.
+
+    Used by surfaces that need to write height/ape without re-sending the
+    full wizard payload (e.g. the Movement Analyzer's calibration panel).
+    Creates a thin profile row if none exists yet so the climber can save
+    measurements before completing the full onboarding wizard.
+    """
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO athlete_profiles (user_id, height_cm, ape_index_cm, unit_preference, updated_at)
+                VALUES (%s, %s, %s, %s, NOW())
+                ON CONFLICT (user_id) DO UPDATE SET
+                    height_cm       = COALESCE(EXCLUDED.height_cm, athlete_profiles.height_cm),
+                    ape_index_cm    = COALESCE(EXCLUDED.ape_index_cm, athlete_profiles.ape_index_cm),
+                    unit_preference = COALESCE(EXCLUDED.unit_preference, athlete_profiles.unit_preference),
+                    updated_at      = NOW();
+                """,
+                (int(user_id), height_cm, ape_index_cm, unit_preference),
             )
         conn.commit()
 
@@ -1004,7 +1058,8 @@ def get_profile(user_id: int) -> Optional[Dict[str, Any]]:
                 """
                 SELECT experience_level, years_climbing, primary_discipline,
                        max_grade_boulder, max_grade_route, days_per_week, session_length_min,
-                       equipment, weaknesses, primary_goal, goal_grade, training_days, updated_at
+                       equipment, weaknesses, primary_goal, goal_grade, training_days,
+                       height_cm, ape_index_cm, unit_preference, updated_at
                 FROM athlete_profiles WHERE user_id = %s;
                 """,
                 (int(user_id),),
@@ -1025,7 +1080,10 @@ def get_profile(user_id: int) -> Optional[Dict[str, Any]]:
         "primary_goal":       row[9],
         "goal_grade":         row[10],
         "training_days":      list(row[11]) if row[11] else [],
-        "updated_at":         str(row[12]) if row[12] else None,
+        "height_cm":          row[12],
+        "ape_index_cm":       row[13],
+        "unit_preference":    row[14],
+        "updated_at":         str(row[15]) if row[15] else None,
     }
 
 

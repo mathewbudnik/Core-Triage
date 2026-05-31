@@ -1093,13 +1093,32 @@ def _enrich_coach_notes(sessions: List[Dict], profile: Dict, openai_client: Any)
     if not openai_client:
         return
 
+    height = profile.get("height_cm")
+    ape    = profile.get("ape_index_cm")
+    body_line = ""
+    body_instruction = ""
+    if height:
+        body_line = f", {height}cm tall"
+        if ape is not None:
+            body_line += f", ape index {ape:+d}cm"
+        # Nudge the LLM to actually USE the measurements rather than just
+        # acknowledge them. One concrete sentence — the model already knows
+        # climbing biomechanics, it just needs to be told to apply them.
+        body_instruction = (
+            " Tailor at least one detail to the athlete's body proportions "
+            "(e.g. shorter climbers benefit from outside-edge work and "
+            "flexibility; positive ape index suits lock-off-focused training; "
+            "tall climbers often need to focus on compact body positions)."
+        )
+
     try:
         for session in sessions[:3]:  # enrich first 3 sessions to limit tokens
             prompt = (
                 f"You are an expert climbing coach. Write a 2-sentence motivational coach note "
-                f"for this training session. Be specific, practical, and encouraging.\n\n"
+                f"for this training session. Be specific, practical, and encouraging."
+                f"{body_instruction}\n\n"
                 f"Athlete: {profile.get('experience_level')} climber, "
-                f"{profile.get('years_climbing')} years, "
+                f"{profile.get('years_climbing')} years{body_line}, "
                 f"goal: {profile.get('primary_goal')}.\n"
                 f"Session type: {session['type']}, week {session['week']} of 4.\n"
                 f"Main exercises: {', '.join(e['exercise'] for e in session['main'][:3])}."

@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import ChatPicker from './ChatPicker'
 import AIChatView from './AIChatView'
 import CoachChatView from './CoachChatView'
 import CoachInboxView from './CoachInboxView'
 import UpgradeModal from './UpgradeModal'
+
+// Heavy: includes a MediaPipe Worker + the pose model. Lazy-loaded so the
+// Chat tab's first paint stays fast for users who never open it.
+const MovementAnalyzerView = lazy(() => import('./MovementAnalyzerView'))
 
 const VIEW_KEY = 'coretriage_chat_view'
 
@@ -62,10 +66,27 @@ export default function ChatTab({ k, user, onLoginClick }) {
 
   const handleSelectAI = useCallback(() => persistView('ai'), [persistView])
 
+  const handleSelectAnalyzer = useCallback(() => {
+    if (!user) {
+      onLoginClick && onLoginClick()
+      return
+    }
+    if (user?.subscription_state?.state === 'expired') {
+      setShowUpgrade(true)
+      return
+    }
+    persistView('analyzer')
+  }, [user, onLoginClick, persistView])
+
   return (
     <>
       {view === 'picker' && (
-        <ChatPicker user={user} onSelectCoach={handleSelectCoach} onSelectAI={handleSelectAI} />
+        <ChatPicker
+          user={user}
+          onSelectCoach={handleSelectCoach}
+          onSelectAI={handleSelectAI}
+          onSelectAnalyzer={handleSelectAnalyzer}
+        />
       )}
       {view === 'coach' && (
         <CoachChatView user={user} onLoginClick={onLoginClick} onBack={handleBack} />
@@ -75,6 +96,11 @@ export default function ChatTab({ k, user, onLoginClick }) {
       )}
       {view === 'ai' && (
         <AIChatView k={k} user={user} onBack={handleBack} />
+      )}
+      {view === 'analyzer' && (
+        <Suspense fallback={<div className="h-full flex items-center justify-center text-ct-cream/60 text-xs">Loading Movement Analyzer…</div>}>
+          <MovementAnalyzerView onBack={handleBack} />
+        </Suspense>
       )}
 
       <AnimatePresence>
@@ -96,6 +122,6 @@ function initialView({ isCoach, isCoachingSub }) {
   if (isCoachingSub) return 'coach'
   if (typeof window === 'undefined') return 'picker'
   const saved = localStorage.getItem(VIEW_KEY)
-  if (saved === 'coach' || saved === 'ai' || saved === 'inbox') return saved
+  if (saved === 'coach' || saved === 'ai' || saved === 'inbox' || saved === 'analyzer') return saved
   return 'picker'
 }
