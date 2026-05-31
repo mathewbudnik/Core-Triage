@@ -108,6 +108,11 @@ export const setDisplayName = (name) => request('PATCH', '/api/auth/me/display-n
 export const setAvatar      = ({ icon = null, color = null } = {}) =>
   request('PATCH', '/api/auth/me/avatar', { icon, color })
 
+// Privacy — toggle leaderboard visibility.
+// Backend persists via PATCH /api/auth/me/leaderboard-private.
+export const setLeaderboardPrivate = (isPrivate) =>
+  request('PATCH', '/api/auth/me/leaderboard-private', { private: isPrivate })
+
 // Billing (Stripe)
 export const createCheckoutSession = (product) => request('POST', '/api/billing/checkout-session', { product })
 export const openBillingPortal = () => request('POST', '/api/billing/portal', {})

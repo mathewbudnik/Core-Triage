@@ -2,19 +2,15 @@ import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronDown, LogOut, Pencil, CreditCard, Sparkles,
-  Check, X, Loader2, Shield, Mail, Trophy, Palette, Clock,
+  Loader2, Shield, Mail, Clock, Settings,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import {
-  setDisplayName as apiSetDisplayName,
   openBillingPortal,
   getMe,
 } from '../api'
 import AvatarChip from './AvatarChip'
 import AvatarPickerModal from './AvatarPickerModal'
-import DeleteAccountSection from './settings/DeleteAccountSection'
-
-const NAME_RE = /^[A-Za-z0-9_-]{3,20}$/
 
 // Subscription state badges shown in the menu header. The shape is a
 // superset of the old free/pro tier model so existing layouts keep
@@ -37,9 +33,6 @@ function badgeFor(user) {
 export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeClick, onToast }) {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
-  const [editingName, setEditingName] = useState(false)
-  const [draftName, setDraftName] = useState(user.display_name || '')
-  const [savingName, setSavingName] = useState(false)
   const [billingLoading, setBillingLoading] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const wrapRef = useRef(null)
@@ -58,49 +51,12 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
     }
   }, [open])
 
-  useEffect(() => {
-    setDraftName(user.display_name || '')
-    setEditingName(false)
-  }, [user.display_name])
-
-  const localNameError = (() => {
-    if (!editingName) return null
-    if (!draftName) return 'Required.'
-    if (!NAME_RE.test(draftName)) return '3–20 chars · letters, digits, _ -'
-    return null
-  })()
-
   async function refreshUser() {
     try {
       const me = await getMe()
       onUserChange?.(me)
     } catch {}
   }
-
-  async function handleSaveName() {
-    if (localNameError || savingName) return
-    if (draftName === user.display_name) { setEditingName(false); return }
-    // Optimistic update: flip the UI immediately, then sync to the server.
-    // On failure we revert + show a toast so the user knows it didn't stick.
-    const previousName = user.display_name
-    onUserChange?.({ ...user, display_name: draftName })
-    setEditingName(false)
-    setSavingName(true)
-    try {
-      await apiSetDisplayName(draftName)
-      // Refresh in the background to pick up any server-side normalization
-      // (case, trim) without blocking the user.
-      refreshUser()
-    } catch (err) {
-      // Revert and re-open the editor so the user can fix / retry.
-      onUserChange?.({ ...user, display_name: previousName })
-      setEditingName(true)
-      onToast?.({ kind: 'error', message: err.message || 'Could not save display name.' })
-    } finally {
-      setSavingName(false)
-    }
-  }
-
 
   async function handleBilling() {
     if (billingLoading) return
@@ -209,75 +165,16 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
               </div>
             </div>
 
-            {/* Display name editor */}
-            <div className="px-2 py-2 border-b border-ct-hairline">
-              <div className="px-2 py-1.5">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-ct-cream/50 mb-1.5 flex items-center gap-1.5">
-                  <Trophy size={9} />
-                  Display name
-                </p>
-                {editingName ? (
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-1.5">
-                      <input
-                        type="text"
-                        value={draftName}
-                        autoFocus
-                        onChange={(e) => setDraftName(e.target.value.slice(0, 24))}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleSaveName()
-                          if (e.key === 'Escape') { setEditingName(false); setDraftName(user.display_name || '') }
-                        }}
-                        disabled={savingName}
-                        maxLength={24}
-                        className="input-base flex-1 text-base sm:text-xs py-1.5"
-                        placeholder="Display name"
-                      />
-                      <button
-                        onClick={handleSaveName}
-                        disabled={!!localNameError || savingName}
-                        className="p-1.5 rounded-md bg-accent/15 border border-accent/30 text-accent hover:bg-accent/25 disabled:opacity-40"
-                        aria-label="Save"
-                      >
-                        {savingName ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
-                      </button>
-                      <button
-                        onClick={() => { setEditingName(false); setDraftName(user.display_name || '') }}
-                        disabled={savingName}
-                        className="p-1.5 rounded-md bg-ct-hairline border border-ct-rim text-ct-cream/60 hover:text-ct-cream"
-                        aria-label="Cancel"
-                      >
-                        <X size={12} />
-                      </button>
-                    </div>
-                    {localNameError && <p className="text-[10px] text-accent2 px-0.5">{localNameError}</p>}
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setEditingName(true)}
-                    className="w-full flex items-center justify-between text-left text-sm text-ct-cream hover:text-ct-terracotta group"
-                  >
-                    <span className="truncate font-medium">
-                      {user.display_name || <span className="italic text-ct-cream/50">Set a display name</span>}
-                    </span>
-                    <Pencil size={11} className="text-ct-cream/30 group-hover:text-ct-terracotta flex-shrink-0 ml-2" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Customize avatar */}
+            {/* Settings */}
             <div className="py-1 border-b border-ct-hairline">
               <button
-                onClick={() => { setPickerOpen(true); setOpen(false) }}
+                onClick={() => { setOpen(false); navigate('/settings') }}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-ct-terra-tint transition-colors"
                 role="menuitem"
               >
-                <Palette size={14} className="text-ct-terracotta flex-shrink-0" />
-                <span className="text-xs font-semibold text-ct-cream flex-1">Customize avatar</span>
-                <span className="text-[10px] text-ct-cream/50">
-                  {user.avatar_icon ? 'Edit' : 'Pick one'}
-                </span>
+                <Settings size={14} className="text-ct-cream/50 flex-shrink-0" />
+                <span className="text-xs font-semibold text-ct-cream flex-1">Settings</span>
+                <span className="text-[10px] text-ct-cream/50">Profile · climbing · billing</span>
               </button>
             </div>
 
@@ -339,11 +236,6 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
                 <LogOut size={14} className="flex-shrink-0" />
                 <span className="text-xs font-semibold">Log out</span>
               </button>
-            </div>
-
-            {/* Danger zone */}
-            <div className="px-4 pb-4">
-              <DeleteAccountSection onDeleted={onLogout} />
             </div>
           </motion.div>
         )}

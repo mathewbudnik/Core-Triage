@@ -156,8 +156,9 @@ export default defineConfig({
     }),
   ],
   test: {
-    environment: 'node',
+    environment: 'jsdom',
     globals: true,
+    setupFiles: ['./src/lib/__tests__/setup.js'],
   },
   build: {
     rollupOptions: {
