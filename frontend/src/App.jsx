@@ -549,7 +549,7 @@ export default function App() {
               <Logo size={32} dark />
               <span
                 className="text-lg font-bold bg-clip-text text-transparent"
-                style={{ backgroundImage: 'linear-gradient(90deg, #d97757, #f0a875, #f0f5ed)' }}
+                style={{ backgroundImage: 'linear-gradient(90deg, #3FD8A4, #d97757)' }}
               >
                 CoreTriage
               </span>
