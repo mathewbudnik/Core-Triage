@@ -43,6 +43,7 @@ const VerifyEmailPage      = lazy(() => import('./components/VerifyEmailPage'))
 const BillingReturnPage    = lazy(() => import('./components/BillingReturnPage'))
 const ForgotPasswordPage   = lazy(() => import('./components/auth/ForgotPasswordPage'))
 const ResetPasswordPage    = lazy(() => import('./components/auth/ResetPasswordPage'))
+const SettingsPage         = lazy(() => import('./components/settings/SettingsPage'))
 const DesignSystem         = import.meta.env.DEV
   ? lazy(() => import('./components/DesignSystem'))
   : null
@@ -899,6 +900,7 @@ export default function App() {
                   <Route path="/train"         element={<TrainTab user={user} dbReady={dbReady} onLoginClick={() => setShowAuth(true)} />} />
                   <Route path="/progress"        element={<ProgressTab user={user} onUserChange={setUser} onLoginClick={() => setShowAuth(true)} />} />
                   <Route path="/progress/awards" element={<AwardsPage user={user} />} />
+                  <Route path="/settings" element={<SettingsPage user={user} onUserChange={setUser} onLogout={handleLogout} onToast={setToast} onUpgradeClick={() => { setUpgradeTrigger('feature'); setShowUpgrade(true) }} />} />
                   <Route path="/chat"          element={<ChatTab k={k} user={user} onLoginClick={() => setShowAuth(true)} />} />
                   <Route path="/history/*"     element={<HistoryTab dbReady={dbReady} user={user} onLoginClick={() => setShowAuth(true)} />} />
                   <Route path="/about"         element={<AboutTab />} />
