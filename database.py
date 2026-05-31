@@ -768,6 +768,66 @@ def is_email_verified(user_id: int) -> bool:
     return bool(row and row[0])
 
 
+# ── Password reset ──────────────────────────────────────────────────────────
+
+def set_password_reset_token(user_id: int, ttl_minutes: int = 60) -> tuple[str, str]:
+    """Generate a fresh password-reset token. Returns (bcrypt_hash, plaintext).
+
+    Plaintext is what we email; bcrypt hash is what we persist."""
+    import bcrypt
+    import secrets
+    from datetime import datetime, timedelta, timezone
+
+    plaintext = secrets.token_urlsafe(32)
+    token_hash = bcrypt.hashpw(plaintext.encode(), bcrypt.gensalt(rounds=10)).decode()
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=ttl_minutes)
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE users SET password_reset_token_hash = %s, password_reset_expires_at = %s "
+                "WHERE id = %s;",
+                (token_hash, expires_at, user_id),
+            )
+        conn.commit()
+    return token_hash, plaintext
+
+
+def consume_password_reset_token(plaintext: str, new_password_hash: str) -> int | None:
+    """Validate a reset token and update the password. Returns user_id on success,
+    None on any failure (wrong token, expired, or already used)."""
+    import bcrypt
+    from datetime import datetime, timezone
+
+    if not plaintext or len(plaintext) < 16 or len(plaintext) > 200:
+        return None
+
+    # Token is bcrypt-hashed so we can't index by it — scan rows with a non-null
+    # reset hash. In practice this set is tiny (a few rows at any time).
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id, password_reset_token_hash, password_reset_expires_at "
+                "FROM users WHERE password_reset_token_hash IS NOT NULL;"
+            )
+            rows = cur.fetchall()
+            for uid, token_hash, expires_at in rows:
+                if not token_hash or not expires_at:
+                    continue
+                if expires_at < datetime.now(timezone.utc):
+                    continue
+                if bcrypt.checkpw(plaintext.encode(), token_hash.encode()):
+                    cur.execute(
+                        "UPDATE users SET password_hash = %s, "
+                        "password_reset_token_hash = NULL, "
+                        "password_reset_expires_at = NULL "
+                        "WHERE id = %s;",
+                        (new_password_hash, uid),
+                    )
+                    conn.commit()
+                    return uid
+    return None
+
+
 # ── Stripe billing state ───────────────────────────────────────────────────
 
 def get_stripe_customer_id(user_id: int) -> str | None:
