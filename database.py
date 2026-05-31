@@ -852,9 +852,9 @@ def consume_openai_tokens(user_id: int, tokens: int, daily_cap: int) -> tuple[bo
 
     Rolls the per-user counter at UTC midnight. If the call would exceed
     `daily_cap`, returns (False, remaining_today) without recording usage."""
-    from datetime import date
+    from datetime import datetime, timezone
 
-    today = date.today()
+    today = datetime.now(timezone.utc).date()
     with _connect() as conn:
         with conn.cursor() as cur:
             cur.execute(

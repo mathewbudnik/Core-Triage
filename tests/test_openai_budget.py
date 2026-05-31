@@ -4,7 +4,7 @@ import os
 import sys
 import unittest
 from unittest import mock
-from datetime import date
+from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -71,7 +71,8 @@ class OpenAIBudgetTests(unittest.TestCase):
 
     def test_blocks_when_over_cap(self):
         from database import consume_openai_tokens
-        self.store[1] = {"tokens": 9_900, "date": date.today()}
+        date_today = datetime.now(timezone.utc).date()
+        self.store[1] = {"tokens": 9_900, "date": date_today}
         ok, remaining = consume_openai_tokens(user_id=1, tokens=500, daily_cap=10_000)
         self.assertFalse(ok)
         self.assertEqual(remaining, 100)
@@ -79,7 +80,8 @@ class OpenAIBudgetTests(unittest.TestCase):
     def test_resets_on_new_utc_day(self):
         from database import consume_openai_tokens
         from datetime import timedelta
-        self.store[1] = {"tokens": 9_999, "date": date.today() - timedelta(days=1)}
+        date_today = datetime.now(timezone.utc).date()
+        self.store[1] = {"tokens": 9_999, "date": date_today - timedelta(days=1)}
         ok, remaining = consume_openai_tokens(user_id=1, tokens=500, daily_cap=10_000)
         self.assertTrue(ok)
         self.assertEqual(remaining, 9_500)
