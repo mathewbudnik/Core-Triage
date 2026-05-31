@@ -39,6 +39,3 @@ frontend/public/mp-wasm/
 
 # Motion-audit reports (one-off design audit HTMLs, not source)
 motion-audits/
-
-# Internal planning docs — kept private to the team (mirrored to ~/coretriage-private)
-docs/superpowers/
