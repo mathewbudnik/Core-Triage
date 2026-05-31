@@ -54,6 +54,7 @@ from database import (
     check_rehab_exercise,
     create_user,
     delete_session,
+    delete_user,
     get_active_plan,
     get_avatar,
     get_chat_used,
@@ -709,6 +710,10 @@ class ResetPasswordRequest(BaseModel):
     new_password: str
 
 
+class DeleteAccountRequest(BaseModel):
+    password: str
+
+
 @app.post("/api/auth/verify-email")
 @limiter.limit("10/minute")
 def verify_email_endpoint(request: Request, req: VerifyEmailRequest):
@@ -731,6 +736,24 @@ def resend_verification_endpoint(request: Request, user: dict = Depends(get_curr
     if not email:
         raise HTTPException(status_code=404, detail="User not found")
     _issue_verification_email(user["id"], email)
+    return {"ok": True}
+
+
+@app.delete("/api/auth/account")
+@limiter.limit("5/minute")
+def delete_account(
+    request: Request,
+    req: DeleteAccountRequest,
+    user: dict = Depends(get_current_user),
+):
+    """Permanently delete the signed-in user. Requires password re-entry.
+    Returns 401 on wrong password (same shape as login failure)."""
+    db_user = get_user_by_email(user["email"])
+    if not db_user or not verify_password(req.password, db_user[2]):
+        log_security_event("account_delete_wrong_password", _get_client_ip(request), user["email"])
+        raise HTTPException(status_code=401, detail="Password is incorrect.")
+    delete_user(user["id"])
+    log_security_event("account_deleted", _get_client_ip(request), user["email"])
     return {"ok": True}
 
 

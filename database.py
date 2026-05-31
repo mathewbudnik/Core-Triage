@@ -571,6 +571,23 @@ def accept_disclaimer(user_id: int) -> None:
         conn.commit()
 
 
+def delete_user(user_id: int) -> bool:
+    """Delete a user and all data that cascades via FK.
+
+    All tables that reference users(id) use ON DELETE CASCADE (see init_db),
+    so a single DELETE here is sufficient: sessions, athlete_profiles,
+    training_plans, training_logs, awards, rehab_progress, coach_threads
+    (and their messages) all get removed.
+
+    Returns True if a row was deleted, False if user_id didn't exist."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM users WHERE id = %s;", (user_id,))
+            deleted = cur.rowcount
+        conn.commit()
+    return deleted > 0
+
+
 def log_security_event(event_type: str, ip_address: str, email_attempted: str) -> None:
     try:
         with _connect() as conn:
