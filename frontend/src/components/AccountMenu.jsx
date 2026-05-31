@@ -12,6 +12,7 @@ import {
 } from '../api'
 import AvatarChip from './AvatarChip'
 import AvatarPickerModal from './AvatarPickerModal'
+import DeleteAccountSection from './settings/DeleteAccountSection'
 
 const NAME_RE = /^[A-Za-z0-9_-]{3,20}$/
 
@@ -338,6 +339,11 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
                 <LogOut size={14} className="flex-shrink-0" />
                 <span className="text-xs font-semibold">Log out</span>
               </button>
+            </div>
+
+            {/* Danger zone */}
+            <div className="px-4 pb-4">
+              <DeleteAccountSection onDeleted={onLogout} />
             </div>
           </motion.div>
         )}
