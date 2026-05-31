@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, memo } from 'react'
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import { X, Loader2, AlertTriangle } from 'lucide-react'
 import { authLogin, authRegister, setDisplayName } from '../api'
 import Logo from './Logo'
@@ -193,6 +194,15 @@ function AuthModal({ onClose, onAuth }) {
             {loading && <Loader2 size={14} className="animate-spin" />}
             {mode === 'login' ? 'Log In' : 'Create Account'}
           </button>
+          {mode === 'login' && (
+            <Link
+              to="/forgot-password"
+              onClick={onClose}
+              className="text-sm text-ct-cream/50 hover:text-ct-cream/80 underline mt-1 inline-block transition-colors"
+            >
+              Forgot password?
+            </Link>
+          )}
         </form>
 
         <p className="text-xs text-center text-ct-cream/60">

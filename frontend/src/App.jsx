@@ -41,6 +41,8 @@ const HistoryTab           = lazy(() => import('./components/HistoryTab'))
 const AboutTab             = lazy(() => import('./components/AboutTab'))
 const VerifyEmailPage      = lazy(() => import('./components/VerifyEmailPage'))
 const BillingReturnPage    = lazy(() => import('./components/BillingReturnPage'))
+const ForgotPasswordPage   = lazy(() => import('./components/auth/ForgotPasswordPage'))
+const ResetPasswordPage    = lazy(() => import('./components/auth/ResetPasswordPage'))
 const DesignSystem         = import.meta.env.DEV
   ? lazy(() => import('./components/DesignSystem'))
   : null
@@ -112,6 +114,8 @@ export default function App() {
   const isStandalonePage = location.pathname === '/verify-email'
                         || location.pathname === '/billing/success'
                         || location.pathname === '/billing/cancel'
+                        || location.pathname === '/forgot-password'
+                        || location.pathname === '/reset-password'
 
   // Sidebar nav still uses these labels — derive activeTabLabel from the URL.
   const activeTabId = useMemo(() => {
@@ -358,6 +362,20 @@ export default function App() {
     return (
       <Suspense fallback={<RouteLoading />}>
         <BillingReturnPage outcome="cancel" onDone={() => navigate('/')} />
+      </Suspense>
+    )
+  }
+  if (location.pathname === '/forgot-password') {
+    return (
+      <Suspense fallback={<RouteLoading />}>
+        <ForgotPasswordPage />
+      </Suspense>
+    )
+  }
+  if (location.pathname === '/reset-password') {
+    return (
+      <Suspense fallback={<RouteLoading />}>
+        <ResetPasswordPage />
       </Suspense>
     )
   }
