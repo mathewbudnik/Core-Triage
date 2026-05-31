@@ -10,6 +10,11 @@
  *   - children: section body.
  *   - tone:  'default' | 'danger'.  Danger renders a red-tinted treatment.
  */
+
+// Offset used by scrollIntoView() so a clicked sidebar/pill-strip nav lands
+// the section title comfortably below the app's sticky topbar (and the mobile
+// pill strip on small viewports).
+const SCROLL_MARGIN = '110px'
 export default function SettingsSection({ id, icon: Icon, title, sub, children, tone = 'default' }) {
   const isDanger = tone === 'danger'
   return (
@@ -22,8 +27,11 @@ export default function SettingsSection({ id, icon: Icon, title, sub, children, 
       }
       style={
         isDanger
-          ? { backgroundImage: 'linear-gradient(180deg, rgba(244,114,114,0.04), rgba(244,114,114,0.01))' }
-          : undefined
+          ? {
+              backgroundImage: 'linear-gradient(180deg, rgba(244,114,114,0.04), rgba(244,114,114,0.01))',
+              scrollMarginTop: SCROLL_MARGIN,
+            }
+          : { scrollMarginTop: SCROLL_MARGIN }
       }
     >
       {isDanger && (

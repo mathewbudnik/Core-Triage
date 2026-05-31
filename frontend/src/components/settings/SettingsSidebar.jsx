@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { User, Mountain, CreditCard, Lock, Eye, Database, Info, AlertTriangle } from 'lucide-react'
 
 const ITEMS = [
@@ -12,37 +13,54 @@ const ITEMS = [
 ]
 
 /**
- * Sticky left-rail nav. Hidden on mobile (<= 920px). Click → smooth-scroll to
- * the matching section. `active` is controlled by the SettingsPage's scroll-spy.
+ * Sticky left-rail nav (desktop only). Click → smooth-scroll via `onNavigate`.
+ * Visual treatment mirrors the main app sidebar at App.jsx — terracotta tint
+ * on active, soft glow, and a layoutId-animated indicator dot that slides
+ * between active items.
  */
-export default function SettingsSidebar({ active }) {
+export default function SettingsSidebar({ active, onNavigate }) {
   return (
     <aside className="hidden lg:block sticky top-[78px] self-start">
       <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-ct-cream/30 mb-3 px-3">
         Settings
       </div>
-      <nav aria-label="Settings sections" className="flex flex-col">
+      <nav aria-label="Settings sections" className="flex flex-col space-y-1">
         {ITEMS.map(({ id, label, icon: Icon, danger }) => {
           const isActive = active === id
           return (
-            <a
+            <button
               key={id}
-              href={`#${id}`}
+              type="button"
+              onClick={() => onNavigate?.(id)}
               className={
-                'relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ' +
+                `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-100 border text-left ` +
                 (isActive
-                  ? 'bg-ct-terra-tint text-ct-terracotta font-semibold'
+                  ? ''
                   : danger
-                    ? 'text-red-400/55 hover:text-red-400 hover:bg-red-500/5'
-                    : 'text-ct-cream/50 hover:text-ct-cream hover:bg-ct-cream/[0.03]')
+                    ? 'text-red-400/55 hover:text-red-400 hover:bg-red-500/5 border-transparent'
+                    : 'text-ct-cream/60 hover:text-ct-cream hover:bg-ct-hairline border-transparent')
               }
+              style={isActive ? {
+                background: 'rgba(217,119,87,0.12)',
+                color: '#f0a875',
+                borderColor: 'rgba(217,119,87,0.30)',
+                boxShadow: '0 0 12px rgba(217,119,87,0.18)',
+              } : undefined}
             >
-              {isActive && (
-                <span aria-hidden className="absolute left-0 top-2 bottom-2 w-[3px] rounded bg-ct-terracotta" />
-              )}
-              <Icon size={15} className="flex-shrink-0 opacity-80" />
+              <Icon size={16} strokeWidth={isActive ? 2.25 : 2} className="flex-shrink-0" />
               {label}
-            </a>
+              {isActive && (
+                <motion.div
+                  layoutId="settings-nav-indicator"
+                  transition={{ duration: 0.12, ease: [0, 0, 0.2, 1] }}
+                  className="ml-auto w-1.5 h-1.5 rounded-full"
+                  style={{
+                    background: '#d97757',
+                    boxShadow: '0 0 6px rgba(217,119,87,0.55)',
+                  }}
+                />
+              )}
+            </button>
           )
         })}
       </nav>

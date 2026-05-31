@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import SettingsSidebar from './SettingsSidebar'
+import SettingsMobileTabs from './SettingsMobileTabs'
 import ProfileHero from './sections/ProfileHero'
 import ClimbingProfileSection from './sections/ClimbingProfileSection'
 import SubscriptionSection from './sections/SubscriptionSection'
@@ -22,6 +23,9 @@ const SECTION_IDS = [
 export default function SettingsPage({ user, onUserChange, onLogout, onToast, onUpgradeClick }) {
   const [active, setActive] = useState('profile')
 
+  // Scroll-spy: highlight the section closest to the viewport's "lower top"
+  // (a hair below the sticky app topbar). Threshold is intentionally below the
+  // sections' scrollMarginTop so a freshly-scrolled-to section reads as active.
   useEffect(() => {
     function onScroll() {
       const offsets = SECTION_IDS.map((id) => {
@@ -29,13 +33,25 @@ export default function SettingsPage({ user, onUserChange, onLogout, onToast, on
         if (!el) return { id, top: Infinity }
         return { id, top: el.getBoundingClientRect().top }
       })
-      const passed = offsets.filter((o) => o.top <= 120)
+      const passed = offsets.filter((o) => o.top <= 140)
       const next = passed.length ? passed[passed.length - 1].id : 'profile'
       setActive(next)
     }
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  // Smooth-scroll to a section. The section's own `scrollMarginTop` (set in
+  // SettingsSection / ProfileHero) provides the topbar+pill-strip offset so we
+  // don't have to compute it here.
+  const scrollToSection = useCallback((id) => {
+    const el = document.getElementById(id)
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    // Optimistically mark active so the nav indicator slides immediately
+    // (scroll-spy will reconcile once the smooth scroll completes).
+    setActive(id)
   }, [])
 
   return (
@@ -48,7 +64,7 @@ export default function SettingsPage({ user, onUserChange, onLogout, onToast, on
       }}
     >
       <div className="relative z-[1] max-w-[1140px] mx-auto grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-9 px-5 lg:px-7 pt-7 pb-20">
-        <SettingsSidebar active={active} />
+        <SettingsSidebar active={active} onNavigate={scrollToSection} />
 
         <main className="min-w-0">
           <div className="mb-7">
@@ -72,6 +88,8 @@ export default function SettingsPage({ user, onUserChange, onLogout, onToast, on
               Profile, climbing style, subscription, and privacy — all in one place.
             </p>
           </div>
+
+          <SettingsMobileTabs active={active} onNavigate={scrollToSection} />
 
           <ProfileHero user={user} onUserChange={onUserChange} onToast={onToast} />
           <ClimbingProfileSection user={user} onUserChange={onUserChange} onToast={onToast} />

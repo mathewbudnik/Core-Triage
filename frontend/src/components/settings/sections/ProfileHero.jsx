@@ -75,6 +75,7 @@ export default function ProfileHero({ user, onUserChange, onToast }) {
             'radial-gradient(ellipse 600px 300px at 20% 0%, rgba(20,184,166,0.10), transparent 65%), ' +
             'radial-gradient(ellipse 500px 400px at 100% 100%, rgba(217,119,87,0.10), transparent 60%), ' +
             'linear-gradient(180deg, #2a3534, #1c2322)',
+          scrollMarginTop: '110px',
         }}
       >
         <div className="relative flex gap-5 items-center">
