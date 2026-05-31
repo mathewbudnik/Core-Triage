@@ -1,5 +1,6 @@
 """Password-reset email rendering and dispatch via Resend."""
 from __future__ import annotations
+
 import logging
 
 from src.email import send_email

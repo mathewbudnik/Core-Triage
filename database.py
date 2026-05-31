@@ -791,13 +791,14 @@ def set_password_reset_token(user_id: int, ttl_minutes: int = 60) -> tuple[str, 
     """Generate a fresh password-reset token. Returns (bcrypt_hash, plaintext).
 
     Plaintext is what we email; bcrypt hash is what we persist."""
-    import bcrypt
     import secrets
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
+
+    import bcrypt
 
     plaintext = secrets.token_urlsafe(32)
     token_hash = bcrypt.hashpw(plaintext.encode(), bcrypt.gensalt(rounds=10)).decode()
-    expires_at = datetime.now(timezone.utc) + timedelta(minutes=ttl_minutes)
+    expires_at = datetime.now(UTC) + timedelta(minutes=ttl_minutes)
     with _connect() as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -812,8 +813,9 @@ def set_password_reset_token(user_id: int, ttl_minutes: int = 60) -> tuple[str, 
 def consume_password_reset_token(plaintext: str, new_password_hash: str) -> int | None:
     """Validate a reset token and update the password. Returns user_id on success,
     None on any failure (wrong token, expired, or already used)."""
+    from datetime import datetime
+
     import bcrypt
-    from datetime import datetime, timezone
 
     if not plaintext or len(plaintext) < 16 or len(plaintext) > 200:
         return None
@@ -830,7 +832,7 @@ def consume_password_reset_token(plaintext: str, new_password_hash: str) -> int 
             for uid, token_hash, expires_at in rows:
                 if not token_hash or not expires_at:
                     continue
-                if expires_at < datetime.now(timezone.utc):
+                if expires_at < datetime.now(UTC):
                     continue
                 if bcrypt.checkpw(plaintext.encode(), token_hash.encode()):
                     cur.execute(
@@ -852,9 +854,9 @@ def consume_openai_tokens(user_id: int, tokens: int, daily_cap: int) -> tuple[bo
 
     Rolls the per-user counter at UTC midnight. If the call would exceed
     `daily_cap`, returns (False, remaining_today) without recording usage."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     with _connect() as conn:
         with conn.cursor() as cur:
             cur.execute(

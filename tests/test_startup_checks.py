@@ -1,5 +1,6 @@
 """Production startup must refuse to run with missing/placeholder secrets."""
 from __future__ import annotations
+
 import os
 import sys
 import unittest

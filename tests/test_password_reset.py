@@ -1,9 +1,11 @@
 """HTTP-level tests for forgot/reset password endpoints."""
 from __future__ import annotations
+
 import os
 import sys
 import unittest
 from unittest import mock
+
 from fastapi.testclient import TestClient
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))

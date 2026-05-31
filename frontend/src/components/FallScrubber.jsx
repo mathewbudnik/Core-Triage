@@ -17,10 +17,13 @@ import { Pin } from 'lucide-react'
  *   - value:    current fall-time in ms (null until marked)
  *   - onChange: (ms | null) => void
  */
-export default function FallScrubber({ videoRef, durationS, value, onChange }) {
+export default function FallScrubber({ videoRef, durationS, minS = 0, maxS = null, value, onChange }) {
   const containerRef = useRef(null)
   const previewRef = useRef(null)   // small <video> we render here, separate from the main one
-  const [scrubT, setScrubT] = useState(0)   // current scrub position in seconds (decoupled from `value`)
+  // Effective bounds: caller can constrain to a sub-range (e.g. trim window).
+  const lo = Math.max(0, minS)
+  const hi = Math.min(durationS, maxS ?? durationS)
+  const [scrubT, setScrubT] = useState(lo)   // current scrub position in seconds (decoupled from `value`)
   const [previewSrc, setPreviewSrc] = useState(null)
 
   // The parent's <video> element holds the Blob URL we want to mirror.
@@ -36,13 +39,13 @@ export default function FallScrubber({ videoRef, durationS, value, onChange }) {
 
   // Wire the range input → preview video's currentTime
   const setTime = useCallback((t) => {
-    const clamped = Math.max(0, Math.min(durationS, t))
+    const clamped = Math.max(lo, Math.min(hi, t))
     setScrubT(clamped)
     const v = previewRef.current
     if (v) {
       try { v.currentTime = clamped } catch { /* may throw if not loaded yet */ }
     }
-  }, [durationS])
+  }, [lo, hi])
 
   // When `value` arrives or changes externally (e.g. reset), sync the scrubber
   useEffect(() => {
@@ -79,8 +82,8 @@ export default function FallScrubber({ videoRef, durationS, value, onChange }) {
       {/* Range slider — frame-precise (we use 0.05s steps for 30fps approx) */}
       <input
         type="range"
-        min={0}
-        max={durationS}
+        min={lo}
+        max={hi}
         step={1 / 30}
         value={scrubT}
         onChange={(e) => setTime(parseFloat(e.target.value))}
@@ -91,7 +94,7 @@ export default function FallScrubber({ videoRef, durationS, value, onChange }) {
       {/* Time + actions */}
       <div className="flex items-center justify-between gap-3">
         <span className="text-[11px] text-ct-cream/55 ct-tnum">
-          {formatTime(scrubT)} / {formatTime(durationS)}
+          {formatTime(scrubT)} / {formatTime(hi)}
         </span>
         <div className="flex items-center gap-2">
           {value != null && (

@@ -33,12 +33,17 @@ const SEVERITY_RANK = { critical: 3, important: 2, polish: 1 }
  * @param {Object} props
  * @param {Array} props.findings — output from runRules()
  * @param {number} props.durationS — clip duration in seconds
+ * @param {number} [props.startMs=0] — lane start in ms (for trim windows)
+ * @param {number} [props.endMs] — lane end in ms (defaults to clip duration)
  * @param {number|null} props.fallTimeMs — user-marked fall position (or null)
  * @param {(ms: number) => void} props.onJumpTo
  */
-export default function TimelineRibbon({ findings, durationS, fallTimeMs, onJumpTo }) {
+export default function TimelineRibbon({ findings, durationS, startMs = 0, endMs = null, fallTimeMs, onJumpTo }) {
   if (!durationS || durationS <= 0) return null
   const durationMs = durationS * 1000
+  const laneStart = Math.max(0, startMs)
+  const laneEnd = endMs != null ? Math.min(durationMs, endMs) : durationMs
+  const laneSpan = Math.max(1, laneEnd - laneStart)
 
   // Flatten all instances into markers. If two findings share an exact
   // timestamp (rare but possible), keep the higher-severity one on top.
@@ -48,6 +53,7 @@ export default function TimelineRibbon({ findings, durationS, fallTimeMs, onJump
   for (const finding of findings ?? []) {
     if (finding.kind === 'win') continue
     for (const ts of finding.timestamps ?? []) {
+      if (ts < laneStart || ts > laneEnd) continue
       markers.push({
         ts,
         severity: finding.severity,
@@ -66,7 +72,7 @@ export default function TimelineRibbon({ findings, durationS, fallTimeMs, onJump
       <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.12em] text-ct-cream/45 mb-2">
         <span>Timeline</span>
         <span className="ct-tnum text-ct-cream/35 normal-case tracking-normal">
-          {formatTime(0)} – {formatTime(durationMs)}
+          {formatTime(laneStart)} – {formatTime(laneEnd)}
         </span>
       </div>
 
@@ -74,9 +80,9 @@ export default function TimelineRibbon({ findings, durationS, fallTimeMs, onJump
       <div className="relative h-6 bg-ct-hairline rounded-full">
         {/* Fall marker (drawn first so finding markers sit on top of it
             visually for accessibility — tap targets get priority) */}
-        {fallTimeMs != null && fallTimeMs >= 0 && fallTimeMs <= durationMs && (
+        {fallTimeMs != null && fallTimeMs >= laneStart && fallTimeMs <= laneEnd && (
           <FallMarker
-            leftPct={(fallTimeMs / durationMs) * 100}
+            leftPct={((fallTimeMs - laneStart) / laneSpan) * 100}
             ts={fallTimeMs}
             onJumpTo={onJumpTo}
           />
@@ -92,7 +98,7 @@ export default function TimelineRibbon({ findings, durationS, fallTimeMs, onJump
             aria-label={`${m.name} at ${formatTime(m.ts)} — jump`}
             className={`absolute top-1/2 w-3 h-3 rounded-full border ${SEVERITY_DOT[m.severity]} cursor-pointer hover:scale-125 transition-transform`}
             style={{
-              left: `${(m.ts / durationMs) * 100}%`,
+              left: `${((m.ts - laneStart) / laneSpan) * 100}%`,
               transform: 'translate(-50%, -50%)',
             }}
           />

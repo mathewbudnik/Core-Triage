@@ -52,6 +52,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from database import (
     accept_disclaimer,
     check_rehab_exercise,
+    consume_openai_tokens,
+    consume_password_reset_token,
     create_user,
     delete_session,
     delete_user,
@@ -98,8 +100,6 @@ from database import (
     set_password_reset_token,
     set_stripe_customer_id,
     set_user_role_by_email,
-    consume_openai_tokens,
-    consume_password_reset_token,
     uncheck_rehab_exercise,
     update_last_login,
     update_subscription_state,

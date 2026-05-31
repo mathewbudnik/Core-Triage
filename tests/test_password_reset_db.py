@@ -1,10 +1,11 @@
 """Unit tests for password-reset DB helpers (no real Postgres)."""
 from __future__ import annotations
+
 import os
 import sys
 import unittest
+from datetime import UTC, datetime, timedelta
 from unittest import mock
-from datetime import datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -79,7 +80,7 @@ class PasswordResetDbTests(unittest.TestCase):
         self._patcher.stop()
 
     def test_set_and_consume_round_trip(self):
-        from database import set_password_reset_token, consume_password_reset_token
+        from database import consume_password_reset_token, set_password_reset_token
         self.store[42] = {}
         token_hash, plaintext = set_password_reset_token(42, ttl_minutes=60)
         self.assertTrue(plaintext)
@@ -87,21 +88,21 @@ class PasswordResetDbTests(unittest.TestCase):
         self.assertEqual(new_user_id, 42)
 
     def test_consume_returns_none_for_wrong_token(self):
-        from database import set_password_reset_token, consume_password_reset_token
+        from database import consume_password_reset_token, set_password_reset_token
         self.store[42] = {}
         set_password_reset_token(42, ttl_minutes=60)
         self.assertIsNone(consume_password_reset_token("nope-this-is-not-the-real-token", new_password_hash="x"))
 
     def test_consume_returns_none_for_expired_token(self):
-        from database import set_password_reset_token, consume_password_reset_token
+        from database import consume_password_reset_token, set_password_reset_token
         self.store[42] = {}
         _, plaintext = set_password_reset_token(42, ttl_minutes=60)
         # Manually expire it
-        self.store[42]["expires"] = datetime.now(timezone.utc) - timedelta(minutes=1)
+        self.store[42]["expires"] = datetime.now(UTC) - timedelta(minutes=1)
         self.assertIsNone(consume_password_reset_token(plaintext, new_password_hash="x"))
 
     def test_token_is_single_use(self):
-        from database import set_password_reset_token, consume_password_reset_token
+        from database import consume_password_reset_token, set_password_reset_token
         self.store[42] = {}
         _, plaintext = set_password_reset_token(42, ttl_minutes=60)
         self.assertEqual(consume_password_reset_token(plaintext, new_password_hash="x"), 42)

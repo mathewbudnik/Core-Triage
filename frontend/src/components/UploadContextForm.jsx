@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ChevronRight, CheckCircle2, AlertCircle, XCircle } from 'lucide-react'
 import FallScrubber from './FallScrubber'
+import TrimScrubber from './TrimScrubber'
 
 /**
  * Per-upload context form. Shown after the video loads its metadata,
@@ -72,7 +73,7 @@ const YDS_GRADES = (() => {
   return out
 })()
 
-export default function UploadContextForm({ videoRef, durationS, profile, onSubmit, onCancel }) {
+export default function UploadContextForm({ videoRef, durationS, maxTrimS = 60, profile, onSubmit, onCancel }) {
   const [venue, setVenue] = useState(null)
   const [wallAngle, setWallAngle] = useState(null)
   const [discipline, setDiscipline] = useState(null)
@@ -80,6 +81,29 @@ export default function UploadContextForm({ videoRef, durationS, profile, onSubm
   const [outcome, setOutcome] = useState(null)
   const [fallTimeMs, setFallTimeMs] = useState(null)
   const [focus, setFocus] = useState(profile?.climbingFocus ?? [])
+
+  // Trim window defaults to the first min(maxTrimS, duration) seconds. The
+  // scrubber clamps further edits so end - start <= maxTrimS.
+  const [trim, setTrim] = useState(() => ({
+    startMs: 0,
+    endMs: Math.round(Math.min(durationS, maxTrimS) * 1000),
+  }))
+
+  // When duration arrives late (loadedmetadata races React state), re-seed
+  // the trim so we don't get stuck at endMs=0.
+  useEffect(() => {
+    if (durationS > 0 && trim.endMs === 0) {
+      setTrim({ startMs: 0, endMs: Math.round(Math.min(durationS, maxTrimS) * 1000) })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [durationS])
+
+  // If the user marked a fall outside the current trim window, clear it
+  // so they re-mark inside the analyzed range.
+  useEffect(() => {
+    if (fallTimeMs == null) return
+    if (fallTimeMs < trim.startMs || fallTimeMs > trim.endMs) setFallTimeMs(null)
+  }, [trim.startMs, trim.endMs, fallTimeMs])
 
   // Reset grade if discipline switches between boulder and not (different scales)
   useEffect(() => {
@@ -89,11 +113,15 @@ export default function UploadContextForm({ videoRef, durationS, profile, onSubm
   const gradeOptions = discipline === 'boulder' ? V_GRADES : YDS_GRADES
   const gradeSystem  = discipline === 'boulder' ? 'V' : 'YDS'
 
+  const trimWindowS = (trim.endMs - trim.startMs) / 1000
+  const trimOk = trimWindowS >= 0.5 && trimWindowS <= maxTrimS + 0.05
+
   const requiredOk = useMemo(() => {
     if (!venue || !wallAngle || !discipline || !grade || !outcome) return false
     if (outcome === 'fell' && fallTimeMs == null) return false
+    if (!trimOk) return false
     return true
-  }, [venue, wallAngle, discipline, grade, outcome, fallTimeMs])
+  }, [venue, wallAngle, discipline, grade, outcome, fallTimeMs, trimOk])
 
   const toggleFocus = (tag) => {
     setFocus((prev) => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
@@ -109,6 +137,8 @@ export default function UploadContextForm({ videoRef, durationS, profile, onSubm
       outcome,
       fallTimeMs: outcome === 'fell' ? fallTimeMs : null,
       focus,
+      trimStartMs: trim.startMs,
+      trimEndMs: trim.endMs,
     })
   }
 
@@ -120,6 +150,22 @@ export default function UploadContextForm({ videoRef, durationS, profile, onSubm
           A few quick questions before we analyze — they make the feedback much more accurate.
         </p>
       </div>
+
+      {/* Trim — pick which portion of the clip to analyze. Shorter, focused
+          windows give cleaner reads; cap is enforced by TrimScrubber. */}
+      <Field
+        label="Trim"
+        hint={`Drag the handles to pick the section you want analyzed (up to ${maxTrimS} s). Shorter clips give the cleanest reads.`}
+      >
+        <TrimScrubber
+          videoRef={videoRef}
+          durationS={durationS}
+          startMs={trim.startMs}
+          endMs={trim.endMs}
+          maxWindowS={maxTrimS}
+          onChange={setTrim}
+        />
+      </Field>
 
       {/* Venue */}
       <Field label="Where" hint="Board = Kilter, Moon, Tension or other system board. Analysis is tuned for the bigger movement style.">
@@ -188,6 +234,8 @@ export default function UploadContextForm({ videoRef, durationS, profile, onSubm
           <FallScrubber
             videoRef={videoRef}
             durationS={durationS}
+            minS={trim.startMs / 1000}
+            maxS={trim.endMs / 1000}
             value={fallTimeMs}
             onChange={setFallTimeMs}
           />
@@ -229,6 +277,7 @@ export default function UploadContextForm({ videoRef, durationS, profile, onSubm
             {!grade && 'grade, '}
             {!outcome && 'outcome, '}
             {outcome === 'fell' && fallTimeMs == null && 'fall frame, '}
+            {!trimOk && `trim window (max ${maxTrimS}s), `}
             <span className="text-ct-cream/35">— required.</span>
           </span>
         </div>

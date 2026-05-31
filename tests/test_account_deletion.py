@@ -1,9 +1,11 @@
 """Account deletion endpoint: requires correct password, cascades via FK."""
 from __future__ import annotations
+
 import os
 import sys
 import unittest
 from unittest import mock
+
 from fastapi.testclient import TestClient
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -11,7 +13,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 class AccountDeletionTests(unittest.TestCase):
     def setUp(self):
-        from main import app, hash_password, create_token
+        from main import app, create_token, hash_password
         self.app = app
         self.client = TestClient(app)
         self.token = create_token(7, "user@example.com")
