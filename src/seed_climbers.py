@@ -23,7 +23,6 @@ import hashlib
 import random
 from dataclasses import dataclass
 from datetime import date, timedelta
-from typing import Tuple, Dict, List, Optional
 
 
 @dataclass(frozen=True)
@@ -33,10 +32,10 @@ class Persona:
     avatar_icon: str                       # one of the existing avatar preset keys
     avatar_color: str                      # one of the existing palette swatches
     sessions_per_week: float               # avg, used for daily-tick probability
-    session_min_range: Tuple[int, int]     # min/max duration_min per session
-    intensity_weights: Dict[int, float]    # 1..5 → relative probability
-    grade_pool: List[str]                  # grades_sent draws from this list
-    session_types: List[Tuple[str, float]] # (type, weight)
+    session_min_range: tuple[int, int]     # min/max duration_min per session
+    intensity_weights: dict[int, float]    # 1..5 → relative probability
+    grade_pool: list[str]                  # grades_sent draws from this list
+    session_types: list[tuple[str, float]] # (type, weight)
     rest_week_probability: float           # 0..1 chance a whole week is off
 
 
@@ -59,7 +58,7 @@ _HEAVY_BOULDERING = [
 ]
 
 
-SEED_PERSONAS: List[Persona] = [
+SEED_PERSONAS: list[Persona] = [
     # ── Beginners (3) ────────────────────────────────────────────────────
     Persona(
         handle="Mira K.",       cohort="beginner",
@@ -157,18 +156,18 @@ SEED_PERSONAS: List[Persona] = [
 ]
 
 
-def _weighted_choice(weights: Dict[int, float], rng: random.Random) -> int:
+def _weighted_choice(weights: dict[int, float], rng: random.Random) -> int:
     """Pick a key from a weight-dict (key → relative weight)."""
     keys = list(weights.keys())
     w = [weights[k] for k in keys]
     return rng.choices(keys, weights=w, k=1)[0]
 
 
-def _weighted_type(types: List[Tuple[str, float]], rng: random.Random) -> str:
+def _weighted_type(types: list[tuple[str, float]], rng: random.Random) -> str:
     return rng.choices([t for t, _ in types], weights=[w for _, w in types], k=1)[0]
 
 
-def _pick_grades(grade_pool: List[str], rng: random.Random) -> str:
+def _pick_grades(grade_pool: list[str], rng: random.Random) -> str:
     """1-2 grades from the pool, comma-joined. Climbers usually log
     a couple of sends per session, not a full pyramid."""
     n = rng.choice([1, 1, 1, 2])  # weighted toward 1
@@ -176,14 +175,14 @@ def _pick_grades(grade_pool: List[str], rng: random.Random) -> str:
     return ", ".join(picks)
 
 
-def _pick_climbs(grade_pool: List[str], rng: random.Random) -> Dict:
+def _pick_climbs(grade_pool: list[str], rng: random.Random) -> dict:
     """Structured climbs payload matching the persona's grade pool.
     Mirrors the shape produced by the climb log frontend: per-discipline
     grade buckets with {s, f, p} counters. Each session logs 1-2 grades
     with 1-3 sends each. Drives the sends-based leaderboard."""
     n = rng.choice([1, 1, 2])
     picks = rng.sample(grade_pool, k=min(n, len(grade_pool)))
-    out: Dict[str, Dict[str, Dict[str, int]]] = {}
+    out: dict[str, dict[str, dict[str, int]]] = {}
     for g in picks:
         if g.startswith("V"):
             bucket = out.setdefault("boulder", {})
@@ -217,9 +216,9 @@ def _stable_seed(*parts) -> int:
 def generate_initial_history(
     persona: Persona,
     days: int = 30,
-    today: Optional[date] = None,
-    rng_seed: Optional[int] = None,
-) -> List[Dict]:
+    today: date | None = None,
+    rng_seed: int | None = None,
+) -> list[dict]:
     """Generate ~`days` days of training_logs for a persona, walking back from `today`.
 
     Returns a list of dicts ready to be inserted into the training_logs table.
@@ -236,7 +235,7 @@ def generate_initial_history(
     seed = rng_seed if rng_seed is not None else _stable_seed(persona.handle, days, today.toordinal())
     rng = random.Random(seed)
 
-    rows: List[Dict] = []
+    rows: list[dict] = []
     per_day_p = _per_day_probability(persona)
 
     # Determine "rest weeks" up front so the pattern is realistic.
@@ -272,9 +271,9 @@ def generate_initial_history(
 
 def generate_today_session(
     persona: Persona,
-    today: Optional[date] = None,
-    rng_seed: Optional[int] = None,
-) -> Optional[Dict]:
+    today: date | None = None,
+    rng_seed: int | None = None,
+) -> dict | None:
     """Probabilistically generate ONE training_log for today, or None if
     today is a rest day for this persona. Used by the daily tick script."""
     if today is None:

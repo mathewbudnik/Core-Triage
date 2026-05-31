@@ -19,7 +19,6 @@ import unittest
 
 from src.triage import _keyword_affirmed
 
-
 # Hand-mirrored from frontend/src/data/signalChips.js — keep in sync.
 # Each entry: (chip_id, phrase, keywords_that_must_match)
 CHIPS = [

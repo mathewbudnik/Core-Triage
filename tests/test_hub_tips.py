@@ -16,35 +16,33 @@ class HubTipsSchemaTests(unittest.TestCase):
         init_db()
 
     def test_hub_tips_table_columns(self):
-        with _connect() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """SELECT column_name, data_type
+        with _connect() as conn, conn.cursor() as cur:
+            cur.execute(
+                """SELECT column_name, data_type
                        FROM information_schema.columns
                        WHERE table_name = 'hub_tips'
                        ORDER BY ordinal_position;"""
-                )
-                cols = cur.fetchall()
+            )
+            cols = cur.fetchall()
         names = [c[0] for c in cols]
         for required in ("id", "user_id", "date", "kind", "headline", "body",
                          "cta_label", "cta_route", "color", "dismissed_at", "created_at"):
             self.assertIn(required, names, f"hub_tips.{required} missing")
 
     def test_hub_tips_unique_user_date(self):
-        with _connect() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """SELECT 1 FROM information_schema.table_constraints
+        with _connect() as conn, conn.cursor() as cur:
+            cur.execute(
+                """SELECT 1 FROM information_schema.table_constraints
                        WHERE table_name = 'hub_tips'
                        AND constraint_type = 'UNIQUE';"""
-                )
-                self.assertIsNotNone(cur.fetchone(), "UNIQUE (user_id, date) missing")
+            )
+            self.assertIsNotNone(cur.fetchone(), "UNIQUE (user_id, date) missing")
 
 
 from database import (  # noqa: E402
+    dismiss_hub_tip,
     get_hub_tip,
     insert_hub_tip,
-    dismiss_hub_tip,
 )
 
 
@@ -115,7 +113,8 @@ class HubTipsHelpersTests(unittest.TestCase):
 
 
 from datetime import date, timedelta  # noqa: E402
-from database import log_training, _connect  # noqa: E402
+
+from database import log_training  # noqa: E402
 from src.hub_tips import detect_pattern  # noqa: E402
 
 
@@ -198,7 +197,7 @@ class PatternDetectionTests(unittest.TestCase):
         self.assertEqual(kind, "active_rehab")
 
 
-from src.hub_tips import generate_tip, TIP_META, FALLBACK_COPY  # noqa: E402
+from src.hub_tips import FALLBACK_COPY, TIP_META, generate_tip  # noqa: E402
 
 
 class _FakeOpenAIClient:
@@ -252,7 +251,7 @@ class GenerateTipTests(unittest.TestCase):
         self.assertEqual(tip["headline"], FALLBACK_COPY["overtraining"]["headline"])
 
 
-from src.hub_tips import get_or_create_tip, dismiss_tip  # noqa: E402
+from src.hub_tips import dismiss_tip, get_or_create_tip  # noqa: E402
 
 
 class OrchestrationTests(unittest.TestCase):
@@ -306,6 +305,7 @@ class OrchestrationTests(unittest.TestCase):
 
 
 from fastapi.testclient import TestClient  # noqa: E402
+
 from main import app  # noqa: E402
 
 

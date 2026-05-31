@@ -58,7 +58,17 @@ const MessageItem = memo(function MessageItem({ msg }) {
           : 'ct-surface-flat text-ct-cream/60 rounded-tl-sm'
       }`}>
         {msg.role === 'assistant' ? (
-          <ReactMarkdown className="prose prose-sm prose-invert max-w-none">
+          <ReactMarkdown
+            className="prose prose-sm prose-invert max-w-none"
+            allowedElements={['p', 'strong', 'em', 'code', 'pre', 'a', 'ul', 'ol', 'li', 'br', 'h3', 'h4', 'blockquote']}
+            unwrapDisallowed
+            skipHtml
+            components={{
+              a: ({ node, ...props }) => (
+                <a {...props} target="_blank" rel="noopener noreferrer" />
+              ),
+            }}
+          >
             {msg.content}
           </ReactMarkdown>
         ) : (

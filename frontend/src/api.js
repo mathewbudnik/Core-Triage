@@ -57,6 +57,12 @@ export const getMe = () => request('GET', '/api/auth/me')
 export const acceptDisclaimer = () => request('POST', '/api/auth/disclaimer', {})
 export const verifyEmail = (token) => request('POST', '/api/auth/verify-email', { token })
 export const resendVerification = () => request('POST', '/api/auth/resend-verification', {})
+export const forgotPassword = (email) =>
+  request('POST', '/api/auth/forgot-password', { email })
+export const resetPassword = (token, new_password) =>
+  request('POST', '/api/auth/reset-password', { token, new_password })
+export const deleteAccount = (password) =>
+  request('DELETE', '/api/auth/account', { password })
 
 // Profile
 export const saveProfile = (payload) => request('POST', '/api/profile', payload)

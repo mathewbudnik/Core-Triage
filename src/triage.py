@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
 
 
 # Normalized injury intake used across the app (UI -> triage -> retrieval)
@@ -53,8 +52,8 @@ class Bucket:
     id: str
     title: str
     why: str
-    matches_if: List[str]
-    not_likely_if: List[str]
+    matches_if: list[str]
+    not_likely_if: list[str]
     quick_test: str
     # Trust + transparency. `reasoning_basis` is a short paragraph explaining
     # the clinical signature this bucket represents (distilled from the cited
@@ -72,10 +71,10 @@ class Bucket:
     #   - venue:     journal / publisher / org (e.g. "Sports Medicine")
     #   - url:       link (PubMed, journal page, expert site / video) — optional but preferred
     reasoning_basis: str = ""
-    sources: List[Dict[str, str]] = field(default_factory=list)
+    sources: list[dict[str, str]] = field(default_factory=list)
 
     @classmethod
-    def from_id(cls, id: str, qualifier: Optional[str] = None) -> "Bucket":
+    def from_id(cls, id: str, qualifier: str | None = None) -> Bucket:
         """Look up bucket content by stable id and construct a Bucket.
 
         `qualifier` is appended to the canonical base title with an em-dash
@@ -158,11 +157,11 @@ def _keyword_affirmed(text: str, keywords: list) -> bool:
 # specialist evaluation but are NOT 911 territory: pulley rupture (bowstringing),
 # distal bicep tendon rupture, locked knee, Achilles rupture, pec major tear.
 
-def get_urgent_flags(i: Intake) -> List[str]:
+def get_urgent_flags(i: Intake) -> list[str]:
     """Return urgent-referral flags for climbing-recognizable injuries that warrant
     prompt specialist evaluation. Not 911-tier — this app is not the right tool
     for someone with a true medical emergency."""
-    flags: List[str] = []
+    flags: list[str] = []
     region = i.region.lower()
     text   = i.free_text.lower()
 
@@ -241,7 +240,7 @@ def get_urgent_flags(i: Intake) -> List[str]:
 
 
 # Backwards-compatible alias — older callers and tests may still import this name.
-def get_emergency_flags(i: Intake) -> List[str]:
+def get_emergency_flags(i: Intake) -> list[str]:
     """Deprecated alias for get_urgent_flags. The 911-tier "emergency" concept was
     removed from this app; see get_urgent_flags for the current behavior."""
     return get_urgent_flags(i)
@@ -249,10 +248,10 @@ def get_emergency_flags(i: Intake) -> List[str]:
 
 # ── Standard safety screen ──────────────────────────────────────────────────
 
-def red_flags(i: Intake) -> List[str]:
+def red_flags(i: Intake) -> list[str]:
     """Returns reasons to seek evaluation based on common red flags.
     Urgent climbing-relevant referrals appear first, then standard flags."""
-    flags: List[str] = get_urgent_flags(i)
+    flags: list[str] = get_urgent_flags(i)
     region = i.region.lower()
     text   = i.free_text.lower()
 
@@ -392,7 +391,7 @@ def red_flags(i: Intake) -> List[str]:
 
 # ── Severity classification ─────────────────────────────────────────────────
 
-def classify_severity(i: Intake) -> Dict[str, str]:
+def classify_severity(i: Intake) -> dict[str, str]:
     """Classify injury severity and return recommended action.
 
     Top tier is 'severe' — this app does not surface 911-level emergencies.
@@ -429,12 +428,12 @@ def classify_severity(i: Intake) -> Dict[str, str]:
 
 # ── Training modifications ──────────────────────────────────────────────────
 
-def get_training_modifications(i: Intake) -> Dict[str, List[str]]:
+def get_training_modifications(i: Intake) -> dict[str, list[str]]:
     """Return what training is permitted during recovery based on region and severity."""
     region   = i.region.lower()
     severity = classify_severity(i)["level"]
 
-    modifications: Dict[str, List[str]] = {}
+    modifications: dict[str, list[str]] = {}
 
     # Universal — always apply
     modifications["Universal rules"] = [
@@ -739,11 +738,11 @@ def get_training_modifications(i: Intake) -> Dict[str, List[str]]:
 
 # ── Return to climbing protocol ─────────────────────────────────────────────
 
-def get_return_to_climbing_protocol(i: Intake) -> Dict[str, List[str]]:
+def get_return_to_climbing_protocol(i: Intake) -> dict[str, list[str]]:
     """Return full return-to-sport criteria and progression for the given region."""
     region = i.region.lower()
 
-    protocol: Dict[str, List[str]] = {}
+    protocol: dict[str, list[str]] = {}
 
     if "finger" in region:
         protocol["Criteria before returning to full climbing"] = [
@@ -979,10 +978,10 @@ def get_return_to_climbing_protocol(i: Intake) -> Dict[str, List[str]]:
 
 # ── Heuristic buckets ───────────────────────────────────────────────────────
 
-def bucket_possibilities(i: Intake) -> List[Bucket]:
+def bucket_possibilities(i: Intake) -> list[Bucket]:
     """Heuristic likely patterns given region + mechanism. Not a diagnosis."""
     region = i.region.lower()
-    out: List[Bucket] = []
+    out: list[Bucket] = []
 
     if "finger" in region:
         wf, loc, grip = i.which_finger, i.finger_location, i.grip_mode
@@ -1282,10 +1281,10 @@ def bucket_possibilities(i: Intake) -> List[Bucket]:
 
 # ── Conservative guidance plan ──────────────────────────────────────────────
 
-def conservative_plan(i: Intake) -> Dict[str, List[str]]:
+def conservative_plan(i: Intake) -> dict[str, list[str]]:
     """Conservative guidance template grouped into UI sections (load management focus)."""
     region = i.region.lower()
-    plan: Dict[str, List[str]] = {}
+    plan: dict[str, list[str]] = {}
 
     if "finger" in region:
         avoid_specific = "Avoid full crimping, pockets, and dynamic catches on the affected finger(s)."
@@ -1416,7 +1415,7 @@ def _has_neuro(i: Intake) -> bool:
         return False
 
 
-def classify_severity_v2(i: Intake) -> Dict[str, str]:
+def classify_severity_v2(i: Intake) -> dict[str, str]:
     """Phase 3 severity classifier with explicit thresholds.
 
     Top tier is 'severe' — this app does not surface 911-tier emergencies.
@@ -1528,7 +1527,7 @@ def validate_tone_text(text: str, tone: str) -> None:
 
 # ── Output gating helpers (Phase 3) ──────────────────────────────────────────
 
-def format_differentials_for_tone(buckets: List[Bucket], tone: str) -> Dict[str, object]:
+def format_differentials_for_tone(buckets: list[Bucket], tone: str) -> dict[str, object]:
     """Return a tone-gated differentials block.
 
     Mild: top 1, common name, lead-in copy.
@@ -1561,7 +1560,7 @@ def format_differentials_for_tone(buckets: List[Bucket], tone: str) -> Dict[str,
         return {"lead": "", "items": []}
 
 
-def format_red_flags_for_tone(flags: List[str], tone: str) -> Dict[str, object]:
+def format_red_flags_for_tone(flags: list[str], tone: str) -> dict[str, object]:
     """Return a tone-gated red-flags display block."""
     try:
         if tone == TONE_EMERGENCY:
@@ -1592,7 +1591,7 @@ def format_red_flags_for_tone(flags: List[str], tone: str) -> Dict[str, object]:
         return {"lead": "", "items": flags, "primary": False}
 
 
-def format_rehab_for_tone(plan: Dict[str, List[str]], tone: str) -> Dict[str, object]:
+def format_rehab_for_tone(plan: dict[str, list[str]], tone: str) -> dict[str, object]:
     """Return tone-gated rehab output. Severe and Emergency tones suppress the protocol."""
     try:
         if tone in (TONE_URGENT, TONE_EMERGENCY):
@@ -1619,7 +1618,7 @@ def format_rehab_for_tone(plan: Dict[str, List[str]], tone: str) -> Dict[str, ob
 # applies a 2x weight multiplier to the listed differentials. The mapping is
 # read by the API layer (or the wizard) when re-ordering bucket_possibilities.
 
-CLIMBING_SITUATIONS: Dict[str, Tuple[str, ...]] = {
+CLIMBING_SITUATIONS: dict[str, tuple[str, ...]] = {
     "full_crimp_small_hold": ("a2_pulley", "a4_pulley", "flexor_tenosynovitis"),
     "crack_jamming": ("boutonniere", "tfcc", "finger_jam"),
     "campus_board": ("a2_pulley", "distal_bicep", "medial_epicondylitis", "slap_tear"),

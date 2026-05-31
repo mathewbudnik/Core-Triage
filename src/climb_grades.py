@@ -11,8 +11,7 @@ Invariant: f <= s (a flash is a send on first try).
 from __future__ import annotations
 
 import re
-from typing import Dict, Optional, Any
-
+from typing import Any
 
 BOULDER_RE = re.compile(r"^V([0-9]|1[0-7])$")
 # YDS: 5.6-5.9 OR 5.10a-5.15d
@@ -73,7 +72,7 @@ def validate_climbs(climbs: Any) -> None:
                 raise ValueError(f"flashes cannot exceed sends for {grade}")
 
 
-def format_climbs_summary(climbs: Dict[str, Dict[str, Dict[str, int]]]) -> str:
+def format_climbs_summary(climbs: dict[str, dict[str, dict[str, int]]]) -> str:
     """Render `climbs` as a human-readable single-line summary."""
     if not climbs:
         return ""
@@ -100,9 +99,9 @@ def format_climbs_summary(climbs: Dict[str, Dict[str, Dict[str, int]]]) -> str:
     return ". ".join(parts)
 
 
-def compute_hardest(climbs: Dict[str, Dict[str, Dict[str, int]]]) -> Dict[str, Optional[str]]:
+def compute_hardest(climbs: dict[str, dict[str, dict[str, int]]]) -> dict[str, str | None]:
     """Return the hardest *sent* grade per discipline. Projects don't count."""
-    out: Dict[str, Optional[str]] = {"boulder": None, "route": None}
+    out: dict[str, str | None] = {"boulder": None, "route": None}
     for discipline in _DISCIPLINES:
         grades = climbs.get(discipline, {})
         sent = [g for g, c in grades.items() if c.get("s", 0) > 0]
@@ -178,7 +177,7 @@ def _tier_index(tier: str) -> int:
         return -1
 
 
-def working_tier_from_hardest(hardest: Dict[str, Optional[str]]) -> str:
+def working_tier_from_hardest(hardest: dict[str, str | None]) -> str:
     """Return the user's working tier from a `get_user_hardest()` result.
 
     Picks the higher of the boulder and route tier mappings. Defaults

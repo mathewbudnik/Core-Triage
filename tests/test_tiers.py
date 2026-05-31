@@ -8,11 +8,11 @@ import unittest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.climb_grades import (  # noqa: E402
-    V_TIERS,
     TIER_NAMES,
+    V_TIERS,
     v_grade_to_tier,
-    yds_to_tier,
     working_tier_from_hardest,
+    yds_to_tier,
 )
 
 

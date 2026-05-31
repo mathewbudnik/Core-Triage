@@ -8,10 +8,10 @@ import unittest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.climb_grades import (  # noqa: E402
+    compute_hardest,
+    format_climbs_summary,
     grade_order,
     validate_climbs,
-    format_climbs_summary,
-    compute_hardest,
 )
 
 
@@ -121,14 +121,13 @@ class SchemaMigrationTests(unittest.TestCase):
         init_db()
 
     def test_training_logs_has_climbs_jsonb(self):
-        with _connect() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """SELECT data_type, column_default, is_nullable
+        with _connect() as conn, conn.cursor() as cur:
+            cur.execute(
+                """SELECT data_type, column_default, is_nullable
                        FROM information_schema.columns
                        WHERE table_name = 'training_logs' AND column_name = 'climbs';"""
-                )
-                row = cur.fetchone()
+            )
+            row = cur.fetchone()
         self.assertIsNotNone(row, "climbs column missing")
         data_type, default, nullable = row
         self.assertEqual(data_type, "jsonb")
@@ -136,7 +135,7 @@ class SchemaMigrationTests(unittest.TestCase):
         self.assertEqual(nullable, "NO")
 
 
-from database import log_training, get_training_logs  # noqa: E402
+from database import get_training_logs, log_training  # noqa: E402
 
 
 def _make_seed_user(email: str = "climb_test@coretriage.local") -> int:
@@ -175,13 +174,12 @@ class LogTrainingClimbsTests(unittest.TestCase):
             "climbs": {"boulder": {"V5": {"s": 3, "f": 1, "p": 0}}},
             "notes": "",
         })
-        with _connect() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "SELECT climbs, grades_sent FROM training_logs WHERE user_id = %s;",
-                    (self.uid,),
-                )
-                row = cur.fetchone()
+        with _connect() as conn, conn.cursor() as cur:
+            cur.execute(
+                "SELECT climbs, grades_sent FROM training_logs WHERE user_id = %s;",
+                (self.uid,),
+            )
+            row = cur.fetchone()
         climbs, grades_sent = row
         self.assertEqual(climbs, {"boulder": {"V5": {"s": 3, "f": 1, "p": 0}}})
         self.assertEqual(grades_sent, "Boulder: V5×3 (1 flash)")
@@ -298,6 +296,7 @@ class PyramidTests(unittest.TestCase):
 
 
 from fastapi.testclient import TestClient  # noqa: E402
+
 from main import app  # noqa: E402
 
 

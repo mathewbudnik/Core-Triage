@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Upload, X, Loader2, AlertTriangle, RefreshCw, CheckCircle2, XCircle,
   SlidersHorizontal, Video, ChevronDown, Compass, User, Smartphone, Sun,
-  Ruler, Lock, Camera, Circle,
+  Ruler, Lock, Camera, Circle, Scissors,
 } from 'lucide-react'
 import { createPoseClient } from '../lib/poseWorkerClient'
 import { isAdvancedGrade } from '../lib/gradeTier'
@@ -66,8 +66,9 @@ const ACTIVE_RULES = [
 // Phase 1 toggle — flip false to silence the verification logs.
 const DEBUG = true
 
-const MAX_FILE_BYTES = 200 * 1024 * 1024       // 200 MB
-const MAX_DURATION_S = 30                       // Phase 1 cap
+const MAX_FILE_BYTES = 400 * 1024 * 1024       // 400 MB
+const MAX_DURATION_S = 60                       // longest selectable trim window
+const MAX_RAW_DURATION_S = 600                  // safety ceiling on uploaded clip length (10 min)
 const ACCEPTED_TYPES = ['video/mp4', 'video/webm', 'video/quicktime']
 const NO_DETECTION_THRESHOLD = 0.1              // ratio for "no body detected" banner
 const ASSUMED_FPS = 30                          // phone clips are ~30 fps; no reliable cross-browser API
@@ -317,7 +318,7 @@ export default function MovementAnalyzer() {
       return
     }
     if (file.size > MAX_FILE_BYTES) {
-      setError({ kind: 'size', message: 'Video too large — please upload under 200 MB.' })
+      setError({ kind: 'size', message: 'Video too large — please upload under 400 MB.' })
       return
     }
 
@@ -340,8 +341,8 @@ export default function MovementAnalyzer() {
       return
     }
 
-    if (video.duration > MAX_DURATION_S + 0.5) {
-      setError({ kind: 'duration', message: `Clip is too long. Phase 1 supports up to ${MAX_DURATION_S} seconds.` })
+    if (video.duration > MAX_RAW_DURATION_S + 0.5) {
+      setError({ kind: 'duration', message: `Clip is too long. Please upload under ${MAX_RAW_DURATION_S / 60} minutes — you can trim a longer window inside the app.` })
       // Clean up the URL we just created
       if (objectUrlRef.current) {
         URL.revokeObjectURL(objectUrlRef.current)
@@ -425,12 +426,19 @@ export default function MovementAnalyzer() {
     }
 
     const fps = ASSUMED_FPS
-    const totalFrames = Math.max(1, Math.floor(video.duration * fps))
+    // Trim window — defaults to the whole clip if the context form didn't
+    // supply one (e.g. legacy callers). Frames outside [startS, endS] are
+    // skipped entirely; cache keys remain absolute video ms.
+    const startS = Math.max(0, (context?.trimStartMs ?? 0) / 1000)
+    const endS = Math.min(video.duration, (context?.trimEndMs ?? video.duration * 1000) / 1000)
+    const windowS = Math.max(0, endS - startS)
+    const totalFrames = Math.max(1, Math.floor(windowS * fps))
     const cache = new Map()
     let framesWithDetection = 0
 
     if (DEBUG) console.log('[MovementAnalyzer] Processing', {
       duration: video.duration,
+      trim: { startS, endS, windowS },
       fps,
       totalFrames,
       context,  // Captured form data — for now just verification; Phase 2 detectors will read this.
@@ -443,7 +451,7 @@ export default function MovementAnalyzer() {
         if (DEBUG) console.log('[MovementAnalyzer] Cancelled at frame', i)
         return resetToIdle()
       }
-      const t = i / fps
+      const t = startS + i / fps
       video.currentTime = t
       try {
         await waitFor(video, 'seeked', { timeoutMs: 5000 })
@@ -631,7 +639,9 @@ export default function MovementAnalyzer() {
     setThumbnails(thumbs)
     setStatus(STATUS.READY)
 
-    video.currentTime = 0
+    // Start playback at the trim start so the first thing the user sees is
+    // the analyzed window, not whatever pre-roll they didn't pick.
+    video.currentTime = startS
     await video.play().catch(() => { /* autoplay may be blocked; user can hit play */ })
   }
 
@@ -649,7 +659,7 @@ export default function MovementAnalyzer() {
       return
     }
     if (file.size > MAX_FILE_BYTES) {
-      setError({ kind: 'size', message: 'Video too large — please upload under 200 MB.' })
+      setError({ kind: 'size', message: 'Video too large — please upload under 400 MB.' })
       return
     }
 
@@ -920,6 +930,7 @@ export default function MovementAnalyzer() {
           <UploadContextForm
             videoRef={videoRef}
             durationS={clipDurationS}
+            maxTrimS={MAX_DURATION_S}
             onSubmit={handleContextSubmit}
             onCancel={handleContextCancel}
           />
@@ -1029,6 +1040,8 @@ export default function MovementAnalyzer() {
           <TimelineRibbon
             findings={findings}
             durationS={clipDurationS}
+            startMs={uploadContext?.trimStartMs ?? 0}
+            endMs={uploadContext?.trimEndMs ?? null}
             fallTimeMs={uploadContext?.fallTimeMs ?? null}
             onJumpTo={(ms) => {
               const v = videoRef.current
@@ -1101,7 +1114,7 @@ function DropZone({ onPick, modelReady }) {
       </div>
       <p className="text-sm font-bold text-ct-cream text-center">Drop a climbing clip here</p>
       <p className="text-xs text-ct-cream/60 text-center max-w-[280px]">
-        MP4, WebM, or MOV. Up to 30 seconds, 200 MB. Processed entirely on-device — your video never leaves your phone.
+        MP4, WebM, or MOV. Up to 400 MB. Trim a window up to {MAX_DURATION_S} seconds inside the app — shorter clips give the cleanest reads. Processed entirely on-device — your video never leaves your phone.
       </p>
       <button
         type="button"
@@ -1741,6 +1754,9 @@ function RecordingTips() {
       </button>
       {open && (
         <div className="border-t border-ct-terracotta/25 px-3 py-3 flex flex-col gap-2.5">
+          <TipRow Icon={Scissors} title="Short clips read cleanest">
+            Aim for 5–15 seconds of the move or sequence you want feedback on. You can upload longer and trim a window inside the app.
+          </TipRow>
           <TipRow Icon={Compass} title="Film from ~45° to the wall">
             Best angle for the pose detector to read body line and side-to-side balance at once.
           </TipRow>

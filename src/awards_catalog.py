@@ -9,52 +9,50 @@ returns the list of newly-inserted rows.
 """
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Tuple
+from collections.abc import Callable
+from typing import Any
 
 from database import (
     _connect,
-    count_sends,
     compute_streak,
+    count_sends,
     insert_award,
     list_awards,
 )
-
 
 # ── Predicates ─────────────────────────────────────────────────────────
 
 
 def _user_has_send_at_v(uid: int, target_v: str) -> bool:
     """True if user has any send at the given V-grade across all logs."""
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT 1 FROM training_logs
                 WHERE user_id = %s
                   AND (climbs -> 'boulder' -> %s ->> 's')::int > 0
                 LIMIT 1;
                 """,
-                (int(uid), target_v),
-            )
-            return cur.fetchone() is not None
+            (int(uid), target_v),
+        )
+        return cur.fetchone() is not None
 
 
 def _user_has_any_flash(uid: int) -> bool:
     """True if user has any flash logged in any discipline / any grade."""
-    with _connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT climbs FROM training_logs
                 WHERE user_id = %s AND climbs <> '{}'::jsonb;
                 """,
-                (int(uid),),
-            )
-            for (climbs,) in cur.fetchall():
-                for discipline in ("boulder", "route"):
-                    for c in (climbs or {}).get(discipline, {}).values():
-                        if int(c.get("f", 0) or 0) > 0:
-                            return True
+            (int(uid),),
+        )
+        for (climbs,) in cur.fetchall():
+            for discipline in ("boulder", "route"):
+                for c in (climbs or {}).get(discipline, {}).values():
+                    if int(c.get("f", 0) or 0) > 0:
+                        return True
     return False
 
 
@@ -91,7 +89,7 @@ def _pred_first_flash(uid: int, today_iso: str):
 
 # ── Catalog ────────────────────────────────────────────────────────────
 
-AWARD_CATALOG: List[Dict[str, Any]] = [
+AWARD_CATALOG: list[dict[str, Any]] = [
     # Grade milestones — V3 through V10+
     *[
         {"kind": f"first_send_v{n}", "category": "grade",
@@ -114,11 +112,11 @@ AWARD_CATALOG: List[Dict[str, Any]] = [
 ]
 
 
-def detect_new_awards(uid: int, today_iso: str) -> List[Dict[str, Any]]:
+def detect_new_awards(uid: int, today_iso: str) -> list[dict[str, Any]]:
     """Run every catalog predicate. For each that unlocks AND isn't already
     in `awards`, insert it and return the new rows."""
     earned_kinds = {a["kind"] for a in list_awards(uid)}
-    new_awards: List[Dict[str, Any]] = []
+    new_awards: list[dict[str, Any]] = []
     for entry in AWARD_CATALOG:
         if entry["kind"] in earned_kinds:
             continue
