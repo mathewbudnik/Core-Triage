@@ -94,14 +94,17 @@ from database import (
     set_display_name,
     set_email_verification_token,
     set_leaderboard_private,
+    set_password_reset_token,
     set_stripe_customer_id,
     set_user_role_by_email,
+    consume_password_reset_token,
     uncheck_rehab_exercise,
     update_last_login,
     update_subscription_state,
     verify_email_with_token,
 )
 from src import billing
+from src.auth_email import send_password_reset_email
 from src.email import send_verification_email
 from src.render import build_query, format_citations
 from src.retriever import TfidfRetriever, load_kb
@@ -697,6 +700,15 @@ class VerifyEmailRequest(BaseModel):
     token: str
 
 
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+
 @app.post("/api/auth/verify-email")
 @limiter.limit("10/minute")
 def verify_email_endpoint(request: Request, req: VerifyEmailRequest):
@@ -719,6 +731,39 @@ def resend_verification_endpoint(request: Request, user: dict = Depends(get_curr
     if not email:
         raise HTTPException(status_code=404, detail="User not found")
     _issue_verification_email(user["id"], email)
+    return {"ok": True}
+
+
+@app.post("/api/auth/forgot-password")
+@limiter.limit("5/minute")
+def forgot_password(request: Request, req: ForgotPasswordRequest):
+    """Always returns 200 to avoid email enumeration. If the email exists,
+    we generate a single-use token (1h TTL) and email a reset link."""
+    user = get_user_by_email(req.email)
+    if user:
+        _, plaintext = set_password_reset_token(user[0], ttl_minutes=60)
+        reset_url = f"{FRONTEND_BASE_URL}/reset-password?token={plaintext}"
+        send_password_reset_email(to=req.email, reset_url=reset_url)
+    return {"ok": True}
+
+
+@app.post("/api/auth/reset-password")
+@limiter.limit("5/minute")
+def reset_password(request: Request, req: ResetPasswordRequest):
+    """Consume a reset token and set a new password. Token is single-use and
+    expires after 60 minutes."""
+    if len(req.new_password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+    if not any(c.isdigit() for c in req.new_password):
+        raise HTTPException(status_code=400, detail="Password must include at least one number")
+    if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in req.new_password):
+        raise HTTPException(status_code=400, detail="Password must include at least one symbol")
+
+    new_hash = hash_password(req.new_password)
+    user_id = consume_password_reset_token(req.token, new_password_hash=new_hash)
+    if not user_id:
+        raise HTTPException(status_code=400, detail="This reset link is invalid or expired.")
+    log_security_event("password_reset_success", _get_client_ip(request), "")
     return {"ok": True}
 
 
