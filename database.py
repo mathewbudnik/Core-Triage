@@ -186,6 +186,35 @@ def init_db() -> None:
                 """
             )
 
+            # Password reset — token is a bcrypt hash of the plaintext token
+            # (we send plaintext via email, store only the hash). expires_at
+            # bounds reuse risk; consume_password_reset_token() requires both
+            # match AND not-expired AND clears the row on use.
+            _add_column_if_missing(cur, "users", "password_reset_token_hash",
+                "TEXT NULL")
+            _add_column_if_missing(cur, "users", "password_reset_expires_at",
+                "TIMESTAMPTZ NULL")
+            # Per-user OpenAI daily token budget. tokens_today is incremented
+            # by the chat endpoint; reset_date is rolled when we cross UTC midnight.
+            _add_column_if_missing(cur, "users", "openai_tokens_today",
+                "INT NOT NULL DEFAULT 0")
+            _add_column_if_missing(cur, "users", "openai_tokens_reset_date",
+                "DATE NULL")
+
+            # Foreign key indexes for query performance
+            cur.execute(
+                "CREATE INDEX IF NOT EXISTS sessions_user_id_idx ON sessions (user_id);"
+            )
+            cur.execute(
+                "CREATE INDEX IF NOT EXISTS training_logs_user_id_idx ON training_logs (user_id);"
+            )
+            cur.execute(
+                "CREATE INDEX IF NOT EXISTS training_plans_user_id_idx ON training_plans (user_id);"
+            )
+            cur.execute(
+                "CREATE INDEX IF NOT EXISTS security_log_created_at_idx ON security_log (created_at DESC);"
+            )
+
             # ── Security log ───────────────────────────────────────────────
             cur.execute(
                 """
