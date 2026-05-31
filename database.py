@@ -847,6 +847,37 @@ def consume_password_reset_token(plaintext: str, new_password_hash: str) -> int 
 
 # ── Stripe billing state ───────────────────────────────────────────────────
 
+def consume_openai_tokens(user_id: int, tokens: int, daily_cap: int) -> tuple[bool, int]:
+    """Atomically check + record OpenAI usage. Returns (allowed, remaining_after).
+
+    Rolls the per-user counter at UTC midnight. If the call would exceed
+    `daily_cap`, returns (False, remaining_today) without recording usage."""
+    from datetime import date
+
+    today = date.today()
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT openai_tokens_today, openai_tokens_reset_date FROM users WHERE id = %s;",
+                (user_id,),
+            )
+            row = cur.fetchone()
+            current = row[0] if row else 0
+            reset_date = row[1] if row else None
+            if reset_date != today:
+                current = 0
+            if current + tokens > daily_cap:
+                remaining = max(0, daily_cap - current)
+                return (False, remaining)
+            new_total = current + tokens
+            cur.execute(
+                "UPDATE users SET openai_tokens_today = %s, openai_tokens_reset_date = %s WHERE id = %s;",
+                (new_total, today, user_id),
+            )
+        conn.commit()
+    return (True, daily_cap - new_total)
+
+
 def get_stripe_customer_id(user_id: int) -> str | None:
     with _connect() as conn, conn.cursor() as cur:
         cur.execute(

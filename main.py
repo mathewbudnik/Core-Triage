@@ -98,6 +98,7 @@ from database import (
     set_password_reset_token,
     set_stripe_customer_id,
     set_user_role_by_email,
+    consume_openai_tokens,
     consume_password_reset_token,
     uncheck_rehab_exercise,
     update_last_login,
@@ -265,6 +266,8 @@ def _optional_user(request: Request) -> dict[str, Any] | None:
 
 
 FREE_CHAT_LIMIT = 5
+OPENAI_DAILY_TOKEN_CAP = int(os.getenv("OPENAI_DAILY_TOKEN_CAP", "20000"))
+OPENAI_KILL_SWITCH = os.getenv("OPENAI_KILL_SWITCH", "false").lower() == "true"
 
 
 def _get_client_ip(request: Request) -> str:
@@ -868,10 +871,27 @@ def triage(request: Request, req: IntakeRequest):
 @app.post("/api/chat")
 @limiter.limit("20/minute;100/hour")
 def chat(request: Request, req: ChatRequest):
+    if OPENAI_KILL_SWITCH:
+        raise HTTPException(status_code=503, detail="Chat is temporarily unavailable. Please try again later.")
+
+    # Pre-flight per-user budget (auth only — anonymous users are bounded by
+    # the IP rate limit and the FREE_CHAT_LIMIT counter further down).
+    # The real usage will be reconciled post-call in Plan B Task 5.
+    PREFLIGHT_TOKENS = 1500
+    opt_user = _optional_user(request)
+    if opt_user:
+        allowed, _remaining = consume_openai_tokens(
+            opt_user["id"], tokens=PREFLIGHT_TOKENS, daily_cap=OPENAI_DAILY_TOKEN_CAP,
+        )
+        if not allowed:
+            raise HTTPException(
+                status_code=429,
+                detail=f"You've reached today's chat limit ({OPENAI_DAILY_TOKEN_CAP} tokens). It resets at midnight UTC.",
+            )
+
     # Optional auth — enforce per-user chat limits for free accounts.
     # Every chat is now AI-synthesized (KB chunks still feed it as RAG
     # context, but there's no longer a separate "Lookup" mode).
-    opt_user = _optional_user(request)
     if opt_user:
         is_coach = get_user_role(opt_user["id"]) == "coach"
         tier = get_user_tier(opt_user["id"])
