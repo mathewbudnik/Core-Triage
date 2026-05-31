@@ -141,6 +141,12 @@ if os.getenv("ENVIRONMENT", "development").lower() == "production" and (
         "SECRET_KEY must be set to a strong random value in production. "
         "Generate one with: python -c 'import secrets; print(secrets.token_urlsafe(64))'"
     )
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+if os.getenv("ENVIRONMENT", "development").lower() == "production" and not STRIPE_WEBHOOK_SECRET:
+    raise RuntimeError(
+        "STRIPE_WEBHOOK_SECRET must be set in production. Without it, Stripe "
+        "webhook signatures cannot be verified and subscription state will not update."
+    )
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_HOURS = 24
 COACH_EMAIL = os.getenv("COACH_EMAIL", "mathewbudnik@gmail.com")
