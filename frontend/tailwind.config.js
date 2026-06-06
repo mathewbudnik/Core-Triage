@@ -3,6 +3,11 @@ export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
+      fontFamily: {
+        serif: ['Fraunces', 'Georgia', 'serif'],
+        script: ['Caveat', 'cursive'],
+        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+      },
       colors: {
         bg: '#1c2520',
         panel: '#243530',
@@ -25,6 +30,13 @@ export default {
           'terra-soft':  '#f0a875',
           'terra-tint':  'rgba(217,119,87,0.06)',
         },
+        'ct-paper': {
+          base: '#e8dcc4',
+          mid:  '#ddd0b3',
+          deep: '#c9bb9c',
+        },
+        'ct-ink': '#1a2620',
+        'ct-ink-soft': '#2b3a32',
       },
       borderColor: {
         outline: 'rgba(230,237,228,0.12)',
@@ -36,6 +48,7 @@ export default {
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'ct-foil': 'linear-gradient(135deg, #b88a3a, #c75e3a, #7a4a8e, #2f4ea8, #b88a3a)',
       },
       animation: {
         'pulse-slow':  'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
