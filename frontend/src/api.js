@@ -72,6 +72,11 @@ export const getProfile = () => request('GET', '/api/profile')
 // unit preference without re-sending the full onboarding wizard payload.
 export const saveBodyMeasurements = (payload) => request('POST', '/api/profile/body', payload)
 
+// Identity surface (Hub hero strip)
+export const getMeState           = () => request('GET', '/api/me/state')
+export const getPentagonSnapshots = (limit = 6) =>
+  request('GET', `/api/me/pentagon-snapshots?limit=${encodeURIComponent(limit)}`)
+
 // Plans
 export const generatePlan = (payload = {}) => request('POST', '/api/plans/generate', payload)
 export const getActivePlan = () => request('GET', '/api/plans/active')
