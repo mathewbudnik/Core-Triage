@@ -34,7 +34,11 @@ export default function HubTab({ user }) {
       .then(([s, ss]) => {
         if (cancelled) return
         setState(s)
-        setSnapshots(ss.snapshots || [])
+        setSnapshots((ss.snapshots || []).map(snap => ({
+          capturedAt: snap.captured_at,
+          axes: snap.axes,
+          archetype: snap.archetype,
+        })))
       })
       .catch((err) => console.error('[HubTab] state fetch failed', err))
     return () => { cancelled = true }
