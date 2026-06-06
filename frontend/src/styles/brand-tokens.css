@@ -12,15 +12,15 @@
   --ct-ink-faint:  rgba(26, 38, 32, 0.30);
 
   /* Cream (inverse text) */
-  --ct-cream:      #f4ecdf;
-  --ct-cream-mute: rgba(244, 236, 223, 0.65);
-  --ct-cream-quiet:rgba(244, 236, 223, 0.40);
+  --ct-cream:       #f4ecdf;
+  --ct-cream-mute:  rgba(244, 236, 223, 0.65);
+  --ct-cream-quiet: rgba(244, 236, 223, 0.40);
 
   /* Accents */
   --ct-terracotta: #c75e3a;
   --ct-terra-deep: #a44a2a;
   --ct-terra-tint: rgba(199, 94, 58, 0.12);
-  --ct-terra-vert: #f0a875;
+  --ct-terra-vertex: #f0a875;
   --ct-mint:       #2da283;
 
   /* Foil prestige gradient (used as background-image OR via masking) */
