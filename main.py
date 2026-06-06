@@ -50,6 +50,8 @@ from slowapi.util import get_remote_address
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from database import (
+    _connect,
+    _current_streak_days,
     accept_disclaimer,
     check_rehab_exercise,
     consume_openai_tokens,
@@ -76,6 +78,7 @@ from database import (
     get_user_by_email,
     get_user_by_id,
     get_user_email,
+    get_user_hardest,
     get_user_role,
     get_user_tier,
     increment_chat_used,
@@ -688,6 +691,246 @@ def me(request: Request, user: dict = Depends(get_current_user)):
         # Rich trial / subscription state — drives the trial countdown
         # badge in the header and the post-trial paywall banner.
         "subscription_state": get_subscription_state(user["id"]),
+    }
+
+
+# ── /api/me/state — single payload for the Hub identity strip ──────────────
+#
+# Returns apex grade + tier, current & longest streak, the 5-axis pentagon,
+# the user's archetype, and the last 5 sends. Reused helpers (get_user_hardest,
+# _current_streak_days) keep this thin; the only truly new logic is the
+# style-counts → pentagon-axes rollup and the (sandstone..obsidian) tier
+# ladder used by the identity strip (distinct from the v0..v10 Frost..Phoenix
+# tier system used by the existing leaderboard / tier badges).
+
+# Style-axis keys, in the order the JS pentagon expects them. Note the
+# `powerful` → `power` rename: the climbs-styles map keys log entries as
+# "powerful" but the archetype rules read `power`. We honor both renames here.
+_PENTAGON_AXES = ("power", "crimpy", "dynamic", "technical", "mobility")
+_STYLE_TO_AXIS = {
+    "powerful":  "power",
+    "crimpy":    "crimpy",
+    "dynamic":   "dynamic",
+    "technical": "technical",
+    "mobility":  "mobility",
+}
+
+# Identity-strip tier ladder (V0=sandstone .. V11+=obsidian). Distinct from
+# the v0..v10 Frost..Phoenix ladder in src/climb_grades.py — kept separate
+# so changing one doesn't drag the other.
+_IDENTITY_TIERS = (
+    "sandstone", "granite", "basalt", "quartz", "jasper", "jade",
+    "topaz", "garnet", "emerald", "ruby", "diamond", "obsidian",
+)
+
+
+def _grade_to_tier(grade: str | None) -> str:
+    """V-grade → identity-strip tier name. V0=sandstone, V11+=obsidian.
+
+    Returns 'sandstone' for None / unparseable input so the strip always
+    has a tier to render.
+    """
+    if not grade:
+        return _IDENTITY_TIERS[0]
+    m = re.match(r"^V(\d+)$", grade)
+    if not m:
+        return _IDENTITY_TIERS[0]
+    n = int(m.group(1))
+    return _IDENTITY_TIERS[min(n, len(_IDENTITY_TIERS) - 1)]
+
+
+def _compute_current_pentagon(user_id: int) -> dict[str, float] | None:
+    """Aggregate per-send `styles` counters across the user's training logs
+    and return a 0-10 axis dict.
+
+    Returns None for users with no styles-tagged sends — the Hub will then
+    render the empty/starter pentagon and the archetype falls back to
+    'Apprentice'. The axis scaling matches the JS Pentagon: 20% per axis
+    (perfectly balanced) → 5.0, which keeps the archetype rules well-tuned.
+    """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT climbs FROM training_logs "
+            "WHERE user_id = %s AND climbs <> '{}'::jsonb;",
+            (int(user_id),),
+        )
+        rows = cur.fetchall()
+
+    counts = {axis: 0 for axis in _PENTAGON_AXES}
+    for (climbs,) in rows:
+        for discipline in ("boulder", "route"):
+            grades = (climbs or {}).get(discipline, {})
+            for entry in grades.values():
+                styles = entry.get("styles") if isinstance(entry, dict) else None
+                if not isinstance(styles, dict):
+                    continue
+                for style_key, axis_key in _STYLE_TO_AXIS.items():
+                    counts[axis_key] += int(styles.get(style_key, 0) or 0)
+
+    total = sum(counts.values())
+    if total <= 0:
+        return None
+    # Scale: pct/5. Even distribution (20%) → 5.0. Full dominance → 20.0,
+    # clamped to 10. Keeps the archetype rules' >7 / >8 thresholds meaningful.
+    return {
+        axis: min(10.0, round((counts[axis] / total) * 50.0, 2))
+        for axis in _PENTAGON_AXES
+    }
+
+
+def _compute_streaks(user_id: int) -> tuple[int, int]:
+    """Return (current, longest) consecutive-day streak counts.
+
+    Current streak reuses the existing `_current_streak_days` helper —
+    consecutive days ending today (or yesterday if no log today). Longest
+    is computed in-process from the same distinct-day set.
+    """
+    from datetime import date, timedelta
+
+    current = _current_streak_days(user_id)
+
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT DISTINCT date FROM training_logs WHERE user_id = %s ORDER BY date;",
+            (int(user_id),),
+        )
+        days: list[date] = [r[0] for r in cur.fetchall() if r[0] is not None]
+
+    if not days:
+        return 0, 0
+
+    longest = 1
+    run = 1
+    for i in range(1, len(days)):
+        if days[i] - days[i - 1] == timedelta(days=1):
+            run += 1
+            longest = max(longest, run)
+        else:
+            run = 1
+    return current, longest
+
+
+def _get_recent_sends(user_id: int, limit: int = 5) -> list[dict[str, Any]]:
+    """Return up to `limit` of the user's most recent sends, JS-friendly shape.
+
+    The schema doesn't have `wall_angle`, `is_first_at_grade`, or
+    `burns_before_send` columns — those defaults are returned per the plan.
+    Sends live inside `training_logs.climbs` as JSONB; we expand each per-grade
+    counter back into N rows (one per send) and order by log date.
+    """
+    from src.climb_grades import grade_order  # local import to avoid cycle
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT date, created_at, climbs FROM training_logs "
+            "WHERE user_id = %s AND climbs <> '{}'::jsonb "
+            "ORDER BY date DESC, created_at DESC;",
+            (int(user_id),),
+        )
+        rows = cur.fetchall()
+
+    out: list[dict[str, Any]] = []
+    for log_date, created_at, climbs in rows:
+        if len(out) >= limit:
+            break
+        # Walk the climbs JSONB; emit one row per send (s counter). Sort
+        # grades within a log hardest-first so the most impressive shows up.
+        per_log: list[tuple[str, int]] = []
+        for discipline in ("boulder", "route"):
+            grades = (climbs or {}).get(discipline, {})
+            for g, counters in grades.items():
+                sends = int(counters.get("s", 0) or 0)
+                if sends > 0:
+                    try:
+                        per_log.append((g, sends))
+                    except Exception:
+                        continue
+        try:
+            per_log.sort(key=lambda gs: grade_order(gs[0]), reverse=True)
+        except Exception:
+            pass
+        sent_at_iso = (created_at or log_date).isoformat() if (created_at or log_date) else None
+        for g, sends in per_log:
+            for _ in range(sends):
+                if len(out) >= limit:
+                    break
+                out.append({
+                    "wallAngle": None,             # column not yet in schema
+                    "sentAt": sent_at_iso,
+                    "grade": g,
+                    "isFirstAtGrade": False,       # column not yet in schema
+                    "burnsBeforeSend": 0,          # column not yet in schema
+                })
+            if len(out) >= limit:
+                break
+    return out
+
+
+def _compute_archetype_py(pentagon: dict[str, float]) -> str:
+    """Python port of `frontend/src/lib/identity/archetype.js`.
+
+    Keep in sync with that file — same thresholds, same tie-breaks. Called
+    only when `pentagon` is not None; the caller falls back to 'Apprentice'
+    for users with no styles-tagged sends.
+    """
+    p = pentagon.get("power", 0)
+    c = pentagon.get("crimpy", 0)
+    d = pentagon.get("dynamic", 0)
+    t = pentagon.get("technical", 0)
+    m = pentagon.get("mobility", 0)
+
+    if all(v < 5 for v in (p, c, d, t, m)):
+        return "Apprentice"
+    if p > 7 and c > 7 and m < 5:
+        return "Crimper"
+    if p > 7 and d > 7:
+        return "Dynamo"
+    if t > 8 and m > 6 and p < 6:
+        return "Slabber"
+    if c > 8 and m > 6 and d < 5:
+        return "Spider"
+    if d > 7 and m > 7 and c < 5:
+        return "Acrobat"
+    if c > 7 and d > 7 and t < 5:
+        return "Brute"
+
+    vs = (p, c, d, t, m)
+    if max(vs) - min(vs) <= 1.5:
+        return "All-Rounder"
+
+    fallback = {
+        "power": "Brute", "crimpy": "Crimper", "dynamic": "Dynamo",
+        "technical": "Slabber", "mobility": "Spider",
+    }
+    dom = max(_PENTAGON_AXES, key=lambda k: pentagon.get(k, 0))
+    return fallback[dom]
+
+
+@app.get("/api/me/state")
+@limiter.limit("60/minute")
+def get_me_state(request: Request, user: dict = Depends(get_current_user)):
+    """Single payload for the Hub identity strip.
+
+    Bundles apex grade, identity tier, streak counts (current + longest),
+    the 5-axis pentagon, archetype, and the last 5 sends so the strip only
+    needs one fetch on mount. All fields are present for new users — empty
+    streaks, None apex/pentagon, 'sandstone' tier, 'Apprentice' archetype.
+    """
+    user_id = user["id"]
+    hardest = get_user_hardest(user_id, window="all") or {}
+    apex_grade = hardest.get("boulder")
+    tier = _grade_to_tier(apex_grade)
+    pentagon = _compute_current_pentagon(user_id)
+    streak_current, streak_longest = _compute_streaks(user_id)
+    recent_sends = _get_recent_sends(user_id, limit=5)
+    archetype = _compute_archetype_py(pentagon) if pentagon else "Apprentice"
+    return {
+        "apex_grade": apex_grade,
+        "tier": tier,
+        "streak_days_current": streak_current,
+        "streak_days_longest": streak_longest,
+        "pentagon": pentagon,
+        "recent_sends": recent_sends,
+        "archetype": archetype,
     }
 
 
