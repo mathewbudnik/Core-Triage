@@ -21,6 +21,7 @@ import UpgradeModal from './components/UpgradeModal'
 import AwardUnlockToast from './components/AwardUnlockToast'
 import TierPromotionTakeover from './components/TierPromotionTakeover'
 import { TierThemeProvider } from './components/ui/TierThemeProvider'
+import TextureDefs from './components/ui/TextureDefs'
 
 // Routing strategy — split into "primary" (eager-loaded, in the main bundle)
 // and "secondary" (still lazy). The 5 primary tabs are what users navigate
@@ -408,6 +409,11 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-bg flex" style={tierVars}>
+      {/* Off-screen SVG defs (hatch patterns, foil gradient, ink-blot symbol)
+          mounted once so any descendant can reference via fill="url(#ct-foil)"
+          etc. */}
+      <TextureDefs />
+
       {/* Ambient background orbs — warm forest-on-forest with a faint
           terracotta lift up top. Replaces the legacy teal+pink+gold trio
           that was the dominant source of the cold/blue cast across the
