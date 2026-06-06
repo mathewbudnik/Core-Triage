@@ -1,0 +1,44 @@
+/* frontend/src/styles/brand-tokens.css */
+:root {
+  /* Paper world palette */
+  --ct-paper-base: #e8dcc4;
+  --ct-paper-mid:  #ddd0b3;
+  --ct-paper-deep: #c9bb9c;
+
+  /* Ink */
+  --ct-ink:        #1a2620;
+  --ct-ink-soft:   #2b3a32;
+  --ct-ink-quiet:  rgba(26, 38, 32, 0.55);
+  --ct-ink-faint:  rgba(26, 38, 32, 0.30);
+
+  /* Cream (inverse text) */
+  --ct-cream:      #f4ecdf;
+  --ct-cream-mute: rgba(244, 236, 223, 0.65);
+  --ct-cream-quiet:rgba(244, 236, 223, 0.40);
+
+  /* Accents */
+  --ct-terracotta: #c75e3a;
+  --ct-terra-deep: #a44a2a;
+  --ct-terra-tint: rgba(199, 94, 58, 0.12);
+  --ct-terra-vert: #f0a875;
+  --ct-mint:       #2da283;
+
+  /* Foil prestige gradient (used as background-image OR via masking) */
+  --ct-foil-stops: #b88a3a, #c75e3a, #7a4a8e, #2f4ea8, #b88a3a;
+  --ct-foil-grad:  linear-gradient(135deg, var(--ct-foil-stops));
+
+  /* Typography */
+  --ct-font-serif:  "Fraunces", Georgia, serif;
+  --ct-font-script: "Caveat", cursive;
+  --ct-font-mono:   "JetBrains Mono", ui-monospace, monospace;
+  --ct-font-sans:   "Inter", -apple-system, sans-serif;
+
+  /* Type scale */
+  --ct-type-display-xl: clamp(2.5rem, 5vw, 3.4rem);
+  --ct-type-display:    clamp(2rem, 4vw, 2.75rem);
+  --ct-type-h1:         1.5rem;
+  --ct-type-h2:         1.25rem;
+  --ct-type-body:       1rem;
+  --ct-type-caption:    0.875rem;
+  --ct-type-mono-meta:  0.75rem;
+}
