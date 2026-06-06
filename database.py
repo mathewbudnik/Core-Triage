@@ -398,6 +398,32 @@ def init_db() -> None:
             )
             cur.execute("CREATE INDEX IF NOT EXISTS hub_tips_user_date_idx ON hub_tips (user_id, date);")
 
+            # ── Pentagon snapshots (identity / progression) ────────────────
+            # Monthly snapshot of the climber's 5-axis pentagon. captured_at
+            # is the actual timestamp; captured_month is the truncated month
+            # used as the idempotency key — re-saving within the same month
+            # overwrites axes + archetype instead of duplicating rows.
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS pentagon_snapshots (
+                    id SERIAL PRIMARY KEY,
+                    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    captured_at TIMESTAMPTZ NOT NULL,
+                    captured_month DATE NOT NULL,
+                    axes_json JSONB NOT NULL,
+                    archetype TEXT NOT NULL,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    UNIQUE (user_id, captured_month)
+                );
+                """
+            )
+            cur.execute(
+                """
+                CREATE INDEX IF NOT EXISTS pentagon_snapshots_user_captured_idx
+                ON pentagon_snapshots (user_id, captured_at DESC);
+                """
+            )
+
             # ── Coach messaging ────────────────────────────────────────────
             cur.execute(
                 """
@@ -1667,6 +1693,67 @@ def dismiss_hub_tip(user_id: int, date_iso: str) -> bool:
                 updated = cur.fetchone() is not None
         conn.commit()
     return updated
+
+
+# ── Pentagon snapshot helpers ────────────────────────────────────────
+
+
+def save_pentagon_snapshot(
+    user_id: int,
+    captured_at: Any,
+    axes: dict[str, Any],
+    archetype: str,
+) -> None:
+    """Idempotent per (user, calendar month).
+
+    Re-saving in the same month overwrites axes + archetype.
+    `captured_at` is the original timestamp; `captured_month` is the
+    truncated month used as the conflict key.
+    """
+    month = captured_at.replace(day=1).date()
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO pentagon_snapshots
+                  (user_id, captured_at, captured_month, axes_json, archetype)
+                VALUES (%s, %s, %s, %s::jsonb, %s)
+                ON CONFLICT (user_id, captured_month) DO UPDATE
+                  SET captured_at = EXCLUDED.captured_at,
+                      axes_json   = EXCLUDED.axes_json,
+                      archetype   = EXCLUDED.archetype;
+                """,
+                (int(user_id), captured_at, month, json.dumps(axes), archetype),
+            )
+        conn.commit()
+
+
+def get_pentagon_snapshots(user_id: int, limit: int = 6) -> list[dict[str, Any]]:
+    """Return up to `limit` snapshots for a user, most recent first.
+
+    Each row: {captured_at, axes, archetype}. `axes` is the parsed JSON dict.
+    """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+                SELECT captured_at, axes_json, archetype
+                FROM pentagon_snapshots
+                WHERE user_id = %s
+                ORDER BY captured_at DESC
+                LIMIT %s;
+                """,
+            (int(user_id), int(limit)),
+        )
+        rows = cur.fetchall()
+    out: list[dict[str, Any]] = []
+    for r in rows:
+        axes = r[1]
+        # psycopg2 returns JSONB as a dict by default, but be defensive
+        # in case the driver/row factory returns a JSON string.
+        if isinstance(axes, str):
+            axes = json.loads(axes)
+        out.append({"captured_at": r[0], "axes": axes, "archetype": r[2]})
+    return out
 
 
 def count_sends(user_id: int) -> int:
