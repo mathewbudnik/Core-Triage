@@ -73,6 +73,7 @@ from database import (
     get_subscription_state,
     get_thread_by_user,
     get_thread_messages,
+    get_pentagon_snapshots,
     get_training_logs,
     get_training_stats,
     get_user_by_email,
@@ -92,6 +93,7 @@ from database import (
     record_webhook_event,
     reset_failed_login,
     save_body_measurements,
+    save_pentagon_snapshot,
     save_plan,
     save_profile,
     save_session,
@@ -739,7 +741,7 @@ def _grade_to_tier(grade: str | None) -> str:
     return _IDENTITY_TIERS[min(n, len(_IDENTITY_TIERS) - 1)]
 
 
-def _compute_current_pentagon(user_id: int) -> dict[str, float] | None:
+def _compute_current_pentagon(user_id: int, as_of=None) -> dict[str, float] | None:
     """Aggregate per-send `styles` counters across the user's training logs
     and return a 0-10 axis dict.
 
@@ -747,13 +749,26 @@ def _compute_current_pentagon(user_id: int) -> dict[str, float] | None:
     render the empty/starter pentagon and the archetype falls back to
     'Apprentice'. The axis scaling matches the JS Pentagon: 20% per axis
     (perfectly balanced) → 5.0, which keeps the archetype rules well-tuned.
+
+    If `as_of` is a date/datetime, only training_logs with `date <= as_of`
+    are included — used by the snapshot backfill to reconstruct historical
+    monthly pentagons from existing sends.
     """
     with _connect() as conn, conn.cursor() as cur:
-        cur.execute(
-            "SELECT climbs FROM training_logs "
-            "WHERE user_id = %s AND climbs <> '{}'::jsonb;",
-            (int(user_id),),
-        )
+        if as_of is None:
+            cur.execute(
+                "SELECT climbs FROM training_logs "
+                "WHERE user_id = %s AND climbs <> '{}'::jsonb;",
+                (int(user_id),),
+            )
+        else:
+            cutoff = as_of.date() if hasattr(as_of, "date") else as_of
+            cur.execute(
+                "SELECT climbs FROM training_logs "
+                "WHERE user_id = %s AND climbs <> '{}'::jsonb "
+                "AND date <= %s;",
+                (int(user_id), cutoff),
+            )
         rows = cur.fetchall()
 
     counts = {axis: 0 for axis in _PENTAGON_AXES}
@@ -931,6 +946,72 @@ def get_me_state(request: Request, user: dict = Depends(get_current_user)):
         "pentagon": pentagon,
         "recent_sends": recent_sends,
         "archetype": archetype,
+    }
+
+
+# ── /api/me/pentagon-snapshots — morph-timeline data feed ───────────────
+#
+# Returns the user's last N monthly pentagon snapshots (most recent first).
+# On the first request for an account with sends but no snapshots yet, we
+# lazily backfill up to 5 historical monthly points by replaying the
+# `_compute_current_pentagon` aggregation with a date cutoff at each
+# month-start. The monthly cron (Task 15) takes over going forward.
+
+def _backfill_pentagon_snapshots(user_id: int) -> int:
+    """Reconstruct up to 5 historical monthly snapshots from training_logs.
+
+    For each of the last 5 month-starts (oldest first), compute the pentagon
+    as if `as_of=that month` and persist via `save_pentagon_snapshot`. Months
+    with no styles data are skipped (helper returns None).
+
+    Returns the number of snapshots actually written.
+    """
+    import datetime as dt
+    now = dt.datetime.now(tz=dt.timezone.utc).replace(
+        day=1, hour=0, minute=0, second=0, microsecond=0
+    )
+    written = 0
+    for i in range(5, 0, -1):
+        month_start = (now - dt.timedelta(days=30 * i)).replace(day=1)
+        axes = _compute_current_pentagon(user_id, as_of=month_start)
+        if axes is None:
+            continue
+        archetype = _compute_archetype_py(axes)
+        save_pentagon_snapshot(user_id, month_start, axes, archetype)
+        written += 1
+    return written
+
+
+@app.get("/api/me/pentagon-snapshots")
+@limiter.limit("60/minute")
+def list_pentagon_snapshots(
+    request: Request,
+    limit: int = 6,
+    user: dict = Depends(get_current_user),
+):
+    """Return the user's last N monthly pentagon snapshots.
+
+    On first request for an account with no snapshots yet, lazily backfills
+    up to 5 historical monthly points reconstructed from training_logs. The
+    monthly cron (Task 15) writes fresh snapshots from then on.
+    """
+    user_id = user["id"]
+    snapshots = get_pentagon_snapshots(user_id, limit=limit)
+
+    if not snapshots:
+        backfilled = _backfill_pentagon_snapshots(user_id)
+        if backfilled:
+            snapshots = get_pentagon_snapshots(user_id, limit=limit)
+
+    return {
+        "snapshots": [
+            {
+                "captured_at": s["captured_at"].isoformat(),
+                "axes": s["axes"],
+                "archetype": s["archetype"],
+            }
+            for s in snapshots
+        ]
     }
 
 

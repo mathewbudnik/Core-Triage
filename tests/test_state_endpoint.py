@@ -137,5 +137,35 @@ class MeStateEndpointTests(unittest.TestCase):
         self.assertEqual(first["grade"], "V5")
 
 
+class PentagonSnapshotsEndpointTests(unittest.TestCase):
+    """Tests for /api/me/pentagon-snapshots — the morph-timeline data feed."""
+
+    @classmethod
+    def setUpClass(cls):
+        init_db()
+
+    def setUp(self):
+        self.email = "pentagon_snapshots_test@coretriage.local"
+        _cleanup_user(self.email)
+        self.token = _register_and_login(self.email)
+        self.client = TestClient(app)
+
+    def tearDown(self):
+        _cleanup_user(self.email)
+
+    def _auth(self) -> dict[str, str]:
+        return {"Authorization": f"Bearer {self.token}"}
+
+    def test_pentagon_snapshots_endpoint_returns_list(self):
+        r = self.client.get(
+            "/api/me/pentagon-snapshots?limit=6",
+            headers=self._auth(),
+        )
+        self.assertEqual(r.status_code, 200, r.text)
+        body = r.json()
+        self.assertIn("snapshots", body)
+        self.assertIsInstance(body["snapshots"], list)
+
+
 if __name__ == "__main__":
     unittest.main()
