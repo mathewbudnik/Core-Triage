@@ -4,9 +4,9 @@
 
 @layer base {
   :root {
-    --color-accent: #14b8a6;
-    --color-accent2: #fb7185;
-    --color-accent3: #fbbf24;
+    --color-accent: #c58a77;
+    --color-accent2: #97a886;
+    --color-accent3: #d7ac5b;
   }
 
   * {
@@ -28,10 +28,30 @@
   }
 
   body {
-    background-color: #1c2520;
-    color: #f0f5ed;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #e7ddc6;
+    color: #2a2722;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
+    /* newspaper print-dot base */
+    background-image: radial-gradient(circle, rgba(42,39,34,0.05) 0.5px, transparent 0.6px);
+    background-size: 3px 3px;
+  }
+
+  /* organic grain overlay — fixed, covers viewport, multiply */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.18;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23g)'/></svg>");
+  }
+
+  #root {
+    position: relative;
+    z-index: 1;
   }
 
   ::-webkit-scrollbar {
@@ -39,16 +59,16 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: #1f2924;
+    background: #e0d4b6;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(230, 237, 228, 0.15);
+    background: rgba(42, 39, 34, 0.18);
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(217, 119, 87, 0.4);
+    background: rgba(197, 138, 119, 0.6);
   }
 }
 
@@ -58,66 +78,69 @@
        focused inputs — that zoom was making auth/avatar modals look
        cartoonishly large on phones. Desktop reverts to the tighter
        text-sm we had before. */
-    @apply w-full bg-panel border border-outline rounded-lg px-3 py-2 text-text text-base sm:text-sm
-           focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent
+    @apply w-full bg-card border border-ct-rim rounded-lg px-3 py-2 text-ink text-base sm:text-sm
+           focus:outline-none focus:ring-1 focus:ring-clay focus:border-clay
            transition-colors duration-200;
   }
 
   .btn-primary {
-    @apply px-5 py-2.5 rounded-lg font-semibold text-sm text-ct-cream
-           bg-ct-terracotta
-           hover:brightness-110 active:brightness-95
+    @apply px-5 py-2.5 rounded-lg font-semibold text-sm text-cream
+           bg-clay
+           hover:brightness-105 active:brightness-95
            transition-all duration-200
            disabled:opacity-50 disabled:cursor-not-allowed;
+    box-shadow: 0 2px 0 #b06a4f;
   }
 
   .btn-secondary {
-    @apply px-4 py-2 rounded-lg font-medium text-sm text-ct-cream
-           bg-ct-hairline border border-ct-rim
-           hover:border-ct-terracotta/50 hover:text-ct-terra-soft
+    @apply px-4 py-2 rounded-lg font-medium text-sm text-ink
+           bg-card border border-ct-rim
+           hover:border-clay/50 hover:text-clay-deep
            transition-all duration-200;
   }
 
   .btn-danger {
-    @apply px-4 py-2 rounded-lg font-medium text-sm text-red-400
-           bg-ct-hairline border border-ct-rim
+    @apply px-4 py-2 rounded-lg font-medium text-sm text-red-700
+           bg-card border border-ct-rim
            hover:border-red-500/40 hover:bg-red-500/10
            transition-all duration-200;
   }
 
   .card {
     @apply ct-surface p-5
-           transition-all duration-300
-           hover:border-ct-terracotta/30;
+           transition-all duration-300;
   }
 
   .label {
     @apply block text-xs font-medium text-muted mb-1.5 uppercase tracking-wide;
+    font-family: 'JetBrains Mono', monospace;
   }
 
-  .ct-eyebrow    { font-size: 10px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: theme(colors.ct.moss); }
-  .ct-title      { font-size: 15px; font-weight: 700; letter-spacing: -0.015em; color: theme(colors.ct.cream); }
-  .ct-display    { font-size: 36px; font-weight: 800; letter-spacing: -0.030em; line-height: 1; color: theme(colors.ct.terracotta); font-variant-numeric: tabular-nums; }
-  .ct-stat-num   { font-size: 24px; font-weight: 800; letter-spacing: -0.025em; color: theme(colors.ct.terracotta); font-variant-numeric: tabular-nums; }
-  .ct-body       { font-size: 13px; color: theme(colors.ct.cream); line-height: 1.5; }
-  .ct-body-soft  { font-size: 12px; color: theme(colors.ct.cream-soft); line-height: 1.55; }
-  .ct-meta       { font-size: 10px; color: theme(colors.ct.moss); letter-spacing: 0.05em; }
-  .ct-tnum       { font-variant-numeric: tabular-nums; }
+  .ct-eyebrow   { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: #8d8472; }
+  .ct-title     { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; color: #2a2722; }
+  .ct-display   { font-family: 'Fraunces', serif; font-size: 34px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.02; color: #2a2722; }
+  .ct-stat-num  { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 600; letter-spacing: -0.01em; color: #b06a4f; font-variant-numeric: tabular-nums; }
+  .ct-body      { font-size: 13px; color: #2a2722; line-height: 1.5; }
+  .ct-body-soft { font-size: 12px; color: #5f594c; line-height: 1.55; }
+  .ct-meta      { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #8d8472; letter-spacing: 0.05em; }
+  .ct-tnum      { font-variant-numeric: tabular-nums; }
 
   .ct-surface {
-    @apply border border-ct-hairline rounded-lg;
-    background-image: linear-gradient(180deg, theme(colors.ct.forest-deep) 0%, theme(colors.ct.forest-soft) 100%);
+    @apply border border-ct-rim rounded-lg;
+    background-color: #f4ecdb;
+    box-shadow: 0 4px 14px rgba(42,39,34,0.07);
   }
 
   .ct-surface-hero {
     @apply border rounded-lg;
-    border-color: rgba(217,119,87,0.20);
-    background-image: linear-gradient(180deg, #2a3a34 0%, theme(colors.ct.forest-soft) 100%);
+    border-color: #bcae8a;
+    background-color: #f4ecdb;
+    box-shadow: 0 8px 22px rgba(42,39,34,0.10);
   }
 
   .ct-surface-flat {
     @apply border border-ct-hairline rounded-md;
-    background-color: theme(colors.ct.forest);
+    background-color: #efe6d2;
   }
 }
 
