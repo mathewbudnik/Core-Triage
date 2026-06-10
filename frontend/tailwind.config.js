@@ -4,47 +4,52 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        serif: ['Fraunces', 'Georgia', 'serif'],
+        serif:  ['Fraunces', 'Georgia', 'serif'],
+        sans:   ['Inter', '-apple-system', 'sans-serif'],
+        mono:   ['JetBrains Mono', 'ui-monospace', 'monospace'],
         script: ['Caveat', 'cursive'],
-        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
       },
       colors: {
-        bg: '#1c2520',
-        panel: '#243530',
-        panel2: '#1f2924',
-        text: '#f0f5ed',
-        muted: '#95a698',
-        accent: '#14b8a6',
-        accent2: '#fb7185',
-        accent3: '#fbbf24',
+        // Almanac surfaces / ink
+        bg:     '#e7ddc6',  paper:  '#e7ddc6',
+        side:   '#e0d4b6',
+        panel:  '#f4ecdb',  card:   '#f4ecdb',
+        panel2: '#efe6d2',
+        text:   '#2a2722',  ink:    '#2a2722',
+        muted:  '#8d8472',
+        cream:  '#fdf6ea',          // text on colored fills
+        // accents (legacy names remapped so existing usages flip correctly)
+        accent:  '#c58a77',  accent2: '#97a886',  accent3: '#d7ac5b',
+        clay:    '#c58a77',  'clay-deep': '#b06a4f',
+        ochre:   '#d7ac5b',  sage: '#97a886', 'sage-deep': '#5f7a4e',
         ct: {
-          forest:        '#1c2520',
-          'forest-deep': '#243530',
-          'forest-soft': '#1f2924',
-          cream:         '#f0f5ed',
-          'cream-soft':  '#c8d3c4',
-          moss:          '#95a698',
-          hairline:      'rgba(230,237,228,0.10)',
-          rim:           'rgba(230,237,228,0.18)',
-          terracotta:    '#d97757',
-          'terra-soft':  '#f0a875',
-          'terra-tint':  'rgba(217,119,87,0.06)',
+          forest:        '#e7ddc6',
+          'forest-deep': '#f4ecdb',
+          'forest-soft': '#e0d4b6',
+          cream:         '#2a2722',   // NB: now ink — see "inverse text" nuance
+          'cream-soft':  '#5f594c',
+          moss:          '#8d8472',
+          hairline:      'rgba(42,39,34,0.13)',
+          rim:           '#bcae8a',
+          edge:          '#bcae8a',
+          terracotta:    '#c58a77',
+          'terra-soft':  '#b06a4f',
+          'terra-tint':  'rgba(197,138,119,0.10)',
         },
-        'ct-paper': {
-          base: '#e8dcc4',
-          mid:  '#ddd0b3',
-          deep: '#c9bb9c',
+        // semantic skill colors
+        skill: {
+          power: '#b85c44', crimp: '#c79a3c', dynamic: '#5f87a0',
+          technique: '#7f9466', mobility: '#a06f8a',
         },
-        'ct-ink': '#1a2620',
-        'ct-ink-soft': '#2b3a32',
+        // keep tier tokens referenced by lib/tier.js (re-paletted in Task 6)
       },
       borderColor: {
-        outline: 'rgba(230,237,228,0.12)',
+        outline: 'rgba(42,39,34,0.13)',
       },
       boxShadow: {
-        glow: '0 0 24px rgba(20,184,166,0.25)',
-        'glow-coral': '0 0 24px rgba(251,113,133,0.25)',
-        'glow-gold': '0 0 24px rgba(251,191,36,0.20)',
+        glow:        '0 0 24px rgba(197,138,119,0.22)',
+        'glow-coral':'0 0 24px rgba(176,106,79,0.22)',
+        'glow-gold': '0 0 24px rgba(215,172,91,0.20)',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
