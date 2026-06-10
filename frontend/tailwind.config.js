@@ -16,6 +16,7 @@ export default {
         panel:  '#f4ecdb',  card:   '#f4ecdb',
         panel2: '#efe6d2',
         text:   '#2a2722',  ink:    '#2a2722',
+        'ink-soft': '#5f594c',  'ink-muted': '#8d8472',
         muted:  '#8d8472',
         cream:  '#fdf6ea',          // text on colored fills
         // accents (legacy names remapped so existing usages flip correctly)
