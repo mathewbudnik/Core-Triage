@@ -1,22 +1,20 @@
 import { useEffect, useState, useCallback, useMemo, useRef, lazy, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Routes, Route, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom'
-import { MessageSquare, Clock, Info, AlertTriangle, Menu, X, LogIn, Activity, Dumbbell, FileText, Stethoscope, UserCircle2, ChevronRight, Bug, Loader2, Trophy, Home } from 'lucide-react'
+import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom'
+import { X, LogIn, Trophy, Loader2 } from 'lucide-react'
 import * as Sentry from '@sentry/react'
-import { getHealth, getMe, getPyramid, acceptDisclaimer } from './api'
+import { getHealth, getMe, getPyramid, getMeState, acceptDisclaimer } from './api'
 import { workingTierFromHardest, TIER_TOKENS } from './lib/tier'
 import { clearAll as clearDataCache } from './lib/dataCache'
 import Landing from './components/Landing'
-import Logo from './components/Logo'
 import AuthModal from './components/AuthModal'
-import TipCard from './components/TipCard'
 import DisclaimerModal from './components/DisclaimerModal'
 import LegalModal from './components/LegalModal'
 import EmailVerificationBanner from './components/EmailVerificationBanner'
 import TrialStatusBanner from './components/TrialStatusBanner'
 import AccountMenu from './components/AccountMenu'
+import AppShell from './components/shell/AppShell'
 import { PRIVACY_POLICY, TERMS_OF_SERVICE } from './data/legal'
-import { openBillingPortal } from './api'
 import UpgradeModal from './components/UpgradeModal'
 import AwardUnlockToast from './components/AwardUnlockToast'
 import TierPromotionTakeover from './components/TierPromotionTakeover'
@@ -32,11 +30,10 @@ import HubTab      from './components/HubTab'
 import RecoverTab  from './components/RecoverTab'
 import TrainTab    from './components/TrainTab'
 import ProgressTab from './components/ProgressTab'
-import ChatTab     from './components/ChatTab'
+import CoachTab    from './components/CoachTab'
 
-const RehabRegionRedirect  = lazy(() => import('./components/RehabRegionRedirect'))
 const TriageTab            = lazy(() => import('./components/TriageTab'))
-const RehabTab             = lazy(() => import('./components/RehabTab'))
+const RehabRegionRedirect  = lazy(() => import('./components/RehabRegionRedirect'))
 const AwardsPage           = lazy(() => import('./components/AwardsPage'))
 const HistoryTab           = lazy(() => import('./components/HistoryTab'))
 const AboutTab             = lazy(() => import('./components/AboutTab'))
@@ -60,27 +57,23 @@ function RouteLoading() {
   )
 }
 
-// Single source of truth for every tab's metadata (label, icon, subtitle for
-// the global header). Routes still exist for every entry in this list — the
-// nav arrays below decide which tabs surface in which navigation chrome.
-const TABS = [
-  { id: 'hub',      label: 'Hub',      icon: Home,          subtitle: 'Your climbing dashboard' },
-  { id: 'train',    label: 'Train',    icon: Dumbbell,      subtitle: 'Plans, stats, and how you stack up' },
-  { id: 'progress', label: 'Progress', icon: Trophy,        subtitle: 'Leaderboard, grade pyramid, and your stats' },
-  { id: 'recover',  label: 'Recover',  icon: Stethoscope,   subtitle: 'Screen issues + work through rehab' },
-  { id: 'chat',     label: 'Chat',     icon: MessageSquare, subtitle: 'Ask the climbing-trained assistant' },
-]
-
-// Mobile bottom nav + top of desktop sidebar — 5 core tabs.
-const PRIMARY_TAB_IDS = ['hub', 'train', 'progress', 'recover', 'chat']
-// No secondary tabs needed with the 4-tab structure.
-const SECONDARY_TAB_IDS = []
-// Triage / History → still accessible via direct links / internal navigation.
-// About            → reachable from the sidebar footer next to Privacy / Terms.
-// Routes still exist for all of these; they just don't take up nav real estate.
-
-const PRIMARY_TABS   = TABS.filter((t) => PRIMARY_TAB_IDS.includes(t.id))
-const SECONDARY_TABS = TABS.filter((t) => SECONDARY_TAB_IDS.includes(t.id))
+// Per-route header copy — drives AppShell's pageTitle + pageDateline. The 5
+// primary tabs (ids match the AppShell nav routes) plus the secondary routes
+// that still render inside the shell (Triage / History / Settings / About).
+// The first path segment is looked up here; unknown segments fall back to the
+// Home copy.
+const TAB_META = {
+  home:     { title: 'Home',     dateline: 'your dashboard' },
+  train:    { title: 'Train',    dateline: 'plans + log' },
+  progress: { title: 'Progress', dateline: 'the record' },
+  coach:    { title: 'Coach',    dateline: 'ask + analyze' },
+  recover:  { title: 'Recover',  dateline: 'screen + rehab' },
+  triage:   { title: 'Triage',   dateline: 'screen a symptom' },
+  history:  { title: 'History',  dateline: 'your log' },
+  settings: { title: 'Settings', dateline: 'account + plan' },
+  about:    { title: 'About',    dateline: 'CoreTriage' },
+}
+const DEFAULT_TAB_META = TAB_META.home
 
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
 
@@ -108,6 +101,9 @@ export default function App() {
   // grades on their athlete profile; null until the profile loads (nav falls
   // back to the default teal accent via the CSS variable fallback values).
   const [userTier, setUserTier] = useState(null)
+  // Current streak shown in the Header — sourced from me-state, the same
+  // payload the Hub reads. 0 hides the Header flame.
+  const [streakDays, setStreakDays] = useState(0)
 
   // Derive "is on landing?" and "is on a special standalone page?" from URL
   // — landing has its own full-bleed layout; verify-email + billing/* are
@@ -119,17 +115,13 @@ export default function App() {
                         || location.pathname === '/forgot-password'
                         || location.pathname === '/reset-password'
 
-  // Sidebar nav still uses these labels — derive activeTabLabel from the URL.
-  const activeTabId = useMemo(() => {
-    const seg = location.pathname.split('/')[1] || ''
-    return TABS.find((t) => t.id === seg)?.id || null
-  }, [location.pathname])
-  const activeTab = useMemo(
-    () => TABS.find((t) => t.id === activeTabId) || null,
-    [activeTabId],
+  // Active tab id = first path segment. Drives AppShell's activeTabId prop and
+  // the per-route header copy lookup.
+  const activeTabId = useMemo(
+    () => location.pathname.split('/')[1] || 'home',
+    [location.pathname],
   )
-  const activeTabLabel    = activeTab?.label    || ''
-  const activeTabSubtitle = activeTab?.subtitle || ''
+  const tabMeta = TAB_META[activeTabId] || DEFAULT_TAB_META
 
   // Session timeout
   const timeoutRef = useRef(null)
@@ -233,7 +225,7 @@ export default function App() {
   // "I'm V0 Frost on Progress but my nav is V10 coral" mismatches).
   // No recent sends → workingTierFromHardest falls back to 'rookie' (Quartz).
   useEffect(() => {
-    if (!user) { setUserTier(null); return }
+    if (!user) { setUserTier(null); setStreakDays(0); return }
     let cancelled = false
     getPyramid({ window: 'month' })
       .then((p) => {
@@ -245,6 +237,10 @@ export default function App() {
         if (tier) setUserTier(tier)
       })
       .catch(() => { /* no pyramid data yet — keep default accent */ })
+    // Streak for the Header flame — me-state is the same payload the Hub reads.
+    getMeState()
+      .then((s) => { if (!cancelled) setStreakDays(s?.streak_days_current ?? 0) })
+      .catch(() => { /* no me-state yet — leave streak hidden */ })
     return () => { cancelled = true }
   }, [user])
 
@@ -393,13 +389,13 @@ export default function App() {
 
   // Landing has its own full-bleed layout — no sidebar.
   if (isLandingRoute) {
-    // Signed-in users land on the Hub, not the marketing page.
+    // Signed-in users land on Home, not the marketing page.
     if (user) {
-      return <Navigate to="/hub" replace />
+      return <Navigate to="/home" replace />
     }
     return (
       <>
-        <Landing onEnter={(tab) => navigate(tab ? `/${tab}` : '/hub')} />
+        <Landing onEnter={(tab) => navigate(tab ? `/${tab}` : '/home')} />
         {showTerms && (
           <DisclaimerModal readOnly onExit={() => setShowTerms(false)} />
         )}
@@ -408,7 +404,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-bg flex" style={tierVars}>
+    <div style={tierVars}>
       {/* Off-screen SVG defs (hatch patterns, foil gradient, ink-blot symbol)
           mounted once so any descendant can reference via fill="url(#ct-foil)"
           etc. */}
@@ -540,248 +536,52 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Mobile sidebar overlay */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.1 }}
-            className="fixed inset-0 bg-bg/80 backdrop-blur-sm z-30 md:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Sidebar */}
-      <aside className={`
-        fixed md:sticky md:top-0 inset-y-0 md:inset-y-auto left-0 z-40
-        md:h-screen
-        w-64 shrink-0 flex flex-col border-r border-ct-hairline bg-ct-forest/95 backdrop-blur-sm
-        transition-transform duration-150 ease-out
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-      `}>
-        {/* Logo */}
-        <div className="shrink-0 px-6 pt-8 pb-6 border-b border-ct-hairline">
-          <div className="flex items-center justify-between">
-            <NavLink
-              to="/hub"
-              onClick={() => setSidebarOpen(false)}
-              aria-label="Go to hub"
-              className="flex items-center gap-2 mb-1 hover:opacity-90 transition-opacity"
-            >
-              <Logo size={32} dark />
-              <span
-                className="text-lg font-bold bg-clip-text text-transparent"
-                style={{ backgroundImage: 'linear-gradient(90deg, #3FD8A4, #d97757)' }}
-              >
-                CoreTriage
-              </span>
-            </NavLink>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="md:hidden text-ink-soft hover:text-ct-cream"
-              aria-label="Close menu"
-            >
-              <X size={18} />
-            </button>
-          </div>
-          <p className="text-xs text-ink-soft leading-relaxed mt-1">
-            Training, rehab &amp; coaching for climbers
-          </p>
-        </div>
-
-        {/* Scrollable middle — nav + coaching CTA + tip card */}
-        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col">
-        {/* Nav — primary climbing surfaces on top, secondary (Chat) below
-            a thin divider so the hierarchy reads at a glance. */}
-        <nav className="px-3 py-4 space-y-1">
-          {PRIMARY_TABS.map(({ id, label, icon: Icon }) => (
-            <NavLink
-              key={id}
-              to={`/${id}`}
-              onClick={() => setSidebarOpen(false)}
-              className={({ isActive }) => `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-100 border ${
-                isActive ? '' : 'text-ink-soft hover:text-ct-cream hover:bg-ct-hairline border-transparent'
-              }`}
-              style={({ isActive }) => isActive ? {
-                background: 'rgba(217,119,87,0.12)',
-                color: '#f0a875',
-                borderColor: 'rgba(217,119,87,0.30)',
-                boxShadow: '0 0 12px rgba(217,119,87,0.18)',
-              } : undefined}
-            >
-              {({ isActive }) => (
-                <>
-                  <Icon
-                    size={16}
-                    strokeWidth={isActive ? 2.25 : 2}
-                  />
-                  {label}
-                  {isActive && (
-                    <motion.div
-                      layoutId="nav-indicator"
-                      transition={{ duration: 0.12, ease: [0, 0, 0.2, 1] }}
-                      className="ml-auto w-1.5 h-1.5 rounded-full"
-                      style={{
-                        background: '#d97757',
-                        boxShadow: '0 0 6px rgba(217,119,87,0.55)',
-                      }}
-                    />
-                  )}
-                </>
-              )}
-            </NavLink>
-          ))}
-          {SECONDARY_TABS.length > 0 && (
-            <>
-              <div className="h-px bg-ct-hairline mx-3 my-3" />
-              {SECONDARY_TABS.map(({ id, label, icon: Icon }) => (
-                <NavLink
-                  key={id}
-                  to={`/${id}`}
-                  onClick={() => setSidebarOpen(false)}
-                  className={({ isActive }) => `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-100 border ${
-                    isActive ? '' : 'text-ink-soft hover:text-ct-cream hover:bg-ct-hairline border-transparent'
-                  }`}
-                  style={({ isActive }) => isActive ? {
-                    background: 'rgba(217,119,87,0.12)',
-                    color: '#f0a875',
-                    borderColor: 'rgba(217,119,87,0.30)',
-                    boxShadow: '0 0 12px rgba(217,119,87,0.18)',
-                  } : undefined}
-                >
-                  {({ isActive }) => (
-                    <>
-                      <Icon size={16} />
-                      {label}
-                      {isActive && (
-                        <motion.div
-                          layoutId="nav-indicator"
-                          transition={{ duration: 0.12, ease: [0, 0, 0.2, 1] }}
-                          className="ml-auto w-1.5 h-1.5 rounded-full"
-                          style={{
-                            background: '#d97757',
-                            boxShadow: '0 0 6px rgba(217,119,87,0.55)',
-                          }}
-                        />
-                      )}
-                    </>
-                  )}
-                </NavLink>
-              ))}
-            </>
-          )}
-        </nav>
-
-        {/* Coaching CTA */}
-        <div className="mt-auto mx-3 mb-3 rounded-xl border border-accent3/25 bg-accent3/8 p-3">
-          <div className="flex items-center gap-1.5 mb-1">
-            <UserCircle2 size={12} className="text-accent3" />
-            <span className="text-[10px] font-bold text-accent3 uppercase tracking-wide">1:1 Coaching</span>
-          </div>
-          <p className="text-[11px] text-muted leading-snug mb-2">
-            $89/mo · application only. Personal injury review &amp; custom return-to-climb plan.
-          </p>
-          <button
-            onClick={() => {
-              setUpgradeTrigger('coaching')
-              setShowUpgrade(true)
-            }}
-            className="flex items-center gap-1 text-[11px] font-semibold text-accent3 hover:text-accent3/80 transition-colors"
-          >
-            Apply for coaching <ChevronRight size={10} />
-          </button>
-        </div>
-
-        {/* Tip card — desktop sidebar only. On mobile the drawer is a
-            transient nav surface, not a place for ambient content. */}
-        <div className="hidden md:block">
-          <TipCard />
-        </div>
-
-        </div>
-        {/* Sidebar footer */}
-        <div className="shrink-0 px-4 py-4 border-t border-ct-hairline space-y-2">
-          <div className="flex items-start gap-2">
-            <AlertTriangle size={11} className="text-accent3 shrink-0 mt-0.5" />
-            <p className="text-[10px] text-ink-muted leading-relaxed">
-              Severe symptoms or major trauma: seek professional evaluation.
-            </p>
-          </div>
-          {user && user.tier && user.tier !== 'free' ? (
-            <button
-              onClick={async () => {
-                try {
-                  const { url } = await openBillingPortal()
-                  window.location.href = url
-                } catch (err) {
-                  setToast({ kind: 'error', message: err.message || 'Could not open billing portal.' })
-                }
-              }}
-              className="flex items-center gap-1 text-[10px] text-ink-muted hover:text-ink-soft transition-colors"
-            >
-              <ChevronRight size={9} />
-              Manage subscription
-            </button>
+      {/* Almanac shell — sidebar + header + bottom nav. The routed page
+          content (Routes, wrapped in TierThemeProvider + the global fade-rise
+          motion div) is passed as children. The banners ride at the top of
+          the content area, above the page, exactly as before. */}
+      <AppShell
+        user={user}
+        activeTabId={activeTabId}
+        pageTitle={tabMeta.title}
+        pageDateline={tabMeta.dateline}
+        streak={streakDays}
+        onLogClick={() => navigate('/train')}
+        accountSlot={
+          user ? (
+            <AccountMenu
+              user={user}
+              onUserChange={setUser}
+              onLogout={handleLogout}
+              onUpgradeClick={() => { setUpgradeTrigger('feature'); setShowUpgrade(true) }}
+              onToast={setToast}
+            />
           ) : (
             <button
-              onClick={() => { setUpgradeTrigger('feature'); setShowUpgrade(true) }}
-              className="flex items-center gap-1 text-[10px] text-ink-muted hover:text-ink-soft transition-colors"
+              onClick={() => setShowAuth(true)}
+              className="flex items-center gap-1.5 text-xs btn-secondary"
             >
-              <ChevronRight size={9} />
-              View plans &amp; pricing
+              <LogIn size={13} />
+              Log in
             </button>
-          )}
-          <button
-            onClick={() => navigate('/about')}
-            className="flex items-center gap-1 text-[10px] text-ink-muted hover:text-ink-soft transition-colors"
-          >
-            <Info size={9} />
-            About CoreTriage
-          </button>
-          <button
-            onClick={() => setShowTerms(true)}
-            className="flex items-center gap-1 text-[10px] text-ink-muted hover:text-ink-soft transition-colors"
-          >
-            <FileText size={9} />
-            Medical Disclaimer
-          </button>
-          <button
-            onClick={() => setLegalDoc(PRIVACY_POLICY)}
-            className="flex items-center gap-1 text-[10px] text-ink-muted hover:text-ink-soft transition-colors"
-          >
-            <FileText size={9} />
-            Privacy Policy
-          </button>
-          <button
-            onClick={() => setLegalDoc(TERMS_OF_SERVICE)}
-            className="flex items-center gap-1 text-[10px] text-ink-muted hover:text-ink-soft transition-colors"
-          >
-            <FileText size={9} />
-            Terms of Service
-          </button>
-          <button
-            onClick={() => {
-              const feedback = Sentry.getFeedback()
-              if (feedback) {
-                feedback.createForm().then((form) => form.appendToDom() && form.open())
-              } else {
-                // Sentry not initialised (no DSN set). Fall back to email.
-                window.location.href = 'mailto:mathewbudnik@gmail.com?subject=CoreTriage%20bug%20report'
-              }
-            }}
-            className="flex items-center gap-1 text-[10px] text-ink-muted hover:text-red-400 transition-colors"
-          >
-            <Bug size={9} />
-            Report a bug
-          </button>
-        </div>
-      </aside>
-
-      {/* Main content */}
-      <main className="flex-1 flex flex-col min-w-0 relative z-10 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
+          )
+        }
+        weekDays={[]}
+        sidebarOpen={sidebarOpen}
+        onSidebarToggle={setSidebarOpen}
+        onCoachingClick={() => { setUpgradeTrigger('coaching'); setShowUpgrade(true) }}
+        onFooterClick={(key) => {
+          if (key === 'about') navigate('/about')
+          else if (key === 'privacy') setLegalDoc(PRIVACY_POLICY)
+          else if (key === 'terms') setLegalDoc(TERMS_OF_SERVICE)
+          else if (key === 'disclaimer') setShowTerms(true)
+          else if (key === 'bug') {
+            const feedback = Sentry.getFeedback?.()
+            if (feedback) feedback.createForm().then((form) => form.appendToDom() && form.open())
+            else window.location.href = 'mailto:mathewbudnik@gmail.com?subject=CoreTriage%20bug%20report'
+          }
+        }}
+      >
         {/* Email verification banner — shown when user is signed in but unverified */}
         {user && user.email_verified === false && !bannerDismissed && (
           <EmailVerificationBanner user={user} onDismiss={() => setBannerDismissed(true)} />
@@ -795,84 +595,10 @@ export default function App() {
           />
         )}
 
-        {/* Top bar — tier-themed accent: a hairline gradient at the bottom
-            edge and a small filled icon in the active tab's tier color keep
-            mobile chrome from reading as flat grey. */}
-        <header className="border-b border-ct-hairline px-4 md:px-8 py-4 flex items-center justify-between bg-ct-forest/40 backdrop-blur-sm sticky top-0 z-20 relative">
-          <span
-            aria-hidden
-            className="pointer-events-none absolute left-0 right-0 bottom-[-1px] h-px"
-            style={{
-              background: 'linear-gradient(90deg, transparent 0%, #d97757 50%, transparent 100%)',
-              opacity: 0.45,
-            }}
-          />
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="md:hidden text-ink-soft hover:text-ct-cream p-1"
-              aria-label="Open menu"
-            >
-              <Menu size={20} />
-            </button>
-            <div className="flex items-center gap-2.5 min-w-0">
-              {activeTab?.icon && (
-                <motion.span
-                  key={activeTab.id}
-                  initial={{ scale: 0.92, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.18, ease: [0, 0, 0.2, 1] }}
-                  aria-hidden
-                  className="shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-lg flex items-center justify-center"
-                  style={{
-                    background: 'rgba(217,119,87,0.16)',
-                    border: '0.5px solid rgba(217,119,87,0.30)',
-                    boxShadow: '0 0 10px rgba(217,119,87,0.25)',
-                    color: '#f0a875',
-                  }}
-                >
-                  <activeTab.icon size={14} strokeWidth={2.25} />
-                </motion.span>
-              )}
-              <div className="min-w-0">
-                <h1 className="text-base md:text-xl font-bold text-text leading-tight">
-                  {activeTabLabel}
-                </h1>
-                {activeTabSubtitle && (
-                  <p className="text-xs text-ink-soft hidden sm:block mt-0.5">
-                    {activeTabSubtitle}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Auth area */}
-          <div className="flex items-center gap-2">
-            {user ? (
-              <AccountMenu
-                user={user}
-                onUserChange={setUser}
-                onLogout={handleLogout}
-                onUpgradeClick={() => { setUpgradeTrigger('feature'); setShowUpgrade(true) }}
-                onToast={setToast}
-              />
-            ) : (
-              <button
-                onClick={() => setShowAuth(true)}
-                className="flex items-center gap-1.5 text-xs btn-secondary"
-              >
-                <LogIn size={13} />
-                Log in
-              </button>
-            )}
-          </div>
-        </header>
-
         {/* Tab content — driven by URL routes. Each tab handles its own
-            internal navigation (e.g. /triage/onset, /rehab/finger). The
-            Suspense wrapper covers the lazy-load gap as a route's chunk
-            downloads on first navigation to it.
+            internal navigation (e.g. /triage/onset). The Suspense wrapper
+            covers the lazy-load gap as a route's chunk downloads on first
+            navigation to it.
 
             AnimatePresence (mode="wait") gives every route change a soft
             fade-rise — the global "Apple-flow" transition. Keyed on the
@@ -883,7 +609,7 @@ export default function App() {
 
             initial={false} suppresses the animation on first paint so app
             load doesn't feel artificially slow. */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1">
           <Suspense fallback={<RouteLoading />}>
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
@@ -895,91 +621,38 @@ export default function App() {
               >
                 <TierThemeProvider tier={userTier}>
                 <Routes location={location}>
-                  <Route path="/hub/*"         element={<HubTab user={user} />} />
+                  <Route path="/home/*"        element={<HubTab user={user} />} />
+                  {/* Back-compat: old /hub links redirect to /home. */}
+                  <Route path="/hub/*"         element={<Navigate to="/home" replace />} />
                   <Route path="/recover/*"     element={<RecoverTab user={user} onLoginClick={() => setShowAuth(true)} />} />
                   {/* Legacy /body links — bookmarks, old emails, in-app cache —
                       redirect to /recover so the old path keeps working. */}
                   <Route path="/body/*"        element={<Navigate to="/recover" replace />} />
-                  <Route path="/triage/*"      element={<TriageTab k={k} user={user} />} />
+                  {/* Back-compat: old /rehab links redirect to /recover; /rehab/:region keeps the region. */}
                   <Route path="/rehab"         element={<Navigate to="/recover" replace />} />
                   <Route path="/rehab/:region" element={<RehabRegionRedirect />} />
+                  <Route path="/triage/*"      element={<TriageTab k={k} user={user} />} />
                   <Route path="/train"         element={<TrainTab user={user} dbReady={dbReady} onLoginClick={() => setShowAuth(true)} />} />
                   <Route path="/progress"        element={<ProgressTab user={user} onUserChange={setUser} onLoginClick={() => setShowAuth(true)} />} />
                   <Route path="/progress/awards" element={<AwardsPage user={user} />} />
                   <Route path="/settings" element={<SettingsPage user={user} onUserChange={setUser} onLogout={handleLogout} onToast={setToast} onUpgradeClick={() => { setUpgradeTrigger('feature'); setShowUpgrade(true) }} />} />
-                  <Route path="/chat"          element={<ChatTab k={k} user={user} onLoginClick={() => setShowAuth(true)} />} />
+                  <Route path="/coach"         element={<CoachTab k={k} user={user} onLoginClick={() => setShowAuth(true)} />} />
+                  {/* Back-compat: old /chat links redirect to /coach. */}
+                  <Route path="/chat"          element={<Navigate to="/coach" replace />} />
                   <Route path="/history/*"     element={<HistoryTab dbReady={dbReady} user={user} onLoginClick={() => setShowAuth(true)} />} />
                   <Route path="/about"         element={<AboutTab />} />
                   {import.meta.env.DEV && (
                     <Route path="/design-system" element={<DesignSystem />} />
                   )}
-                  {/* Any unknown path lands the user on Hub. */}
-                  <Route path="*"              element={<Navigate to="/hub" replace />} />
+                  {/* Any unknown path lands the user on Home. */}
+                  <Route path="*"              element={<Navigate to="/home" replace />} />
                 </Routes>
                 </TierThemeProvider>
               </motion.div>
             </AnimatePresence>
           </Suspense>
         </div>
-      </main>
-
-      {/* Bottom nav — mobile only. pb-[env(safe-area-inset-bottom)] keeps
-          tap targets above the iPhone home-indicator strip. */}
-      <nav className="fixed bottom-0 left-0 right-0 z-20 md:hidden bg-ct-forest/95 backdrop-blur-sm border-t border-ct-hairline pb-[env(safe-area-inset-bottom)]">
-        <div className="flex">
-          {/* Mobile bottom nav: primary 5 only — Chat / History / About are
-              reachable via the sidebar drawer (hamburger), Account menu, and
-              sidebar footer respectively. Cuts clutter at typical phone widths. */}
-          {PRIMARY_TABS.map(({ id, label, icon: Icon }) => (
-            <NavLink
-              key={id}
-              to={`/${id}`}
-              className={({ isActive }) => `relative flex-1 min-w-0 flex flex-col items-center gap-1 pt-2.5 pb-3 text-[10px] sm:text-xs font-medium leading-tight transition-colors duration-100 active:scale-[0.92] [transition:transform_120ms_ease,color_100ms_ease] ${
-                isActive ? '' : 'text-ink-soft'
-              }`}
-              style={({ isActive }) => isActive ? { color: '#f0a875' } : undefined}
-            >
-              {({ isActive }) => (
-                <>
-                  {/* Icon + soft tier-glow blob behind it on active. The blob
-                      uses color-mix so it adapts to whatever tier color is live. */}
-                  <span className="relative flex items-center justify-center w-9 h-7">
-                    {isActive && (
-                      <motion.span
-                        layoutId="bottom-nav-blob"
-                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                        aria-hidden
-                        className="absolute inset-0 rounded-full"
-                        style={{
-                          background: 'rgba(217,119,87,0.22)',
-                          boxShadow: '0 0 12px rgba(217,119,87,0.35)',
-                        }}
-                      />
-                    )}
-                    <Icon
-                      size={isActive ? 19 : 18}
-                      strokeWidth={isActive ? 2.25 : 2}
-                      className="relative z-10 transition-[font-size] duration-150"
-                    />
-                  </span>
-                  <span className="truncate max-w-full px-0.5">{label}</span>
-                  {isActive && (
-                    <motion.div
-                      layoutId="bottom-nav-indicator"
-                      transition={{ duration: 0.18, ease: [0, 0, 0.2, 1] }}
-                      className="absolute bottom-0 w-10 h-1 rounded-full"
-                      style={{
-                        background: '#d97757',
-                        boxShadow: '0 0 10px rgba(217,119,87,0.55)',
-                      }}
-                    />
-                  )}
-                </>
-              )}
-            </NavLink>
-          ))}
-        </div>
-      </nav>
+      </AppShell>
     </div>
   )
 }

@@ -7,13 +7,13 @@ import CoachInboxView from './CoachInboxView'
 import UpgradeModal from './UpgradeModal'
 
 // Heavy: includes a MediaPipe Worker + the pose model. Lazy-loaded so the
-// Chat tab's first paint stays fast for users who never open it.
+// Coach tab's first paint stays fast for users who never open it.
 const MovementAnalyzerView = lazy(() => import('./MovementAnalyzerView'))
 
 const VIEW_KEY = 'coretriage_chat_view'
 
 /**
- * Chat tab router.
+ * Coach tab router.
  *
  * Decides which sub-view to render based on user state + persisted preference:
  *   - Budnik (coach role)         → Inbox by default
@@ -24,7 +24,7 @@ const VIEW_KEY = 'coretriage_chat_view'
  * Each sub-view receives an `onBack` callback that returns the user to the
  * picker, clears the persisted choice, and lets them re-pick.
  */
-export default function ChatTab({ k, user, onLoginClick }) {
+export default function CoachTab({ k, user, onLoginClick }) {
   const isCoach = user?.is_coach === true
   const tier = user?.tier ?? 'free'
   const isCoachingSub = tier === 'coaching'

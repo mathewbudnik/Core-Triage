@@ -1,4 +1,4 @@
-import { Home, Dumbbell, TrendingUp, MessageCircle, Stethoscope } from 'lucide-react'
+import { Home, Dumbbell, TrendingUp, MessageCircle, Stethoscope, AlertTriangle, Bug } from 'lucide-react'
 import NavItem from './NavItem'
 import WeekDots from './WeekDots'
 import SpecimenCard from './SpecimenCard'
@@ -26,7 +26,7 @@ const NAV = [
   { to: '/recover', icon: Stethoscope, label: 'Recover' },
 ]
 
-const FOOTER = ['About', 'Privacy', 'Terms']
+const FOOTER = ['About', 'Privacy', 'Terms', 'Disclaimer']
 
 export default function Sidebar({
   user,
@@ -82,8 +82,16 @@ export default function Sidebar({
         <div className="text-[11px] font-semibold text-clay-deep">Apply →</div>
       </button>
 
+      {/* Safety note — important for a triage product */}
+      <div className="flex items-start gap-1.5 px-1.5 mt-3">
+        <AlertTriangle size={11} className="text-clay-deep shrink-0 mt-0.5" />
+        <p className="text-[10px] leading-relaxed text-ink-muted">
+          Severe symptoms or major trauma: seek professional evaluation.
+        </p>
+      </div>
+
       {/* Footer links */}
-      <div className="flex gap-2 px-1.5 mt-3 font-mono text-[8px] tracking-[0.1em] uppercase text-ink-muted">
+      <div className="flex flex-wrap gap-x-2 gap-y-1 px-1.5 mt-2.5 font-mono text-[8px] tracking-[0.1em] uppercase text-ink-muted">
         {FOOTER.map((label, i) => (
           <span key={label} className="flex gap-2">
             {i > 0 && <span aria-hidden="true">·</span>}
@@ -97,6 +105,15 @@ export default function Sidebar({
           </span>
         ))}
       </div>
+
+      {/* Report a bug */}
+      <button
+        type="button"
+        onClick={() => onFooterClick?.('bug')}
+        className="flex items-center gap-1 px-1.5 mt-2 font-mono text-[8px] tracking-[0.1em] uppercase text-ink-muted hover:text-clay-deep transition-colors"
+      >
+        <Bug size={9} /> Report a bug
+      </button>
     </div>
   )
 }

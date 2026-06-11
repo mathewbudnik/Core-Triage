@@ -7,9 +7,9 @@ import { Stethoscope, Dumbbell, MessageSquare } from 'lucide-react'
  * centerpiece; these are tools you reach for.
  */
 const TOOLS = [
-  { key: 'recover', label: 'RECOVER',   icon: Stethoscope,    color: '#7dd3c0', route: '/recover' },
-  { key: 'train',   label: 'TRAIN',     icon: Dumbbell,       color: '#a78bfa', route: '/train' },
-  { key: 'chat',    label: 'ASK COACH', icon: MessageSquare,  color: '#f0a875', route: '/chat' },
+  { key: 'recover', label: 'RECOVER',   icon: Stethoscope,    color: '#97a886', route: '/recover' },
+  { key: 'train',   label: 'TRAIN',     icon: Dumbbell,       color: '#c58a77', route: '/train' },
+  { key: 'coach',   label: 'ASK COACH', icon: MessageSquare,  color: '#d7ac5b', route: '/coach' },
 ]
 
 export default function HubToolsGrid() {
