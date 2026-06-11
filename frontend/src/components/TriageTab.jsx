@@ -4,7 +4,7 @@ import {
   Clock, Zap, Grip, Target, TrendingUp, Mountain, ChevronsUp, HelpCircle,
   RotateCcw, RotateCw, ArrowUp, Maximize2, AlertCircle,
 } from 'lucide-react'
-import { triageIntake, saveSession } from '../api'
+import { triageIntake, saveSession, createRehabPlan } from '../api'
 import { saveLastTriage } from '../lib/lastTriage'
 import BodyDiagram from './BodyDiagram'
 import Coachmark from './Coachmark'
@@ -220,6 +220,16 @@ export default function TriageTab({ k, user }) {
         } catch (_) { /* swallowed */ }
       }
 
+      // Persist a durable rehab plan for signed-in, non-severe diagnoses so
+      // Recover loads it on its own (cross-device). Severe diagnoses are a
+      // clinical referral, NOT a self-managed plan — never create one.
+      const isSevere = data?.severity?.level === 'severe'
+      if (user && !isSevere) {
+        try {
+          await createRehabPlan({ region: form.region, session_id: savedSessionId })
+        } catch (_) { /* swallowed — sessionStorage fallback still works */ }
+      }
+
       // sessionStorage cache so refreshing /recover keeps the diagnosis.
       saveLastTriage({
         result: data,
@@ -245,6 +255,16 @@ export default function TriageTab({ k, user }) {
       },
     })
   }, [result, form.region, form.severity, form.onset, navigate])
+
+  // Auto-handoff: once a non-severe diagnosis has revealed inline, advance to the
+  // Recover plan after a short readable beat. Severe diagnoses stay on the
+  // clinical-referral screen and are never auto-routed into a self-managed plan.
+  useEffect(() => {
+    if (!result) return
+    if (result?.severity?.level === 'severe') return
+    const t = setTimeout(openRehabPlan, 1200)
+    return () => clearTimeout(t)
+  }, [result, openRehabPlan])
 
   return (
     <div className="p-4 md:p-8 max-w-2xl mx-auto">
