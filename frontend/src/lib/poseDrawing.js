@@ -103,8 +103,11 @@ function drawLandmarkDot(ctx, lm, color, radius) {
  * @param {Array<{x: number, y: number, z: number, visibility?: number}>|null|undefined} landmarks
  *   33-entry array of normalized (0–1) landmarks from PoseLandmarker. Pass
  *   nullish/empty to clear without drawing.
+ * @param {{joints?: number[], segments?: Array<[number, number]>}|null} highlight
+ *   Optional flagged-finding overlay re-drawn on top in the flag color. Defaults
+ *   to null so existing `drawPose(ctx, landmarks)` callers are unaffected.
  */
-export function drawPose(ctx, landmarks) {
+export function drawPose(ctx, landmarks, highlight = null) {
   // Clear the full backing buffer (no DPR division — ctx has identity transform).
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
   if (!landmarks || landmarks.length === 0) return
@@ -129,5 +132,33 @@ export function drawPose(ctx, landmarks) {
   for (let i = 0; i < landmarks.length; i++) {
     if (i >= 1 && i <= 10) continue  // face mesh — too noisy at climbing distance
     drawLandmarkDot(ctx, landmarks[i], STYLES.landmark.color, radius)
+  }
+
+  // Overlay: re-draw the flagged finding's segments + joints on top in the flag
+  // color so the climber sees exactly which body part this finding is about.
+  if (highlight) drawHighlight(ctx, landmarks, highlight, dpr)
+}
+
+function drawHighlight(ctx, landmarks, { joints = [], segments = [] }, dpr) {
+  ctx.globalAlpha = 1
+  for (const [i, j] of segments) {
+    const a = landmarks[i]
+    const b = landmarks[j]
+    if (!a || !b) continue
+    ctx.beginPath()
+    ctx.moveTo(a.x * ctx.canvas.width, a.y * ctx.canvas.height)
+    ctx.lineTo(b.x * ctx.canvas.width, b.y * ctx.canvas.height)
+    ctx.strokeStyle = FLAGGED_JOINT_COLOR
+    ctx.lineWidth = 6 * dpr
+    ctx.lineCap = 'round'
+    ctx.stroke()
+  }
+  for (const idx of joints) {
+    const lm = landmarks[idx]
+    if (!lm) continue
+    ctx.beginPath()
+    ctx.arc(lm.x * ctx.canvas.width, lm.y * ctx.canvas.height, 7 * dpr, 0, Math.PI * 2)
+    ctx.fillStyle = FLAGGED_JOINT_COLOR
+    ctx.fill()
   }
 }
