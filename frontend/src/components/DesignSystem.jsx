@@ -15,7 +15,7 @@ import LevelMeter from './ui/LevelMeter'
 import StreakEmblem from './ui/StreakEmblem'
 import RewardPreview from './ui/RewardPreview'
 import StatStrip from './ui/StatStrip'
-import StatRadar from './ui/StatRadar'
+import Pentagon from './identity/Pentagon'
 import QuestCard from './ui/QuestCard'
 import { TierThemeProvider, useTierTheme } from './ui/TierThemeProvider'
 import StatTrends7Day from './progress/StatTrends7Day'
@@ -191,19 +191,19 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
       </section>
 
       <section className="mb-12">
-        <h2 className="ct-title mb-4">StatRadar</h2>
+        <h2 className="ct-title mb-4">Pentagon</h2>
         <div className="grid grid-cols-3 gap-4">
           <Surface tier="default" padding="lg">
-            <Eyebrow divider className="mb-3">Asymmetric</Eyebrow>
-            <StatRadar stats={{ power: 7, crimpy: 6, dynamic: 4, technical: 5, mobility: 3 }} size={130} />
+            <Eyebrow divider className="mb-3">Hero — labels + values</Eyebrow>
+            <Pentagon axes={{ power: 9, crimp: 7, dynamic: 6, technique: 3, mobility: 4 }} size={200} showLabels showValues />
           </Surface>
           <Surface tier="default" padding="lg">
-            <Eyebrow divider className="mb-3">Mixed — some null</Eyebrow>
-            <StatRadar stats={{ power: 6, crimpy: 4, dynamic: null, technical: 3, mobility: null }} size={130} />
+            <Eyebrow divider className="mb-3">Emblem — mini variant</Eyebrow>
+            <Pentagon axes={{ power: 9, crimp: 7, dynamic: 6, technique: 3, mobility: 4 }} size={120} mini />
           </Surface>
           <Surface tier="default" padding="lg">
             <Eyebrow divider className="mb-3">Brand new — all null</Eyebrow>
-            <StatRadar stats={{ power: null, crimpy: null, dynamic: null, technical: null, mobility: null }} size={130} />
+            <Pentagon axes={{ power: null, crimp: null, dynamic: null, technique: null, mobility: null }} size={130} />
           </Surface>
         </div>
       </section>

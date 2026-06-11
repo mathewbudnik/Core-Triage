@@ -14,11 +14,11 @@ export const V_TIERS = ['v0','v1','v2','v3','v4','v5','v6','v7','v8','v9','v10']
 // working-tier resolver moves them up to Bronze.
 //
 // Metals at the base, gemstones rising to Diamond at the apex. Each
-// name picks a real element/gem; the palette below uses jewel-saturated
-// hex values so the tier color feels like the real stone (not a pastel
-// approximation). Amber sits in the v2 slot (fossilized resin, warm
-// orange) in place of Copper — both warm, common-tier "stepping stones"
-// before the precious gemstones begin.
+// name picks a real element/gem; the palette below uses muted, desaturated
+// stone tones so each tier feels like the real material weathered into
+// the Almanac's parchment palette (not a neon jewel). Amber sits in the
+// v2 slot (fossilized resin, warm gold-brown) in place of Copper — both
+// warm, common-tier "stepping stones" before the precious gemstones begin.
 export const TIER_NAMES = {
   rookie: 'Quartz',
   v0:  'Bronze',
@@ -34,41 +34,47 @@ export const TIER_NAMES = {
   v10: 'Diamond',
 }
 
-// Minecraft-block vivid palette — saturated AND luminous, not muted.
-// Adjacent grades alternate hot/cold so neighbors are always visually
-// distinct. Diamond breaks strict alternation at v10 — it's the
-// universally "elite" gem and earns the apex slot.
+// Muted, Almanac-harmonious stone palette — desaturated parchment-era
+// tones, NOT neon. Each name still maps to its real stone, but rendered
+// as a dusty, low-chroma analogue that sits quietly against parchment
+// (#e7ddc6) while staying distinct from its neighbors. Adjacent tiers
+// still alternate warm/cool so the ladder reads at a glance, and Diamond
+// holds the apex with the palest, iciest (but still muted) slate-cyan.
 export const TIER_TOKENS = {
-  // pre-tier — quartz (pale crystalline lavender-white). Most abundant
-  // mineral on earth: pretty without feeling earned. Brand-new users
-  // see this until they log their first V0, then climb into Bronze.
-  rookie: { light: '#ece9f0', c: '#c8c2d6', deep: '#5b556b' },
-  // hot — bronze, but rendered as polished copper (more red-orange-warm
-  // than a yellow-brown bronze; reads like a freshly minted penny)
-  v0:  { light: '#f0a577', c: '#d97f4c', deep: '#7a3f1f' },
-  // cold — silver (bright polished steel)
-  v1:  { light: '#eef1f5', c: '#d6dde6', deep: '#4a5260' },
-  // hot — amber (vivid warm orange, same hex as before — only the name changed)
-  v2:  { light: '#f08d6f', c: '#e85a37', deep: '#6e1f10' },
-  // cold — aquamarine (deeper jewel-teal, leans more green-cyan to stay
-  // visually distinct from Diamond's icy brilliance at v10)
-  v3:  { light: '#5eead4', c: '#14b8a6', deep: '#0f766e' },
-  // hot — rose gold (vivid pink-rose)
-  v4:  { light: '#f472b6', c: '#ec4899', deep: '#831d4c' },
-  // cold — sapphire (bright royal blue)
-  v5:  { light: '#60a5fa', c: '#3b82f6', deep: '#1e3a8a' },
-  // hot — ruby (bright crimson, redstone-like)
-  v6:  { light: '#f43f5e', c: '#e11d48', deep: '#4c0519' },
-  // cold — emerald (bright Minecraft-emerald green)
-  v7:  { light: '#4ade80', c: '#22c55e', deep: '#064e3b' },
-  // hot — coral (vivid orange)
-  v8:  { light: '#fb923c', c: '#f97316', deep: '#7c2d12' },
-  // cold — amethyst (vivid purple, Minecraft-amethyst-like)
-  v9:  { light: '#a78bfa', c: '#8b5cf6', deep: '#4c1d95' },
-  // apex — diamond (icy brilliant cyan, lighter than Aquamarine so the
-  // two tiers read clearly different even though both sit in the cyan-
-  // teal family). Paired with the animated DiamondShimmer overlay.
-  v10: { light: '#a5f3fc', c: '#67e8f9', deep: '#0e7490' },
+  // pre-tier — quartz (soft greyed lavender-stone). Most abundant mineral
+  // on earth: pretty without feeling earned. Brand-new users see this
+  // until they log their first V0, then climb into Bronze.
+  rookie: { light: '#dcd6cb', c: '#aaa295', deep: '#615a4e' },
+  // warm — bronze (dusty weathered copper-bronze, leans toward the clay
+  // token; reads like an aged patina'd coin, not a shiny penny)
+  v0:  { light: '#cb9f7e', c: '#a9774f', deep: '#5f4128' },
+  // cool — silver (muted pewter / weathered steel, low chroma so it stays
+  // a quiet neutral against parchment rather than glaring white)
+  v1:  { light: '#cfcabf', c: '#9a988f', deep: '#54514a' },
+  // warm — amber (mellow ochre-amber, harmonizes with the ochre token —
+  // fossilized resin gone soft and golden-brown)
+  v2:  { light: '#dcb878', c: '#c08f47', deep: '#6e4a1c' },
+  // cool — aquamarine (dusty sea-green teal, muted and green-leaning so it
+  // stays clearly distinct from Diamond's pale slate-cyan at v10)
+  v3:  { light: '#9cc1b4', c: '#6a978a', deep: '#3d5b51' },
+  // warm — rose gold (soft dusty rose, leans toward the clay token; a
+  // greyed pink with no neon magenta)
+  v4:  { light: '#d3a394', c: '#b67d6c', deep: '#6e4339' },
+  // cool — sapphire (muted slate-blue, desaturated denim rather than royal)
+  v5:  { light: '#94a6bb', c: '#647d99', deep: '#384a5e' },
+  // warm — ruby (dusky brick-red, an oxblood / faded-garnet tone, no neon)
+  v6:  { light: '#c08b85', c: '#a35a52', deep: '#5e2c28' },
+  // cool — emerald (muted sage-green that echoes the sage tokens; a quiet
+  // forest-stone green, distinct from Aquamarine's bluer teal)
+  v7:  { light: '#a4b794', c: '#778f63', deep: '#41512f' },
+  // warm — coral (soft terracotta-coral, a sun-faded clay-orange)
+  v8:  { light: '#dba98c', c: '#c47f5a', deep: '#6e3f24' },
+  // cool — amethyst (greyed dusty mauve-purple, low-chroma heather)
+  v9:  { light: '#b4a3bd', c: '#8a738f', deep: '#4d3c52' },
+  // apex — diamond (palest icy slate-cyan; the lightest, coolest stone so
+  // it reads clearly above Aquamarine's greener teal. Paired with the
+  // animated DiamondShimmer overlay.)
+  v10: { light: '#cfdcdc', c: '#9fb6b8', deep: '#54696b' },
 }
 
 /** Map a V-grade string ('V0'..'V17') to a tier id. V10+ collapses to 'v10'. */

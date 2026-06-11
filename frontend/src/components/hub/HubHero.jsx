@@ -1,6 +1,6 @@
 import Surface from '../ui/Surface'
 import TierBadge from '../ui/TierBadge'
-import StatRadar from '../ui/StatRadar'
+import Pentagon from '../identity/Pentagon'
 import LevelMeter from '../ui/LevelMeter'
 import StatStrip from '../ui/StatStrip'
 import StreakEmblem from '../ui/StreakEmblem'
@@ -52,7 +52,7 @@ export default function HubHero({ user }) {
       </div>
 
       <div className="flex items-center gap-4 mt-4 pt-4 border-t border-ct-hairline">
-        <StatRadar stats={shape} size={110} />
+        <Pentagon axes={shape} size={110} />
         <div className="flex-1 min-w-0">
           <LevelMeter
             level={level}
