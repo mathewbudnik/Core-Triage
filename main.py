@@ -125,6 +125,7 @@ from src.triage import (
     red_flags,
 )
 from src.user_context import build_user_context, format_for_prompt
+from src.prescriptions import compute_gap_axis
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -990,6 +991,7 @@ def get_me_state(request: Request, user: dict = Depends(get_current_user)):
         "streak_days_current": streak_current,
         "streak_days_longest": streak_longest,
         "pentagon": pentagon,
+        "gap_axis": compute_gap_axis(pentagon),
         "recent_sends": recent_sends,
         "archetype": archetype,
     }
