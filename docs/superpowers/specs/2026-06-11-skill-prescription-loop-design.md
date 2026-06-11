@@ -99,18 +99,18 @@ New backend module. `AXIS_TO_DRILLS: dict[axis -> list[drill]]`, **5 drills per 
 - **Gap exposure:** add `gap_axis` (canonical key or `null`) to `GET /api/me/state` (`main.py:969`),
   computed from the existing pentagon with the `identityPhrase` rule. Single source of truth shared by the
   Rx generator and any client copy. Helper `_compute_gap_axis(pentagon) -> str | None` near `_compute_current_pentagon`.
-- `GET /api/me/prescription` → returns the active block + per-drill progress for today/this week. If none and a
-  gap exists, generate + persist one (`source='auto'`). Returns `null`-ish payload with `gap_axis: null` when balanced.
-- `POST /api/prescriptions/check` → body `{ drill_key }`; idempotent insert into `prescription_progress` for
-  today; recomputes block progress; flips block to `completed` (+ stamps `completed_at`) at 100%. Returns updated
-  block + `{ completed: bool, xp_awarded: int }`.
-- `GET /api/coach/clients/{id}/prescription` → coach-role-gated; returns the client's gap, active block, progress %.
-- `POST /api/coach/clients/{id}/prescription` → coach-role-gated; body `{ axis, drill_keys[] }`; creates a
-  `source='coach'` block (assigned_by = coach id), marking any active block completed. Validates the coach owns
-  that client relationship.
+- `GET /api/me/prescription?date=YYYY-MM-DD` → returns `{ gap_axis, prescription }`. If a gap exists and there is
+  no active block, generate + persist one (`source='auto'`). `prescription` is `null` when balanced (no gap).
+- `POST /api/prescriptions/check` → body `{ drill_key, date }`; idempotent insert into `prescription_progress` for
+  that date (`ON CONFLICT DO NOTHING`); recomputes block progress (per-drill done capped at `target`); flips the
+  block to `completed` (+ stamps `completed_at`) at 100%. Returns the updated block + `{ completed: bool, xp: int }`.
+  `xp` is informational — XP is applied client-side (see Gamification).
+- `GET /api/admin/coach/clients/{user_id}/prescription` → `require_coach`; returns the client's gap + active block + progress.
+- `POST /api/admin/coach/clients/{user_id}/prescription` → `require_coach`; body `{ axis, drill_keys[] }`; creates a
+  `source='coach'` block (`assigned_by` = coach id), marking any active block completed. No relationship validation
+  (matches existing `admin_reply`).
 
-Tier gating mirrors existing patterns; auto-prescription is available to all signed-in users (it leans on the
-free Pentagon). Coach assign is coach-role only.
+Auto-prescription is available to all signed-in users (it leans on the free Pentagon). Coach assign is `require_coach` only.
 
 ## Frontend — Home surface
 
@@ -130,10 +130,15 @@ free Pentagon). Coach assign is coach-role only.
 
 ## Frontend — Coach surface
 
-- In the existing coach **inbox** (`CoachInbox*` / `CoachInboxView`), each client row gains: gap axis chip +
-  block title + `% complete`. Opening a client surfaces the block read-only plus an **"Assign a block"** action:
-  pick an axis (defaults to the client's gap), accept the catalog's 3 drills (or drop one), send → `source='coach'`.
-- New `api.js` wrappers `getClientPrescription(clientId)`, `assignClientPrescription(clientId, {axis, drillKeys})`.
+- Coach role on the frontend is **`user.is_coach === true`** (boolean), not `role`. The coach inbox is
+  `CoachInbox.jsx` (self-fetching, no props) → rows from `GET /api/admin/coach/threads`. There is **no
+  coach↔client relationship model** — one coach account sees all threads; "assign" is gated by `require_coach`
+  only and keyed by the thread's `user_id` (mirroring the existing `admin_reply`, which has no ownership check).
+  Add `user_id` to the `list_coach_threads` payload so the inbox can key the prescription calls.
+- When the coach opens a client thread (`selectThread`), surface the client's gap + active block + `% complete`
+  read-only, plus an **"Assign a block"** action: pick an axis (defaults to the client's gap) → send the catalog's
+  3 drills for that axis → `source='coach'`, `assigned_by=coach_id`.
+- New `frontend/src/api.js` wrappers `getClientPrescription(userId)`, `assignClientPrescription(userId, {axis, drill_keys})`.
 - v1 keeps assign minimal: axis + the 3 catalog drills; no custom drill authoring.
 
 ## Gamification
