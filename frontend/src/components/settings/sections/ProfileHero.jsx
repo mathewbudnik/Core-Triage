@@ -13,11 +13,11 @@ import {
 const NAME_RE = /^[A-Za-z0-9_-]{3,20}$/
 
 const TIER_BADGE = {
-  active:   { bg: 'rgba(125,211,192,0.15)', border: 'rgba(125,211,192,0.35)', text: '#7dd3c0', label: 'Subscribed' },
-  trial:    { bg: 'rgba(125,211,192,0.12)', border: 'rgba(125,211,192,0.30)', text: '#7dd3c0', label: 'Trial' },
-  expired:  { bg: 'rgba(244,114,114,0.10)', border: 'rgba(244,114,114,0.30)', text: '#f47272', label: 'Trial ended' },
-  coaching: { bg: 'rgba(247,187,81,0.15)',  border: 'rgba(247,187,81,0.35)',  text: '#f7bb51', label: 'Coaching' },
-  coach:    { bg: 'rgba(247,187,81,0.15)',  border: 'rgba(247,187,81,0.35)',  text: '#f7bb51', label: 'Coach' },
+  active:   { bg: 'rgba(151,168,134,0.18)', border: 'rgba(151,168,134,0.40)', text: '#5f7a4e', label: 'Subscribed' },
+  trial:    { bg: 'rgba(151,168,134,0.14)', border: 'rgba(151,168,134,0.35)', text: '#5f7a4e', label: 'Trial' },
+  expired:  { bg: 'rgba(176,106,79,0.12)',  border: 'rgba(176,106,79,0.35)',  text: '#b06a4f', label: 'Trial ended' },
+  coaching: { bg: 'rgba(215,172,91,0.18)',  border: 'rgba(215,172,91,0.40)',  text: '#9c7a2e', label: 'Coaching' },
+  coach:    { bg: 'rgba(215,172,91,0.18)',  border: 'rgba(215,172,91,0.40)',  text: '#9c7a2e', label: 'Coach' },
 }
 
 function tierFor(user) {
@@ -72,9 +72,9 @@ export default function ProfileHero({ user, onUserChange, onToast }) {
         className="relative overflow-hidden rounded-[22px] border border-ct-rim p-7 mb-4"
         style={{
           backgroundImage:
-            'radial-gradient(ellipse 600px 300px at 20% 0%, rgba(20,184,166,0.10), transparent 65%), ' +
-            'radial-gradient(ellipse 500px 400px at 100% 100%, rgba(217,119,87,0.10), transparent 60%), ' +
-            'linear-gradient(180deg, #2a3534, #1c2322)',
+            'radial-gradient(ellipse 600px 300px at 20% 0%, rgba(151,168,134,0.14), transparent 65%), ' +
+            'radial-gradient(ellipse 500px 400px at 100% 100%, rgba(197,138,119,0.14), transparent 60%), ' +
+            'linear-gradient(180deg, #f4ecdb, #efe6d2)',
           scrollMarginTop: '110px',
         }}
       >
@@ -83,7 +83,7 @@ export default function ProfileHero({ user, onUserChange, onToast }) {
             onClick={() => setPickerOpen(true)}
             className="relative group flex-shrink-0"
             aria-label="Edit avatar"
-            style={{ filter: 'drop-shadow(0 12px 32px rgba(217,119,87,0.4))' }}
+            style={{ filter: 'drop-shadow(0 12px 32px rgba(197,138,119,0.4))' }}
           >
             <AvatarChip
               icon={user?.avatar_icon}
@@ -174,9 +174,9 @@ export default function ProfileHero({ user, onUserChange, onToast }) {
 }
 
 function Stat({ value, label, tone }) {
-  const color = tone === 'teal' ? 'text-accent' : tone === 'terra' ? 'text-ct-terracotta' : 'text-ct-cream'
+  const color = tone === 'teal' ? 'text-sage-deep' : tone === 'terra' ? 'text-clay-deep' : 'text-ink'
   return (
-    <div className="rounded-[14px] bg-black/20 border border-ct-hairline p-3.5">
+    <div className="rounded-[14px] bg-side border border-ct-hairline p-3.5">
       <div className={`text-[22px] font-extrabold tracking-tight ${color}`}>{value}</div>
       <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-muted mt-1">{label}</div>
     </div>
@@ -233,16 +233,16 @@ function DisplayNameRow({ user, onUserChange, onToast }) {
             }}
             maxLength={24}
             disabled={saving}
-            className="bg-black/30 border border-ct-hairline rounded-lg px-3 py-1.5 text-sm text-ct-cream focus:border-ct-terracotta/50 focus:outline-none"
+            className="bg-card border border-ct-rim rounded-lg px-3 py-1.5 text-sm text-ink focus:border-ct-terracotta/60 focus:outline-none"
           />
-          <button onClick={save} disabled={!!localError || saving} className="px-3 py-1.5 text-xs rounded-md bg-accent/15 border border-accent/30 text-accent disabled:opacity-40">
+          <button onClick={save} disabled={!!localError || saving} className="px-3 py-1.5 text-xs rounded-md bg-clay/15 border border-clay/40 text-clay-deep disabled:opacity-40">
             {saving ? '…' : 'Save'}
           </button>
         </div>
       ) : (
         <button
           onClick={() => setEditing(true)}
-          className="text-sm text-ct-cream px-3 py-1.5 rounded-lg border border-ct-hairline bg-black/20 hover:border-ct-terracotta/35 min-w-[140px] text-right"
+          className="text-sm text-ink px-3 py-1.5 rounded-lg border border-ct-rim bg-side hover:border-ct-terracotta/40 min-w-[140px] text-right"
         >
           {user?.display_name || <span className="italic text-ink-muted">Set a name</span>}
         </button>
@@ -303,17 +303,17 @@ function BodyMeasurementRow({ user, profile, field, label, hint, allowNegative =
               if (e.key === 'Escape') { setEditing(false); setDraft(profile?.[field] != null ? String(profile[field]) : '') }
             }}
             disabled={saving}
-            className="w-20 bg-black/30 border border-ct-hairline rounded-lg px-3 py-1.5 text-sm text-ct-cream focus:border-ct-terracotta/50 focus:outline-none"
+            className="w-20 bg-card border border-ct-rim rounded-lg px-3 py-1.5 text-sm text-ink focus:border-ct-terracotta/60 focus:outline-none"
           />
           <span className="text-xs text-ink-muted">cm</span>
-          <button onClick={save} disabled={saving} className="px-3 py-1.5 text-xs rounded-md bg-accent/15 border border-accent/30 text-accent disabled:opacity-40">
+          <button onClick={save} disabled={saving} className="px-3 py-1.5 text-xs rounded-md bg-clay/15 border border-clay/40 text-clay-deep disabled:opacity-40">
             {saving ? '…' : 'Save'}
           </button>
         </div>
       ) : (
         <button
           onClick={() => setEditing(true)}
-          className="text-sm text-ct-cream px-3 py-1.5 rounded-lg border border-ct-hairline bg-black/20 hover:border-ct-terracotta/35 min-w-[140px] text-right"
+          className="text-sm text-ink px-3 py-1.5 rounded-lg border border-ct-rim bg-side hover:border-ct-terracotta/40 min-w-[140px] text-right"
         >
           {displayValue}
         </button>

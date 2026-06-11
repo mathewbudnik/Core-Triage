@@ -51,7 +51,7 @@ export default function SessionSummaryOverlay({ open, onClose, events = [], tota
             <button
               type="button"
               onClick={onClose}
-              className="mt-5 w-full py-2.5 rounded-xl bg-ct-terracotta text-white text-sm font-bold"
+              className="mt-5 w-full py-2.5 rounded-xl bg-ct-terracotta text-cream text-sm font-bold"
             >
               Clean send
             </button>

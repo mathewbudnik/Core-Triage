@@ -81,12 +81,12 @@ export default function AwardsPage({ user }) {
                             ${isCurrent
                               ? 'border-[var(--tier-c)] shadow-[0_0_24px_var(--tier-glow)]'
                               : isEarned
-                                ? 'border-white/[0.10]'
-                                : 'border-white/[0.06] opacity-50'}`}
+                                ? 'border-ink/[0.12]'
+                                : 'border-ink/[0.08] opacity-50'}`}
                 style={{
                   background: isEarned
-                    ? `linear-gradient(135deg, ${t.c}26, ${t.c}08)`
-                    : 'rgba(255,255,255,0.02)',
+                    ? `linear-gradient(135deg, ${t.c}30, ${t.c}10)`
+                    : 'rgba(42,39,34,0.03)',
                 }}
               >
                 {tierId === 'v10' && isEarned && <DiamondShimmer size="sm" intensity="soft" />}
@@ -94,9 +94,9 @@ export default function AwardsPage({ user }) {
                 <div
                   className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border-[0.5px]"
                   style={{
-                    background: isEarned ? `linear-gradient(180deg, ${t.light}, ${t.c})` : 'rgba(255,255,255,0.04)',
-                    borderColor: isEarned ? t.deep : 'rgba(255,255,255,0.10)',
-                    color: isEarned ? '#fff' : 'rgba(255,255,255,0.3)',
+                    background: isEarned ? `linear-gradient(180deg, ${t.light}, ${t.c})` : 'rgba(42,39,34,0.05)',
+                    borderColor: isEarned ? t.deep : 'rgba(42,39,34,0.14)',
+                    color: isEarned ? '#fdf6ea' : 'rgba(42,39,34,0.38)',
                   }}
                 >
                   {isEarned ? <Check size={14} strokeWidth={3} /> : <Lock size={13} />}
@@ -106,7 +106,7 @@ export default function AwardsPage({ user }) {
                   <div className="flex items-baseline gap-2">
                     <span
                       className="text-sm font-extrabold tabular-nums -tracking-[0.01em]"
-                      style={{ color: isEarned ? t.light : 'rgba(255,255,255,0.4)' }}
+                      style={{ color: isEarned ? t.deep : 'rgba(42,39,34,0.45)' }}
                     >
                       {gradeLabel}
                     </span>
@@ -119,7 +119,7 @@ export default function AwardsPage({ user }) {
                 {isCurrent && (
                   <span
                     className="text-[10px] font-extrabold uppercase tracking-[0.08em] px-2 py-0.5 rounded-full border-[0.5px]"
-                    style={{ color: t.light, borderColor: t.c, background: `${t.c}26` }}
+                    style={{ color: t.deep, borderColor: t.c, background: `${t.c}26` }}
                   >
                     Current
                   </span>

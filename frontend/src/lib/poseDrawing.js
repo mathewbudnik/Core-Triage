@@ -1,7 +1,7 @@
 /**
  * Body-region color-coded skeleton renderer for MediaPipe Pose Landmarker
- * (33-landmark model). Uses the CoreTriage palette — terracotta for torso,
- * mint for arms, cream for legs.
+ * (33-landmark model). Uses the Almanac palette — clay for the torso
+ * "spine", ink tones for the limbs, and a clear red for flagged joints.
  *
  * We draw ourselves (rather than calling DrawingUtils) so we can:
  *   - filter out low-visibility landmarks (MediaPipe hallucinates positions
@@ -47,11 +47,15 @@ const LEGS = [
 // visually). Bumped from the original 4/3/3 — the smaller values were
 // hard to see against textured wall backgrounds.
 const STYLES = {
-  torso:    { color: '#d97757', lineWidth: 7 },  // ct-terracotta — central "spine"
-  arms:     { color: '#3FD8A4', lineWidth: 5 },  // mint
-  legs:     { color: '#f0f5ed', lineWidth: 5 },  // ct-cream
-  landmark: { color: '#f0f5ed', radius: 5 },     // ct-cream
+  torso:    { color: '#b06a4f', lineWidth: 7 },  // clay-deep — central "spine"
+  arms:     { color: '#c58a77', lineWidth: 5 },  // clay
+  legs:     { color: '#5f594c', lineWidth: 5 },  // ink-soft
+  landmark: { color: '#2a2722', radius: 5 },     // ink
 }
+
+// Clear red for joints the analyzer flags as off-axis / at risk. Stands out
+// against the warm clay/ink skeleton without colliding with the palette.
+export const FLAGGED_JOINT_COLOR = '#c2362b'
 
 function visibilityAlpha(v) {
   if (v == null) return 1.0

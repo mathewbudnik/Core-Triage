@@ -34,9 +34,9 @@ export default function AwardMedal({ size = 'md', light, mid, deep, icon: Icon, 
       <div className="relative rounded-full flex items-center justify-center"
            style={{
              width: px, height: px,
-             background: 'rgba(255,255,255,0.04)',
-             border: '0.5px dashed rgba(255,255,255,0.2)',
-             color: 'rgba(255,255,255,0.3)',
+             background: 'rgba(42,39,34,0.05)',
+             border: '0.5px dashed rgba(42,39,34,0.22)',
+             color: 'rgba(42,39,34,0.40)',
            }}>
         <div className="flex flex-col items-center">
           <ShownIcon size={iconPx} />
@@ -53,23 +53,23 @@ export default function AwardMedal({ size = 'md', light, mid, deep, icon: Icon, 
          style={{
            width: px, height: px,
            background: `
-             radial-gradient(ellipse 50% 40% at 50% 18%, rgba(255,255,255,0.55), rgba(255,255,255,0) 70%),
+             radial-gradient(ellipse 50% 40% at 50% 18%, rgba(253,246,234,0.55), rgba(253,246,234,0) 70%),
              linear-gradient(180deg, ${light} 0%, ${mid} 45%, ${deep} 100%)
            `,
            boxShadow: `
              0 6px 18px -2px ${mid}99,
-             0 2px 4px rgba(0,0,0,0.4),
-             inset 0 -3px 6px rgba(0,0,0,0.4),
-             inset 0 2px 3px rgba(255,255,255,0.35)
+             0 2px 4px rgba(0,0,0,0.35),
+             inset 0 -3px 6px rgba(0,0,0,0.3),
+             inset 0 2px 3px rgba(253,246,234,0.4)
            `,
          }}>
       {/* Bezel ring */}
       <div className="absolute rounded-full pointer-events-none"
            style={{
              inset: size === 'lg' ? 12 : size === 'sm' ? 4 : 6,
-             border: '0.5px solid rgba(255,255,255,0.25)',
-             background: 'radial-gradient(ellipse 60% 50% at 50% 25%, rgba(255,255,255,0.15), rgba(255,255,255,0) 70%)',
-             boxShadow: 'inset 0 0 8px rgba(0,0,0,0.25)',
+             border: '0.5px solid rgba(253,246,234,0.30)',
+             background: 'radial-gradient(ellipse 60% 50% at 50% 25%, rgba(253,246,234,0.18), rgba(253,246,234,0) 70%)',
+             boxShadow: 'inset 0 0 8px rgba(0,0,0,0.22)',
            }} />
       {/* Diamond-tier shimmer — animated overlay above the gradient
           surface but below the icon/label content. Triggered only on
@@ -77,7 +77,7 @@ export default function AwardMedal({ size = 'md', light, mid, deep, icon: Icon, 
       {label === 'V10' && <DiamondShimmer size={size} />}
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center text-white"
+      <div className="relative z-10 flex flex-col items-center text-cream"
            style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
         {Icon && <Icon size={iconPx} strokeWidth={2.2} />}
         {label && (

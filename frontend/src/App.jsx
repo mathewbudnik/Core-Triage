@@ -246,7 +246,7 @@ export default function App() {
 
   // Resolve tier color tokens. Pass these as inline CSS variables on the
   // app root so every `var(--tier-c)` etc. in the nav resolves to the
-  // user's grade color. Fallbacks (#14b8a6 teal) only show pre-login.
+  // user's grade color. Fallbacks (clay) only show pre-login.
   const tierTokens = userTier ? TIER_TOKENS[userTier] : null
   const tierVars = tierTokens ? {
     '--tier-c':     tierTokens.c,
@@ -481,9 +481,9 @@ export default function App() {
                     : 'bg-ct-forest-deep border-ct-hairline text-ct-cream'
               }`}
               style={toast.kind === 'celebration' ? {
-                background: 'linear-gradient(135deg, rgba(217,119,87,0.25), rgba(217,119,87,0.10))',
-                border: '0.5px solid rgba(217,119,87,0.45)',
-                boxShadow: '0 8px 24px rgba(217,119,87,0.30)',
+                background: 'linear-gradient(135deg, rgba(197,138,119,0.25), rgba(197,138,119,0.10))',
+                border: '0.5px solid rgba(197,138,119,0.45)',
+                boxShadow: '0 8px 24px rgba(197,138,119,0.30)',
               } : undefined}
               onClick={() => {
                 if (toast.link) {
@@ -497,8 +497,8 @@ export default function App() {
                   <span
                     className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
                     style={{
-                      background: 'rgba(217,119,87,0.28)',
-                      color: '#f0a875',
+                      background: 'rgba(197,138,119,0.28)',
+                      color: '#b06a4f',
                     }}
                   >
                     <Trophy size={14} />

@@ -42,8 +42,8 @@ export default function TrainWeekStrip({ weekDates, plan, loggedDates, selectedD
         const isRest   = !hasSess && !logged
 
         const dayNumClass =
-          active ? 'text-ct-cream' :
-          today  ? 'text-ct-cream' :
+          active ? 'text-ink' :
+          today  ? 'text-ink' :
           past   ? 'text-ink-soft' :
           isRest ? 'text-ink-muted' :
                    'text-ink-soft'
@@ -53,23 +53,23 @@ export default function TrainWeekStrip({ weekDates, plan, loggedDates, selectedD
         const tileClass = [
           'flex flex-col items-center gap-1.5 py-2.5 rounded-2xl',
           'border-[0.5px] transition-colors min-h-[56px] relative',
-          active ? 'border-ct-terracotta/40'
+          active ? 'border-ct-terracotta/45'
                  : today
-                   ? 'border-ct-terracotta/45'
-                   : 'border-transparent hover:bg-white/[0.03]',
+                   ? 'border-ct-terracotta/50'
+                   : 'border-transparent hover:bg-ink/[0.04]',
         ].join(' ')
 
         const tileBg = active
-          ? { background: 'linear-gradient(180deg, rgba(217,119,87,0.18), rgba(217,119,87,0.04))' }
+          ? { background: 'linear-gradient(180deg, rgba(197,138,119,0.22), rgba(197,138,119,0.06))' }
           : today
-            ? { boxShadow: '0 0 12px rgba(217,119,87,0.18)' }
+            ? { boxShadow: '0 0 12px rgba(197,138,119,0.20)' }
             : {}
 
         const dayLetterClass = (today || active)
           ? 'font-extrabold' : 'font-bold'
         const dayLetterStyle = (today || active)
-          ? { color: '#f0a875' }
-          : { color: 'rgba(240,245,237,0.35)' }
+          ? { color: '#b06a4f' }
+          : { color: 'rgba(141,132,114,0.85)' }
 
         const session = sessionForDay(plan, iso)
         const typeLabel = getSessionTypeLabel(session?.type || session?.session_type)
@@ -101,7 +101,7 @@ export default function TrainWeekStrip({ weekDates, plan, loggedDates, selectedD
             )
           }
           if (past && isRest) {
-            return <span className="w-1 h-1 rounded-full bg-white/20" />
+            return <span className="w-1 h-1 rounded-full bg-ink/25" />
           }
           // Future rest: no indicator
           return <span className="w-2 h-2" />

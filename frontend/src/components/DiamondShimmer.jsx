@@ -29,7 +29,7 @@ const SPARKLE_POSITIONS = [
 export default function DiamondShimmer({ size = 'md', intensity = 'normal' }) {
   const reduced = usePrefersReducedMotion()
   const sparkleSize = size === 'sm' ? 9 : size === 'lg' ? 18 : 12
-  const sparkleColor = intensity === 'soft' ? 'rgba(255,255,255,0.8)' : '#ffffff'
+  const sparkleColor = intensity === 'soft' ? 'rgba(253,246,234,0.85)' : '#fdf6ea'
   const sweepOpacity = intensity === 'soft' ? 0.14 : 0.22
 
   if (reduced) {
@@ -56,7 +56,7 @@ export default function DiamondShimmer({ size = 'md', intensity = 'normal' }) {
         className="absolute inset-y-0"
         style={{
           width: '60%',
-          background: `linear-gradient(110deg, transparent 0%, rgba(255,255,255,${sweepOpacity}) 50%, transparent 100%)`,
+          background: `linear-gradient(110deg, transparent 0%, rgba(253,246,234,${sweepOpacity}) 50%, transparent 100%)`,
           filter: 'blur(2px)',
         }}
         initial={{ x: '-180%' }}

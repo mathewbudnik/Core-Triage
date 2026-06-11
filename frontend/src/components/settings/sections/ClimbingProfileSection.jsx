@@ -73,19 +73,19 @@ export default function ClimbingProfileSection({ user, onUserChange, onToast }) 
           className="relative overflow-hidden rounded-2xl border border-ct-hairline mb-4"
           style={{
             backgroundImage:
-              'linear-gradient(180deg, rgba(20,184,166,0.04), rgba(217,119,87,0.04))',
+              'linear-gradient(180deg, rgba(151,168,134,0.07), rgba(197,138,119,0.07))',
             padding: hasVScale ? '18px 20px 28px' : '18px 20px',
           }}
         >
           <div
             aria-hidden
             className="absolute inset-0 pointer-events-none opacity-40"
-            style={{ backgroundImage: 'radial-gradient(circle 200px at 50% 0%, rgba(217,119,87,0.08), transparent 70%)' }}
+            style={{ backgroundImage: 'radial-gradient(circle 200px at 50% 0%, rgba(197,138,119,0.10), transparent 70%)' }}
           />
           <div className="relative flex items-baseline justify-between gap-3">
             <div className="flex flex-col">
               <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted mb-0.5">Current</span>
-              <span className="text-[32px] font-extrabold tracking-tight leading-none text-accent">{maxBoulder || '—'}</span>
+              <span className="text-[32px] font-extrabold tracking-tight leading-none text-sage-deep">{maxBoulder || '—'}</span>
             </div>
             {hasVScale && (
               <div className="text-ink-muted text-xs font-semibold self-center pt-3.5">
@@ -105,11 +105,11 @@ export default function ClimbingProfileSection({ user, onUserChange, onToast }) 
           </div>
 
           {hasVScale && (
-            <div className="relative h-2 rounded-full mt-5 mx-1" style={{ background: 'rgba(0,0,0,0.30)' }}>
+            <div className="relative h-2 rounded-full mt-5 mx-1" style={{ background: 'rgba(42,39,34,0.14)' }}>
               <div
                 aria-hidden
-                className="absolute inset-0 rounded-full opacity-40"
-                style={{ background: 'linear-gradient(90deg, #7dd3c0 0%, #fbbf24 33%, #d97757 66%, #f47272 100%)' }}
+                className="absolute inset-0 rounded-full opacity-50"
+                style={{ background: 'linear-gradient(90deg, #97a886 0%, #d7ac5b 33%, #c58a77 66%, #b06a4f 100%)' }}
               />
               <div
                 aria-hidden
@@ -117,12 +117,12 @@ export default function ClimbingProfileSection({ user, onUserChange, onToast }) 
                 style={{
                   left: `${vGradePct(currentN)}%`,
                   width: `${Math.max(0, vGradePct(goalN) - vGradePct(currentN))}%`,
-                  background: 'linear-gradient(90deg, #7dd3c0, #d97757)',
-                  boxShadow: '0 0 12px rgba(217,119,87,0.5)',
+                  background: 'linear-gradient(90deg, #97a886, #c58a77)',
+                  boxShadow: '0 0 12px rgba(176,106,79,0.5)',
                 }}
               />
-              <Marker pos={vGradePct(currentN)} color="#7dd3c0" />
-              <Marker pos={vGradePct(goalN)} color="#d97757" />
+              <Marker pos={vGradePct(currentN)} color="#97a886" />
+              <Marker pos={vGradePct(goalN)} color="#c58a77" />
               <Tick pos={0} label="V0" />
               <Tick pos={vGradePct(currentN)} label={`V${currentN}`} lit />
               <Tick pos={vGradePct(goalN)} label={`V${goalN}`} lit />
@@ -139,7 +139,7 @@ export default function ClimbingProfileSection({ user, onUserChange, onToast }) 
         </div>
 
         {/* ═══════ Training days ═══════ */}
-        <div className="p-4 rounded-2xl bg-black/20 border border-ct-hairline mb-3.5">
+        <div className="p-4 rounded-2xl bg-side border border-ct-hairline mb-3.5">
           <div className="flex items-baseline justify-between mb-2.5">
             <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">Training days</span>
             <span className="text-[11px] text-ink-soft font-semibold">
@@ -158,8 +158,8 @@ export default function ClimbingProfileSection({ user, onUserChange, onToast }) 
                   className={
                     'py-3.5 text-center rounded-xl text-xs font-semibold border ' +
                     (on
-                      ? 'bg-ct-terra-tint border-ct-terracotta/35 text-ct-terracotta'
-                      : 'bg-black/20 border-ct-hairline text-ink-muted')
+                      ? 'bg-ct-terra-tint border-ct-terracotta/35 text-clay-deep'
+                      : 'bg-card border-ct-hairline text-ink-muted')
                   }
                 >
                   {d.short}
@@ -167,7 +167,7 @@ export default function ClimbingProfileSection({ user, onUserChange, onToast }) 
                     <div
                       aria-hidden
                       className="mx-auto mt-1.5 w-1.5 h-1.5 rounded-full bg-ct-terracotta"
-                      style={{ boxShadow: '0 0 8px #d97757' }}
+                      style={{ boxShadow: '0 0 8px #c58a77' }}
                     />
                   )}
                 </div>
@@ -249,7 +249,7 @@ function Marker({ pos, color }) {
       style={{
         left: `${pos}%`,
         transform: 'translate(-50%, -50%)',
-        background: '#1c2322',
+        background: '#fdf6ea',
         borderColor: color,
         boxShadow: `0 0 12px ${color}`,
       }}
@@ -277,14 +277,14 @@ function HeroStat({ icon: Icon, label, value }) {
     <div
       className="relative overflow-hidden rounded-2xl px-5 py-4 border transition-all hover:-translate-y-px"
       style={{
-        backgroundImage: 'linear-gradient(135deg, rgba(217,119,87,0.10), rgba(217,119,87,0.02))',
-        borderColor: 'rgba(217,119,87,0.18)',
+        backgroundImage: 'linear-gradient(135deg, rgba(197,138,119,0.14), rgba(197,138,119,0.04))',
+        borderColor: 'rgba(197,138,119,0.30)',
       }}
     >
       <div
         aria-hidden
         className="absolute -right-8 -top-8 w-32 h-32 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(240,168,117,0.15), transparent 70%)' }}
+        style={{ background: 'radial-gradient(circle, rgba(197,138,119,0.18), transparent 70%)' }}
       />
       <div className="relative text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted mb-1.5 inline-flex items-center gap-1.5">
         <Icon size={11} className="opacity-70" />
@@ -297,11 +297,11 @@ function HeroStat({ icon: Icon, label, value }) {
 
 function AttrPill({ icon: Icon, label, value, accent, span }) {
   const iconStyle = accent
-    ? { background: 'rgba(217,119,87,0.10)', borderColor: 'rgba(217,119,87,0.25)', color: '#d97757' }
-    : { background: 'rgba(20,184,166,0.08)', borderColor: 'rgba(20,184,166,0.20)', color: '#7dd3c0' }
+    ? { background: 'rgba(197,138,119,0.14)', borderColor: 'rgba(197,138,119,0.35)', color: '#b06a4f' }
+    : { background: 'rgba(151,168,134,0.14)', borderColor: 'rgba(151,168,134,0.30)', color: '#5f7a4e' }
   const spanCls = span === 3 ? 'sm:col-span-3' : ''
   return (
-    <div className={`flex items-center gap-3 p-3 rounded-xl bg-black/20 border border-ct-hairline hover:border-ct-rim transition-colors ${spanCls}`}>
+    <div className={`flex items-center gap-3 p-3 rounded-xl bg-side border border-ct-hairline hover:border-ct-rim transition-colors ${spanCls}`}>
       <span
         className="flex-shrink-0 w-8 h-8 rounded-lg inline-flex items-center justify-center border"
         style={iconStyle}
@@ -320,7 +320,7 @@ function InvBlock({ icon: Icon, label, items, tone, emptyText }) {
   const count = items.length
   const isEquip = tone === 'equip'
   return (
-    <div className="p-4 rounded-2xl bg-black/20 border border-ct-hairline mb-3">
+    <div className="p-4 rounded-2xl bg-side border border-ct-hairline mb-3">
       <div className="flex items-baseline justify-between mb-2.5">
         <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
           <Icon size={13} className="opacity-70" />
@@ -338,8 +338,8 @@ function InvBlock({ icon: Icon, label, items, tone, emptyText }) {
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border"
               style={
                 isEquip
-                  ? { background: 'rgba(20,184,166,0.08)', color: '#7dd3c0', borderColor: 'rgba(20,184,166,0.25)' }
-                  : { background: 'rgba(244,114,114,0.08)', color: '#f47272', borderColor: 'rgba(244,114,114,0.25)' }
+                  ? { background: 'rgba(151,168,134,0.14)', color: '#5f7a4e', borderColor: 'rgba(151,168,134,0.35)' }
+                  : { background: 'rgba(197,138,119,0.14)', color: '#b06a4f', borderColor: 'rgba(197,138,119,0.35)' }
               }
             >
               {!isEquip && <Crosshair size={10} className="opacity-85" />}

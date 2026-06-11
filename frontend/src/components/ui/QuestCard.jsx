@@ -31,21 +31,21 @@ export default function QuestCard({
       className={[
         'rounded-lg border p-4',
         'bg-gradient-to-b from-ct-forest-deep to-ct-forest-soft',
-        'border-[rgba(217,119,87,0.20)]',
+        'border-[rgba(197,138,119,0.30)]',
         className,
       ].filter(Boolean).join(' ')}
     >
       <div className="flex justify-between items-center mb-2">
-        <p className="text-[10px] tracking-[0.22em] uppercase text-ct-terra-soft font-extrabold">{label}</p>
-        <p className="text-[11px] text-ct-moss font-bold tracking-[0.04em]">
+        <p className="text-[10px] tracking-[0.22em] uppercase text-clay-deep font-extrabold">{label}</p>
+        <p className="text-[11px] text-ink-muted font-bold tracking-[0.04em]">
           +{xp} XP{multiplier ? ` · ${multiplier}` : ''}
         </p>
       </div>
-      <p className="text-[15px] font-bold text-ct-cream leading-tight tracking-[-0.01em]">{title}</p>
-      {why && <p className="text-[11px] text-ct-moss mt-1.5 leading-snug">{why}</p>}
+      <p className="text-[15px] font-bold text-ink leading-tight tracking-[-0.01em]">{title}</p>
+      {why && <p className="text-[11px] text-ink-muted mt-1.5 leading-snug">{why}</p>}
       {progress && (
         <div className="mt-3">
-          <div className="relative h-[5px] bg-white/[0.07] rounded-full overflow-hidden">
+          <div className="relative h-[5px] bg-ink/[0.10] rounded-full overflow-hidden">
             <motion.div
               className="absolute inset-y-0 left-0 bg-gradient-to-r from-ct-terracotta to-ct-terra-soft"
               initial={{ width: `${pct * 100}%` }}
@@ -54,8 +54,8 @@ export default function QuestCard({
             />
           </div>
           <div className="flex justify-between text-[11px] mt-1.5">
-            <span className="text-ct-cream font-bold ct-tnum">{progress.current} of {progress.target}</span>
-            <span className="text-ct-moss tracking-[0.05em]">{Math.round(pct * 100)}%</span>
+            <span className="text-ink font-bold ct-tnum">{progress.current} of {progress.target}</span>
+            <span className="text-ink-muted tracking-[0.05em]">{Math.round(pct * 100)}%</span>
           </div>
         </div>
       )}

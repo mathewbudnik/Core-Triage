@@ -114,17 +114,17 @@ const INTENSITY_LABELS = {
   7: 'Hard', 8: 'Very hard', 9: 'Maximal', 10: 'Absolute max',
 }
 
-// Matches the triage pain slider: teal (≤3) → amber (4-6) → coral (≥7).
-// Same three anchors drive the gradient track + the value label so the bar
-// and the number recolor in lockstep.
+// Severity ramp on the Almanac palette: sage (≤3, calm) → ochre (4-6) →
+// clay (≥7, hard). Same three anchors drive the gradient track + the value
+// label so the bar and the number recolor in lockstep.
 const INTENSITY_HEX = (val) => {
-  if (val <= 3) return '#14b8a6'  // teal (accent)
-  if (val <= 6) return '#fbbf24'  // amber (accent3)
-  return '#fb7185'                 // coral (accent2)
+  if (val <= 3) return '#97a886'  // sage
+  if (val <= 6) return '#d7ac5b'  // ochre
+  return '#b06a4f'                 // clay-deep
 }
 
-const INTENSITY_GRADIENT = 'linear-gradient(90deg, #14b8a6 0%, #fbbf24 50%, #fb7185 100%)'
-const TEAL_GRADIENT      = 'linear-gradient(90deg, #14b8a6 0%, #7dd3c0 100%)'
+const INTENSITY_GRADIENT = 'linear-gradient(90deg, #97a886 0%, #d7ac5b 50%, #b06a4f 100%)'
+const SAGE_GRADIENT      = 'linear-gradient(90deg, #5f7a4e 0%, #97a886 100%)'
 
 /**
  * Shared range slider with a custom gradient track + visible draggable pill.
@@ -142,7 +142,7 @@ const TEAL_GRADIENT      = 'linear-gradient(90deg, #14b8a6 0%, #7dd3c0 100%)'
  */
 function GradientSlider({
   value, min, max, step = 1, onChange,
-  gradient, thumbRingColor = 'rgba(255,255,255,0.35)', ariaLabel,
+  gradient, thumbRingColor = 'rgba(42,39,34,0.30)', ariaLabel,
 }) {
   const pct = ((value - min) / (max - min)) * 100
   return (
@@ -156,7 +156,7 @@ function GradientSlider({
       />
       {/* Visible draggable pill — non-interactive; the input below catches drags */}
       <motion.div
-        className="absolute top-1/2 w-5 h-5 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.45)]
+        className="absolute top-1/2 w-5 h-5 rounded-full bg-cream shadow-[0_2px_8px_rgba(42,39,34,0.30)]
                    ring-2 -translate-y-1/2 -translate-x-1/2 pointer-events-none"
         style={{ left: `${pct}%`, '--tw-ring-color': thumbRingColor }}
         animate={{ left: `${pct}%` }}
@@ -387,7 +387,7 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
         </div>
       </div>
 
-      {/* Duration — teal gradient track; matches Intensity structure */}
+      {/* Duration — sage gradient track; matches Intensity structure */}
       <div>
         <div className="flex items-baseline justify-between mb-2">
           <p className="text-xs text-muted">Duration</p>
@@ -401,8 +401,8 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
           max={240}
           step={15}
           onChange={(v) => set('duration_min', v)}
-          gradient={TEAL_GRADIENT}
-          thumbRingColor="rgba(20,184,166,0.4)"
+          gradient={SAGE_GRADIENT}
+          thumbRingColor="rgba(151,168,134,0.5)"
           ariaLabel="Duration in minutes"
         />
         <div className="flex justify-between mt-1.5">

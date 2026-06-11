@@ -12,11 +12,11 @@
 export const STYLE_ORDER = ['powerful', 'crimpy', 'dynamic', 'technical', 'mobility']
 
 export const STYLE_COLOR = {
-  powerful:  { c: '#fb7185', light: '#fda4af', deep: '#7f1d2c' },   // Phoenix coral
-  crimpy:    { c: '#94a3b8', light: '#cbd5e1', deep: '#334155' },   // Granite slate
-  dynamic:   { c: '#f97316', light: '#fb923c', deep: '#7c2d12' },   // Coral orange
-  technical: { c: '#8b5cf6', light: '#a78bfa', deep: '#4c1d95' },   // Amethyst violet
-  mobility:  { c: '#86efac', light: '#bbf7d0', deep: '#14532d' },   // Sage green
+  powerful:  { c: '#b85c44', light: '#d08a72', deep: '#7e3a28' },   // skill power — clay-red
+  crimpy:    { c: '#c79a3c', light: '#dcbb6f', deep: '#8a6921' },   // skill crimp — ochre-gold
+  dynamic:   { c: '#5f87a0', light: '#8fb0c4', deep: '#3a566a' },   // skill dynamic — slate-blue
+  technical: { c: '#7f9466', light: '#a5b890', deep: '#566440' },   // skill technique — sage
+  mobility:  { c: '#a06f8a', light: '#c19bb0', deep: '#6c4a5e' },   // skill mobility — plum
 }
 
 const STYLE_LABEL = {

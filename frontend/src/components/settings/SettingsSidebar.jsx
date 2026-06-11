@@ -41,10 +41,10 @@ export default function SettingsSidebar({ active, onNavigate }) {
                     : 'text-ink-soft hover:text-ct-cream hover:bg-ct-hairline border-transparent')
               }
               style={isActive ? {
-                background: 'rgba(217,119,87,0.12)',
-                color: '#f0a875',
-                borderColor: 'rgba(217,119,87,0.30)',
-                boxShadow: '0 0 12px rgba(217,119,87,0.18)',
+                background: 'rgba(197,138,119,0.14)',
+                color: '#b06a4f',
+                borderColor: 'rgba(197,138,119,0.40)',
+                boxShadow: '0 0 12px rgba(197,138,119,0.18)',
               } : undefined}
             >
               <Icon size={16} strokeWidth={isActive ? 2.25 : 2} className="flex-shrink-0" />
@@ -55,8 +55,8 @@ export default function SettingsSidebar({ active, onNavigate }) {
                   transition={{ duration: 0.12, ease: [0, 0, 0.2, 1] }}
                   className="ml-auto w-1.5 h-1.5 rounded-full"
                   style={{
-                    background: '#d97757',
-                    boxShadow: '0 0 6px rgba(217,119,87,0.55)',
+                    background: '#c58a77',
+                    boxShadow: '0 0 6px rgba(197,138,119,0.55)',
                   }}
                 />
               )}

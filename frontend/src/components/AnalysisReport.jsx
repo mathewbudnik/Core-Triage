@@ -231,7 +231,7 @@ const SEVERITY_DOT = {
 
 function CompoundMoments({ moments, onJumpTo }) {
   return (
-    <div className="rounded-2xl border border-ct-terracotta/30 bg-[linear-gradient(180deg,rgba(217,119,87,0.05),rgba(217,119,87,0.01))] p-4 flex flex-col gap-3">
+    <div className="rounded-2xl border border-ct-terracotta/30 bg-[linear-gradient(180deg,rgba(197,138,119,0.09),rgba(197,138,119,0.03))] p-4 flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <Layers size={14} className="text-ct-terra-soft" />
         <span className="text-[11px] font-bold uppercase tracking-[0.13em] text-ct-terra-soft">
@@ -287,7 +287,7 @@ function CompoundMomentRow({ moment, onJumpTo }) {
       <button
         type="button"
         onClick={() => onJumpTo(moment.ts)}
-        className="flex-shrink-0 flex items-center gap-1 self-start px-2.5 py-1 rounded-md text-[11px] font-bold bg-ct-terracotta text-ct-cream hover:brightness-110 transition"
+        className="flex-shrink-0 flex items-center gap-1 self-start px-2.5 py-1 rounded-md text-[11px] font-bold bg-clay-deep text-cream hover:brightness-110 transition"
       >
         Jump
         <ChevronRight size={11} />

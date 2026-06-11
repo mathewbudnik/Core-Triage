@@ -13,9 +13,9 @@ import { TIER_NAMES, TIER_TOKENS } from './tier'
  * Used sparingly on rare / high-tier achievements to preserve surprise.
  */
 
-const HONEY = { light: '#fbd470', c: '#f7b03a', deep: '#7c5a14' }
-const CORAL = { light: '#fda4af', c: '#fb7185', deep: '#7f1d2c' }
-const SKY   = { light: '#7cc3ff', c: '#3aa1ff', deep: '#0d3d70' }
+const HONEY = { light: '#e6c886', c: '#d7ac5b', deep: '#9a7a32' }  // Almanac ochre
+const CORAL = { light: '#d08a72', c: '#c58a77', deep: '#7e4632' }  // Almanac clay
+const SKY   = { light: '#8fb0c4', c: '#5f87a0', deep: '#3a566a' }  // skill-dynamic slate-blue
 
 function gradeMedal(tierId) {
   const t = TIER_TOKENS[tierId] || TIER_TOKENS.v0

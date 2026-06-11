@@ -63,7 +63,7 @@ export default function TopTakeaway({ finding, thumbnail, onJumpTo }) {
     !!finding.whyItMatters || !!finding.howToFix || !!finding.whenYouSeeIt
 
   return (
-    <div className="rounded-2xl border border-ct-terracotta/45 bg-[linear-gradient(180deg,rgba(217,119,87,0.12),rgba(217,119,87,0.04))] p-4 md:p-5 flex flex-col gap-3">
+    <div className="rounded-2xl border border-ct-terracotta/45 bg-[linear-gradient(180deg,rgba(197,138,119,0.16),rgba(197,138,119,0.05))] p-4 md:p-5 flex flex-col gap-3">
       {/* Label */}
       <div className="flex items-center gap-2">
         <Target size={14} className="text-ct-terra-soft" />
@@ -78,7 +78,7 @@ export default function TopTakeaway({ finding, thumbnail, onJumpTo }) {
           <button
             type="button"
             onClick={() => onJumpTo(firstTs)}
-            className="flex-shrink-0 w-24 h-20 rounded-lg overflow-hidden bg-black border border-ct-terracotta/30 hover:border-ct-terracotta transition-colors"
+            className="flex-shrink-0 w-24 h-20 rounded-lg overflow-hidden bg-side border border-ct-terracotta/30 hover:border-ct-terracotta transition-colors"
             aria-label={`Jump to ${formatTime(firstTs)}`}
           >
             <img src={thumbnail} alt="" className="w-full h-full object-cover" />
@@ -116,7 +116,7 @@ export default function TopTakeaway({ finding, thumbnail, onJumpTo }) {
         <button
           type="button"
           onClick={() => onJumpTo(firstTs)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-ct-terracotta text-ct-cream hover:brightness-110 transition"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-clay text-cream hover:brightness-110 transition"
         >
           Jump to first
           <ChevronRight size={12} />

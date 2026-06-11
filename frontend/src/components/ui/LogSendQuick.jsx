@@ -108,8 +108,8 @@ export default function LogSendQuick({ sessionType, engineState, onCommit }) {
         className={[
           'w-full py-2.5 rounded-xl text-sm font-bold',
           grade
-            ? 'bg-ct-terracotta text-white'
-            : 'bg-ct-cream/10 text-ink-muted cursor-not-allowed',
+            ? 'bg-ct-terracotta text-cream'
+            : 'bg-ink/10 text-ink-muted cursor-not-allowed',
         ].join(' ')}
       >
         {grade ? `Add ${grade}` : 'Pick a grade'}

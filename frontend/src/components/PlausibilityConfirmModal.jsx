@@ -37,9 +37,9 @@ export default function PlausibilityConfirmModal({
         transition={TRANSITIONS.dialog_in}
         className="w-full max-w-sm rounded-2xl p-5 relative"
         style={{
-          background: 'linear-gradient(180deg, #243530 0%, #1c2520 100%)',
-          border: '0.5px solid rgba(217,119,87,0.25)',
-          boxShadow: '0 8px 36px rgba(0,0,0,0.5), 0 0 60px rgba(217,119,87,0.08)',
+          background: 'linear-gradient(180deg, #f4ecdb 0%, #e7ddc6 100%)',
+          border: '0.5px solid rgba(197,138,119,0.35)',
+          boxShadow: '0 8px 36px rgba(42,39,34,0.25), 0 0 60px rgba(197,138,119,0.12)',
         }}
       >
         <button
@@ -47,7 +47,7 @@ export default function PlausibilityConfirmModal({
           onClick={onEdit}
           aria-label="Edit grade"
           className="absolute top-3 right-3 w-7 h-7 rounded-md inline-flex items-center justify-center
-                     text-ink-soft hover:text-ct-cream hover:bg-white/5 transition-colors"
+                     text-ink-soft hover:text-ink hover:bg-ct-hairline transition-colors"
         >
           <X size={14} />
         </button>
@@ -105,7 +105,7 @@ export default function PlausibilityConfirmModal({
             onClick={() => noteValid && onConfirm(needsNote ? note.trim() : undefined)}
             disabled={!noteValid}
             className="flex-1 h-10 rounded-xl text-xs font-extrabold inline-flex items-center justify-center gap-1.5
-                       bg-ct-terracotta text-ct-cream transition-opacity
+                       bg-clay-deep text-cream transition-opacity
                        disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Confirm send

@@ -22,8 +22,8 @@ export default function AuthShell({ eyebrow, title, subtitle, children, helper }
       className="min-h-screen flex items-center justify-center px-4 py-10 bg-ct-forest"
       style={{
         backgroundImage:
-          "radial-gradient(ellipse 800px 500px at 12% 10%, rgba(20,184,166,0.10), transparent 60%), " +
-          "radial-gradient(ellipse 700px 500px at 88% 90%, rgba(217,119,87,0.10), transparent 60%)",
+          "radial-gradient(ellipse 800px 500px at 12% 10%, rgba(151,168,134,0.16), transparent 60%), " +
+          "radial-gradient(ellipse 700px 500px at 88% 90%, rgba(197,138,119,0.18), transparent 60%)",
       }}
     >
       <motion.div
@@ -38,7 +38,7 @@ export default function AuthShell({ eyebrow, title, subtitle, children, helper }
           className="pointer-events-none absolute inset-0 rounded-3xl"
           style={{
             backgroundImage:
-              'radial-gradient(circle 200px at 50% 0%, rgba(217,119,87,0.10), transparent 70%)',
+              'radial-gradient(circle 200px at 50% 0%, rgba(197,138,119,0.14), transparent 70%)',
           }}
         />
 
@@ -48,7 +48,7 @@ export default function AuthShell({ eyebrow, title, subtitle, children, helper }
           <span
             className="font-extrabold text-[15px] tracking-tight"
             style={{
-              backgroundImage: 'linear-gradient(90deg, #14b8a6, #d97757)',
+              backgroundImage: 'linear-gradient(90deg, #5f7a4e, #b06a4f)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}

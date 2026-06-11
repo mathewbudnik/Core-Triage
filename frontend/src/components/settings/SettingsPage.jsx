@@ -59,8 +59,8 @@ export default function SettingsPage({ user, onUserChange, onLogout, onToast, on
       className="relative"
       style={{
         backgroundImage:
-          'radial-gradient(ellipse 1200px 600px at 20% -10%, rgba(20,184,166,0.05), transparent 60%), ' +
-          'radial-gradient(ellipse 1000px 500px at 90% 10%, rgba(217,119,87,0.04), transparent 60%)',
+          'radial-gradient(ellipse 1200px 600px at 20% -10%, rgba(151,168,134,0.07), transparent 60%), ' +
+          'radial-gradient(ellipse 1000px 500px at 90% 10%, rgba(197,138,119,0.06), transparent 60%)',
       }}
     >
       <div className="relative z-[1] max-w-[1140px] mx-auto grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-9 px-5 lg:px-7 pt-7 pb-20">
@@ -75,7 +75,7 @@ export default function SettingsPage({ user, onUserChange, onLogout, onToast, on
               Make it{' '}
               <span
                 style={{
-                  backgroundImage: 'linear-gradient(90deg, #d97757, #f0a875)',
+                  backgroundImage: 'linear-gradient(90deg, #b06a4f, #c58a77)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                 }}

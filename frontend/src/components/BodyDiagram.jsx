@@ -93,10 +93,14 @@ function BodyDiagram({ selected, onSelect }) {
   // previous pick), we lose which instance was originally tapped — so we
   // highlight all instances of the chosen zone in that case.
   const fill = (zoneId, instanceId) => {
-    if (zoneId && selected === zoneId) return '#FF4444'
-    if (instanceId && tappedInstance === instanceId) return '#FF4444'
-    if (instanceId && hoveredInstance === instanceId) return '#CC3333'
-    return '#C8A84B'
+    // Selected / hurt region — high-severity brick so it stands out clearly
+    // against the muted figure on parchment.
+    if (zoneId && selected === zoneId) return '#b85c44'
+    if (instanceId && tappedInstance === instanceId) return '#b85c44'
+    // Hover preview — a softer clay step below the selected brick.
+    if (instanceId && hoveredInstance === instanceId) return '#c58a77'
+    // Resting figure — muted ink tint, legible on parchment.
+    return 'rgba(42,39,34,0.16)'
   }
 
   const openSheet = (zoneId, instanceId) => {
@@ -146,6 +150,9 @@ function BodyDiagram({ selected, onSelect }) {
       top:         pos.top,
       zIndex:      pos.z ?? 'auto',
       fill:        fill(zoneId, instanceId),
+      // Clay outline so the muted figure reads clearly on parchment.
+      stroke:      'rgba(176,106,79,0.5)',
+      strokeWidth: 0.6,
       transition:  'fill 0.15s ease',
       cursor:      zoneId ? 'pointer' : 'default',
       // Skips the historical iOS double-tap-zoom + tap delay so click fires
@@ -296,13 +303,13 @@ function BodyDiagram({ selected, onSelect }) {
         <p style={{ margin: 0, fontSize: 14 }}>
           {preview ? (
             <>
-              <span style={{ color: '#d97757', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <span style={{ color: '#c58a77', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 {preview.label}
               </span>
-              <span style={{ color: 'rgba(240,245,237,0.4)' }}> · {preview.desc}</span>
+              <span style={{ color: '#8d8472' }}> · {preview.desc}</span>
             </>
           ) : (
-            <span style={{ color: 'rgba(240,245,237,0.35)', letterSpacing: '0.06em' }}>
+            <span style={{ color: '#8d8472', letterSpacing: '0.06em' }}>
               Tap the area that is bothering you
             </span>
           )}
@@ -390,8 +397,8 @@ function BodyDiagram({ selected, onSelect }) {
       document.body)}
 
       {/* ── Back-side region pills ────────────────────────────────────────── */}
-      <div style={{ width: '100%', maxWidth: 360, margin: '20px auto 0', paddingTop: 16, borderTop: '1px solid rgba(230,237,228,0.10)' }}>
-        <p style={{ fontSize: 10, color: 'rgba(149,166,152,1)', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 12px' }}>
+      <div style={{ width: '100%', maxWidth: 360, margin: '20px auto 0', paddingTop: 16, borderTop: '1px solid rgba(42,39,34,0.13)' }}>
+        <p style={{ fontSize: 10, color: '#8d8472', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 12px' }}>
           Or pick from the back side
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 6 }}>
@@ -414,14 +421,14 @@ function BodyDiagram({ selected, onSelect }) {
                   fontWeight: 600,
                   letterSpacing: '0.04em',
                   border: `1px solid ${
-                    isSelected ? '#FF4444' : isHovered ? '#CC3333' : 'rgba(255,255,255,0.15)'
+                    isSelected ? '#b85c44' : isHovered ? '#c58a77' : 'rgba(42,39,34,0.18)'
                   }`,
                   background: isSelected
-                    ? 'rgba(255,68,68,0.15)'
+                    ? 'rgba(184,92,68,0.14)'
                     : isHovered
-                    ? 'rgba(204,51,51,0.1)'
-                    : 'rgba(255,255,255,0.04)',
-                  color: isSelected ? '#FF4444' : isHovered ? '#CC3333' : 'rgba(255,255,255,0.7)',
+                    ? 'rgba(197,138,119,0.12)'
+                    : 'rgba(42,39,34,0.05)',
+                  color: isSelected ? '#b85c44' : isHovered ? '#b06a4f' : '#5f594c',
                   cursor: 'pointer',
                   transition: 'all 0.1s ease',
                 }}

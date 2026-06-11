@@ -77,7 +77,7 @@ export default function Landing({ onEnter }) {
         </div>
         <button
           onClick={() => onEnter()}
-          className="bg-ct-terracotta text-ct-cream flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg font-semibold hover:bg-ct-terracotta/90 transition-colors"
+          className="bg-clay-deep text-cream flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg font-semibold hover:bg-ct-terracotta transition-colors"
         >
           Open App <ChevronRight size={15} />
         </button>
@@ -105,7 +105,7 @@ export default function Landing({ onEnter }) {
         >
           <span
             className="bg-clip-text text-transparent"
-            style={{ backgroundImage: 'linear-gradient(90deg, #f0a875, #f0f5ed, #d97757)' }}
+            style={{ backgroundImage: 'linear-gradient(90deg, #c58a77, #2a2722, #b06a4f)' }}
           >
             Train. Recover. Progress.
           </span>
@@ -130,7 +130,7 @@ export default function Landing({ onEnter }) {
         <motion.div variants={item} className="flex flex-col sm:flex-row gap-3 items-center mb-16">
           <button
             onClick={() => onEnter('triage')}
-            className="bg-ct-terracotta text-ct-cream flex items-center gap-2 text-base px-8 py-3 rounded-lg font-semibold hover:bg-ct-terracotta/90 transition-colors"
+            className="bg-clay-deep text-cream flex items-center gap-2 text-base px-8 py-3 rounded-lg font-semibold hover:bg-ct-terracotta transition-colors"
           >
             Start Triage <ChevronRight size={16} />
           </button>

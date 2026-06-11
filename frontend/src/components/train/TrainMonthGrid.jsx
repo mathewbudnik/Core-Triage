@@ -84,9 +84,9 @@ export default function TrainMonthGrid({ year, monthIndex, plan, loggedDates, se
           const numClass = cell.outside
             ? 'text-ink-muted'
             : isSelected
-              ? 'text-ct-cream'
+              ? 'text-ink'
               : isToday
-                ? 'text-ct-cream'
+                ? 'text-ink'
                 : past
                   ? 'text-ink-soft'
                   : isRest
@@ -99,20 +99,20 @@ export default function TrainMonthGrid({ year, monthIndex, plan, loggedDates, se
             'flex flex-col items-center justify-center py-1.5 rounded-xl',
             'border-[0.5px] min-h-[44px] transition-colors',
             isSelected
-              ? 'border-ct-terracotta/40'
+              ? 'border-ct-terracotta/45'
               : (isToday && !cell.outside)
-                ? 'border-ct-terracotta/45'
-                : 'border-transparent hover:bg-white/[0.03]',
+                ? 'border-ct-terracotta/50'
+                : 'border-transparent hover:bg-ink/[0.04]',
           ].join(' ')
 
           const tileBg = isSelected
-            ? { background: 'linear-gradient(180deg, rgba(217,119,87,0.18), rgba(217,119,87,0.04))' }
+            ? { background: 'linear-gradient(180deg, rgba(197,138,119,0.22), rgba(197,138,119,0.06))' }
             : (isToday && !cell.outside)
-              ? { boxShadow: '0 0 10px rgba(217,119,87,0.16)' }
+              ? { boxShadow: '0 0 10px rgba(197,138,119,0.18)' }
               : undefined
 
           const todayStyle = (isToday && !isSelected && !cell.outside)
-            ? { color: '#f0a875' }
+            ? { color: '#b06a4f' }
             : undefined
 
           const indicator = (() => {
@@ -131,7 +131,7 @@ export default function TrainMonthGrid({ year, monthIndex, plan, loggedDates, se
               )
             }
             if (past && isRest) {
-              return <span className="w-1 h-1 rounded-full bg-white/20" />
+              return <span className="w-1 h-1 rounded-full bg-ink/25" />
             }
             return <span className="w-2 h-2" />
           })()

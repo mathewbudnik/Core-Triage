@@ -15,10 +15,10 @@ import { QUALIFIER_GLOSSARY } from '../../lib/qualifierGlossary'
  * future qualifiers we haven't added definitions for yet.
  */
 const TONE_STYLES = {
-  teal:  { bg: 'rgba(125,211,192,0.15)', border: 'rgba(125,211,192,0.35)', text: '#7dd3c0' },
-  muted: { bg: 'rgba(138,147,166,0.15)', border: 'rgba(138,147,166,0.30)', text: '#a9b7d0' },
-  amber: { bg: 'rgba(247,187,81,0.15)',  border: 'rgba(247,187,81,0.35)',  text: '#f7bb51' },
-  coral: { bg: 'rgba(244,114,114,0.15)', border: 'rgba(244,114,114,0.40)', text: '#fda4af' },
+  teal:  { bg: 'rgba(151,168,134,0.18)', border: 'rgba(151,168,134,0.40)', text: '#5f7a4e' },
+  muted: { bg: 'rgba(141,132,114,0.15)', border: 'rgba(141,132,114,0.30)', text: '#5f594c' },
+  amber: { bg: 'rgba(215,172,91,0.18)',  border: 'rgba(215,172,91,0.40)',  text: '#9a7820' },
+  coral: { bg: 'rgba(176,106,79,0.15)',  border: 'rgba(176,106,79,0.40)',  text: '#b06a4f' },
 }
 
 export default function QualifierChip({ qualifier, size = 'md' }) {

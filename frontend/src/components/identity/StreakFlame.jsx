@@ -10,7 +10,7 @@ export default function StreakFlame({ days = 0, size = 'md' }) {
   const tier = streakTier(days)
   const px = SIZE_MAP[size] ?? SIZE_MAP.md
   const flameFill = {
-    warm: '#c75e3a',
+    warm: '#b06a4f',
     gradient: 'url(#ct-streak-gradient)',
     foil: 'url(#ct-foil)',
   }[tier]
@@ -24,17 +24,17 @@ export default function StreakFlame({ days = 0, size = 'md' }) {
         aria-hidden="true"
         style={{
           filter: tier === 'warm'
-            ? 'drop-shadow(0 0 6px rgba(199,94,58,0.5))'
+            ? 'drop-shadow(0 0 6px rgba(176,106,79,0.5))'
             : tier === 'gradient'
-            ? 'drop-shadow(0 0 8px rgba(240,168,117,0.6))'
-            : 'drop-shadow(0 0 12px rgba(184,138,58,0.7))',
+            ? 'drop-shadow(0 0 8px rgba(197,138,119,0.6))'
+            : 'drop-shadow(0 0 12px rgba(215,172,91,0.7))',
         }}
       >
         <defs>
           <linearGradient id="ct-streak-gradient" x1="0%" y1="100%" x2="0%" y2="0%">
-            <stop offset="0%" stopColor="#c75e3a" />
-            <stop offset="50%" stopColor="#f0a875" />
-            <stop offset="100%" stopColor="#fce6a8" />
+            <stop offset="0%" stopColor="#b06a4f" />
+            <stop offset="50%" stopColor="#c58a77" />
+            <stop offset="100%" stopColor="#d7ac5b" />
           </linearGradient>
         </defs>
         <path

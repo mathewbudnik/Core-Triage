@@ -25,12 +25,12 @@ export default function AvatarChip({ icon, color, name, size = 28, anonymous = f
         className={`flex items-center justify-center flex-shrink-0 ${className}`}
         style={{
           width: size, height: size, borderRadius: radius,
-          background: 'rgba(138,147,166,0.18)',
-          border: '1px solid rgba(138,147,166,0.35)',
+          background: 'rgba(141,132,114,0.18)',
+          border: '1px solid rgba(141,132,114,0.40)',
         }}
         aria-hidden
       >
-        <span style={{ fontSize, lineHeight: 1, color: '#8a93a6' }}>?</span>
+        <span style={{ fontSize, lineHeight: 1, color: '#8d8472' }}>?</span>
       </div>
     )
   }
@@ -62,12 +62,12 @@ export default function AvatarChip({ icon, color, name, size = 28, anonymous = f
       className={`flex items-center justify-center flex-shrink-0 ${className}`}
       style={{
         width: size, height: size, borderRadius: radius,
-        background: 'rgba(125,211,192,0.15)',
-        border: '1px solid rgba(125,211,192,0.35)',
+        background: 'rgba(151,168,134,0.20)',
+        border: '1px solid rgba(151,168,134,0.45)',
       }}
       aria-hidden
     >
-      <span style={{ fontSize, lineHeight: 1, color: '#7dd3c0', fontWeight: 800 }}>
+      <span style={{ fontSize, lineHeight: 1, color: '#5f7a4e', fontWeight: 800 }}>
         {initial}
       </span>
     </div>

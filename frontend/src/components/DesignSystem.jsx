@@ -42,7 +42,7 @@ function EngineLiveDemo() {
       </p>
       <div className="flex gap-2 mt-2">
         <button type="button" onClick={handleSend}
-          className="px-3 py-1.5 rounded-md bg-ct-terracotta text-ct-forest text-xs font-bold">
+          className="px-3 py-1.5 rounded-md bg-ct-terracotta text-cream text-xs font-bold">
           Log V6 crimpy flash
         </button>
         <button type="button" onClick={reset}
@@ -68,7 +68,7 @@ function ThemeDemoBody() {
       <button
         type="button"
         onClick={() => setThemeKey('ember')}
-        className="mt-3 px-4 py-2 rounded-md bg-ct-terracotta text-ct-forest text-sm font-bold"
+        className="mt-3 px-4 py-2 rounded-md bg-ct-terracotta text-cream text-sm font-bold"
       >
         Set Ember
       </button>
@@ -138,10 +138,10 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
         <Surface tier="default" padding="lg">
           <Eyebrow divider className="mb-4">Tier badges</Eyebrow>
           <div className="flex flex-wrap gap-3">
-            <TierBadge name="FROST" color="#7dd3c0" />
-            <TierBadge name="SLATEHOLD" color="#94a3b8" />
-            <TierBadge name="EMBER" color="#d97757" />
-            <TierBadge name="PHOENIX" color="#fbbf24" />
+            <TierBadge name="FROST" color="#5f87a0" />
+            <TierBadge name="SLATEHOLD" color="#8d8472" />
+            <TierBadge name="EMBER" color="#c58a77" />
+            <TierBadge name="PHOENIX" color="#d7ac5b" />
           </div>
         </Surface>
       </section>
@@ -234,7 +234,7 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
           <button
             type="button"
             onClick={() => setCelebrate(true)}
-            className="w-full py-3 rounded-lg bg-ct-terracotta text-ct-forest font-extrabold text-sm tracking-[0.04em]"
+            className="w-full py-3 rounded-lg bg-ct-terracotta text-cream font-extrabold text-sm tracking-[0.04em]"
           >
             Fire celebration
           </button>
@@ -251,7 +251,7 @@ TRANSITIONS keys: ${Object.keys(TRANSITIONS).join(', ')}`}
         <h2 className="ct-title mb-4">SessionSummaryOverlay</h2>
         <Surface tier="default" padding="lg" className="max-w-sm">
           <Eyebrow divider className="mb-4">Multi-event celebration</Eyebrow>
-          <button onClick={() => setDemoOpen(true)} className="px-3 py-2 bg-ct-terracotta rounded text-ct-forest font-bold text-sm">
+          <button onClick={() => setDemoOpen(true)} className="px-3 py-2 bg-ct-terracotta rounded text-cream font-bold text-sm">
             Demo summary
           </button>
           <SessionSummaryOverlay

@@ -376,9 +376,9 @@ export default function HistoryTab({ dbReady, user, onLoginClick }) {
                       {selected.diagnosis.severity?.label && (
                         <p className="text-[11px] font-bold uppercase tracking-wider"
                            style={{
-                             color: selected.diagnosis.severity?.level === 'severe'   ? '#fda4af'
-                                  : selected.diagnosis.severity?.level === 'moderate' ? '#f7bb51'
-                                  :                                                     '#7dd3c0',
+                             color: selected.diagnosis.severity?.level === 'severe'   ? '#b0492f'
+                                  : selected.diagnosis.severity?.level === 'moderate' ? '#a07d28'
+                                  :                                                     '#5f7a4e',
                            }}>
                           {selected.diagnosis.severity.label}
                         </p>

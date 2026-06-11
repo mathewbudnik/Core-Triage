@@ -32,7 +32,7 @@ function PyramidRow({ grade, s, f, p, maxRowTotal }) {
     >
       <span
         className="w-9 text-[12px] font-extrabold text-right tabular-nums tracking-tight"
-        style={{ color: hasBar ? token.c : 'rgba(232,238,252,0.45)' }}
+        style={{ color: hasBar ? token.c : 'rgba(141,132,114,0.75)' }}
       >
         {grade}
       </span>
@@ -49,7 +49,7 @@ function PyramidRow({ grade, s, f, p, maxRowTotal }) {
             {f > 0 && (
               <span
                 className="h-full"
-                style={{ width: `${flashPct}%`, background: '#fbbf24' }}
+                style={{ width: `${flashPct}%`, background: '#d7ac5b' }}
                 aria-label={`${f} flash${f === 1 ? '' : 'es'}`}
               />
             )}
@@ -71,7 +71,7 @@ function PyramidRow({ grade, s, f, p, maxRowTotal }) {
           <span className="text-muted/60">—</span>
         )}
         {p > 0 && (
-          <span className="ml-1.5 inline-flex items-center text-[10px] text-muted/80 bg-white/[0.06] border border-white/10 px-1.5 py-[1px] rounded-full">
+          <span className="ml-1.5 inline-flex items-center text-[10px] text-muted/80 bg-ink/[0.05] border border-ct-rim px-1.5 py-[1px] rounded-full">
             +{p} proj
           </span>
         )}
@@ -155,7 +155,7 @@ function PyramidColumn({ label, data }) {
           />
         ))}
       </motion.div>
-      <p className="text-[10px] text-muted/60 mt-3 pt-2 border-t border-white/[0.06]">
+      <p className="text-[10px] text-muted/60 mt-3 pt-2 border-t border-ct-rim/60">
         <span className="inline-block w-2 h-2 bg-accent3 rounded-sm mr-1.5 align-middle" />
         flash · row color reflects grade tier
       </p>

@@ -59,7 +59,7 @@ export default function ChatPicker({ user, onSelectCoach, onSelectAI, onSelectAn
         <button
           type="button"
           onClick={onSelectCoach}
-          className="group flex flex-col items-center text-center gap-3 px-5 py-6 rounded-xl border bg-[linear-gradient(180deg,rgba(217,119,87,0.10),rgba(217,119,87,0.04))] border-ct-terracotta/25 hover:border-ct-terracotta/50 hover:shadow-glow transition-all duration-150"
+          className="group flex flex-col items-center text-center gap-3 px-5 py-6 rounded-xl border bg-[linear-gradient(180deg,rgba(197,138,119,0.16),rgba(197,138,119,0.06))] border-ct-terracotta/35 hover:border-ct-terracotta/60 hover:shadow-glow transition-all duration-150"
         >
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-base font-bold bg-ct-terra-tint border border-ct-terracotta/40 text-ct-terra-soft">
             M
@@ -78,7 +78,7 @@ export default function ChatPicker({ user, onSelectCoach, onSelectAI, onSelectAn
               Replies in 24–48h
             </p>
           </div>
-          <span className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-ct-terracotta text-ct-cream group-hover:opacity-90 transition-opacity">
+          <span className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-clay-deep text-cream group-hover:opacity-90 transition-opacity">
             {coachCtaLabel}
             <ArrowRight size={12} />
           </span>
@@ -88,7 +88,7 @@ export default function ChatPicker({ user, onSelectCoach, onSelectAI, onSelectAn
         <button
           type="button"
           onClick={onSelectAI}
-          className="group flex flex-col items-center text-center gap-3 px-5 py-6 rounded-xl border bg-[linear-gradient(180deg,rgba(217,119,87,0.06),rgba(217,119,87,0.02))] border-ct-terracotta/20 hover:border-ct-terracotta/40 hover:shadow-glow transition-all duration-150"
+          className="group flex flex-col items-center text-center gap-3 px-5 py-6 rounded-xl border bg-[linear-gradient(180deg,rgba(197,138,119,0.10),rgba(197,138,119,0.04))] border-ct-terracotta/30 hover:border-ct-terracotta/50 hover:shadow-glow transition-all duration-150"
         >
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-ct-terra-tint border border-ct-terracotta/30 text-ct-terra-soft">
             <Bot size={20} />
@@ -104,7 +104,7 @@ export default function ChatPicker({ user, onSelectCoach, onSelectAI, onSelectAn
               Climbing-trained assistant — technique, training, movement, and injury triage. 5 free answers, then unlimited during your 14-day trial and with a subscription.
             </p>
           </div>
-          <span className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-ct-terracotta/30 text-ct-terra-soft bg-ct-terra-tint group-hover:bg-[rgba(217,119,87,0.12)] transition-colors">
+          <span className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-ct-terracotta/40 text-ct-terra-soft bg-ct-terra-tint group-hover:bg-[rgba(197,138,119,0.16)] transition-colors">
             Start chatting
             <ArrowRight size={12} />
           </span>
@@ -114,7 +114,7 @@ export default function ChatPicker({ user, onSelectCoach, onSelectAI, onSelectAn
         <button
           type="button"
           onClick={onSelectAnalyzer}
-          className="group flex flex-col items-center text-center gap-3 px-5 py-6 rounded-xl border bg-[linear-gradient(180deg,rgba(217,119,87,0.06),rgba(217,119,87,0.02))] border-ct-terracotta/20 hover:border-ct-terracotta/40 hover:shadow-glow transition-all duration-150"
+          className="group flex flex-col items-center text-center gap-3 px-5 py-6 rounded-xl border bg-[linear-gradient(180deg,rgba(197,138,119,0.10),rgba(197,138,119,0.04))] border-ct-terracotta/30 hover:border-ct-terracotta/50 hover:shadow-glow transition-all duration-150"
         >
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-ct-terra-tint border border-ct-terracotta/30 text-ct-terra-soft">
             <Activity size={20} />
@@ -130,7 +130,7 @@ export default function ChatPicker({ user, onSelectCoach, onSelectAI, onSelectAn
               Upload a climbing clip and see a frame-by-frame skeleton overlay of your movement. Runs entirely on your device — no upload to a server.
             </p>
           </div>
-          <span className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-ct-terracotta/30 text-ct-terra-soft bg-ct-terra-tint group-hover:bg-[rgba(217,119,87,0.12)] transition-colors">
+          <span className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-ct-terracotta/40 text-ct-terra-soft bg-ct-terra-tint group-hover:bg-[rgba(197,138,119,0.16)] transition-colors">
             {analyzerCtaLabel}
             <ArrowRight size={12} />
           </span>

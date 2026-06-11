@@ -38,7 +38,7 @@ export default function TriageSectionCard({ state, eyebrow, children, innerRef }
         rounded="rounded-2xl"
         className={`mb-2.5 transition-[border-color,box-shadow] duration-200
                     ${isFocused
-                      ? 'border-ct-terracotta/40 shadow-[0_8px_24px_rgba(217,119,87,0.08)]'
+                      ? 'border-ct-terracotta/40 shadow-[0_8px_24px_rgba(197,138,119,0.10)]'
                       : ''}`}
       >
         <Eyebrow className="mb-2.5">{eyebrow}</Eyebrow>

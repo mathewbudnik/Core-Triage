@@ -5,9 +5,9 @@ import { motion } from 'framer-motion'
 // edge of the gradient track. Keeping these in lock-step is the whole point —
 // the bar should always reach the same color the value label shows.
 function painHex(v) {
-  if (v <= 3) return '#14b8a6'  // teal
-  if (v <= 6) return '#fbbf24'  // gold
-  return '#fb7185'              // coral
+  if (v <= 3) return '#97a886'  // sage — low
+  if (v <= 6) return '#d7ac5b'  // ochre — mid
+  return '#b85c44'              // brick — high
 }
 
 function painLabel(v) {
@@ -22,9 +22,9 @@ function painLabel(v) {
 // Gradient that always ENDS at the color the current value owns, so the
 // rightmost pixel of the filled bar matches the value-label color.
 function painGradient(v) {
-  if (v <= 3) return 'linear-gradient(90deg, #14b8a6 0%, #14b8a6 100%)'
-  if (v <= 6) return 'linear-gradient(90deg, #14b8a6 0%, #fbbf24 100%)'
-  return 'linear-gradient(90deg, #14b8a6 0%, #fbbf24 50%, #fb7185 100%)'
+  if (v <= 3) return 'linear-gradient(90deg, #97a886 0%, #97a886 100%)'
+  if (v <= 6) return 'linear-gradient(90deg, #97a886 0%, #d7ac5b 100%)'
+  return 'linear-gradient(90deg, #97a886 0%, #d7ac5b 50%, #b85c44 100%)'
 }
 
 /**
@@ -109,9 +109,9 @@ export default function PainSlider({ value, onChange, onCommit }) {
         onPointerCancel={onPointerUp}
         onKeyDown={onKeyDown}
         className="relative h-11 flex items-center cursor-pointer touch-none select-none
-                   outline-none focus-visible:ring-2 focus-visible:ring-white/30 rounded-full"
+                   outline-none focus-visible:ring-2 focus-visible:ring-ink/30 rounded-full"
       >
-        <div className="relative w-full h-2 rounded-full bg-white/[0.06] overflow-hidden">
+        <div className="relative w-full h-2 rounded-full bg-ink/[0.10] overflow-hidden">
           <motion.div
             className="absolute inset-y-0 left-0 rounded-full"
             animate={{ width: `${pct}%` }}
@@ -120,8 +120,8 @@ export default function PainSlider({ value, onChange, onCommit }) {
           />
         </div>
         <motion.div
-          className="absolute top-1/2 w-6 h-6 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.35)]
-                     border-[0.5px] border-white/40 pointer-events-none"
+          className="absolute top-1/2 w-6 h-6 rounded-full bg-clay shadow-[0_2px_8px_rgba(0,0,0,0.35)]
+                     border-[0.5px] border-clay-deep/40 pointer-events-none"
           animate={{ left: `${pct}%` }}
           transition={{ duration: 0.12, ease: [0, 0, 0.2, 1] }}
           style={{ translateX: '-50%', translateY: '-50%' }}

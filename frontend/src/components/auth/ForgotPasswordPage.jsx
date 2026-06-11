@@ -46,10 +46,10 @@ export default function ForgotPasswordPage() {
           initial={{ scale: 0.92, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
-          className="mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl border border-accent/30 text-accent relative"
+          className="mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl border border-accent/40 text-clay-deep relative"
           style={{
-            background: 'radial-gradient(circle, rgba(20,184,166,0.12), rgba(20,184,166,0.02))',
-            boxShadow: '0 0 32px -8px rgba(20,184,166,0.4)',
+            background: 'radial-gradient(circle, rgba(197,138,119,0.18), rgba(197,138,119,0.04))',
+            boxShadow: '0 0 32px -8px rgba(197,138,119,0.45)',
           }}
         >
           <Mail size={28} strokeWidth={2.5} />
@@ -59,7 +59,7 @@ export default function ForgotPasswordPage() {
           />
         </motion.div>
 
-        <div className="mx-auto mb-5 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/30 border border-ct-hairline text-sm font-semibold text-ct-cream w-fit">
+        <div className="mx-auto mb-5 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-paper border border-ct-rim text-sm font-semibold text-ink w-fit">
           <Mail size={13} className="opacity-70" />
           <span>{submittedTo}</span>
         </div>
@@ -69,15 +69,15 @@ export default function ForgotPasswordPage() {
             href="https://mail.google.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-black/30 border border-ct-hairline text-ct-cream font-semibold text-sm hover:border-ct-terracotta/40 transition-colors"
+            className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-paper border border-ct-rim text-ink font-semibold text-sm hover:border-ct-terracotta/40 transition-colors"
           >
             Open Gmail
             <ExternalLink size={14} />
           </a>
         )}
 
-        <div className="mt-4 flex items-start gap-2.5 p-3 rounded-xl bg-black/25 border border-ct-hairline">
-          <span className="flex-shrink-0 w-6 h-6 rounded-md bg-accent3/15 text-accent3 inline-flex items-center justify-center">
+        <div className="mt-4 flex items-start gap-2.5 p-3 rounded-xl bg-paper border border-ct-rim">
+          <span className="flex-shrink-0 w-6 h-6 rounded-md bg-accent3/20 text-clay-deep inline-flex items-center justify-center">
             <AlertTriangle size={13} />
           </span>
           <div className="text-xs text-ink-soft leading-relaxed">
@@ -105,7 +105,7 @@ export default function ForgotPasswordPage() {
           Forgot your{' '}
           <span
             style={{
-              backgroundImage: 'linear-gradient(90deg, #d97757, #f0a875)',
+              backgroundImage: 'linear-gradient(90deg, #b06a4f, #c58a77)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}
@@ -135,7 +135,7 @@ export default function ForgotPasswordPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="w-full bg-black/30 border border-ct-hairline rounded-xl px-3.5 py-3 text-sm text-ct-cream placeholder:text-ink-muted focus:border-ct-terracotta/50 focus:bg-black/40 focus:outline-none focus:ring-[3px] focus:ring-ct-terracotta/10 transition-colors"
+            className="w-full bg-paper border border-ct-rim rounded-xl px-3.5 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-ct-terracotta/50 focus:bg-cream focus:outline-none focus:ring-[3px] focus:ring-ct-terracotta/15 transition-colors"
           />
         </div>
 
@@ -148,10 +148,10 @@ export default function ForgotPasswordPage() {
         <button
           type="submit"
           disabled={busy}
-          className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-ct-cream font-bold text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-cream font-bold text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed"
           style={{
-            backgroundImage: 'linear-gradient(135deg, #d97757, #f0a875)',
-            boxShadow: '0 8px 24px -8px rgba(217,119,87,0.5)',
+            backgroundImage: 'linear-gradient(135deg, #b06a4f, #c58a77)',
+            boxShadow: '0 8px 24px -8px rgba(176,106,79,0.5)',
           }}
         >
           {busy ? 'Sending…' : (
@@ -162,8 +162,8 @@ export default function ForgotPasswordPage() {
           )}
         </button>
 
-        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-black/25 border border-ct-hairline">
-          <span className="flex-shrink-0 w-6 h-6 rounded-md bg-accent/12 text-accent inline-flex items-center justify-center">
+        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-paper border border-ct-rim">
+          <span className="flex-shrink-0 w-6 h-6 rounded-md bg-accent/15 text-clay-deep inline-flex items-center justify-center">
             <Info size={13} />
           </span>
           <div className="text-xs text-ink-soft leading-relaxed">

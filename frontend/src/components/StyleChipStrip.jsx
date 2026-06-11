@@ -1,5 +1,6 @@
 import { Zap, Grip, Wind, Compass, StretchHorizontal } from 'lucide-react'
-import { STYLE_ORDER, STYLE_COLOR, getStyleLabel } from '../lib/styleColors'
+import { STYLE_ORDER, getStyleLabel } from '../lib/styleColors'
+import { skillColor } from '../lib/skills'
 
 const STYLE_ICON = {
   powerful:  Zap,
@@ -7,6 +8,16 @@ const STYLE_ICON = {
   dynamic:   Wind,
   technical: Compass,
   mobility:  StretchHorizontal,
+}
+
+// Map the five climb-style keys to the canonical skill keys in lib/skills.js
+// so chips read from the single source of truth for skill colors.
+const STYLE_TO_SKILL = {
+  powerful:  'power',
+  crimpy:    'crimp',
+  dynamic:   'dynamic',
+  technical: 'technique',
+  mobility:  'mobility',
 }
 
 /**
@@ -21,17 +32,17 @@ const STYLE_ICON = {
 export default function StyleChipStrip({ value, onChange }) {
   return (
     <div className="sticky top-0 z-10 -mx-3 px-3 py-2
-                    bg-[#0a0a0c]/85 backdrop-blur-md
-                    border-b-[0.5px] border-white/[0.06]">
+                    bg-side/90 backdrop-blur-md
+                    border-b-[0.5px] border-ct-rim">
       <p className="text-[9.5px] font-extrabold uppercase tracking-[0.12em]
-                    text-text/45 mb-2 px-0.5">
+                    text-ink-muted mb-2 px-0.5">
         Style of these climbs
       </p>
       <div className="grid grid-cols-5 gap-1">
         {STYLE_ORDER.map((s) => {
           const Icon = STYLE_ICON[s]
           const active = s === value
-          const tone = STYLE_COLOR[s]
+          const tone = skillColor(STYLE_TO_SKILL[s])
           return (
             <button
               key={s}
@@ -43,14 +54,14 @@ export default function StyleChipStrip({ value, onChange }) {
                          transition-colors"
               style={active
                 ? {
-                    background: `color-mix(in srgb, ${tone.c} 18%, transparent)`,
-                    borderColor: `color-mix(in srgb, ${tone.c} 45%, transparent)`,
-                    color: tone.light,
+                    background: `color-mix(in srgb, ${tone} 18%, transparent)`,
+                    borderColor: `color-mix(in srgb, ${tone} 55%, transparent)`,
+                    color: tone,
                   }
                 : {
                     background: 'transparent',
-                    borderColor: 'rgba(255,255,255,0.08)',
-                    color: 'rgba(255,255,255,0.55)',
+                    borderColor: 'rgba(42,39,34,0.14)',
+                    color: '#8d8472',
                   }
               }
             >

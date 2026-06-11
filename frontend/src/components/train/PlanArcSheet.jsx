@@ -50,10 +50,10 @@ export default function PlanArcSheet({ open, plan, onClose, onSelectWeek }) {
   const sheetClass = isDesktop
     ? `fixed top-[6vh] left-1/2 -translate-x-1/2 z-50
        w-full max-w-md max-h-[88vh] overflow-auto overscroll-contain
-       bg-[#0a0a0c] border-[0.5px] border-white/[0.10]
+       bg-card border-[0.5px] border-ct-rim
        rounded-3xl px-4 pt-3 pb-5`
     : `fixed bottom-0 inset-x-0 z-50
-       bg-[#0a0a0c] border-t-[0.5px] border-white/[0.10]
+       bg-card border-t-[0.5px] border-ct-rim
        rounded-t-3xl px-4 pt-3
        pb-[calc(1.5rem+env(safe-area-inset-bottom))]
        max-h-[88vh] overflow-auto`
@@ -88,12 +88,12 @@ export default function PlanArcSheet({ open, plan, onClose, onSelectWeek }) {
           >
             {!isDesktop && (
               <div className="flex justify-center pb-2">
-                <div className="w-10 h-1 rounded-full bg-white/15" />
+                <div className="w-10 h-1 rounded-full bg-ink/15" />
               </div>
             )}
             <div className="flex items-center justify-between mb-3 px-1">
-              <h3 className="text-[15px] font-extrabold -tracking-[0.01em] text-ct-cream">Your plan</h3>
-              <button onClick={onClose} aria-label="Close" className="p-1.5 -mr-1 rounded-full hover:bg-white/[0.06]">
+              <h3 className="text-[15px] font-extrabold -tracking-[0.01em] text-ink">Your plan</h3>
+              <button onClick={onClose} aria-label="Close" className="p-1.5 -mr-1 rounded-full hover:bg-ink/[0.06]">
                 <X size={16} className="text-ink-soft" />
               </button>
             </div>
@@ -110,7 +110,7 @@ export default function PlanArcSheet({ open, plan, onClose, onSelectWeek }) {
                   ? <Check size={14} strokeWidth={2.8} className="text-ct-moss" />
                   : status === 'current'
                     ? <span className="w-2.5 h-2.5 rounded-full bg-ct-terracotta"
-                            style={{ boxShadow: '0 0 8px rgba(217,119,87,0.60)' }} />
+                            style={{ boxShadow: '0 0 8px rgba(176,106,79,0.55)' }} />
                     : <Circle size={12} strokeWidth={2.2} className="text-ink-muted" />
                 const isDeload = (wi + 1) === totalWeeks
                 return (
@@ -119,8 +119,8 @@ export default function PlanArcSheet({ open, plan, onClose, onSelectWeek }) {
                       type="button"
                       onClick={() => { onSelectWeek(weekStartIso); onClose() }}
                       className={`w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-2xl
-                                  bg-black/35 backdrop-blur-md border-[0.5px] border-white/[0.08]
-                                  hover:bg-white/[0.04] transition-colors text-left ${status === 'current' ? 'ring-1 ring-ct-terracotta/30' : ''}`}
+                                  bg-paper border-[0.5px] border-ct-rim
+                                  hover:bg-ink/[0.04] transition-colors text-left ${status === 'current' ? 'ring-1 ring-ct-terracotta/30' : ''}`}
                     >
                       <div className="flex items-center gap-3">
                         <span className="inline-flex items-center justify-center w-6 h-6">{icon}</span>

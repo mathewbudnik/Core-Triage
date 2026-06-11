@@ -55,7 +55,7 @@ export default function CelebrationOverlay({
             transition={transition}
             xmlns="http://www.w3.org/2000/svg"
           >
-            <g stroke="#d97757" strokeWidth="3" fill="none" strokeLinecap="round">
+            <g stroke="#c58a77" strokeWidth="3" fill="none" strokeLinecap="round">
               {Array.from({ length: 12 }).map((_, i) => {
                 const a = (i * Math.PI * 2) / 12
                 const x1 = 100 + Math.cos(a) * 40
@@ -65,7 +65,7 @@ export default function CelebrationOverlay({
                 return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} />
               })}
             </g>
-            <circle cx="100" cy="100" r="32" fill="#d97757" />
+            <circle cx="100" cy="100" r="32" fill="#c58a77" />
           </motion.svg>
           {title && <p className="text-[28px] font-extrabold text-ct-cream tracking-[-0.025em] text-center">{title}</p>}
           {subtitle && <p className="ct-stat-num text-center">{subtitle}</p>}

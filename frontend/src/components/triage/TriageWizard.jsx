@@ -26,9 +26,9 @@ const ONSET_OPTIONS = [
 ]
 
 function painTone(v) {
-  if (v <= 3) return '#14b8a6'
-  if (v <= 6) return '#fbbf24'
-  return '#fb7185'
+  if (v <= 3) return '#97a886'
+  if (v <= 6) return '#d7ac5b'
+  return '#b85c44'
 }
 
 // Build the initial state map for a given section order — first section

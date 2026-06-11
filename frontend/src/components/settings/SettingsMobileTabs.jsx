@@ -59,9 +59,9 @@ export default function SettingsMobileTabs({ active, onNavigate }) {
                     : 'text-ink-soft border-transparent hover:text-ct-cream')
               }
               style={isActive ? {
-                background: 'rgba(217,119,87,0.12)',
-                color: '#f0a875',
-                borderColor: 'rgba(217,119,87,0.30)',
+                background: 'rgba(197,138,119,0.14)',
+                color: '#b06a4f',
+                borderColor: 'rgba(197,138,119,0.40)',
               } : undefined}
             >
               <Icon size={13} strokeWidth={isActive ? 2.25 : 2} className="flex-shrink-0" />

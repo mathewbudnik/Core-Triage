@@ -45,7 +45,7 @@ export default function HubHero({ user }) {
         {tier && (
           <TierBadge
             name={(tier.name || 'CLIMBER').toString().toUpperCase()}
-            color={tier.color || '#d97757'}
+            color={tier.color || '#c58a77'}
           />
         )}
       </div>

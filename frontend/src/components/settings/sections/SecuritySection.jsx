@@ -59,10 +59,10 @@ export default function SecuritySection({ user, onToast }) {
 }
 
 function StatusRow({ status, title, sub, action }) {
-  const dotClass = status === 'warn' ? 'bg-accent3' : 'bg-accent'
-  const dotGlow = status === 'warn' ? '0 0 12px #fbbf24' : '0 0 12px #14b8a6'
+  const dotClass = status === 'warn' ? 'bg-accent3' : 'bg-sage'
+  const dotGlow = status === 'warn' ? '0 0 12px #d7ac5b' : '0 0 12px #97a886'
   return (
-    <div className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl bg-black/20 border border-ct-hairline">
+    <div className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl bg-side border border-ct-hairline">
       <span aria-hidden className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${dotClass}`} style={{ boxShadow: dotGlow }} />
       <div className="flex-1 min-w-0">
         <div className="text-sm font-semibold text-ct-cream">{title}</div>

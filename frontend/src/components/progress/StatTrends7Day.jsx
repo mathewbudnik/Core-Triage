@@ -5,7 +5,7 @@ import { useRewardEngine } from '../../lib/rewardEngine'
 import { bucketSendsByDay } from '../../lib/sendBuckets'
 import { STYLE_COLOR } from '../../lib/styleColors'
 
-const NEUTRAL_BAR = 'rgba(255,255,255,0.10)'
+const NEUTRAL_BAR = 'rgba(42,39,34,0.14)'
 const DAY_LABEL = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
 export default function StatTrends7Day() {

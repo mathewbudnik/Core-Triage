@@ -32,22 +32,22 @@ export default function TrainHeader({ tierId, plan, streakDays }) {
       <div className="min-w-0">
         <Eyebrow className="mb-1">{dowMon}</Eyebrow>
         <h1
-          className="text-[28px] sm:text-[30px] font-extrabold text-ct-cream -tracking-[0.025em] mt-1 leading-none"
+          className="text-[28px] sm:text-[30px] font-extrabold text-ink -tracking-[0.025em] mt-1 leading-none"
         >
           Train.
         </h1>
         {tierId && (
           <div className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-full
-                          text-[11px] font-bold text-ct-cream"
+                          text-[11px] font-bold text-clay-deep"
                style={{
-                 background: 'rgba(217,119,87,0.12)',
-                 border: '0.5px solid rgba(217,119,87,0.35)',
+                 background: 'rgba(197,138,119,0.14)',
+                 border: '0.5px solid rgba(176,106,79,0.35)',
                }}>
             <span className="w-1.5 h-1.5 rounded-full"
-                  style={{ background: '#d97757', boxShadow: '0 0 6px rgba(217,119,87,0.55)' }} />
+                  style={{ background: '#c58a77', boxShadow: '0 0 6px rgba(197,138,119,0.55)' }} />
             <span className="tabular-nums">{tierLabel}</span>
-            {tierName && <><span className="text-white/30">·</span><span>{tierName}</span></>}
-            {phaseLabel && <><span className="text-white/30">·</span><span>{phaseLabel}</span></>}
+            {tierName && <><span className="text-ink-muted/60">·</span><span>{tierName}</span></>}
+            {phaseLabel && <><span className="text-ink-muted/60">·</span><span>{phaseLabel}</span></>}
           </div>
         )}
       </div>

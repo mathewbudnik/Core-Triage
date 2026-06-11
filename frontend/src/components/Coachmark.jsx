@@ -164,7 +164,7 @@ export default function Coachmark({ tour }) {
               borderRightWidth: pos.placement === 'above' ? 1 : 0,
               borderBottomWidth: pos.placement === 'above' ? 1 : 0,
               borderStyle: 'solid',
-              borderColor: 'rgba(217,119,87,0.40)',
+              borderColor: 'rgba(197,138,119,0.40)',
             }}
           />
         )}

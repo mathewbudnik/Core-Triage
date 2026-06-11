@@ -60,7 +60,7 @@ export default function AboutTab() {
           <Logo size={40} dark />
           <h2
             className="text-3xl font-bold bg-clip-text text-transparent"
-            style={{ backgroundImage: 'linear-gradient(90deg, #d97757, #f0a875, #f0f5ed)' }}
+            style={{ backgroundImage: 'linear-gradient(90deg, #b06a4f, #c58a77, #2a2722)' }}
           >
             CoreTriage
           </h2>

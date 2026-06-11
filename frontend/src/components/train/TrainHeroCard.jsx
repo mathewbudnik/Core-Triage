@@ -58,7 +58,7 @@ export default function TrainHeroCard({
           adapt it around any injuries in your history.
         </p>
         {planError && (
-          <p className="text-[11.5px] font-semibold text-[#fb7185] mb-3">{planError}</p>
+          <p className="text-[11.5px] font-semibold text-clay-deep mb-3">{planError}</p>
         )}
         <motion.button
           type="button"
@@ -130,7 +130,7 @@ export default function TrainHeroCard({
               'font-extrabold text-[12.5px] -tracking-[0.01em]',
               today
                 ? 'bg-ct-terra-tint border border-ct-terracotta/30 text-ct-terra-soft hover:bg-ct-terracotta/10 transition-colors'
-                : 'bg-white/[0.06] text-ink-soft border border-white/[0.14]',
+                : 'bg-ink/[0.04] text-ink-soft border border-ct-rim',
             ].join(' ')}
           >
             {today ? 'Start session' : 'View session'}

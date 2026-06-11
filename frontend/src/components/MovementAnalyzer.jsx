@@ -862,7 +862,7 @@ export default function MovementAnalyzer() {
                 <button
                   type="button"
                   onClick={() => window.location.reload()}
-                  className="self-start text-[11px] font-bold px-2 py-1 rounded bg-ct-terracotta text-ct-cream hover:brightness-110 transition"
+                  className="self-start text-[11px] font-bold px-2 py-1 rounded bg-clay-deep text-cream hover:brightness-110 transition"
                 >
                   Reload
                 </button>
@@ -1367,7 +1367,7 @@ function CalibrationPanel({
                 type="button"
                 onClick={() => setRecording(true)}
                 disabled={!modelReady}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-ct-terracotta text-ct-cream hover:brightness-110 disabled:opacity-40 transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-clay-deep text-cream hover:brightness-110 disabled:opacity-40 transition"
               >
                 <Camera size={12} />
                 Record now
@@ -1380,7 +1380,7 @@ function CalibrationPanel({
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold disabled:opacity-40 transition ${
                 supportsRecording
                   ? 'bg-ct-hairline border border-ct-rim text-ct-cream hover:border-ct-terracotta/60'
-                  : 'bg-ct-terracotta text-ct-cream hover:brightness-110'
+                  : 'bg-clay-deep text-cream hover:brightness-110'
               }`}
             >
               <Upload size={12} />
@@ -1652,7 +1652,7 @@ function CalibrationCameraCapture({ onDone, onCancel }) {
             </div>
           )}
           {stage === 'recording' && (
-            <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-1 rounded-md bg-red-500/90 text-white text-[10px] font-bold uppercase tracking-wider">
+            <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-1 rounded-md bg-red-500/90 text-cream text-[10px] font-bold uppercase tracking-wider">
               <Circle size={8} fill="currentColor" className="animate-pulse" />
               Recording
             </div>
@@ -1669,7 +1669,7 @@ function CalibrationCameraCapture({ onDone, onCancel }) {
               <button
                 type="button"
                 onClick={startCountdown}
-                className="self-center flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold bg-ct-terracotta text-ct-cream hover:brightness-110 transition"
+                className="self-center flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold bg-clay-deep text-cream hover:brightness-110 transition"
               >
                 <Circle size={12} fill="currentColor" />
                 Start recording
@@ -1698,7 +1698,7 @@ function CalibrationCameraCapture({ onDone, onCancel }) {
                 <button
                   type="button"
                   onClick={handleConfirm}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-ct-terracotta text-ct-cream hover:brightness-110 transition"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-clay-deep text-cream hover:brightness-110 transition"
                 >
                   <CheckCircle2 size={11} />
                   Use this clip

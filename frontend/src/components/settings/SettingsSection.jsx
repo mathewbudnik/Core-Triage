@@ -54,7 +54,7 @@ export default function SettingsSection({ id, icon: Icon, title, sub, children, 
           style={
             isDanger
               ? undefined
-              : { backgroundImage: 'linear-gradient(135deg, rgba(217,119,87,0.14), rgba(217,119,87,0.04))' }
+              : { backgroundImage: 'linear-gradient(135deg, rgba(197,138,119,0.16), rgba(197,138,119,0.05))' }
           }
         >
           {Icon ? <Icon size={18} /> : null}

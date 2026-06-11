@@ -237,20 +237,20 @@ export default function ExerciseTimer({ block, onClose }) {
     step.kind === 'innerRest' ? 'REST' :
                                 'READY'
 
-  // Color the countdown by phase — using ct- tokens where available
+  // Color the countdown by phase — Almanac palette accents
   const digitsColor =
-    isDone                 ? 'var(--tier-light)' :
-    isWork && running      ? '#d97757' :           // ct-terracotta
-    isResting && running   ? '#fbd470' :           // gold during rest
-    isPrep && running      ? '#fda4af' :           // coral during prep
-                              'rgba(240,245,237,0.92)' // ct-cream approx
+    isDone                 ? '#5f7a4e' :           // sage-deep (done / positive)
+    isWork && running      ? '#c58a77' :           // clay (work)
+    isResting && running   ? '#d7ac5b' :           // ochre during rest
+    isPrep && running      ? '#b06a4f' :           // clay-deep during prep
+                              '#2a2722'             // ink
 
   const phaseColor =
-    isDone                 ? 'var(--tier-light)' :
-    isWork                 ? '#d97757' :           // ct-terracotta
-    isResting              ? '#fbd470' :
-    isPrep                 ? '#fda4af' :
-                              'rgba(240,245,237,0.55)' // ct-cream/55 approx
+    isDone                 ? '#5f7a4e' :           // sage-deep
+    isWork                 ? '#c58a77' :           // clay
+    isResting              ? '#d7ac5b' :           // ochre
+    isPrep                 ? '#b06a4f' :           // clay-deep
+                              '#5f594c'             // ink-soft
 
   // Subtitle line: "Set 2 / 4" plus optional "Rep 3 / 6" if mid-set
   const repMeta = step.repsPerSet && step.repsPerSet > 1 && (isWork || step.kind === 'innerRest')
@@ -283,7 +283,7 @@ export default function ExerciseTimer({ block, onClose }) {
         onClick={onClose}
         aria-label="Close timer"
         className="absolute top-2.5 right-2.5 p-1.5 rounded-full
-                   text-ink-soft hover:text-ct-cream hover:bg-white/[0.06] transition-colors"
+                   text-ink-soft hover:text-ink hover:bg-ink/[0.06] transition-colors"
       >
         <X size={14} strokeWidth={2.4} />
       </button>
@@ -303,9 +303,9 @@ export default function ExerciseTimer({ block, onClose }) {
       <div className="flex items-center justify-center py-2 mb-3 min-h-[72px]">
         {isDone ? (
           <div className="flex items-center gap-2">
-            <Check size={28} strokeWidth={2.8} style={{ color: 'var(--tier-light)' }} />
+            <Check size={28} strokeWidth={2.8} style={{ color: '#5f7a4e' }} />
             <p className="text-[28px] font-extrabold -tracking-[0.025em]"
-               style={{ color: 'var(--tier-light)' }}>
+               style={{ color: '#5f7a4e' }}>
               All sets done
             </p>
           </div>
@@ -343,8 +343,8 @@ export default function ExerciseTimer({ block, onClose }) {
           whileTap={!isDone ? { scale: 0.94 } : undefined}
           aria-label={playAriaLabel}
           className={`w-[72px] h-[72px] rounded-full flex items-center justify-center
-                     shadow-[0_4px_16px_rgba(217,119,87,0.28)]
-                     disabled:opacity-60 ${isDone ? 'bg-white/10 text-ink-soft' : 'bg-ct-terracotta text-ct-cream'}`}
+                     shadow-[0_4px_16px_rgba(197,138,119,0.30)]
+                     disabled:opacity-60 ${isDone ? 'bg-ink/10 text-ink-soft' : 'bg-clay text-cream'}`}
         >
           {playIcon}
         </motion.button>

@@ -52,7 +52,7 @@ export default function ResetPasswordPage() {
           Set a new{' '}
           <span
             style={{
-              backgroundImage: 'linear-gradient(90deg, #d97757, #f0a875)',
+              backgroundImage: 'linear-gradient(90deg, #b06a4f, #c58a77)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}
@@ -81,7 +81,7 @@ export default function ResetPasswordPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="w-full bg-black/30 border border-ct-hairline rounded-xl px-3.5 py-3 text-sm text-ct-cream placeholder:text-ink-muted focus:border-ct-terracotta/50 focus:bg-black/40 focus:outline-none focus:ring-[3px] focus:ring-ct-terracotta/10 transition-colors"
+            className="w-full bg-paper border border-ct-rim rounded-xl px-3.5 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-ct-terracotta/50 focus:bg-cream focus:outline-none focus:ring-[3px] focus:ring-ct-terracotta/15 transition-colors"
           />
         </div>
 
@@ -94,10 +94,10 @@ export default function ResetPasswordPage() {
         <button
           type="submit"
           disabled={busy}
-          className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-ct-cream font-bold text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-cream font-bold text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed"
           style={{
-            backgroundImage: 'linear-gradient(135deg, #d97757, #f0a875)',
-            boxShadow: '0 8px 24px -8px rgba(217,119,87,0.5)',
+            backgroundImage: 'linear-gradient(135deg, #b06a4f, #c58a77)',
+            boxShadow: '0 8px 24px -8px rgba(176,106,79,0.5)',
           }}
         >
           {busy ? 'Updating…' : (

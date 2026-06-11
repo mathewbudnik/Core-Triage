@@ -27,8 +27,8 @@ export default function PrivacySection({ user, onUserChange, onToast }) {
 
   return (
     <SettingsSection id="privacy" icon={Eye} title="Visibility" sub="Control what other climbers see.">
-      <div className="flex items-center gap-4 p-5 rounded-2xl bg-black/20 border border-ct-hairline">
-        <span className="flex-shrink-0 w-14 h-14 rounded-xl border border-accent/30 inline-flex items-center justify-center text-accent" style={{ background: 'rgba(20,184,166,0.12)' }}>
+      <div className="flex items-center gap-4 p-5 rounded-2xl bg-side border border-ct-hairline">
+        <span className="flex-shrink-0 w-14 h-14 rounded-xl border border-sage/40 inline-flex items-center justify-center text-sage-deep" style={{ background: 'rgba(151,168,134,0.16)' }}>
           <Eye size={22} />
         </span>
         <div className="flex-1">
@@ -46,11 +46,11 @@ export default function PrivacySection({ user, onUserChange, onToast }) {
             'relative w-11 h-6 rounded-full transition-colors flex-shrink-0 disabled:opacity-50 ' +
             (visible ? 'bg-ct-terracotta' : 'bg-ct-rim')
           }
-          style={visible ? { boxShadow: '0 0 16px rgba(217,119,87,0.45)' } : undefined}
+          style={visible ? { boxShadow: '0 0 16px rgba(197,138,119,0.45)' } : undefined}
         >
           <span
             className={
-              'absolute top-0.5 w-5 h-5 rounded-full bg-ct-cream transition-[left] ' +
+              'absolute top-0.5 w-5 h-5 rounded-full bg-cream transition-[left] ' +
               (visible ? 'left-[22px]' : 'left-0.5')
             }
           />

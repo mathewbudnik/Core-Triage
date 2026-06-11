@@ -19,8 +19,8 @@ import { TIER_TOKENS, TIER_NAMES } from '../../lib/tier'
 const THEMES = {
   ember: {
     name: 'EMBER',
-    accent:     '#d97757',
-    accentSoft: '#f0a875',
+    accent:     '#c58a77',
+    accentSoft: '#b06a4f',
   },
 }
 

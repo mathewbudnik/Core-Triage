@@ -24,8 +24,8 @@ function submitHaptic() {
  *   error:         string | null            — inline error above the bar
  */
 const PRIMARY_BG = {
-  teal:  'bg-ct-terracotta text-ct-cream',
-  coral: 'bg-[#fb7185] text-ct-cream',
+  teal:  'bg-clay text-cream',
+  coral: 'bg-clay-deep text-cream',
 }
 
 export default function TriageActionsBar({
@@ -41,7 +41,7 @@ export default function TriageActionsBar({
   return (
     <>
       {error && (
-        <div className="px-1 mb-2 flex items-center gap-2 text-[#fb7185] text-xs">
+        <div className="px-1 mb-2 flex items-center gap-2 text-clay-deep text-xs">
           <span>{error}</span>
         </div>
       )}

@@ -18,15 +18,15 @@ export default function RewardPreview({
       className={[
         'flex justify-between items-center',
         'rounded-lg border px-3 py-2.5',
-        'bg-[rgba(217,119,87,0.08)] border-[rgba(217,119,87,0.18)]',
+        'bg-[rgba(197,138,119,0.12)] border-[rgba(197,138,119,0.28)]',
         className,
       ].filter(Boolean).join(' ')}
     >
       <div>
-        <p className="text-[10px] font-bold tracking-[0.10em] uppercase text-ct-moss">{label}</p>
-        {breakdown && <p className="text-[10px] text-ct-moss mt-0.5">{breakdown}</p>}
+        <p className="text-[10px] font-bold tracking-[0.10em] uppercase text-ink-muted">{label}</p>
+        {breakdown && <p className="text-[10px] text-ink-muted mt-0.5">{breakdown}</p>}
       </div>
-      <p className="text-[16px] font-extrabold text-ct-terra-soft tracking-[0.02em] ct-tnum">
+      <p className="text-[16px] font-extrabold text-clay-deep tracking-[0.02em] ct-tnum">
         +{xp.toLocaleString()} XP
       </p>
     </div>

@@ -9,12 +9,12 @@
  * respectively so the splash stays inside the established palette.
  */
 export const SESSION_TYPE_COLOR = {
-  Power:     { c: '#fb7185', light: '#fda4af', deep: '#7f1d2c' },   // v10 Phoenix
-  Limit:     { c: '#ff7a3d', light: '#ffa97a', deep: '#802811' },   // v2 Ember
-  Endurance: { c: '#14b8a6', light: '#5eead4', deep: '#0a4f48' },   // v5 Cove (fallback)
-  Hangboard: { c: '#c5e637', light: '#d9f06a', deep: '#5a6810' },   // v3 Bramble
-  Strength:  { c: '#f7b03a', light: '#fbd470', deep: '#7c5a14' },   // v1 Halo
-  Mobility:  { c: '#8466ff', light: '#ad95ff', deep: '#3a2580' },   // v8 Veil
+  Power:     { c: '#b85c44', light: '#d08a72', deep: '#7e3a28' },   // skill power — clay-red
+  Limit:     { c: '#b06a4f', light: '#c58a77', deep: '#7e4632' },   // Almanac clay-deep ember
+  Endurance: { c: '#97a886', light: '#bcc9ad', deep: '#5f7a4e' },   // Almanac sage (fallback)
+  Hangboard: { c: '#c79a3c', light: '#dcbb6f', deep: '#8a6921' },   // skill crimp — ochre-gold
+  Strength:  { c: '#d7ac5b', light: '#e6c886', deep: '#9a7a32' },   // Almanac ochre halo
+  Mobility:  { c: '#a06f8a', light: '#c19bb0', deep: '#6c4a5e' },   // skill mobility — plum veil
   Rest:      { c: 'transparent', light: 'transparent', deep: 'transparent' },
 }
 
@@ -24,8 +24,8 @@ const COLOR_ALIAS = {
   power:      'Power',
   endurance:  'Endurance',
   strength:   'Strength',
-  project:    'Limit',     // send-focused effort, borrow ember orange
-  technique:  'Mobility',  // movement work, borrow veil violet
+  project:    'Limit',     // send-focused effort, borrow clay ember
+  technique:  'Mobility',  // movement work, borrow plum veil
   limit:      'Limit',
   mobility:   'Mobility',
   rest:       'Rest',
@@ -51,7 +51,7 @@ function lower(t) {
 /**
  * Return { c, light, deep } for a session type. Case-insensitive. Handles
  * backend aliases (project → Limit color, technique → Mobility). Falls back
- * to Endurance (Cove teal) for unknown / null / undefined inputs.
+ * to Endurance (sage) for unknown / null / undefined inputs.
  */
 export function getSessionTypeColor(type) {
   const key = COLOR_ALIAS[lower(type)] || type

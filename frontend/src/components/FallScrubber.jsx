@@ -72,7 +72,7 @@ export default function FallScrubber({ videoRef, durationS, minS = 0, maxS = nul
           preload="auto"
         />
         {value != null && (
-          <div className="absolute top-2 right-2 flex items-center gap-1 bg-ct-terracotta text-ct-cream text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">
+          <div className="absolute top-2 right-2 flex items-center gap-1 bg-clay-deep text-cream text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">
             <Pin size={10} />
             Marked · {formatTime(value / 1000)}
           </div>
@@ -109,7 +109,7 @@ export default function FallScrubber({ videoRef, durationS, minS = 0, maxS = nul
           <button
             type="button"
             onClick={handleMark}
-            className="flex items-center gap-1 text-[11px] font-bold bg-ct-terra-tint border border-ct-terracotta/40 text-ct-terra-soft hover:bg-[rgba(217,119,87,0.12)] px-2.5 py-1 rounded-md transition-colors"
+            className="flex items-center gap-1 text-[11px] font-bold bg-ct-terra-tint border border-ct-terracotta/40 text-ct-terra-soft hover:bg-[rgba(197,138,119,0.16)] px-2.5 py-1 rounded-md transition-colors"
           >
             <Pin size={11} />
             Mark this frame

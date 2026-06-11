@@ -3,9 +3,9 @@ import { AlertTriangle, Check, X } from 'lucide-react'
 // Severity → palette. Hex values match the existing tailwind tokens
 // (accent/accent2/accent3) so the hero color-matches the rest of the app.
 const PALETTE = {
-  mild:     { color: '#14b8a6', tintFrom: 'rgba(20,184,166,0.18)',  tintTo: 'rgba(20,184,166,0.04)',  border: 'rgba(20,184,166,0.40)',  glow: 'rgba(20,184,166,0.10)',  label: 'Mild' },
-  moderate: { color: '#fbbf24', tintFrom: 'rgba(251,191,36,0.18)',  tintTo: 'rgba(251,191,36,0.04)',  border: 'rgba(251,191,36,0.40)',  glow: 'rgba(251,191,36,0.10)',  label: 'Moderate' },
-  severe:   { color: '#fb7185', tintFrom: 'rgba(251,113,133,0.18)', tintTo: 'rgba(251,113,133,0.04)', border: 'rgba(251,113,133,0.50)', glow: 'rgba(251,113,133,0.12)', label: 'Severe' },
+  mild:     { color: '#5f7a4e', tintFrom: 'rgba(151,168,134,0.22)', tintTo: 'rgba(151,168,134,0.05)', border: 'rgba(151,168,134,0.45)', glow: 'rgba(151,168,134,0.12)', label: 'Mild' },
+  moderate: { color: '#9a7820', tintFrom: 'rgba(215,172,91,0.22)',  tintTo: 'rgba(215,172,91,0.05)',  border: 'rgba(215,172,91,0.45)',  glow: 'rgba(215,172,91,0.12)',  label: 'Moderate' },
+  severe:   { color: '#b06a4f', tintFrom: 'rgba(176,106,79,0.22)',  tintTo: 'rgba(176,106,79,0.05)',  border: 'rgba(176,106,79,0.50)',  glow: 'rgba(176,106,79,0.14)',  label: 'Severe' },
 }
 
 /**
@@ -36,11 +36,11 @@ export default function TriageHero({ severity, title, why, actions = [], redFlag
       >
         <div className="flex items-center gap-2 mb-2">
           <span className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full"
-                style={{ background: 'rgba(251,113,133,0.30)', color: '#fda4af' }}>
+                style={{ background: 'rgba(176,106,79,0.22)', color: '#b06a4f' }}>
             <AlertTriangle size={11} strokeWidth={2.6} />
           </span>
           <p className="text-[10px] font-extrabold uppercase tracking-[0.10em]"
-             style={{ color: '#fda4af' }}>
+             style={{ color: '#b06a4f' }}>
             {p.label} · See a clinician
           </p>
         </div>
@@ -72,16 +72,16 @@ export default function TriageHero({ severity, title, why, actions = [], redFlag
 
       {actions.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-3.5 pt-3.5
-                        border-t-[0.5px] border-[rgba(255,255,255,0.10)]">
+                        border-t-[0.5px] border-ct-hairline">
           {actions.map((a, i) => (
             <span key={i}
                   className="inline-flex items-center gap-1.5 text-[11px] font-bold
                              px-2.5 py-1 rounded-full
-                             bg-white/[0.05] border-[0.5px] border-white/12">
+                             bg-ink/[0.05] border-[0.5px] border-ink/[0.12]">
               <span className={`inline-flex items-center justify-center w-3.5 h-3.5 rounded-full
                                 ${a.kind === 'do'
-                                  ? 'bg-[rgba(20,184,166,0.25)] text-[#5eead4]'
-                                  : 'bg-[rgba(251,113,133,0.22)] text-[#fda4af]'}`}>
+                                  ? 'bg-[rgba(151,168,134,0.30)] text-[#5f7a4e]'
+                                  : 'bg-[rgba(176,106,79,0.25)] text-[#b06a4f]'}`}>
                 {a.kind === 'do' ? <Check size={9} strokeWidth={3}/> : <X size={9} strokeWidth={3}/>}
               </span>
               {a.text}

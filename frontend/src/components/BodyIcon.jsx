@@ -2,8 +2,8 @@ import { memo } from 'react'
 
 /**
  * Mini body silhouette icon. Renders the same SVG paths used by BodyDiagram —
- * the body is drawn in the triage wizard's gold (#C8A84B) and the path(s)
- * matching `region` are filled in red (#FF4444).
+ * the body is drawn in a muted-ink silhouette and the path(s)
+ * matching `region` are highlighted in brick (matches BodyDiagram).
  *
  * Why we don't reuse BodyDiagram via <symbol> + <use>:
  * the <use> shadow DOM blocks external CSS selectors, which is a pain. By
@@ -14,8 +14,8 @@ import { memo } from 'react'
  * would be a shared module — left as a future refactor).
  */
 
-const BASE = '#C8A84B' // gold — matches BodyDiagram rest fill
-const HL   = '#FF4444' // red  — matches BodyDiagram selected fill
+const BASE = '#8d8472' // muted ink — body silhouette (matches BodyDiagram)
+const HL   = '#b85c44' // brick — selected region (matches BodyDiagram)
 
 // Each path entry: zone (region this path belongs to, or null for decorative),
 // transform (translate(x y) string), d (path data), clip (CSS clip-path

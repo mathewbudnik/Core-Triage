@@ -6,7 +6,7 @@
  *   color: hex color for the dot + glow (default: terracotta)
  *   className: extra classes
  */
-export default function TierBadge({ name, color = '#d97757', className = '' }) {
+export default function TierBadge({ name, color = '#c58a77', className = '' }) {
   return (
     <span
       className={[

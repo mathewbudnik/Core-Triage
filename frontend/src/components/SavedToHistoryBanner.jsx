@@ -46,9 +46,9 @@ export default function SavedToHistoryBanner({ sessionId }) {
     state === 'undone' ? 'muted' :
                          'teal'
   const styles = {
-    teal:  { border: 'rgba(217,119,87,0.30)', bg: 'rgba(217,119,87,0.08)', icon: '#d97757' },
-    muted: { border: 'rgba(200,211,196,0.30)', bg: 'rgba(200,211,196,0.08)', icon: '#c8d3c4' },
-    rose:  { border: 'rgba(244,114,114,0.35)', bg: 'rgba(244,114,114,0.08)', icon: '#f47272' },
+    teal:  { border: 'rgba(176,106,79,0.35)', bg: 'rgba(197,138,119,0.12)', icon: '#b06a4f' },
+    muted: { border: 'rgba(141,132,114,0.30)', bg: 'rgba(141,132,114,0.10)', icon: '#8d8472' },
+    rose:  { border: 'rgba(176,74,58,0.40)', bg: 'rgba(176,74,58,0.10)', icon: '#b0492f' },
   }[tone]
 
   return (

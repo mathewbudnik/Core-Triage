@@ -74,7 +74,7 @@ export default function RecoverActiveView({
     <div className="max-w-2xl mx-auto pb-32">
       {/* Sticky header */}
       <div className="sticky top-0 z-10 -mt-px
-                      bg-[linear-gradient(180deg,rgba(11,18,32,1)_0%,rgba(11,18,32,0.96)_70%,rgba(11,18,32,0.85)_100%)]
+                      bg-[linear-gradient(180deg,rgba(244,236,219,1)_0%,rgba(244,236,219,0.96)_70%,rgba(244,236,219,0.85)_100%)]
                       backdrop-blur-md border-b border-outline/60 px-4 pt-5 pb-3">
         <Eyebrow className="mb-1">Recover</Eyebrow>
         <h1 className="text-[22px] font-extrabold leading-tight tracking-tight mb-1 text-ct-cream">
@@ -99,8 +99,8 @@ export default function RecoverActiveView({
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.round(pctDone * 100)}%` }}
                 transition={{ duration: 0.3, ease: [0, 0, 0.2, 1] }}
-                className="h-full rounded-full bg-gradient-to-r from-accent to-[#7dd3c0]
-                           shadow-[0_0_12px_rgba(20,184,166,0.6)]"
+                className="h-full rounded-full bg-gradient-to-r from-clay to-sage
+                           shadow-[0_0_12px_rgba(151,168,134,0.5)]"
               />
             </div>
           </div>
