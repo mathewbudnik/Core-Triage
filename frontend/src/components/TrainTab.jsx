@@ -18,6 +18,7 @@ import TrainHeroCard from './train/TrainHeroCard'
 import TrainNextUpRow from './train/TrainNextUpRow'
 import PlanArcSheet from './train/PlanArcSheet'
 import SessionDetailSheet from './train/SessionDetailSheet'
+import LogDrawer from './log/LogDrawer'
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10)
@@ -80,6 +81,7 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
   const [selectedDay, setSelectedDay] = useState(() => todayIso())
   const [sheetOpen, setSheetOpen] = useState(false)
   const [planSheetOpen, setPlanSheetOpen] = useState(false)
+  const [logPrefill, setLogPrefill] = useState(null) // { sessionType, duration_min } | null
 
   const hub = useHubData(user)
   const tierId = workingTierFromHardest(hub.hardestSends)
@@ -328,7 +330,15 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
           open={sheetOpen}
           session={session}
           onClose={() => setSheetOpen(false)}
-          onLogged={load}
+          onLog={(prefill) => { setSheetOpen(false); setLogPrefill(prefill) }}
+        />
+
+        <LogDrawer
+          open={!!logPrefill}
+          onOpenChange={(v) => { if (!v) setLogPrefill(null) }}
+          prefill={logPrefill || {}}
+          user={user}
+          onLogged={() => { setLogPrefill(null); load() }}
         />
       </div>
     </TierThemeRoot>

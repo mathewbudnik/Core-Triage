@@ -6,7 +6,7 @@ import { getProfile, getMe, getPyramid } from '../api'
 import { workingTierFromHardest, nextTier } from '../lib/tier'
 import { useIsDesktop } from '../hooks/useIsDesktop'
 import TierThemeRoot from './TierThemeRoot'
-import TrainingLogEntry from './TrainingLogEntry'
+import LogDrawer from './log/LogDrawer'
 import ProgressTierHero from './ProgressTierHero'
 import GradePyramidCard from './GradePyramidCard'
 import AwardsStrip from './AwardsStrip'
@@ -135,23 +135,20 @@ export default function ProgressTab({ user, onUserChange, onLoginClick }) {
     : 'Hardest send last 30 days · no boulder sends yet'
 
   const logBar = (
-    <AnimatePresence mode="wait">
-      {logOpen ? (
-        <motion.div key="log-form" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}>
-          <TrainingLogEntry
-            user={user}
-            onSave={() => { setLogOpen(false); setRefreshKey(k => k + 1) }}
-            onCancel={() => setLogOpen(false)} />
-        </motion.div>
-      ) : (
-        <motion.button key="log-button" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-          onClick={() => setLogOpen(true)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-sm font-bold
-                     bg-clay text-cream hover:brightness-105 active:brightness-95 transition-all">
-          <Plus size={15} /> Log a session
-        </motion.button>
-      )}
-    </AnimatePresence>
+    <>
+      <button
+        onClick={() => setLogOpen(true)}
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-sm font-bold
+                   bg-clay text-cream hover:brightness-105 active:brightness-95 transition-all">
+        <Plus size={15} /> Log a session
+      </button>
+      <LogDrawer
+        open={logOpen}
+        onOpenChange={setLogOpen}
+        user={user}
+        onLogged={() => { setLogOpen(false); setRefreshKey(k => k + 1) }}
+      />
+    </>
   )
 
   const tierSection = (

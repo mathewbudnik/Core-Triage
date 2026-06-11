@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { X, ArrowRight, Sparkles, Timer, Snowflake, PlayCircle, ExternalLink } from 'lucide-react'
-import TrainingLogEntry from '../TrainingLogEntry'
 import ExerciseTimer from './ExerciseTimer'
 import Surface from '../ui/Surface'
 import Eyebrow from '../ui/Eyebrow'
@@ -134,10 +133,10 @@ function PhaseList({ title, items, icon: Icon }) {
  *   open:    boolean
  *   session: object | null
  *   onClose: () => void
- *   onLogged: () => void   — fires when the user successfully logs from here
+ *   onLog:   (prefill) => void  — open the log drawer for this session
+ *                                 (prefill = { sessionType, duration_min })
  */
-export default function SessionDetailSheet({ open, session, onClose, onLogged }) {
-  const [logging, setLogging] = useState(false)
+export default function SessionDetailSheet({ open, session, onClose, onLog }) {
   const isDesktop = useIsDesktop()
 
   useEffect(() => {
@@ -146,9 +145,6 @@ export default function SessionDetailSheet({ open, session, onClose, onLogged })
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [open, onClose])
-
-  // Reset to detail view whenever the sheet reopens
-  useEffect(() => { if (open) setLogging(false) }, [open])
 
   if (!session && !open) return null
 
@@ -229,14 +225,9 @@ export default function SessionDetailSheet({ open, session, onClose, onLogged })
               </button>
             </div>
 
-            <div className={`flex-1 overflow-auto ${
-              logging
-                ? 'pb-[env(safe-area-inset-bottom)]'
-                : 'pb-[calc(5.5rem+env(safe-area-inset-bottom))]'
-            }`}>
-              {!logging && (
-                <div className="space-y-5">
-                  {coachNote && (
+            <div className="flex-1 overflow-auto pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
+              <div className="space-y-5">
+                {coachNote && (
                     <Surface tier="default" padding="sm" rounded="rounded-2xl" className="px-3.5 py-3">
                       <div className="flex items-center gap-1.5 mb-1">
                         <Sparkles size={11} strokeWidth={2.4} className="text-clay-deep" />
@@ -265,41 +256,31 @@ export default function SessionDetailSheet({ open, session, onClose, onLogged })
 
                   <PhaseList title="Cool-down" items={coolDown} icon={Snowflake} />
 
-                  {!hasAnyDetail && (
-                    <p className="px-1 py-6 text-center text-[12px] font-semibold text-ink-soft">
-                      No exercise detail captured for this session.
-                    </p>
-                  )}
-                </div>
-              )}
-              {logging && (
-                <TrainingLogEntry
-                  sessionType={(rawType || 'bouldering').toString().toLowerCase()}
-                  onSave={() => { setLogging(false); onLogged?.(); onClose() }}
-                  onCancel={() => setLogging(false)}
-                />
-              )}
+                {!hasAnyDetail && (
+                  <p className="px-1 py-6 text-center text-[12px] font-semibold text-ink-soft">
+                    No exercise detail captured for this session.
+                  </p>
+                )}
+              </div>
             </div>
 
-            {!logging && (
-              <div className="sticky bottom-0 inset-x-0 -mx-4 px-4 pt-3
-                              pb-[calc(0.75rem+env(safe-area-inset-bottom))]
-                              bg-card/95 backdrop-blur-md
-                              border-t border-ct-rim">
-                <motion.button
-                  type="button"
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => setLogging(true)}
-                  className="w-full inline-flex items-center justify-center gap-2
-                             px-5 py-3.5 rounded-2xl
-                             font-extrabold text-[13px] -tracking-[0.01em]
-                             bg-clay text-cream"
-                >
-                  Log this session
-                  <ArrowRight size={14} strokeWidth={2.4} />
-                </motion.button>
-              </div>
-            )}
+            <div className="sticky bottom-0 inset-x-0 -mx-4 px-4 pt-3
+                            pb-[calc(0.75rem+env(safe-area-inset-bottom))]
+                            bg-card/95 backdrop-blur-md
+                            border-t border-ct-rim">
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.97 }}
+                onClick={() => onLog?.({ sessionType: rawType, duration_min: dur })}
+                className="w-full inline-flex items-center justify-center gap-2
+                           px-5 py-3.5 rounded-2xl
+                           font-extrabold text-[13px] -tracking-[0.01em]
+                           bg-clay text-cream"
+              >
+                Log this session
+                <ArrowRight size={14} strokeWidth={2.4} />
+              </motion.button>
+            </div>
           </motion.div>
         </>
       )}
