@@ -28,7 +28,26 @@ export function getInitialState() {
     bestPerStyle:  { ...NULL_BEST_PER_STYLE },
     streak:        { days: 0, best: 0, lastActiveDate: null },
     quest:         { id: null, generatedDate: null, progress: { current: 0, target: 0 } },
+    prescriptionAwards: [],
   }
+}
+
+/**
+ * Grant block-completion XP exactly once per prescription id. Dedup mirrors the
+ * daily-quest date dedup: an id already in `prescriptionAwards` is a no-op, so a
+ * reload or a re-check never re-awards. Returns { state, awarded }.
+ */
+export function awardPrescriptionXP(state, prescriptionId, xp) {
+  const awarded = state.prescriptionAwards ?? []
+  if (prescriptionId == null || awarded.includes(prescriptionId)) {
+    return { state, awarded: false }
+  }
+  const next = {
+    ...state,
+    totalXP: state.totalXP + Math.max(0, xp || 0),
+    prescriptionAwards: [...awarded, prescriptionId],
+  }
+  return { state: next, awarded: true }
 }
 
 /**
@@ -281,11 +300,17 @@ export function useRewardEngine() {
     return allEvents
   }, [state])
 
+  const awardPrescription = useCallback((prescriptionId, xp) => {
+    const { state: next, awarded } = awardPrescriptionXP(state, prescriptionId, xp)
+    if (awarded) { setState(next); saveState(next) }
+    return awarded
+  }, [state])
+
   const reset = useCallback(() => {
     const fresh = getInitialState()
     setState(fresh)
     saveState(fresh)
   }, [])
 
-  return { state, logSend, logSends, reset }
+  return { state, logSend, logSends, awardPrescription, reset }
 }

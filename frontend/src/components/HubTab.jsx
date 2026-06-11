@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { getMeState, getPentagonSnapshots } from '../api'
+import { getMeState, getPentagonSnapshots, getPrescription, checkPrescriptionDrill } from '../api'
 import { useIsDesktop } from '../hooks/useIsDesktop'
 import { useRewardEngine } from '../lib/rewardEngine'
 import { useHubData } from '../hooks/useHubData'
@@ -15,6 +15,8 @@ import HubRecentSends from './hub/HubRecentSends'
 import HubToolsGrid from './hub/HubToolsGrid'
 import HubProjectTile from './hub/HubProjectTile'
 import HomeSegmentNav from './hub/HomeSegmentNav'
+import PrescriptionCard from './hub/PrescriptionCard'
+import CelebrationOverlay from './ui/CelebrationOverlay'
 
 /**
  * Hub — the climber's home screen, "all in one, no long scroll".
@@ -36,19 +38,28 @@ export default function HubTab({ user }) {
   const [state, setState] = useState(null)
   const [snapshots, setSnapshots] = useState([])
   const [seg, setSeg] = useState('today')
+  const [rx, setRx] = useState(null)            // { gap_axis, prescription }
+  const [checkingKey, setCheckingKey] = useState(null)
+  const [celebrate, setCelebrate] = useState(null) // { xp } | null
   const isDesktop = useIsDesktop()
-  const { state: engine } = useRewardEngine()
+  const { state: engine, awardPrescription } = useRewardEngine()
   const { styleProfile } = useHubData(user)
+
+  const today = (() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  })()
 
   useEffect(() => {
     let cancelled = false
-    Promise.all([getMeState(), getPentagonSnapshots(6)])
-      .then(([s, ss]) => {
+    Promise.all([getMeState(), getPentagonSnapshots(6), getPrescription(today)])
+      .then(([s, ss, r]) => {
         if (cancelled) return
         setState(s)
         setSnapshots(
           (ss.snapshots || []).map((snap) => ({ capturedAt: snap.captured_at, axes: snap.axes })),
         )
+        setRx(r)
       })
       .catch((err) => console.error('[HubTab] state fetch failed', err))
     return () => { cancelled = true }
@@ -56,6 +67,24 @@ export default function HubTab({ user }) {
 
   const { level, xpInLevel, xpForNext } = levelFromTotalXP(engine.totalXP)
   const xpPct = xpForNext > 0 ? Math.min(100, Math.round((xpInLevel / xpForNext) * 100)) : 0
+
+  async function handleCheckDrill(drillKey) {
+    if (checkingKey) return
+    setCheckingKey(drillKey)
+    try {
+      const res = await checkPrescriptionDrill({ drill_key: drillKey, date: today })
+      setRx((prev) => ({ ...prev, prescription: res.prescription }))
+      if (res.completed) {
+        if (awardPrescription(res.prescription?.id, res.xp)) setCelebrate({ xp: res.xp })
+        // Re-fetch so the next block (new gap) or the balanced state appears.
+        getPrescription(today).then(setRx).catch(() => {})
+      }
+    } catch (err) {
+      console.error('[HubTab] check failed', err)
+    } finally {
+      setCheckingKey(null)
+    }
+  }
 
   const hero = (
     <section className="ct-surface p-4 md:p-5 flex flex-col sm:flex-row gap-4 sm:items-center mb-4">
@@ -94,6 +123,13 @@ export default function HubTab({ user }) {
   )
   const todaySection = (
     <div className="space-y-4">
+      <PrescriptionCard
+        prescription={rx?.prescription}
+        gapAxis={rx?.gap_axis}
+        hasSends={!!state?.pentagon}
+        onCheck={handleCheckDrill}
+        checkingKey={checkingKey}
+      />
       <TodaysQuestCard />
       <HubRecentSends />
     </div>
@@ -135,6 +171,13 @@ export default function HubTab({ user }) {
           <HomeSegmentNav value={seg} onChange={setSeg} />
         </>
       )}
+
+      <CelebrationOverlay
+        open={!!celebrate}
+        onClose={() => setCelebrate(null)}
+        title="BLOCK COMPLETE"
+        subtitle={celebrate ? `+${celebrate.xp} XP` : ''}
+      />
     </div>
   )
 }

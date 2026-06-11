@@ -105,6 +105,12 @@ export const checkRehabExercise = ({ exercise_key, region, phase, date }) =>
 export const uncheckRehabExercise = ({ exercise_key, date }) =>
   request('DELETE', '/api/rehab/progress/check', { exercise_key, date })
 
+// Skill prescriptions (the diagnose->prescribe loop)
+export const getPrescription = (date) =>
+  request('GET', `/api/me/prescription?date=${encodeURIComponent(date)}`)
+export const checkPrescriptionDrill = ({ drill_key, date }) =>
+  request('POST', '/api/prescriptions/check', { drill_key, date })
+
 // Train stats
 export const getTrainingStats = () => request('GET', '/api/training/stats')
 
