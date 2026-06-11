@@ -42,7 +42,7 @@ export default function Sidebar({
         CoreTriage
       </div>
       <div className="font-mono text-[8px] tracking-[0.18em] uppercase text-ink-muted px-1.5 pb-3">
-        climb / progress
+        climb · progress
       </div>
 
       {/* Identity card */}

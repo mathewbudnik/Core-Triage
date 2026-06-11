@@ -1,27 +1,31 @@
-/* frontend/src/styles/brand-tokens.css */
+/* frontend/src/styles/brand-tokens.css
+   Almanac design tokens (CSS-var form) — kept in exact sync with the Tailwind
+   tokens in tailwind.config.js so components styled via these vars match the
+   rest of the Almanac UI. Surfaces = parchment, ink = warm charcoal (NOT the
+   old greenish ink), accents = clay/sage (NOT the old orange/teal). */
 :root {
   /* Paper world palette */
-  --ct-paper-base: #e8dcc4;
-  --ct-paper-mid:  #ddd0b3;
-  --ct-paper-deep: #c9bb9c;
+  --ct-paper-base: #e7ddc6;
+  --ct-paper-mid:  #e0d4b6;
+  --ct-paper-deep: #cdbf9e;
 
-  /* Ink */
-  --ct-ink:        #1a2620;
-  --ct-ink-soft:   #2b3a32;
-  --ct-ink-quiet:  rgba(26, 38, 32, 0.55);
-  --ct-ink-faint:  rgba(26, 38, 32, 0.30);
+  /* Ink (warm charcoal) */
+  --ct-ink:        #2a2722;
+  --ct-ink-soft:   #5f594c;
+  --ct-ink-quiet:  rgba(42, 39, 34, 0.55);
+  --ct-ink-faint:  rgba(42, 39, 34, 0.30);
 
-  /* Cream (inverse text) */
-  --ct-cream:       #f4ecdf;
-  --ct-cream-mute:  rgba(244, 236, 223, 0.65);
-  --ct-cream-quiet: rgba(244, 236, 223, 0.40);
+  /* Cream (inverse text — used ON colored fills) */
+  --ct-cream:       #fdf6ea;
+  --ct-cream-mute:  rgba(253, 246, 234, 0.65);
+  --ct-cream-quiet: rgba(253, 246, 234, 0.40);
 
-  /* Accents */
-  --ct-terracotta: #c75e3a;
-  --ct-terra-deep: #a44a2a;
-  --ct-terra-tint: rgba(199, 94, 58, 0.12);
-  --ct-terra-vertex: #f0a875;
-  --ct-mint:       #2da283;
+  /* Accents (clay primary, sage secondary) */
+  --ct-terracotta: #c58a77;
+  --ct-terra-deep: #b06a4f;
+  --ct-terra-tint: rgba(197, 138, 119, 0.12);
+  --ct-terra-vertex: #d99a72;
+  --ct-mint:       #97a886;
 
   /* Foil prestige gradient (used as background-image OR via masking) */
   --ct-foil-stops: #b88a3a, #c75e3a, #7a4a8e, #2f4ea8, #b88a3a;
