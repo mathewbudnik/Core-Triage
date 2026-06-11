@@ -18,7 +18,7 @@ const NAV = [
 
 export default function BottomNav() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-20 md:hidden bg-side border-t border-ct-rim pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-20 md:hidden bg-[rgba(224,212,182,0.82)] backdrop-blur-lg border-t border-ct-rim pb-[env(safe-area-inset-bottom)]">
       <div className="flex">
         {NAV.map(({ to, icon: Icon, label }) => (
           <NavLink
