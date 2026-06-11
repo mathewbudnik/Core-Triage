@@ -470,6 +470,27 @@ def init_db() -> None:
                 """
             )
 
+            # ── Rehab plans (the active injury / recovery loop) ────────────
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS rehab_plans (
+                    id               SERIAL PRIMARY KEY,
+                    user_id          INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    session_id       INT REFERENCES sessions(id) ON DELETE SET NULL,
+                    region           TEXT NOT NULL,
+                    current_phase    INT NOT NULL DEFAULT 1,
+                    plan_started_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    status           TEXT NOT NULL DEFAULT 'active',
+                    last_activity_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                );
+                """
+            )
+            cur.execute(
+                "CREATE INDEX IF NOT EXISTS rehab_plans_user_status_idx "
+                "ON rehab_plans (user_id, status);"
+            )
+
             # ── Skill prescriptions (weekly gap-targeted block) ───────────
             cur.execute(
                 """
@@ -2511,6 +2532,83 @@ def uncheck_rehab_exercise(user_id: int, exercise_key: str, date: str) -> bool:
             deleted = cur.rowcount > 0
         conn.commit()
     return deleted
+
+
+def _rehab_plan_row(row) -> dict[str, Any]:
+    return {
+        "id":               row[0],
+        "user_id":          row[1],
+        "session_id":       row[2],
+        "region":           row[3],
+        "current_phase":    int(row[4]),
+        "plan_started_at":  str(row[5]),
+        "status":           row[6],
+        "last_activity_at": str(row[7]),
+        "created_at":       str(row[8]),
+    }
+
+
+_REHAB_PLAN_COLS = ("id, user_id, session_id, region, current_phase, "
+                    "plan_started_at, status, last_activity_at, created_at")
+
+
+def get_active_rehab_plan(user_id: int) -> dict[str, Any] | None:
+    """The user's single active rehab plan, or None."""
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            f"SELECT {_REHAB_PLAN_COLS} FROM rehab_plans "
+            "WHERE user_id = %s AND status = 'active' "
+            "ORDER BY created_at DESC LIMIT 1;",
+            (int(user_id),),
+        )
+        row = cur.fetchone()
+    return _rehab_plan_row(row) if row else None
+
+
+def create_or_reuse_rehab_plan(
+    user_id: int, session_id: int | None, region: str,
+) -> dict[str, Any]:
+    """Reuse the active plan if it's the SAME region (preserves plan_started_at +
+    streak); otherwise abandon any active plan and create a fresh one."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id FROM rehab_plans "
+                "WHERE user_id = %s AND status = 'active' AND region = %s "
+                "ORDER BY created_at DESC LIMIT 1;",
+                (int(user_id), region),
+            )
+            same = cur.fetchone()
+            if same:
+                cur.execute(
+                    "UPDATE rehab_plans SET last_activity_at = NOW() WHERE id = %s;",
+                    (same[0],),
+                )
+            else:
+                cur.execute(
+                    "UPDATE rehab_plans SET status = 'abandoned' "
+                    "WHERE user_id = %s AND status = 'active';",
+                    (int(user_id),),
+                )
+                cur.execute(
+                    "INSERT INTO rehab_plans (user_id, session_id, region) "
+                    "VALUES (%s, %s, %s);",
+                    (int(user_id), int(session_id) if session_id is not None else None, region),
+                )
+        conn.commit()
+    return get_active_rehab_plan(user_id)
+
+
+def get_rehab_checkoff_dates(user_id: int) -> list[str]:
+    """Distinct local dates (newest first) on which the user checked off >=1 exercise."""
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT DISTINCT completed_date FROM rehab_progress "
+            "WHERE user_id = %s ORDER BY completed_date DESC;",
+            (int(user_id),),
+        )
+        rows = cur.fetchall()
+    return [str(r[0]) for r in rows]
 
 
 # ---------------------------------------------------------------------------
