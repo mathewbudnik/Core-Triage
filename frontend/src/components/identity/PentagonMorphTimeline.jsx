@@ -1,8 +1,15 @@
 import Pentagon from './Pentagon'
+import { identityPhrase } from '../../lib/identity'
 
 function formatMonth(iso) {
   const d = new Date(iso)
   return d.toLocaleString('en-US', { month: 'short', year: '2-digit' }).toUpperCase()
+}
+
+// Plain-language label for a single snapshot, derived from its axes (no
+// proper-noun archetype).
+function snapTitle(snap) {
+  return identityPhrase(snap.axes).title
 }
 
 function generateCaption(snapshots) {
@@ -10,10 +17,10 @@ function generateCaption(snapshots) {
   const first = snapshots[0]
   const last = snapshots[snapshots.length - 1]
   const months = snapshots.length
-  const firstArch = first.archetype
-  const lastArch = last.archetype
+  const firstTitle = snapTitle(first)
+  const lastTitle = snapTitle(last)
 
-  // Find the most-changed axis
+  // Find the most-changed axis (legacy snapshot keys).
   const axisDeltas = ['power', 'crimpy', 'dynamic', 'technical', 'mobility'].map((k) => ({
     axis: k,
     delta: (last.axes[k] || 0) - (first.axes[k] || 0),
@@ -21,11 +28,11 @@ function generateCaption(snapshots) {
   const grew = axisDeltas.reduce((max, d) => (d.delta > max.delta ? d : max), axisDeltas[0])
   const shrank = axisDeltas.reduce((min, d) => (d.delta < min.delta ? d : min), axisDeltas[0])
 
-  let arc = firstArch === lastArch ? lastArch : `${firstArch} → ${lastArch}`
-  let detail = grew.delta > 0.5
-    ? `Your ${grew.axis} axis grew ${grew.delta.toFixed(1)} points.`
+  const arc = firstTitle === lastTitle ? lastTitle : `${firstTitle} → ${lastTitle}`
+  const detail = grew.delta > 0.5
+    ? `Your ${grew.axis} grew ${grew.delta.toFixed(1)} points.`
     : ''
-  let weak = shrank.delta < -0.5
+  const weak = shrank.delta < -0.5
     ? `${shrank.axis} cooled.`
     : (last.axes[shrank.axis] < 5
        ? `${shrank.axis.charAt(0).toUpperCase() + shrank.axis.slice(1)} stayed quiet — that's the next push.`
@@ -55,7 +62,7 @@ export default function PentagonMorphTimeline({ snapshots = [], onCellClick }) {
               {formatMonth(snap.capturedAt)}
             </span>
             <span className="font-serif italic text-xs mt-1" style={{ color: 'var(--ct-ink-soft)' }}>
-              {snap.archetype}
+              {snapTitle(snap)}
             </span>
           </button>
         ))}

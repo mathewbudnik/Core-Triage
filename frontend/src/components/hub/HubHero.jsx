@@ -1,9 +1,7 @@
 import Surface from '../ui/Surface'
 import TierBadge from '../ui/TierBadge'
-import Pentagon from '../identity/Pentagon'
 import LevelMeter from '../ui/LevelMeter'
 import StatStrip from '../ui/StatStrip'
-import StreakEmblem from '../ui/StreakEmblem'
 import HubStyleStrip from './HubStyleStrip'
 import { useRewardEngine } from '../../lib/rewardEngine'
 import { useHubData } from '../../hooks/useHubData'
@@ -12,8 +10,9 @@ import { levelFromTotalXP } from '../../lib/xp'
 import { deriveStatShape } from '../../lib/stats'
 
 /**
- * Top hero panel — greeting + name + V-grade tier badge.
- * Stat radar + level meter + streak + style strip added in Tasks 10-11.
+ * Progress panel — greeting + V-grade tier badge + level meter + stat strip
+ * + style strip. The identity radar and streak live in the single hero
+ * identity strip above (HubTab), so they're intentionally not repeated here.
  */
 export default function HubHero({ user }) {
   const { state } = useRewardEngine()
@@ -51,23 +50,14 @@ export default function HubHero({ user }) {
         )}
       </div>
 
-      <div className="flex items-center gap-4 mt-4 pt-4 border-t border-ct-hairline">
-        <Pentagon axes={shape} size={110} />
-        <div className="flex-1 min-w-0">
-          <LevelMeter
-            level={level}
-            xpInLevel={xpInLevel}
-            xpForNext={xpForNext}
-            animateOnMount
-          />
-        </div>
+      <div className="mt-4 pt-4 border-t border-ct-hairline">
+        <LevelMeter
+          level={level}
+          xpInLevel={xpInLevel}
+          xpForNext={xpForNext}
+          animateOnMount
+        />
       </div>
-
-      {(state.streak.days > 0 || state.streak.best > 0) && (
-        <div className="mt-4">
-          <StreakEmblem days={state.streak.days} best={state.streak.best} />
-        </div>
-      )}
 
       <div className="mt-4">
         <StatStrip stats={shape} />

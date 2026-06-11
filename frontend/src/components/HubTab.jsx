@@ -14,11 +14,12 @@ import PentagonMorphTimeline from './identity/PentagonMorphTimeline'
  * Hub — the climber's home screen. Identity + reward-engine surface.
  *
  * Layout (top to bottom):
- *   0. Identity hero strip — Pentagon + IdentityLabel + StreakFlame + apex grade
- *      (Plan #1 addition — sits above the legacy HubHero. Plan #4 will rebuild
- *      the full surface; for now both coexist.)
+ *   0. Identity hero strip — the SINGLE Pentagon + plain-language identity
+ *      (IdentityLabel) + StreakFlame + apex grade. This is the one identity
+ *      block; HubHero below is progress-only (no radar, no streak) so nothing
+ *      duplicates.
  *   0b. PentagonMorphTimeline — last N monthly snapshots, when available.
- *   1. HubHero — greeting + name + tier badge + stat radar + level meter + streak + style strip
+ *   1. HubHero — greeting + tier badge + level meter + stat strip + style strip
  *   2. TodaysQuestCard — today's daily quest with progress
  *   3. HubProjectTile — your active project (the boss climb)
  *   4. HubToolsGrid — Recover / Train / Ask coach
@@ -37,7 +38,6 @@ export default function HubTab({ user }) {
         setSnapshots((ss.snapshots || []).map(snap => ({
           capturedAt: snap.captured_at,
           axes: snap.axes,
-          archetype: snap.archetype,
         })))
       })
       .catch((err) => console.error('[HubTab] state fetch failed', err))
