@@ -453,12 +453,12 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
                 <div className="rounded-xl border border-ct-hairline p-3 space-y-1">
                   <p className="ct-eyebrow">Pending</p>
                   {quickSends.map((s, i) => (
-                    <p key={i} className="text-xs text-ct-cream/80 flex justify-between">
+                    <p key={i} className="text-xs text-ink-soft flex justify-between">
                       <span>{s.grade} · {s.outcome} · {s.stylePrimary}</span>
                       <button
                         type="button"
                         onClick={() => setQuickSends((prev) => prev.filter((_, j) => j !== i))}
-                        className="text-ct-cream/40 hover:text-ct-cream"
+                        className="text-ink-muted hover:text-ct-cream"
                       >×</button>
                     </p>
                   ))}

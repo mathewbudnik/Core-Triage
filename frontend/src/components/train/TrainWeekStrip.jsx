@@ -44,9 +44,9 @@ export default function TrainWeekStrip({ weekDates, plan, loggedDates, selectedD
         const dayNumClass =
           active ? 'text-ct-cream' :
           today  ? 'text-ct-cream' :
-          past   ? 'text-ct-cream/55' :
-          isRest ? 'text-ct-cream/30' :
-                   'text-ct-cream/85'
+          past   ? 'text-ink-soft' :
+          isRest ? 'text-ink-muted' :
+                   'text-ink-soft'
 
         // Tile border + bg by state. Today gets a terracotta outline so the
         // "now" tile reads even when the user has selected a different day.

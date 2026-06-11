@@ -17,11 +17,11 @@ import AvatarPickerModal from './AvatarPickerModal'
 // working — the trial / expired / coaching variants just give clearer
 // context now that we've moved to a trial-then-subscribe model.
 const STATE_BADGES = {
-  active:   { bg: 'rgba(125,211,192,0.15)', border: 'rgba(125,211,192,0.35)', text: '#7dd3c0', label: 'Subscribed' },
-  trial:    { bg: 'rgba(125,211,192,0.12)', border: 'rgba(125,211,192,0.30)', text: '#7dd3c0', label: 'Trial' },
-  expired:  { bg: 'rgba(244,114,114,0.10)', border: 'rgba(244,114,114,0.30)', text: '#f47272', label: 'Trial ended' },
-  coaching: { bg: 'rgba(247,187,81,0.15)',  border: 'rgba(247,187,81,0.35)',  text: '#f7bb51', label: 'Coaching' },
-  coach:    { bg: 'rgba(247,187,81,0.15)',  border: 'rgba(247,187,81,0.35)',  text: '#f7bb51', label: 'Coach' },
+  active:   { bg: 'rgba(151,168,134,0.18)', border: 'rgba(95,122,78,0.35)',  text: '#5f7a4e', label: 'Subscribed' },
+  trial:    { bg: 'rgba(151,168,134,0.14)', border: 'rgba(95,122,78,0.30)',  text: '#5f7a4e', label: 'Trial' },
+  expired:  { bg: 'rgba(176,106,79,0.12)',  border: 'rgba(176,106,79,0.35)',  text: '#b06a4f', label: 'Trial ended' },
+  coaching: { bg: 'rgba(215,172,91,0.18)',  border: 'rgba(154,123,58,0.35)',  text: '#9a7b3a', label: 'Coaching' },
+  coach:    { bg: 'rgba(215,172,91,0.18)',  border: 'rgba(154,123,58,0.35)',  text: '#9a7b3a', label: 'Coach' },
 }
 
 function badgeFor(user) {
@@ -85,7 +85,7 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
         className={`flex items-center gap-2 text-xs px-2 py-1 rounded-full border transition-colors ${
           open
             ? 'bg-ct-terra-tint border-ct-terracotta/40 text-ct-cream'
-            : 'bg-ct-hairline border-ct-rim text-ct-cream/60 hover:text-ct-cream hover:border-ct-terracotta/30'
+            : 'bg-ct-hairline border-ct-rim text-ink-soft hover:text-ct-cream hover:border-ct-terracotta/30'
         }`}
         aria-haspopup="menu"
         aria-expanded={open}
@@ -111,7 +111,7 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
             transition={{ duration: 0.18, ease: [0.2, 0.7, 0.2, 1] }}
             style={{ transformOrigin: 'top right' }}
             role="menu"
-            className="absolute right-0 top-full mt-2 w-72 max-w-[calc(100vw-1rem)] bg-[#1a1f1e] border border-ct-rim rounded-xl shadow-xl z-50 overflow-hidden"
+            className="absolute right-0 top-full mt-2 w-72 max-w-[calc(100vw-1rem)] bg-card border border-ct-rim rounded-xl shadow-xl z-50 overflow-hidden"
           >
             {/* Header */}
             <div className="px-4 py-3.5 border-b border-ct-hairline bg-ct-terra-tint">
@@ -157,7 +157,7 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
                       Trial ended — subscribe to unlock
                     </p>
                   )}
-                  <p className="text-[11px] text-ct-cream/50 truncate flex items-center gap-1 mt-0.5">
+                  <p className="text-[11px] text-ink-muted truncate flex items-center gap-1 mt-0.5">
                     <Mail size={10} />
                     {user.email}
                   </p>
@@ -172,9 +172,9 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-ct-terra-tint transition-colors"
                 role="menuitem"
               >
-                <Settings size={14} className="text-ct-cream/50 flex-shrink-0" />
+                <Settings size={14} className="text-ink-muted flex-shrink-0" />
                 <span className="text-xs font-semibold text-ct-cream flex-1">Settings</span>
-                <span className="text-[10px] text-ct-cream/50">Profile · climbing · billing</span>
+                <span className="text-[10px] text-ink-muted">Profile · climbing · billing</span>
               </button>
             </div>
 
@@ -186,9 +186,9 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-ct-terra-tint transition-colors"
                 role="menuitem"
               >
-                <Clock size={14} className="text-ct-cream/50 flex-shrink-0" />
+                <Clock size={14} className="text-ink-muted flex-shrink-0" />
                 <span className="text-xs font-semibold text-ct-cream flex-1">History</span>
-                <span className="text-[10px] text-ct-cream/50">Your past sessions</span>
+                <span className="text-[10px] text-ink-muted">Your past sessions</span>
               </button>
             </div>
 
@@ -202,8 +202,8 @@ export default function AccountMenu({ user, onUserChange, onLogout, onUpgradeCli
                   role="menuitem"
                 >
                   {billingLoading
-                    ? <Loader2 size={14} className="animate-spin text-ct-cream/50 flex-shrink-0" />
-                    : <CreditCard size={14} className="text-ct-cream/50 flex-shrink-0" />}
+                    ? <Loader2 size={14} className="animate-spin text-ink-muted flex-shrink-0" />
+                    : <CreditCard size={14} className="text-ink-muted flex-shrink-0" />}
                   <span className="text-xs font-semibold text-ct-cream">Manage subscription</span>
                 </button>
               ) : (

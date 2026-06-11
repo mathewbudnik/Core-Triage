@@ -53,7 +53,7 @@ export default function TrialStatusBanner({ user, onUpgradeClick }) {
           <p className="text-ct-cream font-semibold leading-snug">
             Your free trial ended.
           </p>
-          <p className="text-ct-cream/60 leading-snug mt-0.5">
+          <p className="text-ink-soft leading-snug mt-0.5">
             Triage, past sessions, and Phase 1 rehab stay open. Subscribe to
             unlock training plan generation, unlimited AI chat, and Phase 2/3
             rehab progressions.

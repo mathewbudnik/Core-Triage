@@ -86,8 +86,8 @@ export default function TopTakeaway({ finding, thumbnail, onJumpTo }) {
         )}
         <div className="flex-1 min-w-0">
           <h3 className="text-base font-bold text-ct-cream">{finding.name}</h3>
-          <p className="text-sm text-ct-cream/90 mt-1 leading-snug">{finding.cue}</p>
-          <p className="text-[11px] text-ct-cream/55 ct-tnum mt-2">
+          <p className="text-sm text-ink-soft mt-1 leading-snug">{finding.cue}</p>
+          <p className="text-[11px] text-ink-soft ct-tnum mt-2">
             {instancesStr} · first at {formatTime(firstTs)}
             {finding.isFallProximal && ' · near your fall'}
           </p>
@@ -126,7 +126,7 @@ export default function TopTakeaway({ finding, thumbnail, onJumpTo }) {
             type="button"
             onClick={() => setExpanded((e) => !e)}
             aria-expanded={expanded}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-ct-hairline border border-ct-terracotta/30 text-ct-cream/85 hover:text-ct-cream hover:border-ct-terracotta/60 transition-colors"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-ct-hairline border border-ct-terracotta/30 text-ink-soft hover:text-ct-cream hover:border-ct-terracotta/60 transition-colors"
           >
             {expanded ? 'Hide details' : 'What this means'}
             <ChevronDown
@@ -143,10 +143,10 @@ export default function TopTakeaway({ finding, thumbnail, onJumpTo }) {
 function DetailSection({ label, children }) {
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-[10px] font-bold uppercase tracking-[0.13em] text-ct-cream/55">
+      <span className="text-[10px] font-bold uppercase tracking-[0.13em] text-ink-soft">
         {label}
       </span>
-      <p className="text-xs text-ct-cream/80 leading-relaxed">{children}</p>
+      <p className="text-xs text-ink-soft leading-relaxed">{children}</p>
     </div>
   )
 }

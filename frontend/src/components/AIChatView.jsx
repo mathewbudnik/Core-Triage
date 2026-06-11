@@ -55,7 +55,7 @@ const MessageItem = memo(function MessageItem({ msg }) {
       <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
         msg.role === 'user'
           ? 'bg-ct-terra-tint border border-ct-terracotta/20 text-ct-cream rounded-tr-sm'
-          : 'ct-surface-flat text-ct-cream/60 rounded-tl-sm'
+          : 'ct-surface-flat text-ink-soft rounded-tl-sm'
       }`}>
         {msg.role === 'assistant' ? (
           <ReactMarkdown
@@ -183,7 +183,7 @@ export default function AIChatView({ k, user, onBack }) {
       <div className="border-b border-ct-hairline px-4 md:px-6 py-3 flex items-center gap-3 flex-wrap bg-ct-forest-deep/40">
         <button
           onClick={onBack}
-          className="flex items-center gap-1 text-xs text-ct-cream/60 hover:text-ct-cream transition-colors"
+          className="flex items-center gap-1 text-xs text-ink-soft hover:text-ct-cream transition-colors"
           aria-label="Back to picker"
         >
           <ArrowLeft size={13} />
@@ -195,7 +195,7 @@ export default function AIChatView({ k, user, onBack }) {
           {chatUnlimited ? (
             <span className="text-ct-terra-soft">Unlimited</span>
           ) : (
-            <span className={chatUsed >= FREE_CHAT_LIMIT - 1 ? 'text-ct-terracotta' : 'text-ct-cream/60'}>
+            <span className={chatUsed >= FREE_CHAT_LIMIT - 1 ? 'text-ct-terracotta' : 'text-ink-soft'}>
               {Math.min(chatUsed, FREE_CHAT_LIMIT)} / {FREE_CHAT_LIMIT} used
             </span>
           )}
@@ -228,7 +228,7 @@ export default function AIChatView({ k, user, onBack }) {
             </div>
             <div>
               <p className="text-ct-cream font-semibold">CoreTriage Assistant</p>
-              <p className="text-sm text-ct-cream/60 mt-1 max-w-sm">
+              <p className="text-sm text-ink-soft mt-1 max-w-sm">
                 Ask about technique, training, movement, strategy, or injury. Educational only — not a diagnosis.
               </p>
             </div>
@@ -242,7 +242,7 @@ export default function AIChatView({ k, user, onBack }) {
                 <button
                   key={q}
                   onClick={() => setInput(q)}
-                  className="text-xs ct-surface-flat border border-ct-hairline rounded-full px-3 py-1.5 text-ct-cream/60 hover:text-ct-terra-soft hover:border-ct-terracotta/40 transition-colors"
+                  className="text-xs ct-surface-flat border border-ct-hairline rounded-full px-3 py-1.5 text-ink-soft hover:text-ct-terra-soft hover:border-ct-terracotta/40 transition-colors"
                 >
                   {q}
                 </button>
@@ -279,7 +279,7 @@ export default function AIChatView({ k, user, onBack }) {
       <div className="px-4 md:px-6 pt-3 pb-0">
         <div className="flex items-center gap-2 bg-ct-terra-tint border border-ct-terracotta/20 rounded-lg px-3 py-2">
           <AlertTriangle size={12} className="text-ct-terra-soft shrink-0" />
-          <p className="text-[11px] text-ct-cream/60">
+          <p className="text-[11px] text-ink-soft">
             General guidance only — not medical advice. Emergencies: call <strong>911</strong>.
           </p>
         </div>
@@ -293,11 +293,11 @@ export default function AIChatView({ k, user, onBack }) {
             <div className="flex items-center gap-2">
               <Lock size={12} className="text-ct-terra-soft shrink-0" />
               {limitExceeded ? (
-                <p className="text-xs text-ct-cream/60">
+                <p className="text-xs text-ink-soft">
                   Your free chat answers are used up. Subscribe to keep going.
                 </p>
               ) : (
-                <p className="text-xs text-ct-cream/60">
+                <p className="text-xs text-ink-soft">
                   {FREE_CHAT_LIMIT - chatUsed} free answer{FREE_CHAT_LIMIT - chatUsed !== 1 ? 's' : ''} remaining.
                 </p>
               )}
@@ -321,7 +321,7 @@ export default function AIChatView({ k, user, onBack }) {
                 ? 'Upgrade to keep asking questions…'
                 : 'Ask about technique, training, movement, or injury…'
             }
-            className="flex-1 bg-ct-forest-deep border border-ct-hairline rounded-lg px-3 py-2 text-ct-cream text-base sm:text-sm placeholder:text-ct-cream/40 focus:outline-none focus:ring-1 focus:ring-ct-terracotta focus:border-ct-terracotta transition-colors duration-200"
+            className="flex-1 bg-ct-forest-deep border border-ct-hairline rounded-lg px-3 py-2 text-ct-cream text-base sm:text-sm placeholder:text-ink-muted focus:outline-none focus:ring-1 focus:ring-ct-terracotta focus:border-ct-terracotta transition-colors duration-200"
             disabled={loading || limitExceeded}
             maxLength={MAX_CHARS + 50}
           />
@@ -335,10 +335,10 @@ export default function AIChatView({ k, user, onBack }) {
           </button>
         </form>
         <div className="flex items-center justify-between mt-1.5">
-          <p className="text-xs text-ct-cream/60">
+          <p className="text-xs text-ink-soft">
             Educational only · No diagnosis · If severe or worsening, seek professional evaluation
           </p>
-          <span className={`text-[11px] shrink-0 ml-3 tabular-nums ${overLimit ? 'text-ct-terracotta font-semibold' : 'text-ct-cream/30'}`}>
+          <span className={`text-[11px] shrink-0 ml-3 tabular-nums ${overLimit ? 'text-ct-terracotta font-semibold' : 'text-ink-muted'}`}>
             {charCount}/{MAX_CHARS}
           </span>
         </div>

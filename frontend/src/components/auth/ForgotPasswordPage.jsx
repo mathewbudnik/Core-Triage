@@ -80,7 +80,7 @@ export default function ForgotPasswordPage() {
           <span className="flex-shrink-0 w-6 h-6 rounded-md bg-accent3/15 text-accent3 inline-flex items-center justify-center">
             <AlertTriangle size={13} />
           </span>
-          <div className="text-xs text-ct-cream/70 leading-relaxed">
+          <div className="text-xs text-ink-soft leading-relaxed">
             Didn't see it? Check your spam folder, or{' '}
             <button
               type="button"
@@ -135,7 +135,7 @@ export default function ForgotPasswordPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="w-full bg-black/30 border border-ct-hairline rounded-xl px-3.5 py-3 text-sm text-ct-cream placeholder:text-ct-cream/30 focus:border-ct-terracotta/50 focus:bg-black/40 focus:outline-none focus:ring-[3px] focus:ring-ct-terracotta/10 transition-colors"
+            className="w-full bg-black/30 border border-ct-hairline rounded-xl px-3.5 py-3 text-sm text-ct-cream placeholder:text-ink-muted focus:border-ct-terracotta/50 focus:bg-black/40 focus:outline-none focus:ring-[3px] focus:ring-ct-terracotta/10 transition-colors"
           />
         </div>
 
@@ -166,7 +166,7 @@ export default function ForgotPasswordPage() {
           <span className="flex-shrink-0 w-6 h-6 rounded-md bg-accent/12 text-accent inline-flex items-center justify-center">
             <Info size={13} />
           </span>
-          <div className="text-xs text-ct-cream/70 leading-relaxed">
+          <div className="text-xs text-ink-soft leading-relaxed">
             Reset links expire in 60 minutes. They work once.
           </div>
         </div>

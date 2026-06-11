@@ -46,7 +46,7 @@ export function UnitToggle({ unit, onChange }) {
           className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider transition-colors ${
             unit === u
               ? 'bg-ct-forest text-ct-cream'
-              : 'text-ct-cream/55 hover:text-ct-cream'
+              : 'text-ink-soft hover:text-ct-cream'
           }`}
         >
           {u}
@@ -100,7 +100,7 @@ export function MeasurementField({
 
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-ct-cream/55">{label}</span>
+      <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-ink-soft">{label}</span>
       <input
         type="number"
         inputMode="decimal"
@@ -109,9 +109,9 @@ export function MeasurementField({
         onChange={(e) => setLocal(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => { if (e.key === 'Enter') { e.currentTarget.blur() } }}
-        className="px-2.5 py-1.5 rounded-lg bg-ct-hairline border border-ct-rim text-sm text-ct-cream placeholder:text-ct-cream/30 focus:outline-none focus:border-ct-terracotta/60 ct-tnum"
+        className="px-2.5 py-1.5 rounded-lg bg-ct-hairline border border-ct-rim text-sm text-ct-cream placeholder:text-ink-muted focus:outline-none focus:border-ct-terracotta/60 ct-tnum"
       />
-      {hint && <span className="text-[10px] text-ct-cream/40 leading-snug">{hint}</span>}
+      {hint && <span className="text-[10px] text-ink-muted leading-snug">{hint}</span>}
     </label>
   )
 }

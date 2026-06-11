@@ -28,7 +28,7 @@ export default function TriageAnswersStrip({ answers = [], onEdit }) {
       <div className="grid grid-cols-2 gap-x-2 gap-y-1.5">
         {answers.map((a) => (
           <div key={a.label} className="flex items-center gap-1.5 min-w-0">
-            <span className="text-[11px] text-ct-cream/60 font-semibold">{a.label}</span>
+            <span className="text-[11px] text-ink-soft font-semibold">{a.label}</span>
             <span className="text-[11px] font-bold truncate"
                   style={a.tone ? { color: a.tone } : undefined}>
               {a.value}

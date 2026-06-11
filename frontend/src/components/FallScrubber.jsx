@@ -56,7 +56,7 @@ export default function FallScrubber({ videoRef, durationS, minS = 0, maxS = nul
   const handleClear = () => onChange(null)
 
   if (!previewSrc) {
-    return <div className="text-xs text-ct-cream/40">Loading clip preview…</div>
+    return <div className="text-xs text-ink-muted">Loading clip preview…</div>
   }
 
   return (
@@ -93,7 +93,7 @@ export default function FallScrubber({ videoRef, durationS, minS = 0, maxS = nul
 
       {/* Time + actions */}
       <div className="flex items-center justify-between gap-3">
-        <span className="text-[11px] text-ct-cream/55 ct-tnum">
+        <span className="text-[11px] text-ink-soft ct-tnum">
           {formatTime(scrubT)} / {formatTime(hi)}
         </span>
         <div className="flex items-center gap-2">
@@ -101,7 +101,7 @@ export default function FallScrubber({ videoRef, durationS, minS = 0, maxS = nul
             <button
               type="button"
               onClick={handleClear}
-              className="text-[11px] text-ct-cream/60 hover:text-ct-cream px-2 py-1 rounded transition-colors"
+              className="text-[11px] text-ink-soft hover:text-ct-cream px-2 py-1 rounded transition-colors"
             >
               Clear
             </button>

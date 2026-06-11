@@ -91,7 +91,7 @@ export default function ProfileHero({ user, onUserChange, onToast }) {
               name={avatarName}
               size={96}
             />
-            <span className="absolute -right-1.5 -bottom-1.5 w-7 h-7 rounded-full bg-ct-forest-deep border border-ct-rim flex items-center justify-center text-ct-cream/70 opacity-90 group-hover:opacity-100 transition-opacity">
+            <span className="absolute -right-1.5 -bottom-1.5 w-7 h-7 rounded-full bg-ct-forest-deep border border-ct-rim flex items-center justify-center text-ink-soft opacity-90 group-hover:opacity-100 transition-opacity">
               <Pencil size={13} />
             </span>
           </button>
@@ -108,7 +108,7 @@ export default function ProfileHero({ user, onUserChange, onToast }) {
                 </span>
               )}
             </h2>
-            <div className="text-ct-cream/50 text-sm mt-1.5 flex items-center gap-2 flex-wrap">
+            <div className="text-ink-muted text-sm mt-1.5 flex items-center gap-2 flex-wrap">
               <Mail size={13} className="opacity-70" />
               <span className="truncate">{user?.email}</span>
               {user?.email_verified ? (
@@ -178,7 +178,7 @@ function Stat({ value, label, tone }) {
   return (
     <div className="rounded-[14px] bg-black/20 border border-ct-hairline p-3.5">
       <div className={`text-[22px] font-extrabold tracking-tight ${color}`}>{value}</div>
-      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-ct-cream/50 mt-1">{label}</div>
+      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-muted mt-1">{label}</div>
     </div>
   )
 }
@@ -218,7 +218,7 @@ function DisplayNameRow({ user, onUserChange, onToast }) {
     <div className="flex items-center justify-between gap-4 py-3 border-t border-ct-hairline first:border-t-0 first:pt-0">
       <div>
         <div className="text-sm font-semibold text-ct-cream">Display name</div>
-        <div className="text-[11px] text-ct-cream/50 mt-0.5">Shown on the leaderboard</div>
+        <div className="text-[11px] text-ink-muted mt-0.5">Shown on the leaderboard</div>
       </div>
       {editing ? (
         <div className="flex items-center gap-2">
@@ -244,7 +244,7 @@ function DisplayNameRow({ user, onUserChange, onToast }) {
           onClick={() => setEditing(true)}
           className="text-sm text-ct-cream px-3 py-1.5 rounded-lg border border-ct-hairline bg-black/20 hover:border-ct-terracotta/35 min-w-[140px] text-right"
         >
-          {user?.display_name || <span className="italic text-ct-cream/50">Set a name</span>}
+          {user?.display_name || <span className="italic text-ink-muted">Set a name</span>}
         </button>
       )}
     </div>
@@ -289,7 +289,7 @@ function BodyMeasurementRow({ user, profile, field, label, hint, allowNegative =
     <div className="flex items-center justify-between gap-4 py-3 border-t border-ct-hairline">
       <div>
         <div className="text-sm font-semibold text-ct-cream">{label}</div>
-        <div className="text-[11px] text-ct-cream/50 mt-0.5">{hint}</div>
+        <div className="text-[11px] text-ink-muted mt-0.5">{hint}</div>
       </div>
       {editing ? (
         <div className="flex items-center gap-2">
@@ -305,7 +305,7 @@ function BodyMeasurementRow({ user, profile, field, label, hint, allowNegative =
             disabled={saving}
             className="w-20 bg-black/30 border border-ct-hairline rounded-lg px-3 py-1.5 text-sm text-ct-cream focus:border-ct-terracotta/50 focus:outline-none"
           />
-          <span className="text-xs text-ct-cream/50">cm</span>
+          <span className="text-xs text-ink-muted">cm</span>
           <button onClick={save} disabled={saving} className="px-3 py-1.5 text-xs rounded-md bg-accent/15 border border-accent/30 text-accent disabled:opacity-40">
             {saving ? '…' : 'Save'}
           </button>

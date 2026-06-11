@@ -30,7 +30,7 @@ export default function Chip({ active, onClick, children, ariaLabel }) {
                   transition-colors
                   ${active
                     ? 'bg-ct-terra-tint border-ct-terracotta/50 text-ct-terra-soft'
-                    : 'bg-ct-forest border-ct-hairline text-ct-cream/60 hover:text-ct-cream'}`}
+                    : 'bg-ct-forest border-ct-hairline text-ink-soft hover:text-ct-cream'}`}
     >
       {children}
     </motion.button>

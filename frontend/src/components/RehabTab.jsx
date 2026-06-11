@@ -63,7 +63,7 @@ function RegionCard({ region, groupKey, onClick }) {
       <BodyIcon region={region} size={56} />
       <div className="mt-1">
         <p className="text-sm font-bold text-ct-cream">{region}</p>
-        <p className="text-[10px] text-ct-cream/60 mt-0.5">
+        <p className="text-[10px] text-ink-soft mt-0.5">
           {count} exercise{count === 1 ? '' : 's'}
           {weeks ? ` · ${weeks} wk` : ''}
         </p>
@@ -123,12 +123,12 @@ function PhaseCard({ phase, label, short, free, feel, examples, progress, expand
             {free ? (
               <span className="text-[9px] font-semibold bg-accent/15 text-accent px-1.5 py-0.5 rounded-full">Free</span>
             ) : (
-              <span className="text-[9px] font-semibold bg-ct-forest text-ct-cream/60 px-1.5 py-0.5 rounded-full border border-ct-hairline">Pro</span>
+              <span className="text-[9px] font-semibold bg-ct-forest text-ink-soft px-1.5 py-0.5 rounded-full border border-ct-hairline">Pro</span>
             )}
           </div>
-          <p className="text-[11px] text-ct-cream/60 mt-0.5 leading-relaxed">{short}</p>
+          <p className="text-[11px] text-ink-soft mt-0.5 leading-relaxed">{short}</p>
         </div>
-        <div className="text-ct-cream/30 shrink-0 mt-0.5">
+        <div className="text-ink-muted shrink-0 mt-0.5">
           {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </div>
       </button>
@@ -144,7 +144,7 @@ function PhaseCard({ phase, label, short, free, feel, examples, progress, expand
           >
             <div className="px-4 pt-3 pb-4 space-y-3 bg-ct-forest/30">
               <div>
-                <p className="text-[10px] font-semibold text-ct-cream/50 uppercase tracking-wide mb-1">Example exercises</p>
+                <p className="text-[10px] font-semibold text-ink-muted uppercase tracking-wide mb-1">Example exercises</p>
                 <ul className="space-y-1">
                   {examples.map((ex) => (
                     <li key={ex} className="text-[11px] text-ct-cream leading-snug flex items-start gap-2">
@@ -155,14 +155,14 @@ function PhaseCard({ phase, label, short, free, feel, examples, progress, expand
                 </ul>
               </div>
               <div>
-                <p className="text-[10px] font-semibold text-ct-cream/50 uppercase tracking-wide mb-1">What it should feel like</p>
-                <p className="text-[11px] text-ct-cream/60 leading-relaxed">{feel}</p>
+                <p className="text-[10px] font-semibold text-ink-muted uppercase tracking-wide mb-1">What it should feel like</p>
+                <p className="text-[11px] text-ink-soft leading-relaxed">{feel}</p>
               </div>
               <div>
-                <p className="text-[10px] font-semibold text-ct-cream/50 uppercase tracking-wide mb-1">Move to next phase when</p>
-                <p className="text-[11px] text-ct-cream/60 leading-relaxed">{progress}</p>
+                <p className="text-[10px] font-semibold text-ink-muted uppercase tracking-wide mb-1">Move to next phase when</p>
+                <p className="text-[11px] text-ink-soft leading-relaxed">{progress}</p>
               </div>
-              <p className="text-[10px] text-ct-cream/30 italic pt-1">Pick your injury area below to see your specific exercises.</p>
+              <p className="text-[10px] text-ink-muted italic pt-1">Pick your injury area below to see your specific exercises.</p>
             </div>
           </motion.div>
         )}
@@ -194,7 +194,7 @@ export default function RehabTab({ user, onLoginClick }) {
           <Stethoscope size={18} className="text-accent" />
           <h2 className="text-lg font-bold text-ct-cream">Rehab Exercise Library</h2>
         </div>
-        <p className="text-sm text-ct-cream/60">
+        <p className="text-sm text-ink-soft">
           Pick your injury area to start a week-by-week plan.
         </p>
       </div>
@@ -222,21 +222,21 @@ export default function RehabTab({ user, onLoginClick }) {
               live in a compact pill row instead of getting their own cards. */}
           <div>
             <Eyebrow className="mb-2 ml-1">
-              Back side <span className="font-normal normal-case text-ct-cream/40">— not visible on the front diagram</span>
+              Back side <span className="font-normal normal-case text-ink-muted">— not visible on the front diagram</span>
             </Eyebrow>
             <div className="flex flex-wrap gap-2">
               {BACK_PILL_REGIONS.map((r) => (
                 <button
                   key={r}
                   onClick={() => setRegion(r)}
-                  className="px-3 py-1.5 rounded-full text-xs font-medium border ct-surface-flat border-ct-hairline text-ct-cream/60 hover:text-ct-cream hover:border-accent/20 transition-colors"
+                  className="px-3 py-1.5 rounded-full text-xs font-medium border ct-surface-flat border-ct-hairline text-ink-soft hover:text-ct-cream hover:border-accent/20 transition-colors"
                 >
                   {r}
                 </button>
               ))}
               <button
                 onClick={() => setRegion('General')}
-                className="px-3 py-1.5 rounded-full text-xs font-medium border ct-surface-flat border-ct-hairline text-ct-cream/40 hover:text-ct-cream hover:border-accent/20 transition-colors"
+                className="px-3 py-1.5 rounded-full text-xs font-medium border ct-surface-flat border-ct-hairline text-ink-muted hover:text-ct-cream hover:border-accent/20 transition-colors"
               >
                 General
               </button>
@@ -250,7 +250,7 @@ export default function RehabTab({ user, onLoginClick }) {
         <button
           type="button"
           onClick={() => setRegion(null)}
-          className="text-xs text-ct-cream/60 hover:text-accent transition-colors flex items-center gap-1"
+          className="text-xs text-ink-soft hover:text-accent transition-colors flex items-center gap-1"
         >
           <ChevronUp size={12} /> Pick a different area
         </button>
@@ -262,7 +262,7 @@ export default function RehabTab({ user, onLoginClick }) {
           type="button"
           onClick={() => setHowItWorksOpen((v) => !v)}
           aria-expanded={howItWorksOpen}
-          className="w-full flex items-center justify-between text-xs font-semibold text-ct-cream/60 uppercase tracking-wide py-2 hover:text-ct-cream transition-colors"
+          className="w-full flex items-center justify-between text-xs font-semibold text-ink-soft uppercase tracking-wide py-2 hover:text-ct-cream transition-colors"
         >
           <span>How does this work?</span>
           {howItWorksOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -278,7 +278,7 @@ export default function RehabTab({ user, onLoginClick }) {
               className="overflow-hidden"
             >
               <div className="space-y-3 pt-3">
-                <p className="text-xs text-ct-cream/60 leading-relaxed">
+                <p className="text-xs text-ink-soft leading-relaxed">
                   Each rehab plan has three phases. Tap any phase below to see what to expect.
                 </p>
 
@@ -299,7 +299,7 @@ export default function RehabTab({ user, onLoginClick }) {
                   <Info size={14} className="text-accent shrink-0 mt-0.5" />
                   <div>
                     <p className="text-xs font-semibold text-ct-cream mb-0.5">Not sure what's wrong?</p>
-                    <p className="text-xs text-ct-cream/60">
+                    <p className="text-xs text-ink-soft">
                       Use <span className="text-accent font-medium">Triage</span> first — it walks you through your symptoms and tells you what's likely injured. Come back here once you know what you're dealing with.
                     </p>
                   </div>
@@ -331,7 +331,7 @@ export default function RehabTab({ user, onLoginClick }) {
       {/* Login nudge */}
       {!user && (
         <Surface tier="flat" padding="sm" rounded="rounded-xl" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <p className="text-xs text-ct-cream/60 leading-relaxed">
+          <p className="text-xs text-ink-soft leading-relaxed">
             Sign in to save your rehab progress · Phase 2 &amp; 3 require Pro
           </p>
           <button

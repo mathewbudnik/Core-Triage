@@ -45,7 +45,7 @@ export default function TriageHero({ severity, title, why, actions = [], redFlag
           </p>
         </div>
         <h2 className="text-[17px] font-extrabold leading-tight mb-1">{title}</h2>
-        <p className="text-[12px] text-ct-cream/60 leading-relaxed">{redFlagBody || why}</p>
+        <p className="text-[12px] text-ink-soft leading-relaxed">{redFlagBody || why}</p>
       </section>
     )
   }
@@ -68,7 +68,7 @@ export default function TriageHero({ severity, title, why, actions = [], redFlag
         ● {p.label}
       </span>
       <h2 className="text-[18px] font-extrabold tracking-[-0.01em] leading-tight mb-1.5">{title}</h2>
-      <p className="text-[13px] text-ct-cream/60 leading-relaxed">{why}</p>
+      <p className="text-[13px] text-ink-soft leading-relaxed">{why}</p>
 
       {actions.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-3.5 pt-3.5

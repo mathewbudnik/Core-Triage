@@ -33,7 +33,7 @@ export default function DangerZoneSection({ onDeleted, onToast }) {
       <div className="relative z-[1] flex items-center justify-between gap-4 flex-wrap p-4 rounded-2xl bg-black/30 border border-red-500/20">
         <div className="flex-1 min-w-0">
           <div className="text-sm font-bold text-ct-cream">Delete account</div>
-          <div className="text-xs text-ct-cream/50 mt-1 max-w-lg">
+          <div className="text-xs text-ink-muted mt-1 max-w-lg">
             Permanently remove your account and all triage history, training logs, sessions, and profile data. This cannot be undone.
           </div>
         </div>
@@ -48,7 +48,7 @@ export default function DangerZoneSection({ onDeleted, onToast }) {
             <button type="submit" disabled={busy} className="px-4 py-2 rounded-lg bg-red-500 text-ct-cream text-sm font-bold disabled:opacity-50">
               {busy ? 'Deleting…' : 'Permanently delete'}
             </button>
-            <button type="button" onClick={() => { setExpanded(false); setPassword(''); setError(null) }} className="px-4 py-2 rounded-lg border border-ct-hairline text-ct-cream/70 text-sm">
+            <button type="button" onClick={() => { setExpanded(false); setPassword(''); setError(null) }} className="px-4 py-2 rounded-lg border border-ct-hairline text-ink-soft text-sm">
               Cancel
             </button>
           </form>

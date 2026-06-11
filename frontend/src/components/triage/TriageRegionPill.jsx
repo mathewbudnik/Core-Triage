@@ -20,7 +20,7 @@ export default function TriageRegionPill({ region, onChangeRegion }) {
       <button
         type="button"
         onClick={onChangeRegion}
-        className="text-[11px] font-semibold text-ct-cream/60 hover:text-ct-cream transition-colors"
+        className="text-[11px] font-semibold text-ink-soft hover:text-ct-cream transition-colors"
       >
         Change ›
       </button>

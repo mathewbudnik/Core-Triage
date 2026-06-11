@@ -94,7 +94,7 @@ export default function UpgradeModal({ onClose, trigger = 'feature', user, onSig
       >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-ct-cream/60 hover:text-ct-cream transition-colors"
+          className="absolute top-4 right-4 text-ink-soft hover:text-ct-cream transition-colors"
         >
           <X size={18} />
         </button>
@@ -106,14 +106,14 @@ export default function UpgradeModal({ onClose, trigger = 'feature', user, onSig
           </div>
           <div>
             <h2 className="text-base font-bold text-ct-cream">{meta.headline}</h2>
-            <p className="text-xs text-ct-cream/60 mt-1 max-w-[260px] mx-auto">{meta.sub}</p>
+            <p className="text-xs text-ink-soft mt-1 max-w-[260px] mx-auto">{meta.sub}</p>
           </div>
         </div>
 
         {/* Price */}
         <div className="text-center">
           <span className={`text-2xl font-bold ${meta.color}`}>{meta.price}</span>
-          <span className="text-sm text-ct-cream/60"> {meta.cadence}</span>
+          <span className="text-sm text-ink-soft"> {meta.cadence}</span>
         </div>
 
         {/* Benefits */}
@@ -123,7 +123,7 @@ export default function UpgradeModal({ onClose, trigger = 'feature', user, onSig
               <div className={`w-5 h-5 rounded-md ${meta.bg} border ${meta.border} flex items-center justify-center shrink-0 mt-0.5`}>
                 <BenefitIcon size={11} className={meta.color} />
               </div>
-              <span className="text-xs text-ct-cream/80 leading-relaxed">{text}</span>
+              <span className="text-xs text-ink-soft leading-relaxed">{text}</span>
             </li>
           ))}
         </ul>
@@ -164,14 +164,14 @@ export default function UpgradeModal({ onClose, trigger = 'feature', user, onSig
         {/* Cross-sell to the other product */}
         <button
           onClick={() => setActiveView(otherView)}
-          className="w-full flex items-center justify-center gap-1 text-[11px] text-ct-cream/50 hover:text-ct-cream/80 transition-colors"
+          className="w-full flex items-center justify-center gap-1 text-[11px] text-ink-muted hover:text-ink-soft transition-colors"
         >
           {otherView === 'coaching' ? 'Want personal 1:1 coaching?' : 'Just want the app?'}
-          <span className="font-medium text-ct-cream/80">{otherMeta.label} ({otherMeta.price}{otherView === 'coaching' ? '/mo' : '/mo'})</span>
+          <span className="font-medium text-ink-soft">{otherMeta.label} ({otherMeta.price}{otherView === 'coaching' ? '/mo' : '/mo'})</span>
           <ChevronRight size={10} />
         </button>
 
-        <p className="text-[10px] text-center text-ct-cream/40 -mt-2">{meta.note}</p>
+        <p className="text-[10px] text-center text-ink-muted -mt-2">{meta.note}</p>
       </motion.div>
     </div>
   )

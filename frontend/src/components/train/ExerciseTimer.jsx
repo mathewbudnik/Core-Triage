@@ -283,7 +283,7 @@ export default function ExerciseTimer({ block, onClose }) {
         onClick={onClose}
         aria-label="Close timer"
         className="absolute top-2.5 right-2.5 p-1.5 rounded-full
-                   text-ct-cream/60 hover:text-ct-cream hover:bg-white/[0.06] transition-colors"
+                   text-ink-soft hover:text-ct-cream hover:bg-white/[0.06] transition-colors"
       >
         <X size={14} strokeWidth={2.4} />
       </button>
@@ -293,7 +293,7 @@ export default function ExerciseTimer({ block, onClose }) {
            style={{ color: phaseColor }}>
           {phaseLabel}
         </p>
-        <p className="text-[11px] font-bold text-ct-cream/60 tabular-nums">
+        <p className="text-[11px] font-bold text-ink-soft tabular-nums">
           Set <span className="text-ct-cream font-extrabold">{step.set}</span>
           <span className="opacity-60">/{totalSets}</span>
           {repMeta}
@@ -310,7 +310,7 @@ export default function ExerciseTimer({ block, onClose }) {
             </p>
           </div>
         ) : isUserPaced ? (
-          <p className="text-[18px] font-extrabold text-ct-cream/60 tracking-[0.04em]">
+          <p className="text-[18px] font-extrabold text-ink-soft tracking-[0.04em]">
             {running ? 'Tap when finished' : 'Tap Play to begin'}
           </p>
         ) : (
@@ -331,7 +331,7 @@ export default function ExerciseTimer({ block, onClose }) {
           aria-label="Previous set"
           className="w-12 h-12 rounded-full flex items-center justify-center
                      bg-ct-hairline border-[0.5px] border-ct-rim
-                     text-ct-cream/80 disabled:opacity-30 disabled:cursor-not-allowed"
+                     text-ink-soft disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <SkipBack size={18} strokeWidth={2.4} fill={canPrev ? 'currentColor' : 'none'} />
         </motion.button>
@@ -344,7 +344,7 @@ export default function ExerciseTimer({ block, onClose }) {
           aria-label={playAriaLabel}
           className={`w-[72px] h-[72px] rounded-full flex items-center justify-center
                      shadow-[0_4px_16px_rgba(217,119,87,0.28)]
-                     disabled:opacity-60 ${isDone ? 'bg-white/10 text-ct-cream/60' : 'bg-ct-terracotta text-ct-cream'}`}
+                     disabled:opacity-60 ${isDone ? 'bg-white/10 text-ink-soft' : 'bg-ct-terracotta text-ct-cream'}`}
         >
           {playIcon}
         </motion.button>
@@ -357,7 +357,7 @@ export default function ExerciseTimer({ block, onClose }) {
           aria-label="Next set"
           className="w-12 h-12 rounded-full flex items-center justify-center
                      bg-ct-hairline border-[0.5px] border-ct-rim
-                     text-ct-cream/80 disabled:opacity-30 disabled:cursor-not-allowed"
+                     text-ink-soft disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <SkipForward size={18} strokeWidth={2.4} fill={canNext ? 'currentColor' : 'none'} />
         </motion.button>
@@ -369,7 +369,7 @@ export default function ExerciseTimer({ block, onClose }) {
           onClick={reset}
           className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full
                      text-[10.5px] font-bold uppercase tracking-[0.06em]
-                     text-ct-cream/60 hover:text-ct-cream transition-colors"
+                     text-ink-soft hover:text-ct-cream transition-colors"
         >
           <RotateCcw size={11} strokeWidth={2.4} />
           Reset

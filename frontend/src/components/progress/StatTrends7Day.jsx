@@ -55,7 +55,7 @@ export default function StatTrends7Day() {
                 }}
                 aria-label={`${b.date}: ${b.totalXP} XP`}
               />
-              <span className="text-[9px] text-ct-cream/50 font-bold uppercase">{dayLabel}</span>
+              <span className="text-[9px] text-ink-muted font-bold uppercase">{dayLabel}</span>
             </div>
           )
         })}

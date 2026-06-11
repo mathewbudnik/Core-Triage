@@ -59,7 +59,7 @@ export default function AuthShell({ eyebrow, title, subtitle, children, helper }
 
         <div className="relative">
           {eyebrow && (
-            <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-ct-cream/30 mb-2">
+            <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-muted mb-2">
               {eyebrow}
             </div>
           )}
@@ -69,12 +69,12 @@ export default function AuthShell({ eyebrow, title, subtitle, children, helper }
             </h1>
           )}
           {subtitle && (
-            <p className="text-sm text-ct-cream/70 leading-relaxed mb-6">{subtitle}</p>
+            <p className="text-sm text-ink-soft leading-relaxed mb-6">{subtitle}</p>
           )}
 
           {children}
 
-          {helper && <div className="text-center mt-5 text-sm text-ct-cream/50">{helper}</div>}
+          {helper && <div className="text-center mt-5 text-sm text-ink-muted">{helper}</div>}
         </div>
       </motion.div>
     </div>

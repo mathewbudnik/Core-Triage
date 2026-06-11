@@ -14,7 +14,7 @@ function ThreadRow({ thread, selected, onClick }) {
       }`}
     >
       <div className="flex items-center justify-between gap-2">
-        <p className={`text-sm truncate ${hasUnread ? 'font-semibold text-ct-cream' : 'text-ct-cream/60'}`}>
+        <p className={`text-sm truncate ${hasUnread ? 'font-semibold text-ct-cream' : 'text-ink-soft'}`}>
           {thread.email}
         </p>
         {hasUnread > 0 && (
@@ -24,11 +24,11 @@ function ThreadRow({ thread, selected, onClick }) {
         )}
       </div>
       {thread.last_msg && (
-        <p className="text-xs text-ct-cream/60 truncate mt-0.5">
+        <p className="text-xs text-ink-soft truncate mt-0.5">
           {thread.last_sender === 'coach' ? 'You: ' : ''}{thread.last_msg}
         </p>
       )}
-      <p className="text-[10px] text-ct-cream/30 mt-0.5">
+      <p className="text-[10px] text-ink-muted mt-0.5">
         {new Date(thread.updated_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
       </p>
     </button>
@@ -46,10 +46,10 @@ function Message({ msg }) {
       <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
         isCoach
           ? 'bg-ct-terra-tint border border-ct-terracotta/20 text-ct-cream rounded-tr-sm'
-          : 'ct-surface-flat text-ct-cream/60 rounded-tl-sm'
+          : 'ct-surface-flat text-ink-soft rounded-tl-sm'
       }`}>
         <p className="whitespace-pre-wrap">{msg.content}</p>
-        <p className="text-[10px] text-ct-cream/30 mt-1.5">
+        <p className="text-[10px] text-ink-muted mt-1.5">
           {new Date(msg.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
         </p>
       </div>
@@ -152,7 +152,7 @@ export default function CoachInbox() {
             </div>
           )}
           {!loading && threads.length === 0 && (
-            <p className="text-sm text-ct-cream/60 text-center py-12 px-4">No messages yet.</p>
+            <p className="text-sm text-ink-soft text-center py-12 px-4">No messages yet.</p>
           )}
           {threads.map(t => (
             <ThreadRow
@@ -171,7 +171,7 @@ export default function CoachInbox() {
         ${!mobileShowThread ? 'hidden md:flex' : 'flex'}
       `}>
         {!selectedThread ? (
-          <div className="flex flex-col items-center justify-center h-full text-center px-8 space-y-3 text-ct-cream/60">
+          <div className="flex flex-col items-center justify-center h-full text-center px-8 space-y-3 text-ink-soft">
             <Inbox size={32} className="text-ct-hairline" />
             <p className="text-sm">Select a conversation</p>
           </div>
@@ -181,7 +181,7 @@ export default function CoachInbox() {
             <div className="border-b border-ct-hairline px-4 py-3 flex items-center gap-3 bg-ct-forest-deep/40">
               <button
                 onClick={() => setMobileShowThread(false)}
-                className="md:hidden text-ct-cream/60 hover:text-ct-cream"
+                className="md:hidden text-ink-soft hover:text-ct-cream"
               >
                 <ChevronLeft size={18} />
               </button>
@@ -211,7 +211,7 @@ export default function CoachInbox() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={`Reply to ${selectedThread.email}…`}
-                  className="flex-1 bg-ct-forest-deep border border-ct-hairline rounded-lg px-3 py-2 text-ct-cream text-base sm:text-sm placeholder:text-ct-cream/40 focus:outline-none focus:ring-1 focus:ring-ct-terracotta focus:border-ct-terracotta transition-colors duration-200"
+                  className="flex-1 bg-ct-forest-deep border border-ct-hairline rounded-lg px-3 py-2 text-ct-cream text-base sm:text-sm placeholder:text-ink-muted focus:outline-none focus:ring-1 focus:ring-ct-terracotta focus:border-ct-terracotta transition-colors duration-200"
                   disabled={sending}
                 />
                 <button

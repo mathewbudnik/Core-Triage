@@ -25,7 +25,7 @@ export default function RecoverEmptyView({ pastTriage = [] }) {
       <h1 className="text-[22px] font-extrabold leading-tight tracking-tight mb-1 text-ct-cream">
         All clear right now
       </h1>
-      <p className="text-xs text-ct-cream/60 mb-5">No active triage or rehab plan.</p>
+      <p className="text-xs text-ink-soft mb-5">No active triage or rehab plan.</p>
 
       {/* Hero CTA */}
       <div
@@ -41,7 +41,7 @@ export default function RecoverEmptyView({ pastTriage = [] }) {
           <Activity size={26} strokeWidth={2} />
         </div>
         <h2 className="text-[19px] font-extrabold text-ct-cream mb-2">Something hurts?</h2>
-        <p className="text-[13px] text-ct-cream/60 leading-relaxed mb-4 max-w-[280px] mx-auto">
+        <p className="text-[13px] text-ink-soft leading-relaxed mb-4 max-w-[280px] mx-auto">
           5-question screen — red-flag warnings, likely injury patterns, and a phase-based rehab plan.
         </p>
         <button
@@ -56,7 +56,7 @@ export default function RecoverEmptyView({ pastTriage = [] }) {
         </button>
       </div>
 
-      <p className="text-center text-xs text-ct-cream/60 mb-8">
+      <p className="text-center text-xs text-ink-soft mb-8">
         Or browse exercises for prehab + mobility — no injury required.{' '}
         <button onClick={() => navigate('/triage')} className="text-ct-terra-soft font-bold hover:underline">
           Start triage
@@ -82,7 +82,7 @@ export default function RecoverEmptyView({ pastTriage = [] }) {
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-bold leading-tight text-ct-cream">{t.injury_area}</p>
-                  <p className="text-[11px] text-ct-cream/60 mt-0.5">
+                  <p className="text-[11px] text-ink-soft mt-0.5">
                     {new Date(t.created_at).toLocaleDateString(undefined, {
                       year: 'numeric', month: 'short', day: 'numeric',
                     })}

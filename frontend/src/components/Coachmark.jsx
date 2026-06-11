@@ -175,12 +175,12 @@ export default function Coachmark({ tour }) {
               <span className="text-[9px] uppercase tracking-wider font-semibold text-ct-terra-soft">
                 {tip.label}
               </span>
-              <p className="text-xs text-ct-cream/90 leading-snug mt-0.5">{tip.body}</p>
+              <p className="text-xs text-ink-soft leading-snug mt-0.5">{tip.body}</p>
             </div>
             <button
               onClick={skip}
               aria-label="Skip tour"
-              className="text-ct-cream/40 hover:text-ct-cream transition-colors -mt-0.5 -mr-0.5 p-0.5 shrink-0"
+              className="text-ink-muted hover:text-ct-cream transition-colors -mt-0.5 -mr-0.5 p-0.5 shrink-0"
             >
               <X size={12} />
             </button>

@@ -80,14 +80,14 @@ function ProgressBar({ pct }) {
 function StepHeader({ stepIndex, totalSteps, title, subtitle }) {
   return (
     <div className="mb-6">
-      <p className="text-[11px] font-extrabold uppercase tracking-[0.13em] text-ct-cream/60">
+      <p className="text-[11px] font-extrabold uppercase tracking-[0.13em] text-ink-soft">
         Step {stepIndex + 1} of {totalSteps}
       </p>
       <h2 className="mt-2 text-[28px] sm:text-[30px] font-extrabold -tracking-[0.025em] leading-[1.1]">
         {title}
       </h2>
       {subtitle && (
-        <p className="mt-2 text-[13px] font-semibold text-ct-cream/60 leading-snug">
+        <p className="mt-2 text-[13px] font-semibold text-ink-soft leading-snug">
           {subtitle}
         </p>
       )}
@@ -112,7 +112,7 @@ function SelectRow({ label, sub, selected, onClick }) {
           {label}
         </p>
         {sub && (
-          <p className="text-[12px] font-semibold text-ct-cream/50 leading-snug mt-1">
+          <p className="text-[12px] font-semibold text-ink-muted leading-snug mt-1">
             {sub}
           </p>
         )}
@@ -164,7 +164,7 @@ function GradeSlider({ value, options, onChange }) {
            style={{ color: '#f0a875' }}>
           {value}
         </p>
-        <p className="text-[11px] font-bold uppercase tracking-[0.10em] text-ct-cream/40">
+        <p className="text-[11px] font-bold uppercase tracking-[0.10em] text-ink-muted">
           {idx + 1} of {options.length}
         </p>
       </div>
@@ -177,7 +177,7 @@ function GradeSlider({ value, options, onChange }) {
         className="w-full"
         style={{ accentColor: '#d97757' }}
       />
-      <div className="flex justify-between mt-2 text-[11px] font-bold text-ct-cream/40 tabular-nums">
+      <div className="flex justify-between mt-2 text-[11px] font-bold text-ink-muted tabular-nums">
         <span>{options[0]}</span>
         <span>{options[Math.floor(options.length / 2)]}</span>
         <span>{options[options.length - 1]}</span>
@@ -230,7 +230,7 @@ function NumberSlider({ value, min, max, step = 5, unit, onChange, hint }) {
       <div className="flex items-baseline justify-between mb-4">
         <p className="text-[28px] font-extrabold tabular-nums -tracking-[0.025em]"
            style={{ color: '#f0a875' }}>
-          {value} <span className="text-[14px] font-bold text-ct-cream/60">{unit}</span>
+          {value} <span className="text-[14px] font-bold text-ink-soft">{unit}</span>
         </p>
       </div>
       <input
@@ -243,12 +243,12 @@ function NumberSlider({ value, min, max, step = 5, unit, onChange, hint }) {
         className="w-full"
         style={{ accentColor: '#d97757' }}
       />
-      <div className="flex justify-between mt-2 text-[11px] font-bold text-ct-cream/40 tabular-nums">
+      <div className="flex justify-between mt-2 text-[11px] font-bold text-ink-muted tabular-nums">
         <span>{min} {unit}</span>
         <span>{Math.round((min + max) / 2)} {unit}</span>
         <span>{max} {unit}</span>
       </div>
-      {hint && <p className="text-[11px] font-semibold text-ct-cream/40 mt-3 leading-snug">{hint}</p>}
+      {hint && <p className="text-[11px] font-semibold text-ink-muted mt-3 leading-snug">{hint}</p>}
     </div>
   )
 }
@@ -405,7 +405,7 @@ export default function ProfileSetup({ onComplete }) {
               allowNegative
             />
           </div>
-          <p className="text-[11px] text-ct-cream/45 mt-3 leading-snug">
+          <p className="text-[11px] text-ink-muted mt-3 leading-snug">
             Skip this if you don't have the numbers handy — you can fill them in later from the Movement Analyzer or your profile.
           </p>
         </>
@@ -493,7 +493,7 @@ export default function ProfileSetup({ onComplete }) {
               <div className="mb-4 px-3.5 py-3 rounded-2xl
                               bg-[rgba(217,119,87,0.08)]
                               border-[0.5px] border-[rgba(217,119,87,0.22)]">
-                <p className="text-[11.5px] font-semibold text-ct-cream/80 leading-snug">
+                <p className="text-[11.5px] font-semibold text-ink-soft leading-snug">
                   Based on <b className="tabular-nums">{styleProfile.total}</b> tagged climbs, your
                   weakest style looks like <b style={{ color: '#f0a875' }}>{weakLabel}</b>.
                   We've pre-checked it — adjust if you disagree.
@@ -505,7 +505,7 @@ export default function ProfileSetup({ onComplete }) {
               <div className="mb-4 px-3.5 py-3 rounded-2xl
                               bg-[rgba(217,119,87,0.08)]
                               border-[0.5px] border-[rgba(217,119,87,0.22)]">
-                <p className="text-[11.5px] font-semibold text-ct-cream/80 leading-snug mb-2">
+                <p className="text-[11.5px] font-semibold text-ink-soft leading-snug mb-2">
                   From <b className="tabular-nums">{styleProfile.total}</b> tagged climbs:
                   <b style={{ color: '#f0a875' }}> {domLabel}</b>-heavy,
                   <b style={{ color: '#f0a875' }}> {weakLabel}</b> is your gap.
@@ -537,7 +537,7 @@ export default function ProfileSetup({ onComplete }) {
           </div>
           {form.primary_goal === 'grade_progression' && (
             <div className="mt-5">
-              <p className="text-[11px] font-bold uppercase tracking-[0.10em] text-ct-cream/40 mb-2">
+              <p className="text-[11px] font-bold uppercase tracking-[0.10em] text-ink-muted mb-2">
                 Target grade
               </p>
               <input
@@ -642,7 +642,7 @@ export default function ProfileSetup({ onComplete }) {
           disabled={step === 0 || saving}
           className="mt-3 w-full inline-flex items-center justify-center gap-1
                      text-[11px] font-extrabold uppercase tracking-[0.10em]
-                     text-ct-cream/60 hover:text-ct-cream transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                     text-ink-soft hover:text-ct-cream transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <ChevronLeft size={12} strokeWidth={2.6} />
           Back

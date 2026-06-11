@@ -30,7 +30,7 @@ export default function TriageSummaryPill({ label, value, valueTone, onEdit }) {
           <Check size={11} strokeWidth={3} />
         </span>
         <div className="min-w-0">
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.10em] text-ct-cream/60 leading-tight">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.10em] text-ink-soft leading-tight">
             {label}
           </p>
           <p className="text-[13px] font-bold leading-tight mt-0.5 truncate"

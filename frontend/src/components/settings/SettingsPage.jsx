@@ -68,7 +68,7 @@ export default function SettingsPage({ user, onUserChange, onLogout, onToast, on
 
         <main className="min-w-0">
           <div className="mb-7">
-            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-ct-cream/30 mb-2">
+            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink-muted mb-2">
               Settings
             </div>
             <h1 className="text-[34px] font-extrabold tracking-tight leading-[1.05] text-ct-cream m-0">
@@ -84,7 +84,7 @@ export default function SettingsPage({ user, onUserChange, onLogout, onToast, on
               </span>
               .
             </h1>
-            <p className="text-ct-cream/70 mt-2 text-sm max-w-[560px]">
+            <p className="text-ink-soft mt-2 text-sm max-w-[560px]">
               Profile, climbing style, subscription, and privacy — all in one place.
             </p>
           </div>

@@ -23,11 +23,11 @@ function Message({ msg }) {
       )}
       <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
         isCoach
-          ? 'ct-surface-flat text-ct-cream/60 rounded-tl-sm'
+          ? 'ct-surface-flat text-ink-soft rounded-tl-sm'
           : 'bg-ct-terra-tint border border-ct-terracotta/20 text-ct-cream rounded-tr-sm'
       }`}>
         <p className="whitespace-pre-wrap">{msg.content}</p>
-        <p className="text-[10px] text-ct-cream/30 mt-1.5">
+        <p className="text-[10px] text-ink-muted mt-1.5">
           {new Date(msg.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
         </p>
       </div>
@@ -94,7 +94,7 @@ export default function CoachChat({ user, onLoginClick }) {
         <img src="/logo.png" alt="Coach" className="w-16 h-16 rounded-2xl" />
         <div>
           <p className="font-semibold text-ct-cream">Chat with your coach</p>
-          <p className="text-sm text-ct-cream/60 mt-1 max-w-xs">
+          <p className="text-sm text-ink-soft mt-1 max-w-xs">
             Sign in to send a message directly to Budnik for a personalised training plan or coaching advice.
           </p>
         </div>
@@ -113,7 +113,7 @@ export default function CoachChat({ user, onLoginClick }) {
         <img src="/logo.png" alt="Coach" className="w-8 h-8 rounded-xl" />
         <div>
           <p className="text-sm font-semibold text-ct-cream">Budnik · Coach</p>
-          <p className="text-xs text-ct-cream/60">Replies within 24–48 hours</p>
+          <p className="text-xs text-ink-soft">Replies within 24–48 hours</p>
         </div>
       </div>
 
@@ -130,7 +130,7 @@ export default function CoachChat({ user, onLoginClick }) {
             <img src="/logo.png" alt="Coach" className="w-14 h-14 rounded-2xl opacity-80" />
             <div>
               <p className="font-semibold text-ct-cream">Start a conversation</p>
-              <p className="text-sm text-ct-cream/60 mt-1 max-w-sm">
+              <p className="text-sm text-ink-soft mt-1 max-w-sm">
                 Tell Budnik about your climbing background, goals, and what you're working on.
                 He'll write you a hyper-specific plan tailored to you.
               </p>
@@ -144,7 +144,7 @@ export default function CoachChat({ user, onLoginClick }) {
                 <button
                   key={q}
                   onClick={() => setInput(q)}
-                  className="text-xs ct-surface-flat border border-ct-hairline rounded-xl px-4 py-2.5 text-ct-cream/60 hover:text-ct-terra-soft hover:border-ct-terracotta/40 transition-colors text-left"
+                  className="text-xs ct-surface-flat border border-ct-hairline rounded-xl px-4 py-2.5 text-ink-soft hover:text-ct-terra-soft hover:border-ct-terracotta/40 transition-colors text-left"
                 >
                   {q}
                 </button>
@@ -174,7 +174,7 @@ export default function CoachChat({ user, onLoginClick }) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Message your coach…"
-            className="flex-1 bg-ct-forest-deep border border-ct-hairline rounded-lg px-3 py-2 text-ct-cream text-base sm:text-sm placeholder:text-ct-cream/40 focus:outline-none focus:ring-1 focus:ring-ct-terracotta focus:border-ct-terracotta transition-colors duration-200"
+            className="flex-1 bg-ct-forest-deep border border-ct-hairline rounded-lg px-3 py-2 text-ct-cream text-base sm:text-sm placeholder:text-ink-muted focus:outline-none focus:ring-1 focus:ring-ct-terracotta focus:border-ct-terracotta transition-colors duration-200"
             disabled={sending}
           />
           <button
@@ -186,7 +186,7 @@ export default function CoachChat({ user, onLoginClick }) {
             Send
           </button>
         </form>
-        <p className="text-xs text-ct-cream/60 mt-2 text-center">
+        <p className="text-xs text-ink-soft mt-2 text-center">
           Direct messages to Budnik · Not an AI
         </p>
       </div>

@@ -72,7 +72,7 @@ export default function DisplayNamePromptModal({ onDone }) {
           </div>
           <div>
             <h2 className="text-base font-bold text-ct-cream">Pick a display name</h2>
-            <p className="text-xs text-ct-cream/60 mt-1 leading-relaxed max-w-[260px] mx-auto">
+            <p className="text-xs text-ink-soft mt-1 leading-relaxed max-w-[260px] mx-auto">
               Your training shows up on leaderboards alongside other climbers. This is the name they'll see — pick something you're happy with. You can change it later.
             </p>
           </div>
@@ -89,11 +89,11 @@ export default function DisplayNamePromptModal({ onDone }) {
               value={name}
               onChange={(e) => setName(e.target.value.slice(0, 24))}
               placeholder="e.g. SnowyCrimper42"
-              className="w-full bg-ct-forest-deep border border-ct-hairline text-ct-cream placeholder:text-ct-cream/40 focus:border-ct-terracotta/50 rounded-lg px-3 py-2 text-base sm:text-sm outline-none transition-colors"
+              className="w-full bg-ct-forest-deep border border-ct-hairline text-ct-cream placeholder:text-ink-muted focus:border-ct-terracotta/50 rounded-lg px-3 py-2 text-base sm:text-sm outline-none transition-colors"
               disabled={submitting}
               maxLength={24}
             />
-            <p className="text-[10px] text-ct-cream/50 mt-1.5">
+            <p className="text-[10px] text-ink-muted mt-1.5">
               3–20 characters · letters, digits, underscore, dash
             </p>
           </div>

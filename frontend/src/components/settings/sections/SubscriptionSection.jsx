@@ -57,10 +57,10 @@ export default function SubscriptionSection({ user, onUpgradeClick, onToast }) {
               )}
             </div>
             {state === 'trial' && daysRemaining != null && (
-              <div className="text-ct-cream/50 text-xs mt-1">{daysRemaining} day{daysRemaining === 1 ? '' : 's'} remaining</div>
+              <div className="text-ink-muted text-xs mt-1">{daysRemaining} day{daysRemaining === 1 ? '' : 's'} remaining</div>
             )}
             {isPaid && (
-              <div className="text-ct-cream/50 text-xs mt-1">{sub.product_name || 'Subscribed'}</div>
+              <div className="text-ink-muted text-xs mt-1">{sub.product_name || 'Subscribed'}</div>
             )}
           </div>
 
@@ -81,7 +81,7 @@ export default function SubscriptionSection({ user, onUpgradeClick, onToast }) {
             <div className="h-1.5 rounded-full overflow-hidden bg-black/30">
               <div className="h-full rounded-full transition-[width]" style={{ width: `${fillPct}%`, backgroundImage: 'linear-gradient(90deg, #14b8a6, #d97757)' }} />
             </div>
-            <div className="flex justify-between text-[11px] text-ct-cream/50 mt-2">
+            <div className="flex justify-between text-[11px] text-ink-muted mt-2">
               <span><strong className="text-ct-cream font-bold">{daysUsed}</strong> of {TRIAL_DAYS} days used</span>
               <span><strong className="text-ct-cream font-bold">{daysRemaining}</strong> days remaining</span>
             </div>
@@ -100,7 +100,7 @@ export default function SubscriptionSection({ user, onUpgradeClick, onToast }) {
 
 function Bullet({ children }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs text-ct-cream/70">
+    <span className="inline-flex items-center gap-1.5 text-xs text-ink-soft">
       <Check size={12} strokeWidth={3} className="text-accent" />
       {children}
     </span>

@@ -75,7 +75,7 @@ export default function TriageDifferentials({ items = [], severity = 'moderate' 
                         )
                       })()}
                       {item.subtitle && !isOpen && (
-                        <p className="text-[10px] text-ct-cream/60 font-semibold mt-0.5 truncate">
+                        <p className="text-[10px] text-ink-soft font-semibold mt-0.5 truncate">
                           {item.subtitle}
                         </p>
                       )}
@@ -84,7 +84,7 @@ export default function TriageDifferentials({ items = [], severity = 'moderate' 
                   <motion.span
                     animate={{ rotate: isOpen ? 180 : 0 }}
                     transition={{ duration: 0.18, ease: [0, 0, 0.2, 1] }}
-                    className="shrink-0 text-ct-cream/30"
+                    className="shrink-0 text-ink-muted"
                   >
                     <ChevronDown size={16} strokeWidth={2.4} />
                   </motion.span>
@@ -102,7 +102,7 @@ export default function TriageDifferentials({ items = [], severity = 'moderate' 
                     >
                       <div className="px-3.5 pb-3.5 pt-1 space-y-3 border-t border-ct-hairline">
                         {item.subtitle && (
-                          <p className="text-[11.5px] text-ct-cream/60 leading-snug mt-2">
+                          <p className="text-[11.5px] text-ink-soft leading-snug mt-2">
                             {item.subtitle}
                           </p>
                         )}
@@ -178,7 +178,7 @@ function Block({ icon, label, children }) {
     <div>
       <div className="flex items-center gap-1.5 mb-1.5">
         {icon}
-        <p className="text-[9.5px] font-extrabold uppercase tracking-[0.08em] text-ct-cream/50">
+        <p className="text-[9.5px] font-extrabold uppercase tracking-[0.08em] text-ink-muted">
           {label}
         </p>
       </div>

@@ -69,9 +69,9 @@ export default function TimelineRibbon({ findings, durationS, startMs = 0, endMs
 
   return (
     <div className="rounded-xl bg-ct-forest-deep border border-ct-hairline px-3 py-2.5">
-      <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.12em] text-ct-cream/45 mb-2">
+      <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.12em] text-ink-muted mb-2">
         <span>Timeline</span>
-        <span className="ct-tnum text-ct-cream/35 normal-case tracking-normal">
+        <span className="ct-tnum text-ink-muted normal-case tracking-normal">
           {formatTime(laneStart)} – {formatTime(laneEnd)}
         </span>
       </div>

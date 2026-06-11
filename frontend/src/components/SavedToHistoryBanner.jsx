@@ -64,7 +64,7 @@ export default function SavedToHistoryBanner({ sessionId }) {
         ) : (
           <Check size={13} className="shrink-0" style={{ color: styles.icon }} strokeWidth={2.6} />
         )}
-        <span className="truncate text-ct-cream/90">
+        <span className="truncate text-ink-soft">
           {state === 'saved'   && 'Saved to your history.'}
           {state === 'undoing' && 'Removing from history…'}
           {state === 'undone'  && 'Removed from history.'}
@@ -76,7 +76,7 @@ export default function SavedToHistoryBanner({ sessionId }) {
         <button
           type="button"
           onClick={handleUndo}
-          className="flex items-center gap-1 text-[11px] font-bold whitespace-nowrap text-ct-cream/85 hover:text-ct-cream px-2 py-0.5 rounded"
+          className="flex items-center gap-1 text-[11px] font-bold whitespace-nowrap text-ink-soft hover:text-ct-cream px-2 py-0.5 rounded"
         >
           <RotateCcw size={10} strokeWidth={2.4} />
           Undo
@@ -95,7 +95,7 @@ export default function SavedToHistoryBanner({ sessionId }) {
         <button
           type="button"
           onClick={() => setState('hidden')}
-          className="text-[11px] font-bold whitespace-nowrap text-ct-cream/60 hover:text-ct-cream"
+          className="text-[11px] font-bold whitespace-nowrap text-ink-soft hover:text-ct-cream"
           aria-label="Dismiss"
         >
           Dismiss

@@ -11,7 +11,7 @@ export default function AboutSection() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Cell label="Version">
           <div className="text-sm text-ct-cream font-semibold">{VERSION}</div>
-          <div className="text-[11px] text-ct-cream/40 mt-0.5">build {COMMIT}</div>
+          <div className="text-[11px] text-ink-muted mt-0.5">build {COMMIT}</div>
         </Cell>
         <Cell label="Legal">
           <LinkRow href="#">Terms of Use</LinkRow>
@@ -30,7 +30,7 @@ export default function AboutSection() {
 function Cell({ label, children }) {
   return (
     <div className="rounded-xl bg-black/15 border border-ct-hairline px-4 py-3.5">
-      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-ct-cream/50 mb-1.5">{label}</div>
+      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-muted mb-1.5">{label}</div>
       {children}
     </div>
   )
@@ -38,7 +38,7 @@ function Cell({ label, children }) {
 
 function LinkRow({ href, children }) {
   return (
-    <a href={href} className="block py-0.5 text-xs text-ct-cream/70 hover:text-ct-terracotta transition-colors">
+    <a href={href} className="block py-0.5 text-xs text-ink-soft hover:text-ct-terracotta transition-colors">
       {children} →
     </a>
   )

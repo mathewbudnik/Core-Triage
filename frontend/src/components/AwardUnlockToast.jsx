@@ -36,12 +36,12 @@ export default function AwardUnlockToast({ award, onTap, onClose }) {
             Earned
           </span>
         </div>
-        <div className="text-[11px] text-ct-cream/60 mt-0.5">
+        <div className="text-[11px] text-ink-soft mt-0.5">
           {meta.sub} · tap to view
         </div>
       </div>
       <button type="button" onClick={(e) => { e.stopPropagation(); onClose() }}
-              className="text-ct-cream/40 hover:text-ct-cream/60 text-sm transition-colors">×</button>
+              className="text-ink-muted hover:text-ink-soft text-sm transition-colors">×</button>
     </motion.div>
   )
 }

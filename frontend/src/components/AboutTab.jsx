@@ -65,10 +65,10 @@ export default function AboutTab() {
             CoreTriage
           </h2>
         </div>
-        <p className="text-ct-cream/60 leading-relaxed max-w-2xl">
+        <p className="text-ink-soft leading-relaxed max-w-2xl">
           CoreTriage is the complete app for climbers — <span className="text-ct-cream font-medium">personalised training plans</span>, <span className="text-ct-cream font-medium">injury triage and rehab</span>, and <span className="text-ct-cream font-medium">1:1 coaching</span>. Whether you're chasing your next grade, working through an injury, or both at once, it's all built around climbing-specific demands. Built by climbers, for climbers.
         </p>
-        <div className="flex items-center gap-2 text-xs text-ct-cream/50">
+        <div className="flex items-center gap-2 text-xs text-ink-muted">
           <Mountain size={12} />
           <span>Built by an outdoor V13 boulderer · Climbing-specific from the ground up</span>
         </div>
@@ -76,7 +76,7 @@ export default function AboutTab() {
 
       {/* What we cover */}
       <div>
-        <h3 className="text-xs font-semibold text-ct-cream/60 uppercase tracking-widest mb-4">What CoreTriage covers</h3>
+        <h3 className="text-xs font-semibold text-ink-soft uppercase tracking-widest mb-4">What CoreTriage covers</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {FEATURES.map((f, i) => (
             <motion.div
@@ -91,7 +91,7 @@ export default function AboutTab() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-ct-cream">{f.title}</p>
-                <p className="text-xs text-ct-cream/60 mt-0.5 leading-relaxed">{f.desc}</p>
+                <p className="text-xs text-ink-soft mt-0.5 leading-relaxed">{f.desc}</p>
               </div>
             </motion.div>
           ))}
@@ -100,12 +100,12 @@ export default function AboutTab() {
 
       {/* Injury areas */}
       <div>
-        <h3 className="text-xs font-semibold text-ct-cream/60 uppercase tracking-widest mb-4">Injury areas covered</h3>
+        <h3 className="text-xs font-semibold text-ink-soft uppercase tracking-widest mb-4">Injury areas covered</h3>
         <div className="flex flex-wrap gap-2">
           {INJURY_AREAS.map((area) => (
             <span
               key={area}
-              className="text-xs bg-ct-hairline border border-ct-rim rounded-full px-3 py-1.5 text-ct-cream/60"
+              className="text-xs bg-ct-hairline border border-ct-rim rounded-full px-3 py-1.5 text-ink-soft"
             >
               {area}
             </span>
@@ -126,15 +126,15 @@ export default function AboutTab() {
         <div className="space-y-3">
           <p className="text-sm font-semibold text-ct-cream">About the Coach</p>
 
-          <p className="text-xs text-ct-cream/60 leading-relaxed">
+          <p className="text-xs text-ink-soft leading-relaxed">
             Budnik is an <span className="text-ct-cream font-medium">outdoor V13 boulderer</span> with over a decade of climbing experience across bouldering, sport, and competition. He's been <span className="text-ct-cream font-medium">routesetting at Momentum Houston for the past five years</span>, holds <span className="text-ct-cream font-medium">USAC L1 and L2 routesetting certifications</span>, and has coached climbers from first-timers to regional competitors. That combination — climbing at a high level AND setting at scale — gives him a rare view of movement from both sides of the wall: how holds load the body, where positions force compromise, and why certain patterns chronically injure climbers.
           </p>
 
-          <p className="text-xs text-ct-cream/60 leading-relaxed">
+          <p className="text-xs text-ink-soft leading-relaxed">
             He's also lived through the injuries climbers actually get on the way up: the slow comeback from a pulley, the elbow flares that won't quite let go, the wrist that flares whenever volume creeps up. CoreTriage exists because he wished a tool like it had existed during his own rehabs.
           </p>
 
-          <p className="text-xs text-ct-cream/60 leading-relaxed">
+          <p className="text-xs text-ink-soft leading-relaxed">
             Coach Chat connects you directly with him for the work an algorithm can't do: <span className="text-ct-cream font-medium">beta breakdowns from video of your project</span>, a training plan shaped around it, plus async messaging for load management, return-to-climbing calls, and technique tweaks — feedback from an <span className="text-ct-cream font-medium">outdoor V13 boulderer</span> and USAC-certified routesetter who's been at this for a decade.
           </p>
 
@@ -156,7 +156,7 @@ export default function AboutTab() {
           <AlertTriangle size={13} className="text-ct-terra-soft" />
           <p className="text-xs font-semibold text-ct-terra-soft uppercase tracking-wide">Important Disclaimer</p>
         </div>
-        <p className="text-sm text-ct-cream/60 leading-relaxed">
+        <p className="text-sm text-ink-soft leading-relaxed">
           CoreTriage is an educational tool and does not provide medical diagnosis or treatment. Guidance is intentionally conservative and designed to support appropriate medical referral when needed. If your symptoms are severe, worsening, involve neurological signs, or follow significant trauma — seek professional evaluation immediately. Do not delay medical care based on anything in this app.
         </p>
       </motion.div>

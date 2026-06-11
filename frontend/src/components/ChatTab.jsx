@@ -98,7 +98,7 @@ export default function ChatTab({ k, user, onLoginClick }) {
         <AIChatView k={k} user={user} onBack={handleBack} />
       )}
       {view === 'analyzer' && (
-        <Suspense fallback={<div className="h-full flex items-center justify-center text-ct-cream/60 text-xs">Loading Movement Analyzer…</div>}>
+        <Suspense fallback={<div className="h-full flex items-center justify-center text-ink-soft text-xs">Loading Movement Analyzer…</div>}>
           <MovementAnalyzerView onBack={handleBack} />
         </Suspense>
       )}

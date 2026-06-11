@@ -116,13 +116,13 @@ export default function Landing({ onEnter }) {
         {/* Subheading */}
         <motion.p
           variants={item}
-          className="text-ct-cream/80 text-base md:text-lg max-w-xl leading-relaxed mb-3"
+          className="text-ink-soft text-base md:text-lg max-w-xl leading-relaxed mb-3"
         >
           Personalised training plans, injury triage and rehab, and 1:1 coaching from an outdoor V13 boulderer — three tools every climber needs, in one app.
         </motion.p>
 
         {/* Tagline pill */}
-        <motion.p variants={item} className="text-xs text-ct-cream/50 mb-10">
+        <motion.p variants={item} className="text-xs text-ink-muted mb-10">
           Plans · Triage · Rehab · Coaching · Built by an outdoor V13 boulderer
         </motion.p>
 
@@ -134,7 +134,7 @@ export default function Landing({ onEnter }) {
           >
             Start Triage <ChevronRight size={16} />
           </button>
-          <p className="text-xs text-ct-cream/60">Free to use · No account needed</p>
+          <p className="text-xs text-ink-soft">Free to use · No account needed</p>
         </motion.div>
 
         {/* Feature cards — clickable */}
@@ -152,11 +152,11 @@ export default function Landing({ onEnter }) {
                 <div className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 ${f.bg}`}>
                   <f.icon size={16} className={f.color} />
                 </div>
-                <ArrowRight size={14} className="text-ct-cream/30 group-hover:text-ct-cream/60 group-hover:translate-x-0.5 transition-all mt-1 shrink-0" />
+                <ArrowRight size={14} className="text-ink-muted group-hover:text-ink-soft group-hover:translate-x-0.5 transition-all mt-1 shrink-0" />
               </div>
               <div>
                 <p className="text-sm font-semibold text-ct-cream">{f.title}</p>
-                <p className="text-xs text-ct-cream/60 mt-1 leading-relaxed">{f.desc}</p>
+                <p className="text-xs text-ink-soft mt-1 leading-relaxed">{f.desc}</p>
               </div>
               <p className={`text-xs font-medium ${f.color} flex items-center gap-1`}>
                 {f.cta} <ChevronRight size={11} />
@@ -175,17 +175,17 @@ export default function Landing({ onEnter }) {
                   <UserCircle2 size={11} />
                   1:1 Coaching · $89/mo
                 </span>
-                <span className="text-[11px] text-ct-cream/50">application only</span>
+                <span className="text-[11px] text-ink-muted">application only</span>
               </div>
               <h2 className="text-lg md:text-xl font-bold text-ct-cream mb-2">
                 Inside knowledge, climber to climber
               </h2>
-              <p className="text-sm text-ct-cream/60 leading-relaxed mb-5 max-w-lg">
+              <p className="text-sm text-ink-soft leading-relaxed mb-5 max-w-lg">
                 Send video of your project and get the kind of feedback that only comes from years inside the sport — a <span className="text-ct-cream font-medium">beta breakdown</span> with technique fixes and sequence ideas, plus a <span className="text-ct-cream font-medium">training plan shaped around your weaknesses</span>. Direct messaging covers everything an AI can't help with. Budnik climbs V13 outdoors, sets at Momentum Houston, and has spent a decade figuring out what actually works on the wall.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-6">
                 {COACHING_INCLUDES.map((point) => (
-                  <div key={point} className="flex items-start gap-2 text-xs text-ct-cream/60">
+                  <div key={point} className="flex items-start gap-2 text-xs text-ink-soft">
                     <CheckCircle size={12} className="text-ct-terra-soft shrink-0 mt-0.5" />
                     <span>{point}</span>
                   </div>
@@ -212,17 +212,17 @@ export default function Landing({ onEnter }) {
             <button
               key={area}
               onClick={() => onEnter('recover')}
-              className="text-xs bg-ct-forest border border-ct-hairline rounded-full px-3 py-1.5 text-ct-cream/60 hover:text-ct-terra-soft hover:border-ct-terracotta/40 transition-colors"
+              className="text-xs bg-ct-forest border border-ct-hairline rounded-full px-3 py-1.5 text-ink-soft hover:text-ct-terra-soft hover:border-ct-terracotta/40 transition-colors"
             >
               {area}
             </button>
           ))}
-          <span className="text-xs text-ct-cream/30 self-center">injury areas covered</span>
+          <span className="text-xs text-ink-muted self-center">injury areas covered</span>
         </motion.div>
       </motion.div>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-ct-hairline px-6 py-4 text-center text-xs text-ct-cream/30">
+      <footer className="relative z-10 border-t border-ct-hairline px-6 py-4 text-center text-xs text-ink-muted">
         CoreTriage is an educational tool and does not provide medical diagnosis or treatment.
       </footer>
 

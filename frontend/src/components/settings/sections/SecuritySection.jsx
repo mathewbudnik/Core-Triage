@@ -36,7 +36,7 @@ export default function SecuritySection({ user, onToast }) {
           action={user?.email_verified
             ? <span className="text-[11px] font-bold text-accent">VERIFIED</span>
             : (
-              <button onClick={handleResend} disabled={resendBusy} className="px-3 py-1.5 rounded-lg border border-ct-hairline text-ct-cream/70 text-xs font-semibold hover:border-ct-terracotta/35 hover:text-ct-terracotta disabled:opacity-50">
+              <button onClick={handleResend} disabled={resendBusy} className="px-3 py-1.5 rounded-lg border border-ct-hairline text-ink-soft text-xs font-semibold hover:border-ct-terracotta/35 hover:text-ct-terracotta disabled:opacity-50">
                 {resendBusy ? <Loader2 size={11} className="animate-spin inline-block mr-1" /> : null}
                 Resend
               </button>
@@ -48,7 +48,7 @@ export default function SecuritySection({ user, onToast }) {
           title="Password"
           sub="We'll send a reset link to your inbox."
           action={
-            <button onClick={changePassword} className="px-3 py-1.5 rounded-lg border border-ct-hairline text-ct-cream/70 text-xs font-semibold hover:border-ct-terracotta/35 hover:text-ct-terracotta">
+            <button onClick={changePassword} className="px-3 py-1.5 rounded-lg border border-ct-hairline text-ink-soft text-xs font-semibold hover:border-ct-terracotta/35 hover:text-ct-terracotta">
               Change password
             </button>
           }
@@ -66,7 +66,7 @@ function StatusRow({ status, title, sub, action }) {
       <span aria-hidden className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${dotClass}`} style={{ boxShadow: dotGlow }} />
       <div className="flex-1 min-w-0">
         <div className="text-sm font-semibold text-ct-cream">{title}</div>
-        <div className="text-[11px] text-ct-cream/50 mt-0.5 truncate">{sub}</div>
+        <div className="text-[11px] text-ink-muted mt-0.5 truncate">{sub}</div>
       </div>
       {action}
     </div>

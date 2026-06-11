@@ -25,7 +25,7 @@ export default function TrainPlanArcChip({ currentWeek, totalWeeks, phase, onOpe
                  text-ct-terra-soft hover:text-ct-cream transition-colors"
     >
       <span>Week {currentWeek} of {totalWeeks}</span>
-      {phaseLabel && <span className="text-ct-cream/30">·</span>}
+      {phaseLabel && <span className="text-ink-muted">·</span>}
       {phaseLabel && <span>{phaseLabel}</span>}
       <ChevronRight size={12} strokeWidth={2.4} className="opacity-70" />
     </button>

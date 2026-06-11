@@ -37,31 +37,31 @@ export default function ProgressTierHero({ tierId, metaLine, promotionProgress }
       {tierId === 'v10' && <DiamondShimmer size="lg" intensity="soft" />}
       <div className="flex items-center justify-between mb-0 relative z-10">
         <p className="ct-eyebrow text-ct-terra-soft">Current tier</p>
-        <ChevronRight size={14} className="text-ct-cream/40" />
+        <ChevronRight size={14} className="text-ink-muted" />
       </div>
       <div className="text-2xl font-bold text-ct-cream -tracking-[0.025em] mt-1 mb-0.5">
         {tierId === 'v10' ? 'V10+' : tierId.toUpperCase()} · {tierName}
       </div>
-      <div className="text-xs text-ct-cream/60 mb-3">{metaLine}</div>
+      <div className="text-xs text-ink-soft mb-3">{metaLine}</div>
 
       {isApex ? (
-        <div className="text-xs text-ct-cream/50 italic">Apex tier — V10+ {tierName}.</div>
+        <div className="text-xs text-ink-muted italic">Apex tier — V10+ {tierName}.</div>
       ) : (
         <>
           <div className="flex items-baseline justify-between text-[11px] mb-1.5">
-            <span className="text-ct-cream/60 uppercase tracking-[0.05em] font-semibold">
+            <span className="text-ink-soft uppercase tracking-[0.05em] font-semibold">
               Promotion to {nextId.toUpperCase()} · {nextName}
             </span>
             <span className="text-ct-cream font-bold tabular-nums -tracking-[0.01em]">
               {promotionProgress.current}
-              <span className="text-ct-cream/30 font-medium">/{promotionProgress.goal}</span>
+              <span className="text-ink-muted font-medium">/{promotionProgress.goal}</span>
             </span>
           </div>
           <div className="h-[5px] rounded-full overflow-hidden bg-ct-hairline">
             <div className="h-full rounded-full bg-gradient-to-r from-ct-terracotta to-ct-terra-soft"
                  style={{ width: `${Math.round(frac * 100)}%` }} />
           </div>
-          <div className="text-[11px] text-ct-cream/50 mt-2">
+          <div className="text-[11px] text-ink-muted mt-2">
             {remaining} more {nextId.toUpperCase()} send{remaining === 1 ? '' : 's'} within 30 days to advance to {nextName}
           </div>
         </>

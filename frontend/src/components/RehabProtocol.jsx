@@ -36,20 +36,20 @@ function ExerciseCard({ exercise, index }) {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-ct-cream leading-tight">{exercise.name}</p>
-          <p className="text-[11px] text-ct-cream/60 mt-0.5">{exercise.area}</p>
+          <p className="text-[11px] text-ink-soft mt-0.5">{exercise.area}</p>
           {/* Quick stats row */}
           <div className="flex flex-wrap gap-3 mt-2">
-            <span className="flex items-center gap-1 text-[10px] text-ct-cream/60">
+            <span className="flex items-center gap-1 text-[10px] text-ink-soft">
               <Repeat size={9} className="text-accent/60" />
               {exercise.sets} sets · {exercise.reps}
             </span>
-            <span className="flex items-center gap-1 text-[10px] text-ct-cream/60">
+            <span className="flex items-center gap-1 text-[10px] text-ink-soft">
               <Clock size={9} className="text-accent2/60" />
               {exercise.frequency}
             </span>
           </div>
         </div>
-        <div className="shrink-0 text-ct-cream/40 mt-1">
+        <div className="shrink-0 text-ink-muted mt-1">
           {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </div>
       </button>
@@ -65,7 +65,7 @@ function ExerciseCard({ exercise, index }) {
             className="overflow-hidden"
           >
             <div className="px-4 pb-4 space-y-3 border-t border-ct-hairline pt-3">
-              <p className="text-xs text-ct-cream/60 leading-relaxed italic">{exercise.rationale}</p>
+              <p className="text-xs text-ink-soft leading-relaxed italic">{exercise.rationale}</p>
 
               <a
                 href={buildExerciseVideoUrl(exercise)}
@@ -83,7 +83,7 @@ function ExerciseCard({ exercise, index }) {
                   <CheckCircle2 size={12} className="text-accent shrink-0 mt-0.5" />
                   <div>
                     <p className="text-[10px] font-semibold text-accent uppercase tracking-wide mb-0.5">What it should feel like</p>
-                    <p className="text-xs text-ct-cream/60">{exercise.feel}</p>
+                    <p className="text-xs text-ink-soft">{exercise.feel}</p>
                   </div>
                 </div>
 
@@ -91,7 +91,7 @@ function ExerciseCard({ exercise, index }) {
                   <AlertTriangle size={12} className="text-accent2 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-[10px] font-semibold text-accent2 uppercase tracking-wide mb-0.5">Stop if</p>
-                    <p className="text-xs text-ct-cream/60">{exercise.red_flags}</p>
+                    <p className="text-xs text-ink-soft">{exercise.red_flags}</p>
                   </div>
                 </div>
 
@@ -99,7 +99,7 @@ function ExerciseCard({ exercise, index }) {
                   <Zap size={12} className="text-accent3 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-[10px] font-semibold text-accent3 uppercase tracking-wide mb-0.5">Progress when</p>
-                    <p className="text-xs text-ct-cream/60">{exercise.progression_trigger}</p>
+                    <p className="text-xs text-ink-soft">{exercise.progression_trigger}</p>
                   </div>
                 </div>
               </div>
@@ -119,7 +119,7 @@ function PhaseLockGate({ onUpgrade }) {
       </div>
       <div>
         <p className="text-sm font-semibold text-ct-cream">Subscription required</p>
-        <p className="text-xs text-ct-cream/60 mt-1 max-w-xs">
+        <p className="text-xs text-ink-soft mt-1 max-w-xs">
           Phase 2 &amp; 3 progressions are part of the subscription — full periodized protocols mapped to your injury. Free 14-day trial, then $7.99/mo.
         </p>
       </div>
@@ -163,7 +163,7 @@ export default function RehabProtocol({ region, severity, user, compact = false 
             Rehab Protocol — {region}
           </h3>
           {severity && (
-            <p className="text-xs text-ct-cream/60 mt-0.5">Based on: {severity} presentation</p>
+            <p className="text-xs text-ink-soft mt-0.5">Based on: {severity} presentation</p>
           )}
         </div>
       )}
@@ -190,8 +190,8 @@ export default function RehabProtocol({ region, severity, user, compact = false 
                 active
                   ? 'ct-surface text-accent shadow border border-accent/20'
                   : locked
-                  ? 'text-ct-cream/30 hover:text-ct-cream/60'
-                  : 'text-ct-cream/60 hover:text-ct-cream'
+                  ? 'text-ink-muted hover:text-ink-soft'
+                  : 'text-ink-soft hover:text-ct-cream'
               }`}
             >
               <span className="flex items-center gap-1">
@@ -207,7 +207,7 @@ export default function RehabProtocol({ region, severity, user, compact = false 
       {/* Phase subtitle */}
       <div>
         <p className="text-xs font-semibold text-ct-cream">{PHASE_LABELS[activePhase].sub}</p>
-        <p className="text-[11px] text-ct-cream/60">{PHASE_LABELS[activePhase].weeks} · {exercises.length} exercises</p>
+        <p className="text-[11px] text-ink-soft">{PHASE_LABELS[activePhase].weeks} · {exercises.length} exercises</p>
       </div>
 
       {/* Content */}

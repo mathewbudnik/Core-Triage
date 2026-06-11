@@ -348,20 +348,20 @@ function BodyDiagram({ selected, onSelect }) {
                   type="button"
                   onClick={handleCancel}
                   aria-label="Close"
-                  className="absolute top-3 right-3 w-10 h-10 rounded-full bg-panel border border-outline flex items-center justify-center text-ct-cream/60 hover:text-ct-cream hover:bg-panel2 active:bg-outline transition-colors"
+                  className="absolute top-3 right-3 w-10 h-10 rounded-full bg-panel border border-outline flex items-center justify-center text-ink-soft hover:text-ct-cream hover:bg-panel2 active:bg-outline transition-colors"
                   style={{ touchAction: 'manipulation' }}
                 >
                   <X size={18} />
                 </button>
 
                 <div className="text-center space-y-1.5">
-                  <p className="text-[11px] font-semibold text-ct-cream/50 uppercase tracking-widest">
+                  <p className="text-[11px] font-semibold text-ink-muted uppercase tracking-widest">
                     You selected
                   </p>
                   <h3 className="text-3xl font-bold text-ct-cream tracking-tight">
                     {zone.label}
                   </h3>
-                  <p className="text-sm text-ct-cream/60">{zone.desc}</p>
+                  <p className="text-sm text-ink-soft">{zone.desc}</p>
                 </div>
 
                 <div className="space-y-2">

@@ -43,7 +43,7 @@ export default function ChatPicker({ user, onSelectCoach, onSelectAI, onSelectAn
         className="text-center mb-8"
       >
         <h2 className="text-xl font-bold text-ct-cream">How do you want to chat?</h2>
-        <p className="text-sm text-ct-cream/60 mt-1.5 max-w-md mx-auto">
+        <p className="text-sm text-ink-soft mt-1.5 max-w-md mx-auto">
           Both options stay available — pick whichever fits right now.
         </p>
       </motion.div>
@@ -71,10 +71,10 @@ export default function ChatPicker({ user, onSelectCoach, onSelectAI, onSelectAn
                 Coaching
               </span>
             </div>
-            <p className="text-xs text-ct-cream/60 mt-1.5 leading-relaxed">
+            <p className="text-xs text-ink-soft mt-1.5 leading-relaxed">
               Send video of your project — get a beta breakdown and training feedback from an outdoor V13 boulderer and USAC-certified routesetter with a decade in the sport. Plus direct messaging for return-to-climb and load-management calls.
             </p>
-            <p className="text-[10px] text-ct-cream/50 mt-2">
+            <p className="text-[10px] text-ink-muted mt-2">
               Replies in 24–48h
             </p>
           </div>
@@ -100,7 +100,7 @@ export default function ChatPicker({ user, onSelectCoach, onSelectAI, onSelectAn
                 Free trial
               </span>
             </div>
-            <p className="text-xs text-ct-cream/60 mt-1.5 leading-relaxed">
+            <p className="text-xs text-ink-soft mt-1.5 leading-relaxed">
               Climbing-trained assistant — technique, training, movement, and injury triage. 5 free answers, then unlimited during your 14-day trial and with a subscription.
             </p>
           </div>
@@ -126,7 +126,7 @@ export default function ChatPicker({ user, onSelectCoach, onSelectAI, onSelectAn
                 Beta
               </span>
             </div>
-            <p className="text-xs text-ct-cream/60 mt-1.5 leading-relaxed">
+            <p className="text-xs text-ink-soft mt-1.5 leading-relaxed">
               Upload a climbing clip and see a frame-by-frame skeleton overlay of your movement. Runs entirely on your device — no upload to a server.
             </p>
           </div>
@@ -137,7 +137,7 @@ export default function ChatPicker({ user, onSelectCoach, onSelectAI, onSelectAn
         </button>
       </motion.div>
 
-      <p className="text-[10px] text-ct-cream/30 mt-6 text-center max-w-md">
+      <p className="text-[10px] text-ink-muted mt-6 text-center max-w-md">
         Educational only — not a medical diagnosis. If symptoms are severe or worsening, seek professional evaluation.
       </p>
     </div>

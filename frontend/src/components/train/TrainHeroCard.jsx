@@ -53,7 +53,7 @@ export default function TrainHeroCard({
         <h2 className="text-[26px] font-extrabold -tracking-[0.025em] leading-tight mb-2 text-ct-cream">
           Ready to build<br/>your plan
         </h2>
-        <p className="text-[12.5px] font-semibold text-ct-cream/60 leading-snug mb-4">
+        <p className="text-[12.5px] font-semibold text-ink-soft leading-snug mb-4">
           We'll generate a 4-week personalised plan based on your profile and
           adapt it around any injuries in your history.
         </p>
@@ -115,7 +115,7 @@ export default function TrainHeroCard({
       <h2 className="text-[28px] font-extrabold -tracking-[0.025em] leading-[1.05] mb-2.5 text-ct-cream">
         {title}
       </h2>
-      <p className="text-[12.5px] font-semibold text-ct-cream/60 leading-snug mb-5">
+      <p className="text-[12.5px] font-semibold text-ink-soft leading-snug mb-5">
         {subtitle}
       </p>
 
@@ -130,7 +130,7 @@ export default function TrainHeroCard({
               'font-extrabold text-[12.5px] -tracking-[0.01em]',
               today
                 ? 'bg-ct-terra-tint border border-ct-terracotta/30 text-ct-terra-soft hover:bg-ct-terracotta/10 transition-colors'
-                : 'bg-white/[0.06] text-ct-cream/70 border border-white/[0.14]',
+                : 'bg-white/[0.06] text-ink-soft border border-white/[0.14]',
             ].join(' ')}
           >
             {today ? 'Start session' : 'View session'}

@@ -302,7 +302,7 @@ export default function TriageWizard({
             multi
             onChange={onPickSignals}
           />
-          <p className="text-[11px] text-ct-cream/60 mt-2">Pick all that apply — or skip.</p>
+          <p className="text-[11px] text-ink-soft mt-2">Pick all that apply — or skip.</p>
         </TriageSectionCard>
       </AnimatePresence>
 

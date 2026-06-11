@@ -18,7 +18,7 @@ export default function LogModeToggle({ value, onChange }) {
               'flex-1 flex flex-col items-center py-2 rounded-lg transition-colors',
               active
                 ? 'bg-ct-terracotta/15 text-ct-terra-soft'
-                : 'text-ct-cream/60',
+                : 'text-ink-soft',
             ].join(' ')}
           >
             <span className="text-xs font-bold">{m.label}</span>

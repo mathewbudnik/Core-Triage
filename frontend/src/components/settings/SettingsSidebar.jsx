@@ -21,7 +21,7 @@ const ITEMS = [
 export default function SettingsSidebar({ active, onNavigate }) {
   return (
     <aside className="hidden lg:block sticky top-[78px] self-start">
-      <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-ct-cream/30 mb-3 px-3">
+      <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted mb-3 px-3">
         Settings
       </div>
       <nav aria-label="Settings sections" className="flex flex-col space-y-1">
@@ -38,7 +38,7 @@ export default function SettingsSidebar({ active, onNavigate }) {
                   ? ''
                   : danger
                     ? 'text-red-400/55 hover:text-red-400 hover:bg-red-500/5 border-transparent'
-                    : 'text-ct-cream/60 hover:text-ct-cream hover:bg-ct-hairline border-transparent')
+                    : 'text-ink-soft hover:text-ct-cream hover:bg-ct-hairline border-transparent')
               }
               style={isActive ? {
                 background: 'rgba(217,119,87,0.12)',

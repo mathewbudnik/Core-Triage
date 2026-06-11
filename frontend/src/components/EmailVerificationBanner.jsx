@@ -30,14 +30,14 @@ export default function EmailVerificationBanner({ user, onDismiss }) {
           Verify your email
         </span>
       </div>
-      <span className="text-ct-cream/60 hidden sm:inline">
+      <span className="text-ink-soft hidden sm:inline">
         We sent a verification link to <strong className="text-ct-cream">{user.email}</strong>.
       </span>
 
       {state === 'sent' ? (
         <span className="text-accent font-medium">✓ Email sent — check your inbox</span>
       ) : state === 'sending' ? (
-        <span className="text-ct-cream/60 flex items-center gap-1">
+        <span className="text-ink-soft flex items-center gap-1">
           <Loader2 size={11} className="animate-spin" /> Sending…
         </span>
       ) : (
@@ -55,7 +55,7 @@ export default function EmailVerificationBanner({ user, onDismiss }) {
 
       <button
         onClick={onDismiss}
-        className="ml-auto text-ct-cream/60 hover:text-ct-cream transition-colors"
+        className="ml-auto text-ink-soft hover:text-ct-cream transition-colors"
         aria-label="Dismiss"
       >
         <X size={13} />

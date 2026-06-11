@@ -36,11 +36,11 @@ export default function LegalModal({ document, onClose }) {
         <div className="px-6 py-4 border-b border-ct-hairline flex items-center justify-between bg-ct-forest">
           <div>
             <h2 className="text-base font-bold text-ct-cream">{document.title}</h2>
-            <p className="text-xs text-ct-cream/60 mt-0.5">Effective {document.effective}</p>
+            <p className="text-xs text-ink-soft mt-0.5">Effective {document.effective}</p>
           </div>
           <button
             onClick={onClose}
-            className="text-ct-cream/60 hover:text-ct-cream transition-colors"
+            className="text-ink-soft hover:text-ct-cream transition-colors"
             aria-label="Close"
           >
             <X size={18} />
@@ -49,7 +49,7 @@ export default function LegalModal({ document, onClose }) {
 
         {/* Body — scrollable */}
         <div className="px-6 py-5 overflow-y-auto flex-1">
-          <p className="text-sm text-ct-cream/60 leading-relaxed mb-5">
+          <p className="text-sm text-ink-soft leading-relaxed mb-5">
             {document.intro}
           </p>
 
@@ -60,7 +60,7 @@ export default function LegalModal({ document, onClose }) {
               </h3>
               <div className="space-y-2">
                 {section.body.map((para, j) => (
-                  <p key={j} className="text-xs text-ct-cream/60 leading-relaxed">
+                  <p key={j} className="text-xs text-ink-soft leading-relaxed">
                     {para}
                   </p>
                 ))}
@@ -74,7 +74,7 @@ export default function LegalModal({ document, onClose }) {
         <div className="px-6 py-3 border-t border-ct-hairline bg-ct-forest flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-ct-hairline text-ct-cream/80 border border-ct-rim hover:brightness-110 transition-all duration-200"
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-ct-hairline text-ink-soft border border-ct-rim hover:brightness-110 transition-all duration-200"
           >
             Close
           </button>

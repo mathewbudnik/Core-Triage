@@ -33,7 +33,7 @@ export default function CrashFallback({ error, resetError, eventId }) {
           </div>
           <div>
             <h1 className="text-lg font-bold text-ct-cream">Something broke</h1>
-            <p className="text-sm text-ct-cream/60 mt-1.5 leading-relaxed">
+            <p className="text-sm text-ink-soft mt-1.5 leading-relaxed">
               CoreTriage hit an unexpected error and couldn't recover. Reloading
               usually clears it. If it keeps happening, send us a quick note.
             </p>
@@ -41,10 +41,10 @@ export default function CrashFallback({ error, resetError, eventId }) {
         </div>
 
         <details className="bg-ct-forest border border-ct-hairline rounded-lg px-3 py-2 text-left">
-          <summary className="text-[11px] text-ct-cream/50 cursor-pointer select-none">
+          <summary className="text-[11px] text-ink-muted cursor-pointer select-none">
             Technical detail
           </summary>
-          <p className="text-[11px] text-ct-cream/40 mt-2 break-all font-mono leading-relaxed">
+          <p className="text-[11px] text-ink-muted mt-2 break-all font-mono leading-relaxed">
             {errorMessage}
           </p>
         </details>

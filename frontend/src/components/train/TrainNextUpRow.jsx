@@ -34,7 +34,7 @@ export default function TrainNextUpRow({ weekDates, plan, fromDay, onSelectDay }
   const next = findNext(weekDates, fromDay, plan)
   if (!next) {
     return (
-      <p className="mt-3 px-1 text-[11.5px] font-semibold text-ct-cream/30 italic">
+      <p className="mt-3 px-1 text-[11.5px] font-semibold text-ink-muted italic">
         End of the week — review your plan ›
       </p>
     )
@@ -50,9 +50,9 @@ export default function TrainNextUpRow({ weekDates, plan, fromDay, onSelectDay }
     <button
       type="button"
       onClick={() => onSelectDay(next.iso)}
-      className="mt-3 px-1 text-left text-[11.5px] font-semibold text-ct-cream/30 hover:text-ct-cream transition-colors"
+      className="mt-3 px-1 text-left text-[11.5px] font-semibold text-ink-muted hover:text-ct-cream transition-colors"
     >
-      Next: <span className="font-bold text-ct-cream/60">{label}</span> ›
+      Next: <span className="font-bold text-ink-soft">{label}</span> ›
     </button>
   )
 }

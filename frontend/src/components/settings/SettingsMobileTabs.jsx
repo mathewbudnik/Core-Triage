@@ -56,7 +56,7 @@ export default function SettingsMobileTabs({ active, onNavigate }) {
                   ? ''
                   : danger
                     ? 'text-red-400/55 border-transparent hover:text-red-400'
-                    : 'text-ct-cream/60 border-transparent hover:text-ct-cream')
+                    : 'text-ink-soft border-transparent hover:text-ct-cream')
               }
               style={isActive ? {
                 background: 'rgba(217,119,87,0.12)',

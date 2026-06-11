@@ -80,7 +80,7 @@ export default function RecoverActiveView({
         <h1 className="text-[22px] font-extrabold leading-tight tracking-tight mb-1 text-ct-cream">
           {region}{hasExercises ? ` · Phase ${phase}` : ''}
         </h1>
-        <p className="text-xs text-ct-cream/60 mb-3">
+        <p className="text-xs text-ink-soft mb-3">
           {hasExercises
             ? `Day ${rp?.dayInPhase ?? 1} of ${rp?.phaseLength ?? 14} · pain at or below 3/10.`
             : 'Read your guidance below and follow the action plan.'}
@@ -90,7 +90,7 @@ export default function RecoverActiveView({
 
         {hasExercises && (
           <div className="mt-3 px-3 py-2.5 rounded-xl bg-panel2/60 border border-outline/60">
-            <div className="flex justify-between text-[11px] text-ct-cream/60 mb-1.5">
+            <div className="flex justify-between text-[11px] text-ink-soft mb-1.5">
               <span>Today's progress</span>
               <strong className="text-ct-cream font-bold">{doneCount} / {exercises.length}</strong>
             </div>
@@ -134,7 +134,7 @@ export default function RecoverActiveView({
                 <LogIn size={14} className="text-accent shrink-0 mt-0.5" strokeWidth={2.4} />
                 <span className="min-w-0">
                   <span className="block text-[12px] font-bold text-ct-cream">Save this plan</span>
-                  <span className="block text-[11px] text-ct-cream/60 mt-0.5 leading-snug">
+                  <span className="block text-[11px] text-ink-soft mt-0.5 leading-snug">
                     Sign in to track progress, daily check-offs, and history.
                   </span>
                 </span>
@@ -179,7 +179,7 @@ export default function RecoverActiveView({
           >
             <span>
               <span className="block text-[13px] font-bold text-ct-cream">Something new hurts?</span>
-              <span className="block text-[11px] text-ct-cream/60 mt-0.5">
+              <span className="block text-[11px] text-ink-soft mt-0.5">
                 Quick screen — keeps your current plan.
               </span>
             </span>

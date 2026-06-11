@@ -51,10 +51,10 @@ const SEVERITY_VISUALS = {
   },
   polish: {
     label: 'Polish',
-    dotClass:    'text-ct-cream/70',
+    dotClass:    'text-ink-soft',
     border:      'border-ct-rim',
     bg:          'bg-ct-hairline',
-    badgeText:   'text-ct-cream/70',
+    badgeText:   'text-ink-soft',
   },
 }
 
@@ -85,7 +85,7 @@ export default function AnalysisReport({ findings, thumbnails, onJumpTo }) {
         <Activity size={16} className="text-ct-terra-soft flex-shrink-0 mt-0.5" />
         <div>
           <p className="text-sm font-bold text-ct-cream">Nothing to call out on this clip.</p>
-          <p className="text-xs text-ct-cream/55 mt-1 leading-snug">
+          <p className="text-xs text-ink-soft mt-1 leading-snug">
             The analyzer didn't find any sustained technique flags or notable wins.
             Try a clip with a longer attempt or a different angle — early detectors
             only catch a few specific patterns.
@@ -126,11 +126,11 @@ export default function AnalysisReport({ findings, thumbnails, onJumpTo }) {
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-ct-cream">
               {showTakeaway ? 'Other findings' : 'Findings'}{' '}
-              <span className="text-ct-cream/45 font-normal">
+              <span className="text-ink-muted font-normal">
                 ({showTakeaway ? restFlags.length : rankedFlags.length})
               </span>
             </h3>
-            <p className="text-[10px] text-ct-cream/45">
+            <p className="text-[10px] text-ink-muted">
               Tap a card for details
             </p>
           </div>
@@ -169,10 +169,10 @@ export default function AnalysisReport({ findings, thumbnails, onJumpTo }) {
  * fired once. Sorted by descending count.
  */
 const REGION_TINTS = {
-  'shoulders-arms': 'border-ct-rim text-ct-cream/85 bg-ct-hairline',
+  'shoulders-arms': 'border-ct-rim text-ink-soft bg-ct-hairline',
   'hips-core':       'border-ct-terracotta/40 text-ct-terra-soft bg-ct-terra-tint/60',
-  'knees-feet':      'border-ct-rim text-ct-cream/85 bg-ct-hairline',
-  'head-gaze':       'border-ct-rim text-ct-cream/85 bg-ct-hairline',
+  'knees-feet':      'border-ct-rim text-ink-soft bg-ct-hairline',
+  'head-gaze':       'border-ct-rim text-ink-soft bg-ct-hairline',
 }
 
 function RegionSummary({ flags }) {
@@ -188,7 +188,7 @@ function RegionSummary({ flags }) {
   const entries = [...totals.entries()].sort((a, b) => b[1] - a[1])
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-ct-cream/45">
+      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-muted">
         By region
       </span>
       {entries.map(([region, count]) => (
@@ -226,7 +226,7 @@ const SEVERITY_BORDER = {
 const SEVERITY_DOT = {
   critical:  'text-red-400',
   important: 'text-ct-terra-soft',
-  polish:    'text-ct-cream/70',
+  polish:    'text-ink-soft',
 }
 
 function CompoundMoments({ moments, onJumpTo }) {
@@ -237,11 +237,11 @@ function CompoundMoments({ moments, onJumpTo }) {
         <span className="text-[11px] font-bold uppercase tracking-[0.13em] text-ct-terra-soft">
           Moments to study
         </span>
-        <span className="text-[10px] text-ct-cream/45 ml-1">
+        <span className="text-[10px] text-ink-muted ml-1">
           ({moments.length})
         </span>
       </div>
-      <p className="text-[11px] text-ct-cream/55 leading-snug -mt-1">
+      <p className="text-[11px] text-ink-soft leading-snug -mt-1">
         Single moves where multiple issues fired together — usually one fix addresses them all.
       </p>
       <ul className="flex flex-col gap-2">
@@ -262,11 +262,11 @@ function CompoundMomentRow({ moment, onJumpTo }) {
     <li className={`rounded-lg border ${border} p-3 flex items-start gap-3`}>
       <div className="flex-1 min-w-0 flex flex-col gap-1.5">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-ct-cream/55">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-ink-soft">
             {regions}
           </span>
-          <span className="text-[10px] text-ct-cream/40">·</span>
-          <span className="text-[10px] text-ct-cream/55 ct-tnum">
+          <span className="text-[10px] text-ink-muted">·</span>
+          <span className="text-[10px] text-ink-soft ct-tnum">
             {formatTime(moment.ts)}
           </span>
         </div>
@@ -279,7 +279,7 @@ function CompoundMomentRow({ moment, onJumpTo }) {
                 fill="currentColor"
                 className={`flex-shrink-0 ${SEVERITY_DOT[r.severity] || SEVERITY_DOT.polish}`}
               />
-              <span className="text-ct-cream/85 leading-snug">{r.name}</span>
+              <span className="text-ink-soft leading-snug">{r.name}</span>
             </li>
           ))}
         </ul>
@@ -314,7 +314,7 @@ function WhatWorked({ wins, onJumpTo }) {
         <span className="text-[11px] font-bold uppercase tracking-[0.13em] text-emerald-300">
           What worked
         </span>
-        <span className="text-[10px] text-ct-cream/45 ml-1">
+        <span className="text-[10px] text-ink-muted ml-1">
           ({wins.length})
         </span>
       </div>
@@ -336,7 +336,7 @@ function WinRow({ win, onJumpTo }) {
       <div className="flex-1 min-w-0 flex flex-col gap-0.5">
         <p className="text-sm text-ct-cream leading-snug">
           <span className="font-semibold">{win.name}</span>
-          <span className="text-ct-cream/70"> — {win.cue}</span>
+          <span className="text-ink-soft"> — {win.cue}</span>
         </p>
         {firstTs != null && (
           <button
@@ -401,16 +401,16 @@ function FindingCard({ finding, thumbnail, onJumpTo, feedback, onMarkWrong, onUn
           {/* Name + cue */}
           <div>
             <h4 className="text-sm font-bold text-ct-cream leading-tight">{finding.name}</h4>
-            <p className="text-sm text-ct-cream/85 mt-0.5 leading-snug">{finding.cue}</p>
+            <p className="text-sm text-ink-soft mt-0.5 leading-snug">{finding.cue}</p>
             {showMisfireHint && (
-              <p className="text-[10px] text-ct-cream/45 mt-1.5 leading-snug italic">
+              <p className="text-[10px] text-ink-muted mt-1.5 leading-snug italic">
                 You&rsquo;ve flagged this rule wrong {totalWrong} times before — does it fit this clip?
               </p>
             )}
           </div>
         </div>
         {/* Chevron */}
-        <span className="flex-shrink-0 text-ct-cream/45 mt-1">
+        <span className="flex-shrink-0 text-ink-muted mt-1">
           <ChevronDown
             size={16}
             className={`transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
@@ -429,7 +429,7 @@ function FindingCard({ finding, thumbnail, onJumpTo, feedback, onMarkWrong, onUn
 
       {/* Instances row — always visible */}
       <div className="px-3 pb-3 pt-1 flex flex-wrap items-center gap-1.5">
-        <span className="text-[10px] text-ct-cream/55 mr-1">
+        <span className="text-[10px] text-ink-soft mr-1">
           {finding.instanceCount === 1 ? '1 instance' : `${finding.instanceCount} instances`}
         </span>
         {finding.timestamps.map((ms, i) => (
@@ -437,7 +437,7 @@ function FindingCard({ finding, thumbnail, onJumpTo, feedback, onMarkWrong, onUn
             key={i}
             type="button"
             onClick={(e) => { e.stopPropagation(); onJumpTo(ms) }}
-            className="flex items-center gap-1 text-[11px] font-semibold text-ct-cream/80 hover:text-ct-cream bg-ct-forest/80 hover:bg-ct-forest border border-ct-rim hover:border-ct-terracotta/50 px-2 py-1 rounded-md transition-colors ct-tnum"
+            className="flex items-center gap-1 text-[11px] font-semibold text-ink-soft hover:text-ct-cream bg-ct-forest/80 hover:bg-ct-forest border border-ct-rim hover:border-ct-terracotta/50 px-2 py-1 rounded-md transition-colors ct-tnum"
           >
             {formatTime(ms)}
             <ChevronRight size={10} />
@@ -456,8 +456,8 @@ function FindingCard({ finding, thumbnail, onJumpTo, feedback, onMarkWrong, onUn
             }}
             className={`ml-auto flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md border transition-colors ${
               markedWrong
-                ? 'bg-ct-hairline border-ct-rim text-ct-cream/85'
-                : 'border-transparent text-ct-cream/40 hover:text-ct-cream/75 hover:border-ct-rim'
+                ? 'bg-ct-hairline border-ct-rim text-ink-soft'
+                : 'border-transparent text-ink-muted hover:text-ink-soft hover:border-ct-rim'
             }`}
             aria-pressed={markedWrong}
             title={markedWrong ? 'You marked this as wrong — tap to undo' : 'Mark as wrong'}
@@ -474,10 +474,10 @@ function FindingCard({ finding, thumbnail, onJumpTo, feedback, onMarkWrong, onUn
 function Section({ label, children }) {
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-[10px] font-bold uppercase tracking-[0.13em] text-ct-cream/45">
+      <span className="text-[10px] font-bold uppercase tracking-[0.13em] text-ink-muted">
         {label}
       </span>
-      <p className="text-xs text-ct-cream/70 leading-relaxed">{children}</p>
+      <p className="text-xs text-ink-soft leading-relaxed">{children}</p>
     </div>
   )
 }

@@ -38,9 +38,9 @@ export default function SessionSummaryOverlay({ open, onClose, events = [], tota
                   transition={{ ...t, delay: 0.05 + i * 0.06 }}
                   className="flex justify-between items-center text-sm"
                 >
-                  <span className="text-ct-cream/90">
+                  <span className="text-ink-soft">
                     {e.label}
-                    {e.sublabel && <span className="ml-2 text-ct-cream/50 text-xs">{e.sublabel}</span>}
+                    {e.sublabel && <span className="ml-2 text-ink-muted text-xs">{e.sublabel}</span>}
                   </span>
                   {typeof e.xp === 'number' && (
                     <span className="ct-tnum text-ct-terra-soft font-bold">+{e.xp}</span>

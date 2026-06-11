@@ -62,7 +62,7 @@ export default function LogSendQuick({ sessionType, engineState, onCommit }) {
                   'px-3 py-2 rounded-xl text-sm font-bold border',
                   active
                     ? 'bg-ct-terracotta/15 border-ct-terracotta/45 text-ct-terra-soft'
-                    : 'bg-transparent border-ct-hairline text-ct-cream/70',
+                    : 'bg-transparent border-ct-hairline text-ink-soft',
                 ].join(' ')}
               >
                 {g}
@@ -87,7 +87,7 @@ export default function LogSendQuick({ sessionType, engineState, onCommit }) {
                 'flex flex-col items-start px-3 py-2 rounded-xl border text-left',
                 active
                   ? 'bg-ct-moss/15 border-ct-moss/40 text-ct-cream'
-                  : 'bg-transparent border-ct-hairline text-ct-cream/70',
+                  : 'bg-transparent border-ct-hairline text-ink-soft',
               ].join(' ')}
             >
               <span className="text-sm font-bold">{o.label}</span>
@@ -109,7 +109,7 @@ export default function LogSendQuick({ sessionType, engineState, onCommit }) {
           'w-full py-2.5 rounded-xl text-sm font-bold',
           grade
             ? 'bg-ct-terracotta text-white'
-            : 'bg-ct-cream/10 text-ct-cream/40 cursor-not-allowed',
+            : 'bg-ct-cream/10 text-ink-muted cursor-not-allowed',
         ].join(' ')}
       >
         {grade ? `Add ${grade}` : 'Pick a grade'}

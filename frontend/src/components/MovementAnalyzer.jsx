@@ -908,7 +908,7 @@ export default function MovementAnalyzer() {
                   style={{ width: `${progress.total > 0 ? Math.round((progress.frame / progress.total) * 100) : 0}%` }}
                 />
               </div>
-              <div className="flex items-center justify-between text-[11px] text-ct-cream/60 ct-tnum">
+              <div className="flex items-center justify-between text-[11px] text-ink-soft ct-tnum">
                 <span>Sampling frame {progress.frame} of {progress.total}</span>
                 <span>{progress.total > 0 ? Math.round((progress.frame / progress.total) * 100) : 0}%</span>
               </div>
@@ -916,7 +916,7 @@ export default function MovementAnalyzer() {
             <button
               type="button"
               onClick={() => { cancelRef.current = true; resetToIdle() }}
-              className="self-end flex items-center gap-1.5 text-xs text-ct-cream/70 hover:text-ct-cream px-3 py-1.5 rounded-lg bg-ct-hairline border border-ct-rim hover:border-ct-terracotta/50 transition-colors"
+              className="self-end flex items-center gap-1.5 text-xs text-ink-soft hover:text-ct-cream px-3 py-1.5 rounded-lg bg-ct-hairline border border-ct-rim hover:border-ct-terracotta/50 transition-colors"
             >
               <X size={12} />
               Cancel
@@ -946,7 +946,7 @@ export default function MovementAnalyzer() {
                   style={{ width: `${pct}%` }}
                 />
               </div>
-              <div className="flex items-center justify-between text-[11px] text-ct-cream/60 ct-tnum">
+              <div className="flex items-center justify-between text-[11px] text-ink-soft ct-tnum">
                 <span>
                   {contextReady && !modelReady
                     ? 'Waiting for pose model…'
@@ -964,7 +964,7 @@ export default function MovementAnalyzer() {
                 cancelRef.current = true
                 resetToIdle()
               }}
-              className="self-end flex items-center gap-1.5 text-xs text-ct-cream/70 hover:text-ct-cream px-3 py-1.5 rounded-lg bg-ct-hairline border border-ct-rim hover:border-ct-terracotta/50 transition-colors"
+              className="self-end flex items-center gap-1.5 text-xs text-ink-soft hover:text-ct-cream px-3 py-1.5 rounded-lg bg-ct-hairline border border-ct-rim hover:border-ct-terracotta/50 transition-colors"
             >
               <X size={12} />
               Cancel
@@ -1054,13 +1054,13 @@ export default function MovementAnalyzer() {
         {/* Ready-state toolbar */}
         {status === STATUS.READY && (
           <div className="flex items-center justify-between gap-3">
-            <p className="text-[11px] text-ct-cream/45 leading-snug">
+            <p className="text-[11px] text-ink-muted leading-snug">
               Processed entirely on-device — your video never leaves your phone.
             </p>
             <button
               type="button"
               onClick={resetToIdle}
-              className="flex items-center gap-1.5 text-xs text-ct-cream/70 hover:text-ct-cream px-3 py-1.5 rounded-lg bg-ct-hairline border border-ct-rim hover:border-ct-terracotta/50 transition-colors"
+              className="flex items-center gap-1.5 text-xs text-ink-soft hover:text-ct-cream px-3 py-1.5 rounded-lg bg-ct-hairline border border-ct-rim hover:border-ct-terracotta/50 transition-colors"
             >
               <RefreshCw size={12} />
               Replace video
@@ -1113,7 +1113,7 @@ function DropZone({ onPick, modelReady }) {
         <Upload size={20} />
       </div>
       <p className="text-sm font-bold text-ct-cream text-center">Drop a climbing clip here</p>
-      <p className="text-xs text-ct-cream/60 text-center max-w-[280px]">
+      <p className="text-xs text-ink-soft text-center max-w-[280px]">
         MP4, WebM, or MOV. Up to 400 MB. Trim a window up to {MAX_DURATION_S} seconds inside the app — shorter clips give the cleanest reads. Processed entirely on-device — your video never leaves your phone.
       </p>
       <button
@@ -1124,7 +1124,7 @@ function DropZone({ onPick, modelReady }) {
         Choose video
       </button>
       {!modelReady && (
-        <p className="text-[10px] text-ct-cream/50 text-center mt-1">
+        <p className="text-[10px] text-ink-muted text-center mt-1">
           You can pick a video now — analysis will start once the model finishes loading.
         </p>
       )}
@@ -1188,21 +1188,21 @@ function ClipQualityChip({ quality }) {
                 : calibrationSource === 'derived' ? 'borderline' : 'borderline'
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-ct-cream/65 px-1">
-      <span className="font-bold uppercase tracking-[0.12em] text-ct-cream/45">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-ink-soft px-1">
+      <span className="font-bold uppercase tracking-[0.12em] text-ink-muted">
         Analyzer
       </span>
       <QualitySignal tone={trackingTone}>
-        Tracking <span className="text-ct-cream/85 ct-tnum font-semibold">{trackedPct}%</span>
+        Tracking <span className="text-ink-soft ct-tnum font-semibold">{trackedPct}%</span>
         {droppedSanity > 0 && (
-          <span className="text-ct-cream/45 ct-tnum"> ({droppedSanity} dropped)</span>
+          <span className="text-ink-muted ct-tnum"> ({droppedSanity} dropped)</span>
         )}
       </QualitySignal>
       <QualitySignal tone={angleTone}>
-        Angle <span className="text-ct-cream/85 font-semibold">{angleLabel}</span>
+        Angle <span className="text-ink-soft font-semibold">{angleLabel}</span>
       </QualitySignal>
       <QualitySignal tone={calTone}>
-        Baseline <span className="text-ct-cream/85 font-semibold">{calLabel}</span>
+        Baseline <span className="text-ink-soft font-semibold">{calLabel}</span>
       </QualitySignal>
     </div>
   )
@@ -1238,11 +1238,11 @@ function AngleWarningBanner({ profile }) {
     ? "This clip looks like it was shot near 90° to the wall. Lateral-balance rules (barn-door, knee position, hip rotation) will be less accurate from this angle."
     : "This clip looks like it was shot head-on with the climber facing the camera. Vertical-body-line rules will be less accurate from this angle."
   return (
-    <div className="flex items-start gap-2 text-xs text-ct-cream/80 px-3 py-2 rounded-lg bg-ct-hairline border border-ct-rim">
+    <div className="flex items-start gap-2 text-xs text-ink-soft px-3 py-2 rounded-lg bg-ct-hairline border border-ct-rim">
       <Compass size={13} className="flex-shrink-0 mt-0.5 text-ct-terra-soft" />
       <div className="flex-1 leading-snug">
         <span className="font-bold text-ct-cream">Camera angle: </span>{msg}{' '}
-        <span className="text-ct-cream/55">For most accurate results, film at about 45° to the wall.</span>
+        <span className="text-ink-soft">For most accurate results, film at about 45° to the wall.</span>
       </div>
     </div>
   )
@@ -1297,20 +1297,20 @@ function CalibrationPanel({
         aria-expanded={open}
         className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-ct-hairline/40 transition-colors"
       >
-        <SourceIcon size={14} className={source === 'explicit' ? 'text-emerald-300 flex-shrink-0' : 'text-ct-cream/60 flex-shrink-0'} />
+        <SourceIcon size={14} className={source === 'explicit' ? 'text-emerald-300 flex-shrink-0' : 'text-ink-soft flex-shrink-0'} />
         <span className="text-xs font-bold text-ct-cream flex-1">
           Your body proportions
         </span>
-        <span className="text-[10px] text-ct-cream/55 mr-1">{sourceLabel}</span>
+        <span className="text-[10px] text-ink-soft mr-1">{sourceLabel}</span>
         <ChevronDown
           size={14}
-          className={`text-ct-cream/45 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`text-ink-muted transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
         />
       </button>
       {flash && (
         <div className="px-3 py-2 border-t border-ct-rim bg-emerald-500/[0.06] flex items-center gap-2">
           <CheckCircle2 size={12} className="text-emerald-300 flex-shrink-0" />
-          <span className="text-[11px] text-ct-cream/85 flex-1">
+          <span className="text-[11px] text-ink-soft flex-1">
             {flash === 'locked'
               ? 'Calibration saved — analysis is locked to your body proportions.'
               : 'Your body baseline was refined from this clip.'}
@@ -1318,7 +1318,7 @@ function CalibrationPanel({
           <button
             type="button"
             onClick={onDismissFlash}
-            className="text-ct-cream/55 hover:text-ct-cream"
+            className="text-ink-soft hover:text-ct-cream"
             aria-label="Dismiss"
           >
             <X size={12} />
@@ -1327,7 +1327,7 @@ function CalibrationPanel({
       )}
       {open && (
         <div className="border-t border-ct-rim px-3 py-3 flex flex-col gap-4">
-          <p className="text-[11px] text-ct-cream/60 leading-snug">
+          <p className="text-[11px] text-ink-soft leading-snug">
             The analyzer measures your technique relative to YOUR body —
             knee position vs. ankle, hip position vs. shoulder, etc.
             Calibrating gives those measurements a stable, accurate
@@ -1390,7 +1390,7 @@ function CalibrationPanel({
               <button
                 type="button"
                 onClick={onReset}
-                className="text-[11px] text-ct-cream/55 hover:text-ct-cream px-2 py-1 transition-colors ml-auto"
+                className="text-[11px] text-ink-soft hover:text-ct-cream px-2 py-1 transition-colors ml-auto"
               >
                 Reset
               </button>
@@ -1407,7 +1407,7 @@ function CalibrationPanel({
               }}
             />
           </div>
-          <p className="text-[10px] text-ct-cream/45 leading-snug">
+          <p className="text-[10px] text-ink-muted leading-snug">
             Stand straight, arms at your sides, facing the camera, full body in frame. 3 seconds is enough.
           </p>
         </div>
@@ -1609,7 +1609,7 @@ function CalibrationCameraCapture({ onDone, onCancel }) {
           <button
             type="button"
             onClick={handleCancel}
-            className="text-ct-cream/55 hover:text-ct-cream"
+            className="text-ink-soft hover:text-ct-cream"
             aria-label="Cancel"
           >
             <X size={14} />
@@ -1663,7 +1663,7 @@ function CalibrationCameraCapture({ onDone, onCancel }) {
         <div className="px-3 py-3 flex flex-col gap-2">
           {stage === 'preview' && (
             <>
-              <p className="text-[11px] text-ct-cream/60 leading-snug text-center">
+              <p className="text-[11px] text-ink-soft leading-snug text-center">
                 Stand back so your full body is in frame. Arms at your sides, facing the camera. We&rsquo;ll record 3 seconds.
               </p>
               <button
@@ -1677,20 +1677,20 @@ function CalibrationCameraCapture({ onDone, onCancel }) {
             </>
           )}
           {(stage === 'countdown' || stage === 'recording') && (
-            <p className="text-[11px] text-ct-cream/60 leading-snug text-center">
+            <p className="text-[11px] text-ink-soft leading-snug text-center">
               Hold still — full body visible.
             </p>
           )}
           {stage === 'review' && (
             <>
-              <p className="text-[11px] text-ct-cream/60 leading-snug text-center">
+              <p className="text-[11px] text-ink-soft leading-snug text-center">
                 Looks good?
               </p>
               <div className="flex items-center justify-center gap-2">
                 <button
                   type="button"
                   onClick={handleRetry}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-ct-hairline border border-ct-rim text-ct-cream/85 hover:text-ct-cream hover:border-ct-terracotta/60 transition"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-ct-hairline border border-ct-rim text-ink-soft hover:text-ct-cream hover:border-ct-terracotta/60 transition"
                 >
                   <RefreshCw size={11} />
                   Retake
@@ -1783,7 +1783,7 @@ function TipRow({ Icon, title, children }) {
       </div>
       <div className="flex-1">
         <p className="text-xs font-bold text-ct-cream leading-snug">{title}</p>
-        <p className="text-[11px] text-ct-cream/65 leading-snug mt-0.5">{children}</p>
+        <p className="text-[11px] text-ink-soft leading-snug mt-0.5">{children}</p>
       </div>
     </div>
   )
@@ -1819,8 +1819,8 @@ function ContextSummary({ context }) {
 
   return (
     <div className="flex flex-col gap-1.5 px-1">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-ct-cream/60">
-        <span className="font-bold uppercase tracking-[0.12em] text-ct-cream/45">This clip</span>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-ink-soft">
+        <span className="font-bold uppercase tracking-[0.12em] text-ink-muted">This clip</span>
         {venue && <Chip>{venueLabel(venue)}</Chip>}
         <Chip>{capitalize(wallAngle)}</Chip>
         <Chip>{capitalize(discipline)}</Chip>
@@ -1830,13 +1830,13 @@ function ContextSummary({ context }) {
           {outcome === 'sent' ? 'Sent' : `Fell${fallStr}`}
         </Chip>
         {focus.length > 0 && (
-          <span className="text-ct-cream/45">
-            Focus: <span className="text-ct-cream/70">{focus.map(capitalize).join(', ')}</span>
+          <span className="text-ink-muted">
+            Focus: <span className="text-ink-soft">{focus.map(capitalize).join(', ')}</span>
           </span>
         )}
       </div>
       {calibrationParts.length > 0 && (
-        <div className="flex items-center gap-1.5 text-[10px] text-ct-cream/50 leading-snug">
+        <div className="flex items-center gap-1.5 text-[10px] text-ink-muted leading-snug">
           <SlidersHorizontal size={10} className="text-ct-terra-soft/80 flex-shrink-0" />
           <span>
             Calibrated for {calibrationParts.join(' + ')} — only sustained, high-confidence flags surface.
@@ -1857,7 +1857,7 @@ function venueLabel(v) {
 function Chip({ children, tone }) {
   const toneClass =
     tone === 'accent' ? 'border-ct-terracotta/40 text-ct-terra-soft bg-ct-terra-tint' :
-                        'border-ct-rim text-ct-cream/70 bg-ct-hairline'
+                        'border-ct-rim text-ink-soft bg-ct-hairline'
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-semibold ${toneClass}`}>
       {children}
@@ -1885,10 +1885,10 @@ function ModelLoadProgress({ progress }) {
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-center gap-2 text-xs text-ct-cream/70">
+      <div className="flex items-center gap-2 text-xs text-ink-soft">
         <Loader2 size={12} className="animate-spin text-ct-terra-soft flex-shrink-0" />
         <span className="flex-1">Loading pose model…</span>
-        <span className="ct-tnum text-ct-cream/50">
+        <span className="ct-tnum text-ink-muted">
           {loadedMB} / {totalMB} MB
         </span>
       </div>

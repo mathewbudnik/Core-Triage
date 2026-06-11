@@ -12,7 +12,7 @@ export default function MovementAnalyzerView({ onBack }) {
       <div className="border-b border-ct-hairline px-4 md:px-6 py-3 flex items-center gap-3 bg-ct-forest-deep/40">
         <button
           onClick={onBack}
-          className="flex items-center gap-1 text-xs text-ct-cream/60 hover:text-ct-cream transition-colors"
+          className="flex items-center gap-1 text-xs text-ink-soft hover:text-ct-cream transition-colors"
           aria-label="Back to picker"
         >
           <ArrowLeft size={13} />

@@ -146,7 +146,7 @@ export default function UploadContextForm({ videoRef, durationS, maxTrimS = 60, 
     <div className="rounded-2xl bg-ct-forest-deep border border-ct-hairline p-5 md:p-6 flex flex-col gap-5">
       <div>
         <h3 className="text-base font-bold text-ct-cream">About this climb</h3>
-        <p className="text-xs text-ct-cream/55 mt-1 leading-snug">
+        <p className="text-xs text-ink-soft mt-1 leading-snug">
           A few quick questions before we analyze — they make the feedback much more accurate.
         </p>
       </div>
@@ -213,7 +213,7 @@ export default function UploadContextForm({ videoRef, durationS, maxTrimS = 60, 
                 className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold border transition-colors ${
                   selected
                     ? 'bg-ct-terracotta border-ct-terracotta text-ct-cream'
-                    : 'bg-ct-hairline border-ct-rim text-ct-cream/70 hover:border-ct-terracotta/50'
+                    : 'bg-ct-hairline border-ct-rim text-ink-soft hover:border-ct-terracotta/50'
                 }`}
               >
                 <Icon size={14} strokeWidth={2.2} />
@@ -255,7 +255,7 @@ export default function UploadContextForm({ videoRef, durationS, maxTrimS = 60, 
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
                   selected
                     ? 'bg-ct-terra-tint border-ct-terracotta/60 text-ct-terra-soft'
-                    : 'bg-ct-hairline border-ct-rim text-ct-cream/60 hover:border-ct-terracotta/40'
+                    : 'bg-ct-hairline border-ct-rim text-ink-soft hover:border-ct-terracotta/40'
                 }`}
               >
                 {selected && <CheckCircle2 size={11} />}
@@ -268,7 +268,7 @@ export default function UploadContextForm({ videoRef, durationS, maxTrimS = 60, 
 
       {/* Validation hint when fields are missing */}
       {!requiredOk && (
-        <div className="flex items-start gap-2 text-[11px] text-ct-cream/45 px-0.5">
+        <div className="flex items-start gap-2 text-[11px] text-ink-muted px-0.5">
           <AlertCircle size={12} className="mt-0.5 flex-shrink-0" />
           <span>
             {!venue && 'Where, '}
@@ -278,7 +278,7 @@ export default function UploadContextForm({ videoRef, durationS, maxTrimS = 60, 
             {!outcome && 'outcome, '}
             {outcome === 'fell' && fallTimeMs == null && 'fall frame, '}
             {!trimOk && `trim window (max ${maxTrimS}s), `}
-            <span className="text-ct-cream/35">— required.</span>
+            <span className="text-ink-muted">— required.</span>
           </span>
         </div>
       )}
@@ -288,7 +288,7 @@ export default function UploadContextForm({ videoRef, durationS, maxTrimS = 60, 
         <button
           type="button"
           onClick={onCancel}
-          className="text-xs text-ct-cream/60 hover:text-ct-cream px-3 py-2 rounded-lg transition-colors"
+          className="text-xs text-ink-soft hover:text-ct-cream px-3 py-2 rounded-lg transition-colors"
         >
           Cancel upload
         </button>
@@ -312,13 +312,13 @@ function Field({ label, hint, required, children }) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-baseline gap-2">
-        <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-ct-cream/55">
+        <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">
           {label}
         </span>
         {required && <span className="text-[10px] text-ct-terracotta">required</span>}
       </div>
       {children}
-      {hint && <p className="text-[11px] text-ct-cream/40 leading-snug">{hint}</p>}
+      {hint && <p className="text-[11px] text-ink-muted leading-snug">{hint}</p>}
     </div>
   )
 }
@@ -338,7 +338,7 @@ function PillGroup({ options, value, onChange }) {
             className={`px-3.5 py-2 rounded-xl text-sm font-bold border transition-colors ${
               selected
                 ? 'bg-ct-terracotta border-ct-terracotta text-ct-cream'
-                : 'bg-ct-hairline border-ct-rim text-ct-cream/70 hover:border-ct-terracotta/50'
+                : 'bg-ct-hairline border-ct-rim text-ink-soft hover:border-ct-terracotta/50'
             }`}
           >
             {opt.label}
@@ -365,7 +365,7 @@ function ScrollPillGroup({ options, value, onChange }) {
               className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-bold border transition-colors ct-tnum ${
                 selected
                   ? 'bg-ct-terracotta border-ct-terracotta text-ct-cream'
-                  : 'bg-ct-hairline border-ct-rim text-ct-cream/70 hover:border-ct-terracotta/50'
+                  : 'bg-ct-hairline border-ct-rim text-ink-soft hover:border-ct-terracotta/50'
               }`}
             >
               {opt.label}

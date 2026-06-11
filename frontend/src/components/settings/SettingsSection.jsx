@@ -64,7 +64,7 @@ export default function SettingsSection({ id, icon: Icon, title, sub, children, 
             {title}
           </h3>
           {sub && (
-            <div className={isDanger ? 'text-red-400/65 text-xs mt-1' : 'text-ct-cream/50 text-xs mt-1'}>
+            <div className={isDanger ? 'text-red-400/65 text-xs mt-1' : 'text-ink-muted text-xs mt-1'}>
               {sub}
             </div>
           )}

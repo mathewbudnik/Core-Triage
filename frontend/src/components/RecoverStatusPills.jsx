@@ -13,7 +13,7 @@ const TONE_CLASSES = {
   teal:   'text-accent  border-accent/40  bg-accent/10',
   coral:  'text-ct-moss border-ct-moss/40 bg-ct-moss/15',
   gold:   'text-accent3 border-accent3/40 bg-accent3/10',
-  muted:  'text-ct-cream/40 border-ct-hairline bg-ct-hairline',
+  muted:  'text-ink-muted border-ct-hairline bg-ct-hairline',
 }
 
 const LIVE_DOT_TONE = {

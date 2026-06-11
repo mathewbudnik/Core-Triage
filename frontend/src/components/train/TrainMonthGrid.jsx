@@ -66,7 +66,7 @@ export default function TrainMonthGrid({ year, monthIndex, plan, loggedDates, se
       <div className="grid grid-cols-7 gap-1 mb-1.5 px-0.5">
         {DAY_LETTER.map((l, i) => (
           <span key={i} className="text-[9.5px] font-bold uppercase tracking-[0.06em]
-                                   text-ct-cream/40 text-center">
+                                   text-ink-muted text-center">
             {l}
           </span>
         ))}
@@ -82,16 +82,16 @@ export default function TrainMonthGrid({ year, monthIndex, plan, loggedDates, se
           const isRest     = !hasSession && !logged
 
           const numClass = cell.outside
-            ? 'text-ct-cream/20'
+            ? 'text-ink-muted'
             : isSelected
               ? 'text-ct-cream'
               : isToday
                 ? 'text-ct-cream'
                 : past
-                  ? 'text-ct-cream/55'
+                  ? 'text-ink-soft'
                   : isRest
-                    ? 'text-ct-cream/45'
-                    : 'text-ct-cream/85'
+                    ? 'text-ink-muted'
+                    : 'text-ink-soft'
 
           // Today gets a terracotta border + soft glow even when not selected.
           // Selected wins the tile-bg gradient; today-style falls through.

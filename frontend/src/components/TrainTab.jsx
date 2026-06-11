@@ -53,7 +53,7 @@ function EmptyState({ icon: Icon, title, body, action }) {
       </div>
       <div>
         <p className="font-semibold text-ct-cream">{title}</p>
-        <p className="text-sm text-ct-cream/60 mt-1 max-w-xs">{body}</p>
+        <p className="text-sm text-ink-soft mt-1 max-w-xs">{body}</p>
       </div>
       {action}
     </div>
@@ -208,7 +208,7 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
           <Loader2 size={28} className="text-[var(--tier-light)] animate-spin" />
           <div>
             <p className="text-[15px] font-extrabold text-ct-cream -tracking-[0.01em]">Building your plan…</p>
-            <p className="text-[12.5px] font-semibold text-ct-cream/60 mt-1">
+            <p className="text-[12.5px] font-semibold text-ink-soft mt-1">
               Personalising sessions based on your profile and injury history.
             </p>
           </div>
@@ -294,7 +294,7 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
 
         <button
           onClick={() => setState('setup')}
-          className="mt-6 px-1 text-[11px] font-bold text-ct-cream/60 hover:text-ct-cream transition-colors"
+          className="mt-6 px-1 text-[11px] font-bold text-ink-soft hover:text-ct-cream transition-colors"
         >
           Edit profile ›
         </button>

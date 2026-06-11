@@ -92,7 +92,7 @@ function AuthModal({ onClose, onAuth }) {
         {/* Close */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 sm:top-4 sm:right-4 text-ct-cream/60 hover:text-ct-cream transition-colors p-1"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 text-ink-soft hover:text-ct-cream transition-colors p-1"
           aria-label="Close"
         >
           <X size={18} />
@@ -116,7 +116,7 @@ function AuthModal({ onClose, onAuth }) {
               className={`flex-1 pb-2.5 text-sm font-medium transition-colors ${
                 mode === m.id
                   ? 'text-ct-terracotta border-b-2 border-ct-terracotta'
-                  : 'text-ct-cream/60 hover:text-ct-cream'
+                  : 'text-ink-soft hover:text-ct-cream'
               }`}
             >
               {m.label}
@@ -131,7 +131,7 @@ function AuthModal({ onClose, onAuth }) {
               ref={emailRef}
               type="email"
               defaultValue=""
-              className="w-full bg-ct-forest-deep border border-ct-hairline text-ct-cream placeholder:text-ct-cream/40 focus:border-ct-terracotta/50 rounded-lg px-3 py-2 text-base sm:text-sm outline-none transition-colors"
+              className="w-full bg-ct-forest-deep border border-ct-hairline text-ct-cream placeholder:text-ink-muted focus:border-ct-terracotta/50 rounded-lg px-3 py-2 text-base sm:text-sm outline-none transition-colors"
               placeholder="you@example.com"
               required
               autoFocus
@@ -143,32 +143,32 @@ function AuthModal({ onClose, onAuth }) {
               ref={passwordRef}
               type="password"
               defaultValue=""
-              className="w-full bg-ct-forest-deep border border-ct-hairline text-ct-cream placeholder:text-ct-cream/40 focus:border-ct-terracotta/50 rounded-lg px-3 py-2 text-base sm:text-sm outline-none transition-colors"
+              className="w-full bg-ct-forest-deep border border-ct-hairline text-ct-cream placeholder:text-ink-muted focus:border-ct-terracotta/50 rounded-lg px-3 py-2 text-base sm:text-sm outline-none transition-colors"
               placeholder="••••••••"
               required
               minLength={8}
             />
             {mode === 'register' && (
-              <p className="text-xs text-ct-cream/60 mt-1">Minimum 8 characters, include at least one symbol</p>
+              <p className="text-xs text-ink-soft mt-1">Minimum 8 characters, include at least one symbol</p>
             )}
           </div>
 
           {mode === 'register' && (
             <div>
               <label className="block text-[10px] font-bold text-ct-moss uppercase tracking-wider mb-1.5">
-                Display name <span className="text-ct-cream/50 font-normal normal-case tracking-normal">(optional)</span>
+                Display name <span className="text-ink-muted font-normal normal-case tracking-normal">(optional)</span>
               </label>
               <input
                 ref={displayNameRef}
                 type="text"
                 defaultValue=""
-                className="w-full bg-ct-forest-deep border border-ct-hairline text-ct-cream placeholder:text-ct-cream/40 focus:border-ct-terracotta/50 rounded-lg px-3 py-2 text-base sm:text-sm outline-none transition-colors"
+                className="w-full bg-ct-forest-deep border border-ct-hairline text-ct-cream placeholder:text-ink-muted focus:border-ct-terracotta/50 rounded-lg px-3 py-2 text-base sm:text-sm outline-none transition-colors"
                 placeholder="e.g. SnowyCrimper42"
                 maxLength={20}
                 pattern={DISPLAY_NAME_RE.source}
                 title="3-20 characters, letters, digits, underscore, dash."
               />
-              <p className="text-xs text-ct-cream/60 mt-1">
+              <p className="text-xs text-ink-soft mt-1">
                 Shown on the climbing-hours leaderboard. You can pick or change it later.
               </p>
             </div>
@@ -198,14 +198,14 @@ function AuthModal({ onClose, onAuth }) {
             <Link
               to="/forgot-password"
               onClick={onClose}
-              className="text-sm text-ct-cream/50 hover:text-ct-cream/80 underline mt-1 inline-block transition-colors"
+              className="text-sm text-ink-muted hover:text-ink-soft underline mt-1 inline-block transition-colors"
             >
               Forgot password?
             </Link>
           )}
         </form>
 
-        <p className="text-xs text-center text-ct-cream/60">
+        <p className="text-xs text-center text-ink-soft">
           {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
           <button
             onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}
@@ -215,7 +215,7 @@ function AuthModal({ onClose, onAuth }) {
           </button>
         </p>
 
-        <p className="text-xs text-center text-ct-cream/30">
+        <p className="text-xs text-center text-ink-muted">
           Your history is private and only visible to you.
         </p>
       </motion.div>

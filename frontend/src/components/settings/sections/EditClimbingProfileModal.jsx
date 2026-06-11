@@ -50,9 +50,9 @@ export default function EditClimbingProfileModal({ profile, onClose, onSaved, on
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div className="relative w-full max-w-lg bg-ct-forest-deep border border-ct-rim rounded-2xl p-6 my-auto">
-        <button onClick={onClose} aria-label="Close" className="absolute top-3 right-3 text-ct-cream/50 hover:text-ct-cream"><X size={18} /></button>
+        <button onClick={onClose} aria-label="Close" className="absolute top-3 right-3 text-ink-muted hover:text-ct-cream"><X size={18} /></button>
         <h2 className="text-xl font-extrabold text-ct-cream tracking-tight mb-1">Edit climbing profile</h2>
-        <p className="text-xs text-ct-cream/50 mb-5">Updates apply to AI coach guidance and training recommendations.</p>
+        <p className="text-xs text-ink-muted mb-5">Updates apply to AI coach guidance and training recommendations.</p>
 
         <Selector label="Experience" value={form.experience_level} options={EXPERIENCE_OPTS} onChange={(v) => setForm((f) => ({ ...f, experience_level: v }))} />
         <Selector label="Discipline" value={form.primary_discipline} options={DISCIPLINE_OPTS} onChange={(v) => setForm((f) => ({ ...f, primary_discipline: v }))} />
@@ -67,7 +67,7 @@ export default function EditClimbingProfileModal({ profile, onClose, onSaved, on
         <MultiSelect label="Weaknesses" value={form.weaknesses} options={WEAKNESSES_OPTS} onToggle={(v) => toggleArr('weaknesses', v)} />
 
         <div className="flex justify-end gap-2 mt-5">
-          <button onClick={onClose} className="px-4 py-2 rounded-lg border border-ct-hairline text-sm text-ct-cream/70">Cancel</button>
+          <button onClick={onClose} className="px-4 py-2 rounded-lg border border-ct-hairline text-sm text-ink-soft">Cancel</button>
           <button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-ct-terracotta text-ct-cream text-sm font-bold disabled:opacity-50">
             {saving ? 'Saving…' : 'Save changes'}
           </button>
@@ -109,7 +109,7 @@ function Selector({ label, value, options, onChange }) {
               'px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ' +
               (value === opt
                 ? 'bg-ct-terra-tint border-ct-terracotta/40 text-ct-terracotta'
-                : 'border-ct-hairline text-ct-cream/60 hover:border-ct-rim')
+                : 'border-ct-hairline text-ink-soft hover:border-ct-rim')
             }
           >
             {opt}
@@ -136,7 +136,7 @@ function MultiSelect({ label, value, options, onToggle }) {
                 'px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ' +
                 (on
                   ? 'bg-ct-terra-tint border-ct-terracotta/40 text-ct-terracotta'
-                  : 'border-ct-hairline text-ct-cream/60 hover:border-ct-rim')
+                  : 'border-ct-hairline text-ink-soft hover:border-ct-rim')
               }
             >
               {opt}

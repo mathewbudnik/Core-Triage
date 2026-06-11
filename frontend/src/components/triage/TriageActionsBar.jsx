@@ -60,7 +60,7 @@ export default function TriageActionsBar({
                       tracking-[-0.01em] transition-colors
                       ${enabled && !loading
                         ? PRIMARY_BG[primaryTone] || PRIMARY_BG.teal
-                        : 'bg-ct-forest text-ct-cream/30 border border-ct-hairline cursor-not-allowed'}`}
+                        : 'bg-ct-forest text-ink-muted border border-ct-hairline cursor-not-allowed'}`}
         >
           {loading ? (
             <><Loader2 size={16} className="animate-spin" /> Reading your screening…</>

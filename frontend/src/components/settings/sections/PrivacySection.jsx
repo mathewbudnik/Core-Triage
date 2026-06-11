@@ -33,7 +33,7 @@ export default function PrivacySection({ user, onUserChange, onToast }) {
         </span>
         <div className="flex-1">
           <h4 className="font-bold text-ct-cream m-0">Show me on the leaderboard</h4>
-          <p className="text-xs text-ct-cream/50 mt-1 max-w-md">
+          <p className="text-xs text-ink-muted mt-1 max-w-md">
             Your stats still count toward cohort aggregates when off — only the display name is hidden.
           </p>
         </div>

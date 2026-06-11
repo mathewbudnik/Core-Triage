@@ -84,11 +84,11 @@ export default function ClimbingProfileSection({ user, onUserChange, onToast }) 
           />
           <div className="relative flex items-baseline justify-between gap-3">
             <div className="flex flex-col">
-              <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ct-cream/50 mb-0.5">Current</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted mb-0.5">Current</span>
               <span className="text-[32px] font-extrabold tracking-tight leading-none text-accent">{maxBoulder || '—'}</span>
             </div>
             {hasVScale && (
-              <div className="text-ct-cream/50 text-xs font-semibold self-center pt-3.5">
+              <div className="text-ink-muted text-xs font-semibold self-center pt-3.5">
                 {gradesToGoal === 0 ? (
                   <span className="text-ct-terracotta font-bold">Goal reached</span>
                 ) : (
@@ -99,7 +99,7 @@ export default function ClimbingProfileSection({ user, onUserChange, onToast }) 
               </div>
             )}
             <div className="flex flex-col items-end">
-              <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ct-cream/50 mb-0.5">Goal</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted mb-0.5">Goal</span>
               <span className="text-[32px] font-extrabold tracking-tight leading-none text-ct-terracotta">{goal || '—'}</span>
             </div>
           </div>
@@ -141,9 +141,9 @@ export default function ClimbingProfileSection({ user, onUserChange, onToast }) 
         {/* ═══════ Training days ═══════ */}
         <div className="p-4 rounded-2xl bg-black/20 border border-ct-hairline mb-3.5">
           <div className="flex items-baseline justify-between mb-2.5">
-            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ct-cream/50">Training days</span>
-            <span className="text-[11px] text-ct-cream/70 font-semibold">
-              <strong className={trainingDayCount > 0 ? 'text-ct-terracotta font-extrabold' : 'text-ct-cream/50'}>
+            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">Training days</span>
+            <span className="text-[11px] text-ink-soft font-semibold">
+              <strong className={trainingDayCount > 0 ? 'text-ct-terracotta font-extrabold' : 'text-ink-muted'}>
                 {trainingDayCount}
               </strong>{' '}
               day{trainingDayCount === 1 ? '' : 's'}/week
@@ -159,7 +159,7 @@ export default function ClimbingProfileSection({ user, onUserChange, onToast }) 
                     'py-3.5 text-center rounded-xl text-xs font-semibold border ' +
                     (on
                       ? 'bg-ct-terra-tint border-ct-terracotta/35 text-ct-terracotta'
-                      : 'bg-black/20 border-ct-hairline text-ct-cream/30')
+                      : 'bg-black/20 border-ct-hairline text-ink-muted')
                   }
                 >
                   {d.short}
@@ -175,7 +175,7 @@ export default function ClimbingProfileSection({ user, onUserChange, onToast }) 
             })}
           </div>
           {trainingDayCount === 0 && (
-            <div className="mt-2.5 px-3 py-2 rounded-lg border border-dashed border-ct-rim text-center text-xs text-ct-cream/50">
+            <div className="mt-2.5 px-3 py-2 rounded-lg border border-dashed border-ct-rim text-center text-xs text-ink-muted">
               Set the days you typically climb — your AI coach uses this.{' '}
               <button
                 type="button"
@@ -263,7 +263,7 @@ function Tick({ pos, label, lit }) {
       aria-hidden
       className={
         'absolute top-full mt-1.5 text-[9px] font-bold tracking-wider ' +
-        (lit ? 'text-ct-cream/70' : 'text-ct-cream/30')
+        (lit ? 'text-ink-soft' : 'text-ink-muted')
       }
       style={{ left: `${pos}%`, transform: 'translateX(-50%)' }}
     >
@@ -286,7 +286,7 @@ function HeroStat({ icon: Icon, label, value }) {
         className="absolute -right-8 -top-8 w-32 h-32 rounded-full pointer-events-none"
         style={{ background: 'radial-gradient(circle, rgba(240,168,117,0.15), transparent 70%)' }}
       />
-      <div className="relative text-[10px] font-bold uppercase tracking-[0.14em] text-ct-cream/50 mb-1.5 inline-flex items-center gap-1.5">
+      <div className="relative text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted mb-1.5 inline-flex items-center gap-1.5">
         <Icon size={11} className="opacity-70" />
         {label}
       </div>
@@ -309,7 +309,7 @@ function AttrPill({ icon: Icon, label, value, accent, span }) {
         <Icon size={14} />
       </span>
       <div className="min-w-0">
-        <div className="text-[9.5px] font-bold uppercase tracking-[0.14em] text-ct-cream/50">{label}</div>
+        <div className="text-[9.5px] font-bold uppercase tracking-[0.14em] text-ink-muted">{label}</div>
         <div className="text-sm text-ct-cream font-semibold leading-tight truncate">{value}</div>
       </div>
     </div>
@@ -322,14 +322,14 @@ function InvBlock({ icon: Icon, label, items, tone, emptyText }) {
   return (
     <div className="p-4 rounded-2xl bg-black/20 border border-ct-hairline mb-3">
       <div className="flex items-baseline justify-between mb-2.5">
-        <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-ct-cream/50">
+        <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
           <Icon size={13} className="opacity-70" />
           {label}
         </span>
-        <span className="text-[11px] text-ct-cream/50">{count ? `${count} item${count === 1 ? '' : 's'}` : ''}</span>
+        <span className="text-[11px] text-ink-muted">{count ? `${count} item${count === 1 ? '' : 's'}` : ''}</span>
       </div>
       {count === 0 ? (
-        <div className="text-xs text-ct-cream/40 italic">{emptyText}</div>
+        <div className="text-xs text-ink-muted italic">{emptyText}</div>
       ) : (
         <div className="flex flex-wrap gap-2">
           {items.map((item, i) => (

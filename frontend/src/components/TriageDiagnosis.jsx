@@ -107,7 +107,7 @@ function BucketDetail({ bucket, isPrimary = false }) {
           </div>
           <ul className="space-y-1">
             {bucket.matches_if.map((m, mi) => (
-              <li key={mi} className="text-xs text-ct-cream/60 leading-relaxed flex items-start gap-1.5">
+              <li key={mi} className="text-xs text-ink-soft leading-relaxed flex items-start gap-1.5">
                 <span className="text-accent mt-0.5">•</span>
                 <span>{m}</span>
               </li>
@@ -117,13 +117,13 @@ function BucketDetail({ bucket, isPrimary = false }) {
       )}
       {hasNotLikely && (
         <div>
-          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-ct-cream/60 font-semibold mb-1.5">
+          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-ink-soft font-semibold mb-1.5">
             <XCircle size={11} /> Probably not this if
           </div>
           <ul className="space-y-1">
             {bucket.not_likely_if.map((m, mi) => (
-              <li key={mi} className="text-xs text-ct-cream/50 leading-relaxed flex items-start gap-1.5">
-                <span className="text-ct-cream/30 mt-0.5">•</span>
+              <li key={mi} className="text-xs text-ink-muted leading-relaxed flex items-start gap-1.5">
+                <span className="text-ink-muted mt-0.5">•</span>
                 <span>{m}</span>
               </li>
             ))}
@@ -135,7 +135,7 @@ function BucketDetail({ bucket, isPrimary = false }) {
           <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-accent3 font-semibold mb-1.5">
             <Hand size={11} /> Quick self-check
           </div>
-          <p className="text-xs text-ct-cream/60 leading-relaxed">{bucket.quick_test}</p>
+          <p className="text-xs text-ink-soft leading-relaxed">{bucket.quick_test}</p>
         </div>
       )}
       {/* Sources & reasoning — collapsed by default for differentials,
@@ -199,7 +199,7 @@ export function ResultsHero({ result, form }) {
           </h3>
         )
       })()}
-      <p className="text-xs sm:text-sm text-ct-cream/60 mt-1.5 leading-relaxed">{lead}</p>
+      <p className="text-xs sm:text-sm text-ink-soft mt-1.5 leading-relaxed">{lead}</p>
 
       {chips.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mt-3.5">
@@ -226,7 +226,7 @@ export function ResultsHero({ result, form }) {
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="mt-4 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-ct-cream/60 hover:text-ct-cream transition-colors"
+            className="mt-4 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-ink-soft hover:text-ct-cream transition-colors"
             aria-expanded={expanded}
           >
             <span>{expanded ? 'Hide self-check' : 'Why this might be you'}</span>
@@ -305,13 +305,13 @@ export function OtherPossibilities({ buckets }) {
                     )
                   })()}
                   {b.why && (
-                    <p className="text-xs text-ct-cream/60 mt-1 leading-relaxed">{b.why}</p>
+                    <p className="text-xs text-ink-soft mt-1 leading-relaxed">{b.why}</p>
                   )}
                 </div>
                 {hasDetail && (
                   <ChevronDown
                     size={14}
-                    className={`text-ct-cream/60 shrink-0 mt-0.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                    className={`text-ink-soft shrink-0 mt-0.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                   />
                 )}
               </div>

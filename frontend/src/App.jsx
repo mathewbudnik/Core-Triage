@@ -520,7 +520,7 @@ export default function App() {
               )}
               <button
                 onClick={(e) => { e.stopPropagation(); setToast(null) }}
-                className="text-ct-cream/60 hover:text-ct-cream shrink-0"
+                className="text-ink-soft hover:text-ct-cream shrink-0"
                 aria-label="Dismiss"
               >
                 <X size={14} />
@@ -581,13 +581,13 @@ export default function App() {
             </NavLink>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="md:hidden text-ct-cream/60 hover:text-ct-cream"
+              className="md:hidden text-ink-soft hover:text-ct-cream"
               aria-label="Close menu"
             >
               <X size={18} />
             </button>
           </div>
-          <p className="text-xs text-ct-cream/60 leading-relaxed mt-1">
+          <p className="text-xs text-ink-soft leading-relaxed mt-1">
             Training, rehab &amp; coaching for climbers
           </p>
         </div>
@@ -603,7 +603,7 @@ export default function App() {
               to={`/${id}`}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) => `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-100 border ${
-                isActive ? '' : 'text-ct-cream/60 hover:text-ct-cream hover:bg-ct-hairline border-transparent'
+                isActive ? '' : 'text-ink-soft hover:text-ct-cream hover:bg-ct-hairline border-transparent'
               }`}
               style={({ isActive }) => isActive ? {
                 background: 'rgba(217,119,87,0.12)',
@@ -643,7 +643,7 @@ export default function App() {
                   to={`/${id}`}
                   onClick={() => setSidebarOpen(false)}
                   className={({ isActive }) => `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-100 border ${
-                    isActive ? '' : 'text-ct-cream/60 hover:text-ct-cream hover:bg-ct-hairline border-transparent'
+                    isActive ? '' : 'text-ink-soft hover:text-ct-cream hover:bg-ct-hairline border-transparent'
                   }`}
                   style={({ isActive }) => isActive ? {
                     background: 'rgba(217,119,87,0.12)',
@@ -706,7 +706,7 @@ export default function App() {
         <div className="shrink-0 px-4 py-4 border-t border-ct-hairline space-y-2">
           <div className="flex items-start gap-2">
             <AlertTriangle size={11} className="text-accent3 shrink-0 mt-0.5" />
-            <p className="text-[10px] text-ct-cream/50 leading-relaxed">
+            <p className="text-[10px] text-ink-muted leading-relaxed">
               Severe symptoms or major trauma: seek professional evaluation.
             </p>
           </div>
@@ -720,7 +720,7 @@ export default function App() {
                   setToast({ kind: 'error', message: err.message || 'Could not open billing portal.' })
                 }
               }}
-              className="flex items-center gap-1 text-[10px] text-ct-cream/40 hover:text-ct-cream/80 transition-colors"
+              className="flex items-center gap-1 text-[10px] text-ink-muted hover:text-ink-soft transition-colors"
             >
               <ChevronRight size={9} />
               Manage subscription
@@ -728,7 +728,7 @@ export default function App() {
           ) : (
             <button
               onClick={() => { setUpgradeTrigger('feature'); setShowUpgrade(true) }}
-              className="flex items-center gap-1 text-[10px] text-ct-cream/40 hover:text-ct-cream/80 transition-colors"
+              className="flex items-center gap-1 text-[10px] text-ink-muted hover:text-ink-soft transition-colors"
             >
               <ChevronRight size={9} />
               View plans &amp; pricing
@@ -736,28 +736,28 @@ export default function App() {
           )}
           <button
             onClick={() => navigate('/about')}
-            className="flex items-center gap-1 text-[10px] text-ct-cream/40 hover:text-ct-cream/80 transition-colors"
+            className="flex items-center gap-1 text-[10px] text-ink-muted hover:text-ink-soft transition-colors"
           >
             <Info size={9} />
             About CoreTriage
           </button>
           <button
             onClick={() => setShowTerms(true)}
-            className="flex items-center gap-1 text-[10px] text-ct-cream/40 hover:text-ct-cream/80 transition-colors"
+            className="flex items-center gap-1 text-[10px] text-ink-muted hover:text-ink-soft transition-colors"
           >
             <FileText size={9} />
             Medical Disclaimer
           </button>
           <button
             onClick={() => setLegalDoc(PRIVACY_POLICY)}
-            className="flex items-center gap-1 text-[10px] text-ct-cream/40 hover:text-ct-cream/80 transition-colors"
+            className="flex items-center gap-1 text-[10px] text-ink-muted hover:text-ink-soft transition-colors"
           >
             <FileText size={9} />
             Privacy Policy
           </button>
           <button
             onClick={() => setLegalDoc(TERMS_OF_SERVICE)}
-            className="flex items-center gap-1 text-[10px] text-ct-cream/40 hover:text-ct-cream/80 transition-colors"
+            className="flex items-center gap-1 text-[10px] text-ink-muted hover:text-ink-soft transition-colors"
           >
             <FileText size={9} />
             Terms of Service
@@ -772,7 +772,7 @@ export default function App() {
                 window.location.href = 'mailto:mathewbudnik@gmail.com?subject=CoreTriage%20bug%20report'
               }
             }}
-            className="flex items-center gap-1 text-[10px] text-ct-cream/40 hover:text-red-400 transition-colors"
+            className="flex items-center gap-1 text-[10px] text-ink-muted hover:text-red-400 transition-colors"
           >
             <Bug size={9} />
             Report a bug
@@ -810,7 +810,7 @@ export default function App() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="md:hidden text-ct-cream/60 hover:text-ct-cream p-1"
+              className="md:hidden text-ink-soft hover:text-ct-cream p-1"
               aria-label="Open menu"
             >
               <Menu size={20} />
@@ -839,7 +839,7 @@ export default function App() {
                   {activeTabLabel}
                 </h1>
                 {activeTabSubtitle && (
-                  <p className="text-xs text-ct-cream/60 hidden sm:block mt-0.5">
+                  <p className="text-xs text-ink-soft hidden sm:block mt-0.5">
                     {activeTabSubtitle}
                   </p>
                 )}
@@ -935,7 +935,7 @@ export default function App() {
               key={id}
               to={`/${id}`}
               className={({ isActive }) => `relative flex-1 min-w-0 flex flex-col items-center gap-1 pt-2.5 pb-3 text-[10px] sm:text-xs font-medium leading-tight transition-colors duration-100 active:scale-[0.92] [transition:transform_120ms_ease,color_100ms_ease] ${
-                isActive ? '' : 'text-ct-cream/60'
+                isActive ? '' : 'text-ink-soft'
               }`}
               style={({ isActive }) => isActive ? { color: '#f0a875' } : undefined}
             >
