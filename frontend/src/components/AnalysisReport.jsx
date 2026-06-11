@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ChevronRight, Activity, AlertTriangle, Circle, ChevronDown, Sparkles, CheckCircle2, Layers, ThumbsDown } from 'lucide-react'
 import TopTakeaway, { rankFindings } from './TopTakeaway'
+import MovementScoreCard from './MovementScoreCard'
 import { findCompoundMoments, bodyRegionLabel } from '../lib/compoundFindings'
 import {
   loadFeedback, markFindingWrong, unmarkFindingWrong, isFindingWrong,
@@ -64,7 +65,7 @@ const SEVERITY_VISUALS = {
  * @param {Object<string, string>} props.thumbnails — { [ruleId]: dataURL }
  * @param {(timestampMs: number) => void} props.onJumpTo
  */
-export default function AnalysisReport({ findings, thumbnails, onJumpTo }) {
+export default function AnalysisReport({ findings, thumbnails, onJumpTo, onFocusFinding }) {
   const flags = (findings ?? []).filter((f) => f.kind !== 'win')
   const wins  = (findings ?? []).filter((f) => f.kind === 'win')
   // Per-finding feedback state — loaded from localStorage so it
@@ -107,11 +108,13 @@ export default function AnalysisReport({ findings, thumbnails, onJumpTo }) {
 
   return (
     <div className="flex flex-col gap-4">
+      <MovementScoreCard findings={findings} />
       {showTakeaway && (
         <TopTakeaway
           finding={topFlag}
           thumbnail={thumbnails?.[topFlag.ruleId]}
           onJumpTo={onJumpTo}
+          onFocusFinding={onFocusFinding}
         />
       )}
 
@@ -142,6 +145,7 @@ export default function AnalysisReport({ findings, thumbnails, onJumpTo }) {
                 finding={finding}
                 thumbnail={thumbnails?.[finding.ruleId]}
                 onJumpTo={onJumpTo}
+                onFocusFinding={onFocusFinding}
                 feedback={feedback}
                 onMarkWrong={handleMarkWrong}
                 onUnmarkWrong={handleUnmarkWrong}
@@ -353,7 +357,7 @@ function WinRow({ win, onJumpTo }) {
   )
 }
 
-function FindingCard({ finding, thumbnail, onJumpTo, feedback, onMarkWrong, onUnmarkWrong }) {
+function FindingCard({ finding, thumbnail, onJumpTo, onFocusFinding, feedback, onMarkWrong, onUnmarkWrong }) {
   const [expanded, setExpanded] = useState(false)
   const visuals = SEVERITY_VISUALS[finding.severity] || SEVERITY_VISUALS.polish
 
@@ -429,6 +433,16 @@ function FindingCard({ finding, thumbnail, onJumpTo, feedback, onMarkWrong, onUn
 
       {/* Instances row — always visible */}
       <div className="px-3 pb-3 pt-1 flex flex-wrap items-center gap-1.5">
+        {onFocusFinding && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onFocusFinding(finding) }}
+            className="flex items-center gap-1 text-[11px] font-bold text-cream bg-clay hover:brightness-110 px-2.5 py-1 rounded-md transition"
+          >
+            <Activity size={11} />
+            Show me
+          </button>
+        )}
         <span className="text-[10px] text-ink-soft mr-1">
           {finding.instanceCount === 1 ? '1 instance' : `${finding.instanceCount} instances`}
         </span>
