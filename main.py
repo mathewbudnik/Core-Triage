@@ -60,6 +60,11 @@ from database import (
     delete_session,
     delete_user,
     get_active_plan,
+    get_active_prescription,
+    create_prescription,
+    complete_prescription,
+    check_prescription_drill,
+    get_prescription_checkoffs,
     get_avatar,
     get_chat_used,
     get_display_name,
@@ -125,7 +130,7 @@ from src.triage import (
     red_flags,
 )
 from src.user_context import build_user_context, format_for_prompt
-from src.prescriptions import compute_gap_axis
+from src.prescriptions import compute_gap_axis, select_block, AXIS_TO_DRILLS
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -505,6 +510,11 @@ class RehabUncheckRequest(BaseModel):
     date: str
 
 
+class PrescriptionCheckRequest(BaseModel):
+    drill_key: str
+    date: str
+
+
 class CoachMessageRequest(BaseModel):
     content: str
 
@@ -710,6 +720,7 @@ def me(request: Request, user: dict = Depends(get_current_user)):
 # `powerful` → `power` rename: the climbs-styles map keys log entries as
 # "powerful" but the archetype rules read `power`. We honor both renames here.
 _PENTAGON_AXES = ("power", "crimpy", "dynamic", "technical", "mobility")
+PRESCRIPTION_XP = 250  # XP granted (client-side) when a weekly block completes
 _STYLE_TO_AXIS = {
     "powerful":  "power",
     "crimpy":    "crimpy",
@@ -838,6 +849,49 @@ def _compute_current_pentagon(user_id: int, as_of=None) -> dict[str, float] | No
         )
         for axis in _PENTAGON_AXES
     }
+
+
+def _serialize_prescription(presc: dict, checkoffs: list[dict]) -> dict:
+    """Build the frontend payload: drills with per-drill `done` (capped at target)
+    + block progress. `done` counts distinct checkoff days for that drill."""
+    done_by_key: dict[str, int] = {}
+    for row in checkoffs:
+        done_by_key[row["drill_key"]] = done_by_key.get(row["drill_key"], 0) + 1
+    drills = []
+    total = 0
+    current = 0
+    for d in presc["drills_json"]:
+        target = int(d.get("target", 3))
+        done = min(done_by_key.get(d["key"], 0), target)
+        total += target
+        current += done
+        drills.append({**d, "target": target, "done": done})
+    pct = round(100 * current / total) if total else 0
+    return {
+        "id":         presc["id"],
+        "axis":       presc["axis"],
+        "status":     presc["status"],
+        "source":     presc["source"],
+        "week_start": presc["week_start"],
+        "drills":     drills,
+        "progress":   {"current": current, "total": total, "pct": pct},
+    }
+
+
+def _active_block_payload(user_id: int) -> dict:
+    """Return {gap_axis, prescription}. Auto-generate an active block when a gap
+    exists and none is active. Returns prescription=None when balanced (no gap)."""
+    pentagon = _compute_current_pentagon(user_id)
+    gap_axis = compute_gap_axis(pentagon)
+    active = get_active_prescription(user_id)
+    if active is None and gap_axis is not None:
+        drills = select_block(gap_axis)
+        create_prescription(user_id, gap_axis, drills, source="auto")
+        active = get_active_prescription(user_id)
+    if active is None:
+        return {"gap_axis": gap_axis, "prescription": None}
+    checkoffs = get_prescription_checkoffs(user_id, active["id"])
+    return {"gap_axis": gap_axis, "prescription": _serialize_prescription(active, checkoffs)}
 
 
 def _compute_streaks(user_id: int) -> tuple[int, int]:
@@ -994,6 +1048,49 @@ def get_me_state(request: Request, user: dict = Depends(get_current_user)):
         "gap_axis": compute_gap_axis(pentagon),
         "recent_sends": recent_sends,
         "archetype": archetype,
+    }
+
+
+@app.get("/api/me/prescription")
+@limiter.limit("60/minute")
+def get_my_prescription(request: Request, user: dict = Depends(get_current_user)):
+    """The climber's active weekly skill block (auto-generated for the current
+    gap when none is active). `date` is accepted for client-cache symmetry."""
+    return _active_block_payload(user["id"])
+
+
+@app.post("/api/prescriptions/check")
+@limiter.limit("60/minute")
+def check_my_prescription(
+    request: Request,
+    req: PrescriptionCheckRequest,
+    user: dict = Depends(get_current_user),
+):
+    """Check off a drill for the active block on `date`. Idempotent per day.
+    Auto-completes the block at 100% and reports XP to award (client-side)."""
+    if not _DATE_RE.match(req.date or ""):
+        raise HTTPException(status_code=400, detail="date must be YYYY-MM-DD")
+    if not req.drill_key or len(req.drill_key) > 200:
+        raise HTTPException(status_code=400, detail="drill_key invalid")
+    active = get_active_prescription(user["id"])
+    if active is None:
+        raise HTTPException(status_code=404, detail="no_active_prescription")
+    valid_keys = {d["key"] for d in active["drills_json"]}
+    if req.drill_key not in valid_keys:
+        raise HTTPException(status_code=400, detail="drill_key not in active block")
+
+    check_prescription_drill(user["id"], active["id"], req.drill_key, req.date)
+    checkoffs = get_prescription_checkoffs(user["id"], active["id"])
+    payload = _serialize_prescription(active, checkoffs)
+
+    completed = payload["progress"]["pct"] >= 100
+    if completed:
+        complete_prescription(active["id"])
+        payload = {**payload, "status": "completed"}
+    return {
+        "prescription": payload,
+        "completed": completed,
+        "xp": PRESCRIPTION_XP if completed else 0,
     }
 
 

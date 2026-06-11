@@ -24,6 +24,10 @@ from database import (  # noqa: E402
 )
 from main import app  # noqa: E402
 
+# These tests churn register/login many times; disable rate limiting for the
+# test process so the auth limiter (5/min) doesn't reject setup registrations.
+app.state.limiter.enabled = False
+
 _TEST_PASSWORD = "Rx!Test1password"
 
 
@@ -159,6 +163,120 @@ class PrescriptionDbHelperTests(unittest.TestCase):
         pid = create_prescription(self.uid, "technique", [{"key": "silent_feet", "target": 3}])
         complete_prescription(pid)
         self.assertIsNone(get_active_prescription(self.uid))
+
+
+class GetPrescriptionEndpointTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        init_db()
+
+    def setUp(self):
+        self.email = "rx_get_test@coretriage.local"
+        _cleanup_user(self.email)
+        self.token = _register_and_login(self.email)
+        self.uid = _user_id(self.email)
+        self.client = TestClient(app)
+
+    def tearDown(self):
+        _cleanup_user(self.email)
+
+    def _auth(self):
+        return {"Authorization": f"Bearer {self.token}"}
+
+    def test_new_user_has_no_prescription(self):
+        r = self.client.get("/api/me/prescription?date=2026-06-11", headers=self._auth())
+        self.assertEqual(r.status_code, 200, r.text)
+        body = r.json()
+        self.assertIsNone(body["gap_axis"])
+        self.assertIsNone(body["prescription"])
+
+    def test_auto_generates_block_for_gap(self):
+        _seed_technique_gap(self.uid)
+        r = self.client.get("/api/me/prescription?date=2026-06-11", headers=self._auth())
+        self.assertEqual(r.status_code, 200, r.text)
+        body = r.json()
+        self.assertEqual(body["gap_axis"], "technique")
+        presc = body["prescription"]
+        self.assertIsNotNone(presc)
+        self.assertEqual(presc["axis"], "technique")
+        self.assertEqual(len(presc["drills"]), 3)
+        for d in presc["drills"]:
+            self.assertIn("done", d)
+            self.assertEqual(d["done"], 0)
+        self.assertEqual(presc["progress"]["current"], 0)
+        self.assertGreater(presc["progress"]["total"], 0)
+
+    def test_second_fetch_reuses_the_same_active_block(self):
+        _seed_technique_gap(self.uid)
+        a = self.client.get("/api/me/prescription?date=2026-06-11", headers=self._auth()).json()
+        b = self.client.get("/api/me/prescription?date=2026-06-11", headers=self._auth()).json()
+        self.assertEqual(a["prescription"]["id"], b["prescription"]["id"])
+
+    def test_requires_auth(self):
+        r = TestClient(app).get("/api/me/prescription?date=2026-06-11")
+        self.assertIn(r.status_code, (401, 403))
+
+
+class CheckPrescriptionEndpointTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        init_db()
+
+    def setUp(self):
+        self.email = "rx_check_test@coretriage.local"
+        _cleanup_user(self.email)
+        self.token = _register_and_login(self.email)
+        self.uid = _user_id(self.email)
+        self.client = TestClient(app)
+        _seed_technique_gap(self.uid)  # auto block on first fetch
+        self.presc = self.client.get(
+            "/api/me/prescription?date=2026-06-11", headers=self._auth()
+        ).json()["prescription"]
+
+    def tearDown(self):
+        _cleanup_user(self.email)
+
+    def _auth(self):
+        return {"Authorization": f"Bearer {self.token}"}
+
+    def test_check_increments_progress_and_is_idempotent(self):
+        key = self.presc["drills"][0]["key"]
+        r1 = self.client.post("/api/prescriptions/check",
+                              json={"drill_key": key, "date": "2026-06-11"},
+                              headers=self._auth())
+        self.assertEqual(r1.status_code, 200, r1.text)
+        body1 = r1.json()
+        self.assertFalse(body1["completed"])
+        self.assertEqual(body1["prescription"]["progress"]["current"], 1)
+        # Same drill, same day -> no double count.
+        r2 = self.client.post("/api/prescriptions/check",
+                              json={"drill_key": key, "date": "2026-06-11"},
+                              headers=self._auth())
+        self.assertEqual(r2.json()["prescription"]["progress"]["current"], 1)
+
+    def test_block_completes_at_100_percent(self):
+        # 3 drills x target 3 = 9 checkoffs across 3 distinct days.
+        days = ["2026-06-11", "2026-06-12", "2026-06-13"]
+        last = None
+        for d in self.presc["drills"]:
+            for day in days:
+                last = self.client.post("/api/prescriptions/check",
+                                        json={"drill_key": d["key"], "date": day},
+                                        headers=self._auth()).json()
+        self.assertTrue(last["completed"])
+        self.assertEqual(last["xp"], 250)
+        self.assertEqual(last["prescription"]["progress"]["pct"], 100)
+        # The completed block is no longer active; a new gap may auto-generate.
+        again = self.client.get("/api/me/prescription?date=2026-06-14",
+                                headers=self._auth()).json()
+        if again["prescription"]:
+            self.assertNotEqual(again["prescription"]["id"], self.presc["id"])
+
+    def test_rejects_drill_not_in_block(self):
+        r = self.client.post("/api/prescriptions/check",
+                             json={"drill_key": "not_a_real_drill", "date": "2026-06-11"},
+                             headers=self._auth())
+        self.assertEqual(r.status_code, 400, r.text)
 
 
 if __name__ == "__main__":
