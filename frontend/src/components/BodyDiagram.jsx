@@ -99,8 +99,9 @@ function BodyDiagram({ selected, onSelect }) {
     if (instanceId && tappedInstance === instanceId) return '#b85c44'
     // Hover preview — a softer clay step below the selected brick.
     if (instanceId && hoveredInstance === instanceId) return '#c58a77'
-    // Resting figure — muted ink tint, legible on parchment.
-    return 'rgba(42,39,34,0.16)'
+    // Resting figure — a faint warm wash; the ink facet strokes (in sp())
+    // carry the engraved field-guide character rather than a flat silhouette.
+    return 'rgba(176,106,79,0.10)'
   }
 
   const openSheet = (zoneId, instanceId) => {
@@ -150,9 +151,10 @@ function BodyDiagram({ selected, onSelect }) {
       top:         pos.top,
       zIndex:      pos.z ?? 'auto',
       fill:        fill(zoneId, instanceId),
-      // Clay outline so the muted figure reads clearly on parchment.
-      stroke:      'rgba(176,106,79,0.5)',
-      strokeWidth: 0.6,
+      // Ink hairline reveals the figure's facets like an engraved anatomy
+      // plate — gives it character vs a flat silhouette.
+      stroke:      'rgba(42,39,34,0.5)',
+      strokeWidth: 0.9,
       transition:  'fill 0.15s ease',
       cursor:      zoneId ? 'pointer' : 'default',
       // Skips the historical iOS double-tap-zoom + tap delay so click fires
