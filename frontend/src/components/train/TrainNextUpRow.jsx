@@ -1,5 +1,6 @@
+import { ArrowRight } from 'lucide-react'
 import { sessionForDay, dayStatusFor } from '../../lib/trainSessions'
-import { getSessionTypeLabel } from '../../lib/sessionType'
+import { getSessionTypeLabel, getSessionTypeColor } from '../../lib/sessionType'
 
 const DOW_LONG = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
 
@@ -21,8 +22,8 @@ function findNext(weekDates, fromDay, plan) {
 }
 
 /**
- * Single-line "Next: Thursday · Endurance · 75 min ›" footer.
- * Tap selects that day in the parent.
+ * "Next up" field-card row with a session-type color accent (left border in
+ * the session color). Tapping it selects that day in the parent.
  *
  * Props:
  *   weekDates:   string[7]
@@ -34,25 +35,44 @@ export default function TrainNextUpRow({ weekDates, plan, fromDay, onSelectDay }
   const next = findNext(weekDates, fromDay, plan)
   if (!next) {
     return (
-      <p className="mt-3 px-1 text-[11.5px] font-semibold text-ink-muted italic">
-        End of the week — review your plan ›
-      </p>
+      <div className="ct-surface rounded-2xl px-4 py-3.5">
+        <p className="text-[11.5px] font-semibold text-ink-muted italic">
+          End of the week — review your plan in the calendar above.
+        </p>
+      </div>
     )
   }
+  const rawType = next.session?.type || next.session?.session_type
   const dur = next.session?.duration_min || next.session?.duration_minutes
-  const typeLabel = getSessionTypeLabel(next.session?.type || next.session?.session_type)
-  const label = [
-    DOW_LONG[dayOfWeek(next.iso)],
+  const typeLabel = getSessionTypeLabel(rawType)
+  const colors = getSessionTypeColor(rawType)
+  const meta = [
     typeLabel,
     dur ? `${dur} min` : null,
   ].filter(Boolean).join(' · ')
+
   return (
     <button
       type="button"
       onClick={() => onSelectDay(next.iso)}
-      className="mt-3 px-1 text-left text-[11.5px] font-semibold text-ink-muted hover:text-ct-cream transition-colors"
+      className="w-full ct-surface rounded-2xl pl-4 pr-3.5 py-3.5 text-left
+                 flex items-center justify-between gap-3
+                 border-l-4 hover:brightness-[0.99] transition-all"
+      style={{ borderLeftColor: colors.c }}
     >
-      Next: <span className="font-bold text-ink-soft">{label}</span> ›
+      <div className="min-w-0">
+        <p className="ct-eyebrow mb-0.5">Next up</p>
+        <p className="text-[14px] font-semibold text-ink leading-tight">
+          {DOW_LONG[dayOfWeek(next.iso)]}
+        </p>
+        {meta && (
+          <p className="text-[11.5px] font-semibold text-ink-soft mt-0.5">{meta}</p>
+        )}
+      </div>
+      <span className="shrink-0 w-8 h-8 rounded-full inline-flex items-center justify-center
+                       bg-card border border-ct-rim text-clay-deep">
+        <ArrowRight size={15} strokeWidth={2.4} />
+      </span>
     </button>
   )
 }

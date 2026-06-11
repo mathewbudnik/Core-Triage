@@ -27,12 +27,12 @@ function PyramidRow({ grade, s, f, p, maxRowTotal }) {
       className="flex items-center gap-2.5 my-1"
       variants={{
         hidden:  { opacity: 0, y: 6 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.22, ease: [0.2, 0.7, 0.2, 1] } },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.16, ease: [0.2, 0.7, 0.2, 1] } },
       }}
     >
       <span
         className="w-9 text-[12px] font-extrabold text-right tabular-nums tracking-tight"
-        style={{ color: hasBar ? token.c : 'rgba(141,132,114,0.75)' }}
+        style={{ color: hasBar ? token.c : 'var(--ct-ink-muted, #8d8472)' }}
       >
         {grade}
       </span>
@@ -44,7 +44,7 @@ function PyramidRow({ grade, s, f, p, maxRowTotal }) {
             initial={{ width: 0 }}
             animate={{ width: `${barPct}%` }}
             whileHover={{ boxShadow: `0 0 16px ${token.c}99` }}
-            transition={{ duration: 0.22, ease: [0, 0, 0.2, 1] }}
+            transition={{ duration: 0.16, ease: [0, 0, 0.2, 1] }}
           >
             {f > 0 && (
               <span
@@ -61,17 +61,17 @@ function PyramidRow({ grade, s, f, p, maxRowTotal }) {
           </motion.div>
         )}
       </div>
-      <span className="text-[11px] text-muted tabular-nums whitespace-nowrap min-w-[64px] text-left">
+      <span className="text-[11px] text-ink-soft tabular-nums whitespace-nowrap min-w-[64px] text-left">
         {hasBar ? (
           <>
             {total}
-            {f > 0 && <span className="text-accent3"> · ✦{f}</span>}
+            {f > 0 && <span className="text-ochre"> · ✦{f}</span>}
           </>
         ) : (
-          <span className="text-muted/60">—</span>
+          <span className="text-ink-muted">—</span>
         )}
         {p > 0 && (
-          <span className="ml-1.5 inline-flex items-center text-[10px] text-muted/80 bg-ink/[0.05] border border-ct-rim px-1.5 py-[1px] rounded-full">
+          <span className="ml-1.5 inline-flex items-center text-[10px] text-ink-muted bg-card border border-ct-rim px-1.5 py-[1px] rounded-full">
             +{p} proj
           </span>
         )}
@@ -89,10 +89,10 @@ function PyramidColumn({ label, data }) {
   if (!data || (!data.grades?.length && !data.hardest_send && !data.hardest_flash)) {
     return (
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-muted mb-2">
+        <p className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-ink-muted mb-2">
           {label}
         </p>
-        <p className="text-xs text-muted/70 italic">No climbs logged yet.</p>
+        <p className="text-xs text-ink-muted italic">No climbs logged yet.</p>
       </div>
     )
   }
@@ -113,10 +113,10 @@ function PyramidColumn({ label, data }) {
   return (
     <div className="flex-1 min-w-0">
       <div className="flex items-baseline justify-between mb-2">
-        <p className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-muted">
+        <p className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-ink-muted">
           {label}
         </p>
-        <p className="text-[11px] text-muted">
+        <p className="text-[11px] text-ink-soft">
           {data.hardest_send && (
             <>
               hardest{' '}
@@ -127,7 +127,7 @@ function PyramidColumn({ label, data }) {
           )}
           {data.hardest_send && data.hardest_flash && data.hardest_flash !== data.hardest_send && (
             <>
-              <span className="text-muted/40"> · </span>
+              <span className="text-ink-muted"> · </span>
               flash{' '}
               <span className="font-extrabold" style={{ color: hardestFlashToken?.c }}>
                 {data.hardest_flash}
@@ -155,8 +155,8 @@ function PyramidColumn({ label, data }) {
           />
         ))}
       </motion.div>
-      <p className="text-[10px] text-muted/60 mt-3 pt-2 border-t border-ct-rim/60">
-        <span className="inline-block w-2 h-2 bg-accent3 rounded-sm mr-1.5 align-middle" />
+      <p className="text-[10px] text-ink-muted mt-3 pt-2 border-t border-ct-hairline">
+        <span className="inline-block w-2 h-2 bg-ochre rounded-sm mr-1.5 align-middle" />
         flash · row color reflects grade tier
       </p>
     </div>
@@ -195,14 +195,14 @@ export default function GradePyramidCard() {
     <Surface tier="default" padding="md" rounded="rounded-2xl">
       <div className="flex items-center justify-between mb-3">
         <Eyebrow>Grade Pyramid</Eyebrow>
-        <div className="flex gap-1 bg-bg/40 rounded-lg p-0.5 text-[11px]">
+        <div className="flex gap-0.5 bg-panel2 border border-ct-hairline rounded-lg p-0.5 text-[11px]">
           {[['month', 'Month'], ['all', 'All']].map(([k, label]) => (
             <button
               key={k}
               type="button"
               onClick={() => pickWindow(k)}
-              className={`px-2 py-1 rounded-md font-bold transition-colors ${
-                windowKey === k ? 'bg-accent/20 text-accent' : 'text-muted hover:text-text'
+              className={`px-2.5 py-1 rounded-md font-bold transition-colors ${
+                windowKey === k ? 'bg-clay text-cream' : 'text-ink-soft hover:text-ink'
               }`}
             >
               {label}
@@ -211,10 +211,10 @@ export default function GradePyramidCard() {
         </div>
       </div>
 
-      {loading && <div className="py-6 flex justify-center"><Loader2 size={16} className="animate-spin text-accent" /></div>}
-      {error && <p className="text-xs text-accent2">{error}</p>}
+      {loading && <div className="py-6 flex justify-center"><Loader2 size={16} className="animate-spin text-clay" /></div>}
+      {error && <p className="text-xs text-clay-deep">{error}</p>}
       {empty && (
-        <p className="text-xs text-muted">
+        <p className="text-xs text-ink-soft">
           No climbs logged yet. Log a session in Train (set type to bouldering or routes) to see your pyramid grow.
         </p>
       )}

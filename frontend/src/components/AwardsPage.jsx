@@ -50,11 +50,11 @@ export default function AwardsPage({ user }) {
   const workingIdx = V_TIERS.indexOf(workingTier)
 
   return (
-    <div className="px-4 md:px-8 py-6 max-w-3xl mx-auto">
+    <div className="px-4 md:px-8 py-6 max-w-3xl mx-auto text-ink">
       <button
         type="button"
         onClick={() => navigate('/progress')}
-        className="flex items-center gap-1 text-xs text-muted hover:text-text transition-colors mb-4"
+        className="flex items-center gap-1 text-xs text-ink-soft hover:text-ink transition-colors mb-4"
       >
         <ArrowLeft size={13} />
         Back to Progress
@@ -62,7 +62,7 @@ export default function AwardsPage({ user }) {
 
       {/* ── Tier ladder ───────────────────────────────────────────── */}
       <section className="mb-8">
-        <p className="text-[11px] font-extrabold uppercase tracking-[0.10em] text-muted mb-3">
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.10em] text-ink-muted mb-3">
           Tiers
         </p>
         <ul className="space-y-2">
@@ -110,7 +110,7 @@ export default function AwardsPage({ user }) {
                     >
                       {gradeLabel}
                     </span>
-                    <span className={`text-[13px] font-bold truncate ${isEarned ? 'text-text' : 'text-muted/70'}`}>
+                    <span className={`text-[13px] font-bold truncate ${isEarned ? 'text-ink' : 'text-ink-muted'}`}>
                       {name}
                     </span>
                   </div>
@@ -132,12 +132,12 @@ export default function AwardsPage({ user }) {
 
       {/* ── Achievements grid ──────────────────────────────────────── */}
       <section>
-        <p className="text-[11px] font-extrabold uppercase tracking-[0.10em] text-muted mb-3">
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.10em] text-ink-muted mb-3">
           Achievements
         </p>
 
         {loading ? (
-          <p className="text-xs text-muted/70 italic">Loading…</p>
+          <p className="text-xs text-ink-muted italic">Loading…</p>
         ) : (
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-x-3 gap-y-5">
             {earned.map((a) => {
@@ -161,7 +161,7 @@ function Tile({ meta, earned = false, locked = false }) {
   const displaySub  = isMystery ? 'Mystery' : meta.sub
 
   return (
-    <div className="text-center">
+    <div className="text-center ct-surface bg-card border border-ct-rim rounded-xl px-2 py-3">
       <AwardMedal
         size="md"
         light={meta.light}
@@ -173,11 +173,11 @@ function Tile({ meta, earned = false, locked = false }) {
         mystery={isMystery}
       />
       <div className={`text-[11px] font-semibold mt-2 -tracking-[0.01em] truncate
-                       ${earned ? 'text-text' : 'text-muted'}`}>
+                       ${earned ? 'text-ink' : 'text-ink-muted'}`}>
         {displayName}
       </div>
       {displaySub && (
-        <div className="text-[10px] text-muted/50 mt-0.5 truncate">{displaySub}</div>
+        <div className="text-[10px] text-ink-muted mt-0.5 truncate">{displaySub}</div>
       )}
     </div>
   )

@@ -26,16 +26,16 @@ export default function AwardsStrip({ user, maxLocked = 4 }) {
         <button
           type="button"
           onClick={() => navigate('/progress/awards')}
-          className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-muted hover:text-text transition-colors"
+          className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-ink-soft hover:text-ink transition-colors"
         >
           View all
           <ChevronRight size={11} />
         </button>
       </div>
       {loading ? (
-        <div className="text-xs text-muted">Loading…</div>
+        <div className="text-xs text-ink-soft">Loading…</div>
       ) : earned.length === 0 && locked.length === 0 ? (
-        <div className="text-xs text-muted/70 italic">No awards yet — log a session to start earning.</div>
+        <div className="text-xs text-ink-muted italic">No awards yet — log a session to start earning.</div>
       ) : (
         <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
           {earned.map((a) => {
@@ -59,14 +59,14 @@ function AwardTile({ meta, locked = false, sub }) {
   const displayName = isMystery ? '???' : meta.name
   const displaySub  = isMystery ? 'Mystery' : sub
   return (
-    <div className="shrink-0 w-24 text-center">
+    <div className="shrink-0 w-24 text-center ct-surface bg-card border border-ct-rim rounded-xl px-2 py-3">
       <AwardMedal size="md"
         light={meta.light} mid={meta.c} deep={meta.deep}
         icon={meta.icon} label={meta.label} locked={locked} mystery={isMystery} />
-      <div className={`text-[11px] font-semibold mt-2 -tracking-[0.01em] ${locked ? 'text-muted' : 'text-text'}`}>
+      <div className={`text-[11px] font-semibold mt-2 -tracking-[0.01em] ${locked ? 'text-ink-muted' : 'text-ink'}`}>
         {displayName}
       </div>
-      <div className="text-[10px] text-muted/50 mt-0.5">{displaySub}</div>
+      <div className="text-[10px] text-ink-muted mt-0.5">{displaySub}</div>
     </div>
   )
 }

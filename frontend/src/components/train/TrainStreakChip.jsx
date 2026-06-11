@@ -11,12 +11,12 @@ export default function TrainStreakChip({ streakDays }) {
   if (!streakDays || streakDays < 2) return null
   return (
     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
-                     text-[10.5px] font-extrabold tabular-nums tracking-[0.01em]
-                     border-[0.5px]"
+                     text-[10.5px] font-bold tabular-nums tracking-[0.01em]
+                     border"
           style={{
-            background: 'rgba(247,176,58,0.12)',
-            borderColor: 'rgba(247,176,58,0.32)',
-            color: '#fbd470',
+            background: 'rgba(215,172,91,0.16)',
+            borderColor: 'rgba(215,172,91,0.42)',
+            color: '#9a7a32',
           }}>
       <Flame size={12} strokeWidth={2.4} />
       <span>{streakDays}d</span>

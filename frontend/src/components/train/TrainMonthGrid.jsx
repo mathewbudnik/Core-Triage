@@ -1,5 +1,15 @@
 import { Check } from 'lucide-react'
 import { sessionForDay } from '../../lib/trainSessions'
+import { getSessionTypeColor } from '../../lib/sessionType'
+
+// hex → rgba with the given alpha, for subtle per-session tile tinting.
+function tint(hex, a) {
+  const h = hex.replace('#', '')
+  const r = parseInt(h.slice(0, 2), 16)
+  const g = parseInt(h.slice(2, 4), 16)
+  const b = parseInt(h.slice(4, 6), 16)
+  return `rgba(${r},${g},${b},${a})`
+}
 
 const DAY_LETTER = ['M','T','W','T','F','S','S']
 
@@ -77,9 +87,11 @@ export default function TrainMonthGrid({ year, monthIndex, plan, loggedDates, se
           const isToday    = cell.iso === today
           const isSelected = cell.iso === selectedDay
           const past       = cell.iso < today
-          const hasSession = !!sessionForDay(plan, cell.iso)
+          const session    = sessionForDay(plan, cell.iso)
+          const hasSession = !!session
           const logged     = loggedDates?.has(cell.iso)
           const isRest     = !hasSession && !logged
+          const sessColor  = hasSession ? getSessionTypeColor(session?.type || session?.session_type).c : null
 
           const numClass = cell.outside
             ? 'text-ink-muted'
@@ -93,23 +105,27 @@ export default function TrainMonthGrid({ year, monthIndex, plan, loggedDates, se
                     ? 'text-ink-muted'
                     : 'text-ink-soft'
 
-          // Today gets a terracotta border + soft glow even when not selected.
-          // Selected wins the tile-bg gradient; today-style falls through.
+          // Today gets a clay border + soft glow even when not selected.
+          // Selected wins the tile-bg gradient; an in-month scheduled day gets
+          // a subtle wash in its own session color so the month reads
+          // chromatically at a glance.
           const tileClass = [
             'flex flex-col items-center justify-center py-1.5 rounded-xl',
-            'border-[0.5px] min-h-[44px] transition-colors',
+            'border min-h-[44px] transition-colors',
             isSelected
-              ? 'border-ct-terracotta/45'
+              ? 'border-clay/45'
               : (isToday && !cell.outside)
-                ? 'border-ct-terracotta/50'
-                : 'border-transparent hover:bg-ink/[0.04]',
+                ? 'border-clay/50'
+                : 'border-transparent',
           ].join(' ')
 
           const tileBg = isSelected
             ? { background: 'linear-gradient(180deg, rgba(197,138,119,0.22), rgba(197,138,119,0.06))' }
             : (isToday && !cell.outside)
               ? { boxShadow: '0 0 10px rgba(197,138,119,0.18)' }
-              : undefined
+              : (hasSession && sessColor && !isRest && !cell.outside)
+                ? { background: tint(sessColor, 0.10) }
+                : undefined
 
           const todayStyle = (isToday && !isSelected && !cell.outside)
             ? { color: '#b06a4f' }
@@ -120,18 +136,19 @@ export default function TrainMonthGrid({ year, monthIndex, plan, loggedDates, se
               return <span className="w-2 h-2" />
             }
             if (logged) {
-              return <Check size={11} strokeWidth={3} className="text-ct-moss" />
+              return <Check size={11} strokeWidth={3} className="text-sage-deep" />
             }
             if (isSelected) {
-              return <span className="w-2 h-2 rounded-full bg-ct-terra-soft" />
+              return <span className="w-2 h-2 rounded-full" style={{ background: '#b06a4f' }} />
             }
             if (!isRest) {
               return (
-                <span className="w-2 h-2 rounded-full border-[1.5px] border-ct-terracotta/55" />
+                <span className="w-2 h-2 rounded-full border-[1.5px]"
+                      style={{ borderColor: sessColor || '#b06a4f' }} />
               )
             }
             if (past && isRest) {
-              return <span className="w-1 h-1 rounded-full bg-ink/25" />
+              return <span className="w-1 h-1 rounded-full" style={{ background: 'rgba(42,39,34,0.25)' }} />
             }
             return <span className="w-2 h-2" />
           })()

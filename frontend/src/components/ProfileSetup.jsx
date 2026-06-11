@@ -65,13 +65,12 @@ const WEEKDAYS = [
 // ── Reusable inline atoms ──────────────────────────────────────────────────
 function ProgressBar({ pct }) {
   return (
-    <div className="h-[3px] bg-ink/[0.10] rounded-full overflow-hidden">
+    <div className="h-[4px] bg-ink/[0.10] rounded-full overflow-hidden">
       <motion.div
-        className="h-full rounded-full"
-        style={{ background: '#c58a77' }}
+        className="h-full rounded-full bg-gradient-to-r from-clay to-clay-deep"
         initial={false}
         animate={{ width: `${Math.max(0, Math.min(100, pct))}%` }}
-        transition={{ duration: 0.4, ease: [0, 0, 0.2, 1] }}
+        transition={{ duration: 0.16, ease: [0.2, 0.7, 0.2, 1] }}
       />
     </div>
   )
@@ -79,15 +78,15 @@ function ProgressBar({ pct }) {
 
 function StepHeader({ stepIndex, totalSteps, title, subtitle }) {
   return (
-    <div className="mb-6">
-      <p className="text-[11px] font-extrabold uppercase tracking-[0.13em] text-ink-soft">
+    <div className="mb-5">
+      <p className="ct-eyebrow">
         Step {stepIndex + 1} of {totalSteps}
       </p>
-      <h2 className="mt-2 text-[28px] sm:text-[30px] font-extrabold -tracking-[0.025em] leading-[1.1]">
+      <h2 className="font-serif mt-1.5 text-[26px] sm:text-[28px] font-semibold -tracking-[0.025em] leading-[1.1] text-ink">
         {title}
       </h2>
       {subtitle && (
-        <p className="mt-2 text-[13px] font-semibold text-ink-soft leading-snug">
+        <p className="mt-1.5 text-[13px] font-semibold text-ink-soft leading-snug">
           {subtitle}
         </p>
       )}
@@ -588,10 +587,10 @@ export default function ProfileSetup({ onComplete }) {
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.20, ease: [0, 0, 0.2, 1] }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.16, ease: [0.2, 0.7, 0.2, 1] }}
           >
             {stepBody}
           </motion.div>
@@ -641,7 +640,7 @@ export default function ProfileSetup({ onComplete }) {
           disabled={step === 0 || saving}
           className="mt-3 w-full inline-flex items-center justify-center gap-1
                      text-[11px] font-extrabold uppercase tracking-[0.10em]
-                     text-ink-soft hover:text-ct-cream transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                     text-ink-soft hover:text-ink transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <ChevronLeft size={12} strokeWidth={2.6} />
           Back

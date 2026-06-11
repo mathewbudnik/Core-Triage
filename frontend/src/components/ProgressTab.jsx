@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Trophy, LogIn, Loader2, Dumbbell, Plus } from 'lucide-react'
 import { getProfile, getMe, getPyramid } from '../api'
 import { workingTierFromHardest, nextTier } from '../lib/tier'
+import { useIsDesktop } from '../hooks/useIsDesktop'
 import TierThemeRoot from './TierThemeRoot'
 import TrainingLogEntry from './TrainingLogEntry'
 import ProgressTierHero from './ProgressTierHero'
@@ -11,7 +12,15 @@ import GradePyramidCard from './GradePyramidCard'
 import AwardsStrip from './AwardsStrip'
 import ProgressTrendGraph from './ProgressTrendGraph'
 import StatTrends7Day from './progress/StatTrends7Day'
+import SegmentNav from './shell/SegmentNav'
 import DisplayNamePromptModal from './DisplayNamePromptModal'
+
+const SEG_TRANSITION = { duration: 0.16, ease: [0.2, 0.7, 0.2, 1] } // snappy
+const PROGRESS_SEGMENTS = [
+  { id: 'tier', label: 'Tier' },
+  { id: 'pyramid', label: 'Pyramid' },
+  { id: 'trends', label: 'Trends' },
+]
 
 function EmptyState({ icon: Icon, title, body, action }) {
   return (
@@ -30,12 +39,14 @@ function EmptyState({ icon: Icon, title, body, action }) {
 
 export default function ProgressTab({ user, onUserChange, onLoginClick }) {
   const navigate = useNavigate()
+  const isDesktop = useIsDesktop()
   const [state, setState] = useState('loading')
   const [error, setError] = useState(null)
   const [displayName, setDisplayName] = useState(user?.display_name ?? null)
   const [logOpen, setLogOpen] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const [pyramid, setPyramid] = useState(null)
+  const [seg, setSeg] = useState('tier')
 
   useEffect(() => { setDisplayName(user?.display_name ?? null) }, [user?.display_name])
 
@@ -123,51 +134,94 @@ export default function ProgressTab({ user, onUserChange, onLoginClick }) {
     ? `Hardest send last 30 days · ${sendsAtHardest} ${hardest.boulder} send${sendsAtHardest === 1 ? '' : 's'}${nextId && promotionProgress ? ` · ${promotionProgress.current} ${nextId.toUpperCase()} attempts` : ''}`
     : 'Hardest send last 30 days · no boulder sends yet'
 
+  const logBar = (
+    <AnimatePresence mode="wait">
+      {logOpen ? (
+        <motion.div key="log-form" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}>
+          <TrainingLogEntry
+            user={user}
+            onSave={() => { setLogOpen(false); setRefreshKey(k => k + 1) }}
+            onCancel={() => setLogOpen(false)} />
+        </motion.div>
+      ) : (
+        <motion.button key="log-button" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          onClick={() => setLogOpen(true)}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-sm font-bold
+                     bg-clay text-cream hover:brightness-105 active:brightness-95 transition-all">
+          <Plus size={15} /> Log a session
+        </motion.button>
+      )}
+    </AnimatePresence>
+  )
+
+  const tierSection = (
+    <div className="space-y-4">
+      <ProgressTierHero
+        tierId={tierId}
+        metaLine={metaLine}
+        promotionProgress={promotionProgress}
+      />
+      <AwardsStrip user={user} />
+    </div>
+  )
+  const pyramidSection = <GradePyramidCard key={refreshKey} />
+  const trendsSection = (
+    <div className="space-y-4">
+      <StatTrends7Day />
+      <ProgressTrendGraph />
+    </div>
+  )
+
   return (
     <TierThemeRoot hardest={hardest} global>
       <motion.div
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.15 }}
-        className="max-w-2xl mx-auto px-4 py-6 md:py-8 space-y-3"
+        className="p-4 md:p-6 max-w-md md:max-w-4xl mx-auto text-ink"
         style={{
           background:
             'radial-gradient(circle at 50% -10%, color-mix(in srgb, var(--tier-c) 28%, transparent) 0%, transparent 55%)',
         }}>
 
-        <div className="px-1 pt-1 pb-2">
+        <div className="px-1 pb-3">
           <h1 className="ct-display">Progress</h1>
           <p className="ct-meta mt-1">Grade pyramid, awards, and your XP trend</p>
         </div>
 
-        <AnimatePresence mode="wait">
-          {logOpen ? (
-            <motion.div key="log-form" initial={{opacity:0,y:-4}} animate={{opacity:1,y:0}}>
-              <TrainingLogEntry
-                user={user}
-                onSave={() => { setLogOpen(false); setRefreshKey(k => k+1) }}
-                onCancel={() => setLogOpen(false)} />
-            </motion.div>
-          ) : (
-            <motion.button key="log-button" initial={{opacity:0}} animate={{opacity:1}}
-              onClick={() => setLogOpen(true)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-sm font-bold
-                         bg-ct-terra-tint border border-ct-terracotta/30 text-ct-terra-soft
-                         hover:bg-ct-terracotta/15 transition-colors">
-              <Plus size={15} /> Log a session
-            </motion.button>
-          )}
-        </AnimatePresence>
+        <div className="mb-4">{logBar}</div>
 
-        <ProgressTierHero
-          tierId={tierId}
-          metaLine={metaLine}
-          promotionProgress={promotionProgress}
-        />
-        <GradePyramidCard key={refreshKey} />
-        <AwardsStrip user={user} />
-        <StatTrends7Day />
-        <ProgressTrendGraph />
+        {isDesktop ? (
+          <div className="grid grid-cols-2 gap-4">
+            <div>{tierSection}</div>
+            <div>{pyramidSection}</div>
+            <div className="col-span-2">{trendsSection}</div>
+          </div>
+        ) : (
+          <>
+            <div className="pb-36">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={seg}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={SEG_TRANSITION}
+                >
+                  {seg === 'tier' && tierSection}
+                  {seg === 'pyramid' && pyramidSection}
+                  {seg === 'trends' && trendsSection}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+            <SegmentNav
+              segments={PROGRESS_SEGMENTS}
+              value={seg}
+              onChange={setSeg}
+              layoutId="progress-seg-pill"
+            />
+          </>
+        )}
       </motion.div>
     </TierThemeRoot>
   )

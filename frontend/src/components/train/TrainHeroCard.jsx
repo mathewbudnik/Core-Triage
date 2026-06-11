@@ -47,10 +47,10 @@ export default function TrainHeroCard({
     return (
       <Surface tier="hero" padding="lg" rounded="rounded-2xl">
         <div className="flex items-center gap-2.5 mb-2">
-          <Sparkles size={16} className="text-ct-terra-soft" />
+          <Sparkles size={16} className="text-clay-deep" />
           <Eyebrow>Ready when you are</Eyebrow>
         </div>
-        <h2 className="text-[26px] font-extrabold -tracking-[0.025em] leading-tight mb-2 text-ct-cream">
+        <h2 className="font-serif text-[26px] font-semibold -tracking-[0.025em] leading-tight mb-2 text-ink">
           Ready to build<br/>your plan
         </h2>
         <p className="text-[12.5px] font-semibold text-ink-soft leading-snug mb-4">
@@ -66,9 +66,8 @@ export default function TrainHeroCard({
           disabled={generating}
           whileTap={generating ? undefined : { scale: 0.97 }}
           className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl
-                     font-extrabold text-[12.5px] -tracking-[0.01em] disabled:opacity-60
-                     bg-ct-terra-tint border border-ct-terracotta/30 text-ct-terra-soft
-                     hover:bg-ct-terracotta/10 transition-colors"
+                     font-bold text-[12.5px] -tracking-[0.01em] disabled:opacity-60
+                     bg-clay text-cream hover:brightness-105 transition-all"
         >
           {generating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
           {generating ? 'Generating…' : 'Generate my plan'}
@@ -112,7 +111,7 @@ export default function TrainHeroCard({
         </Eyebrow>
       </div>
 
-      <h2 className="text-[28px] font-extrabold -tracking-[0.025em] leading-[1.05] mb-2.5 text-ct-cream">
+      <h2 className="font-serif text-[28px] font-semibold -tracking-[0.025em] leading-[1.05] mb-2.5 text-ink">
         {title}
       </h2>
       <p className="text-[12.5px] font-semibold text-ink-soft leading-snug mb-5">
@@ -127,17 +126,17 @@ export default function TrainHeroCard({
             whileTap={{ scale: 0.97 }}
             className={[
               'inline-flex items-center gap-2 px-5 py-3 rounded-2xl',
-              'font-extrabold text-[12.5px] -tracking-[0.01em]',
+              'font-bold text-[12.5px] -tracking-[0.01em] transition-all',
               today
-                ? 'bg-ct-terra-tint border border-ct-terracotta/30 text-ct-terra-soft hover:bg-ct-terracotta/10 transition-colors'
-                : 'bg-ink/[0.04] text-ink-soft border border-ct-rim',
+                ? 'bg-clay text-cream hover:brightness-105'
+                : 'bg-card border border-ct-rim text-ink hover:border-clay/50',
             ].join(' ')}
           >
             {today ? 'Start session' : 'View session'}
             <ArrowRight size={14} strokeWidth={2.4} />
           </motion.button>
           {past && (
-            <span className="inline-flex items-center gap-1.5 text-[10.5px] font-extrabold tracking-[0.06em] text-ct-terra-soft">
+            <span className="inline-flex items-center gap-1.5 text-[10.5px] font-bold tracking-[0.06em] text-sage-deep">
               <Check size={12} strokeWidth={2.8} />
               COMPLETED
             </span>

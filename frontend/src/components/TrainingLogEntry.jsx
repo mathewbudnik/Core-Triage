@@ -354,14 +354,15 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
         totalXP={summary.totalXP}
       />
       <motion.div
-        initial={{ opacity: 0, y: 8 }}
+        initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-xl border border-accent/30 bg-accent/5 p-4 space-y-4"
+        transition={{ duration: 0.16, ease: [0.2, 0.7, 0.2, 1] }}
+        className="ct-surface rounded-2xl p-4 space-y-4"
       >
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-text">Log this session</p>
+        <p className="text-sm font-semibold text-ink">Log this session</p>
         {onCancel && (
-          <button onClick={onCancel} className="text-muted hover:text-text">
+          <button onClick={onCancel} className="text-ink-muted hover:text-ink transition-colors">
             <X size={15} />
           </button>
         )}
@@ -370,15 +371,15 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
       {/* Date + type */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <p className="text-xs text-muted mb-1">Date</p>
+          <p className="ct-eyebrow mb-1">Date</p>
           <DatePicker value={form.date} onChange={(v) => set('date', v)} />
         </div>
         <div>
-          <p className="text-xs text-muted mb-1">Session type</p>
+          <p className="ct-eyebrow mb-1">Session type</p>
           <select
             value={form.session_type}
             onChange={(e) => set('session_type', e.target.value)}
-            className="w-full bg-panel border border-outline rounded-lg px-3 py-1.5 text-base sm:text-sm text-text outline-none focus:border-accent capitalize"
+            className="w-full bg-card border border-ct-rim rounded-lg px-3 py-1.5 text-base sm:text-sm text-ink outline-none focus:border-clay capitalize"
           >
             {SESSION_TYPES.map((t) => (
               <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
@@ -390,9 +391,9 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
       {/* Duration — sage gradient track; matches Intensity structure */}
       <div>
         <div className="flex items-baseline justify-between mb-2">
-          <p className="text-xs text-muted">Duration</p>
-          <p className="text-lg font-extrabold text-accent">
-            {form.duration_min}<span className="text-xs font-bold text-muted"> min</span>
+          <p className="ct-eyebrow">Duration</p>
+          <p className="text-lg font-extrabold text-clay-deep">
+            {form.duration_min}<span className="text-xs font-bold text-ink-muted"> min</span>
           </p>
         </div>
         <GradientSlider
@@ -406,17 +407,17 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
           ariaLabel="Duration in minutes"
         />
         <div className="flex justify-between mt-1.5">
-          <span className="text-[10px] text-muted">15 min</span>
-          <span className="text-[10px] text-muted">4 hr</span>
+          <span className="text-[10px] text-ink-muted">15 min</span>
+          <span className="text-[10px] text-ink-muted">4 hr</span>
         </div>
       </div>
 
       {/* Intensity — severity-graded gradient (teal → amber → coral) */}
       <div>
         <div className="flex items-baseline justify-between mb-2">
-          <p className="text-xs text-muted">Intensity (RPE)</p>
+          <p className="ct-eyebrow">Intensity (RPE)</p>
           <p className="text-lg font-extrabold" style={{ color: INTENSITY_HEX(form.intensity) }}>
-            {form.intensity}<span className="text-xs font-bold text-muted">/10</span>
+            {form.intensity}<span className="text-xs font-bold text-ink-muted">/10</span>
           </p>
         </div>
         <GradientSlider
@@ -429,11 +430,11 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
           ariaLabel="Intensity (RPE)"
         />
         <div className="flex justify-between mt-1.5">
-          <span className="text-[10px] text-muted">Easy</span>
+          <span className="text-[10px] text-ink-muted">Easy</span>
           <span className="text-[10px] font-semibold" style={{ color: INTENSITY_HEX(form.intensity) }}>
             {INTENSITY_LABELS[form.intensity]}
           </span>
-          <span className="text-[10px] text-muted">Max</span>
+          <span className="text-[10px] text-ink-muted">Max</span>
         </div>
       </div>
 
@@ -450,7 +451,7 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
                 onCommit={(s) => setQuickSends((prev) => [...prev, s])}
               />
               {quickSends.length > 0 && (
-                <div className="rounded-xl border border-ct-hairline p-3 space-y-1">
+                <div className="rounded-xl border border-ct-rim bg-card p-3 space-y-1">
                   <p className="ct-eyebrow">Pending</p>
                   {quickSends.map((s, i) => (
                     <p key={i} className="text-xs text-ink-soft flex justify-between">
@@ -458,7 +459,7 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
                       <button
                         type="button"
                         onClick={() => setQuickSends((prev) => prev.filter((_, j) => j !== i))}
-                        className="text-ink-muted hover:text-ct-cream"
+                        className="text-ink-muted hover:text-ink transition-colors"
                       >×</button>
                     </p>
                   ))}
@@ -480,17 +481,17 @@ export default function TrainingLogEntry({ user, sessionType: prefillType, onSav
 
       {/* Notes */}
       <div>
-        <p className="text-xs text-muted mb-1">Notes (optional)</p>
+        <p className="ct-eyebrow mb-1">Notes (optional)</p>
         <textarea
           rows={2}
           placeholder="How did it feel? Any breakthroughs or setbacks?"
           value={form.notes}
           onChange={(e) => set('notes', e.target.value)}
-          className="w-full bg-panel border border-outline rounded-lg px-3 py-1.5 text-base sm:text-sm text-text placeholder:text-muted/50 outline-none focus:border-accent resize-none"
+          className="w-full bg-card border border-ct-rim rounded-lg px-3 py-1.5 text-base sm:text-sm text-ink placeholder:text-ink-muted/60 outline-none focus:border-clay resize-none"
         />
       </div>
 
-      {error && <p className="text-xs text-accent2">{error}</p>}
+      {error && <p className="text-xs font-semibold text-clay-deep">{error}</p>}
 
       <button
         onClick={handleSave}

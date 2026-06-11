@@ -5,7 +5,7 @@ import { useRewardEngine } from '../../lib/rewardEngine'
 import { bucketSendsByDay } from '../../lib/sendBuckets'
 import { STYLE_COLOR } from '../../lib/styleColors'
 
-const NEUTRAL_BAR = 'rgba(42,39,34,0.14)'
+const NEUTRAL_BAR = 'var(--ct-ink-faint)'
 const DAY_LABEL = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
 export default function StatTrends7Day() {
@@ -34,7 +34,7 @@ export default function StatTrends7Day() {
     <Surface tier="default" padding="md" rounded="rounded-2xl">
       <div className="flex items-baseline justify-between mb-3">
         <Eyebrow>Stat trends · 7 day</Eyebrow>
-        <p className="ct-tnum text-sm font-bold text-ct-cream">
+        <p className="ct-tnum text-sm font-bold text-ink">
           +{totalXP.toLocaleString()} XP
         </p>
       </div>
@@ -55,7 +55,7 @@ export default function StatTrends7Day() {
                 }}
                 aria-label={`${b.date}: ${b.totalXP} XP`}
               />
-              <span className="text-[9px] text-ink-muted font-bold uppercase">{dayLabel}</span>
+              <span className="text-[10px] text-ink-muted font-bold uppercase">{dayLabel}</span>
             </div>
           )
         })}

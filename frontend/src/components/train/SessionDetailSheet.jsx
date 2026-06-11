@@ -30,12 +30,12 @@ function MainExerciseCard({ block, index }) {
   return (
     <Surface as="li" tier="flat" padding="sm" rounded="rounded-2xl" className="px-4 py-3.5">
       <div className="flex items-baseline justify-between gap-3 mb-1">
-        <p className="text-[13.5px] font-extrabold leading-tight text-ct-cream">
+        <p className="text-[13.5px] font-extrabold leading-tight text-ink">
           <span className="text-ink-muted tabular-nums mr-1.5">{index + 1}.</span>
           {block.exercise || 'Exercise'}
         </p>
         {(sets || reps) && (
-          <p className="text-[11px] font-bold text-ct-terracotta tabular-nums shrink-0">
+          <p className="text-[11px] font-bold text-clay-deep tabular-nums shrink-0">
             {[sets ? `${sets}×` : null, reps].filter(Boolean).join(' ')}
           </p>
         )}
@@ -72,7 +72,7 @@ function MainExerciseCard({ block, index }) {
             onClick={() => setTimerOpen(true)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
                        text-[10.5px] font-extrabold uppercase tracking-[0.06em]
-                       bg-ct-terracotta text-ct-cream"
+                       bg-clay text-cream"
           >
             <Timer size={11} strokeWidth={2.6} />
             Timer
@@ -85,8 +85,8 @@ function MainExerciseCard({ block, index }) {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
                        text-[10.5px] font-extrabold uppercase tracking-[0.06em]
-                       bg-ct-hairline border-[0.5px] border-ct-rim
-                       text-ink-soft hover:text-ct-cream hover:bg-white/[0.06] transition-colors"
+                       bg-card border border-ct-rim
+                       text-ink-soft hover:text-ink hover:border-clay/50 transition-colors"
           >
             <PlayCircle size={11} strokeWidth={2.6} />
             Watch demo
@@ -163,12 +163,12 @@ export default function SessionDetailSheet({ open, session, onClose, onLogged })
   const sheetClass = isDesktop
     ? `fixed top-[6vh] left-1/2 -translate-x-1/2 z-50
        w-full max-w-md max-h-[88vh] flex flex-col overflow-hidden
-       bg-[#0a0a0c] border-[0.5px] border-ct-hairline
+       bg-card border border-ct-rim
        rounded-3xl px-4 pt-3`
     // Mobile: bottom edge sits ABOVE the h-16 bottom nav + safe-area inset,
     // so the sticky CTA inside the sheet is never hidden behind the nav bar.
     : `fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] inset-x-0 z-50
-       bg-[#0a0a0c] border-t-[0.5px] border-ct-hairline
+       bg-card border-t border-ct-rim
        rounded-t-3xl px-4 pt-3 flex flex-col
        max-h-[calc(88vh-4rem-env(safe-area-inset-bottom))]`
   const enter = isDesktop ? { opacity: 1, scale: 1 } : { y: 0 }
@@ -184,9 +184,9 @@ export default function SessionDetailSheet({ open, session, onClose, onLogged })
         <>
           <motion.div
             key="backdrop"
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-ink/35 backdrop-blur-sm"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            transition={{ duration: REDUCE_MOTION ? 0 : 0.18 }}
+            transition={{ duration: REDUCE_MOTION ? 0 : 0.16 }}
             onClick={onClose}
           />
           <motion.div
@@ -195,7 +195,9 @@ export default function SessionDetailSheet({ open, session, onClose, onLogged })
             initial={init}
             animate={enter}
             exit={exit}
-            transition={{ duration: REDUCE_MOTION ? 0 : 0.22, ease: [0, 0, 0.2, 1] }}
+            transition={isDesktop
+              ? { type: 'spring', stiffness: 420, damping: 34 }
+              : { duration: REDUCE_MOTION ? 0 : 0.16, ease: [0.2, 0.7, 0.2, 1] }}
             drag={enableDrag ? 'y' : false}
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.4 }}
@@ -204,15 +206,15 @@ export default function SessionDetailSheet({ open, session, onClose, onLogged })
           >
             {!isDesktop && (
               <div className="flex justify-center pb-2">
-                <div className="w-10 h-1 rounded-full bg-ct-hairline" />
+                <div className="w-10 h-1 rounded-full bg-ink/20" />
               </div>
             )}
             <div className="flex items-start justify-between gap-3 mb-3 px-1">
               <div>
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-ct-terracotta">
+                <p className="ct-eyebrow" style={{ color: '#b06a4f' }}>
                   {typeLabel}
                 </p>
-                <h3 className="text-[19px] font-extrabold -tracking-[0.02em] mt-0.5 text-ct-cream">
+                <h3 className="font-serif text-[19px] font-semibold -tracking-[0.02em] mt-0.5 text-ink">
                   {typeLabel} session
                 </h3>
                 {dur && (
@@ -222,7 +224,7 @@ export default function SessionDetailSheet({ open, session, onClose, onLogged })
                 )}
               </div>
               <button onClick={onClose} aria-label="Close"
-                      className="p-1.5 -mr-1 rounded-full hover:bg-white/[0.06]">
+                      className="p-1.5 -mr-1 rounded-full hover:bg-ink/[0.06]">
                 <X size={16} className="text-ink-soft" />
               </button>
             </div>
@@ -237,7 +239,7 @@ export default function SessionDetailSheet({ open, session, onClose, onLogged })
                   {coachNote && (
                     <Surface tier="default" padding="sm" rounded="rounded-2xl" className="px-3.5 py-3">
                       <div className="flex items-center gap-1.5 mb-1">
-                        <Sparkles size={11} strokeWidth={2.4} className="text-ct-terracotta" />
+                        <Sparkles size={11} strokeWidth={2.4} className="text-clay-deep" />
                         <Eyebrow>Coach note</Eyebrow>
                       </div>
                       <p className="text-[12px] font-semibold text-ink-soft leading-snug">
@@ -282,8 +284,8 @@ export default function SessionDetailSheet({ open, session, onClose, onLogged })
             {!logging && (
               <div className="sticky bottom-0 inset-x-0 -mx-4 px-4 pt-3
                               pb-[calc(0.75rem+env(safe-area-inset-bottom))]
-                              bg-[#0a0a0c]/95 backdrop-blur-md
-                              border-t-[0.5px] border-ct-hairline">
+                              bg-card/95 backdrop-blur-md
+                              border-t border-ct-rim">
                 <motion.button
                   type="button"
                   whileTap={{ scale: 0.97 }}
@@ -291,7 +293,7 @@ export default function SessionDetailSheet({ open, session, onClose, onLogged })
                   className="w-full inline-flex items-center justify-center gap-2
                              px-5 py-3.5 rounded-2xl
                              font-extrabold text-[13px] -tracking-[0.01em]
-                             bg-ct-terracotta text-ct-cream"
+                             bg-clay text-cream"
                 >
                   Log this session
                   <ArrowRight size={14} strokeWidth={2.4} />

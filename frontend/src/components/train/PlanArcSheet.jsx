@@ -68,9 +68,9 @@ export default function PlanArcSheet({ open, plan, onClose, onSelectWeek }) {
         <>
           <motion.div
             key="backdrop"
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-ink/35 backdrop-blur-sm"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            transition={{ duration: REDUCE_MOTION ? 0 : 0.18 }}
+            transition={{ duration: REDUCE_MOTION ? 0 : 0.16 }}
             onClick={onClose}
           />
           <motion.div
@@ -79,7 +79,9 @@ export default function PlanArcSheet({ open, plan, onClose, onSelectWeek }) {
             initial={init}
             animate={enter}
             exit={exit}
-            transition={{ duration: REDUCE_MOTION ? 0 : 0.22, ease: [0, 0, 0.2, 1] }}
+            transition={isDesktop
+              ? { type: 'spring', stiffness: 420, damping: 34 }
+              : { duration: REDUCE_MOTION ? 0 : 0.16, ease: [0.2, 0.7, 0.2, 1] }}
             drag={enableDrag ? 'y' : false}
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.4 }}
@@ -88,7 +90,7 @@ export default function PlanArcSheet({ open, plan, onClose, onSelectWeek }) {
           >
             {!isDesktop && (
               <div className="flex justify-center pb-2">
-                <div className="w-10 h-1 rounded-full bg-ink/15" />
+                <div className="w-10 h-1 rounded-full bg-ink/20" />
               </div>
             )}
             <div className="flex items-center justify-between mb-3 px-1">
@@ -107,9 +109,9 @@ export default function PlanArcSheet({ open, plan, onClose, onSelectWeek }) {
                 const status = weekStatus(plan, wi, todayIso)
                 const weekStartIso = isoFromWeekStart(plan.start_date, wi)
                 const icon = status === 'past'
-                  ? <Check size={14} strokeWidth={2.8} className="text-ct-moss" />
+                  ? <Check size={14} strokeWidth={2.8} className="text-sage-deep" />
                   : status === 'current'
-                    ? <span className="w-2.5 h-2.5 rounded-full bg-ct-terracotta"
+                    ? <span className="w-2.5 h-2.5 rounded-full bg-clay"
                             style={{ boxShadow: '0 0 8px rgba(176,106,79,0.55)' }} />
                     : <Circle size={12} strokeWidth={2.2} className="text-ink-muted" />
                 const isDeload = (wi + 1) === totalWeeks
@@ -119,13 +121,13 @@ export default function PlanArcSheet({ open, plan, onClose, onSelectWeek }) {
                       type="button"
                       onClick={() => { onSelectWeek(weekStartIso); onClose() }}
                       className={`w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-2xl
-                                  bg-paper border-[0.5px] border-ct-rim
-                                  hover:bg-ink/[0.04] transition-colors text-left ${status === 'current' ? 'ring-1 ring-ct-terracotta/30' : ''}`}
+                                  bg-paper border border-ct-rim
+                                  hover:bg-ink/[0.04] transition-colors text-left ${status === 'current' ? 'ring-1 ring-clay/40' : ''}`}
                     >
                       <div className="flex items-center gap-3">
                         <span className="inline-flex items-center justify-center w-6 h-6">{icon}</span>
                         <div>
-                          <p className="text-[13.5px] font-extrabold leading-tight text-ct-cream">Week {wi + 1}</p>
+                          <p className="text-[13.5px] font-extrabold leading-tight text-ink">Week {wi + 1}</p>
                           <p className="text-[10.5px] font-bold text-ink-soft mt-0.5 uppercase tracking-[0.08em]">
                             {isDeload ? 'Deload week' : status === 'current' ? 'This week' : status === 'past' ? 'Complete' : 'Upcoming'}
                           </p>

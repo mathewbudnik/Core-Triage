@@ -1,6 +1,15 @@
 import { Check } from 'lucide-react'
 import { sessionForDay } from '../../lib/trainSessions'
-import { getSessionTypeLabel } from '../../lib/sessionType'
+import { getSessionTypeLabel, getSessionTypeColor } from '../../lib/sessionType'
+
+// hex → rgba with the given alpha, for subtle per-session tile tinting.
+function tint(hex, a) {
+  const h = hex.replace('#', '')
+  const r = parseInt(h.slice(0, 2), 16)
+  const g = parseInt(h.slice(2, 4), 16)
+  const b = parseInt(h.slice(4, 6), 16)
+  return `rgba(${r},${g},${b},${a})`
+}
 
 const DAY_LETTER = ['M','T','W','T','F','S','S']
 const DAY_LONG = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
@@ -32,14 +41,16 @@ function isPast(iso) {
  */
 export default function TrainWeekStrip({ weekDates, plan, loggedDates, selectedDay, onSelectDay }) {
   return (
-    <div className="grid grid-cols-7 gap-1.5 mt-1 mb-4">
+    <div className="grid grid-cols-7 gap-1.5 mt-1">
       {weekDates.map((iso, i) => {
         const today    = isToday(iso)
         const past     = isPast(iso)
-        const hasSess  = !!sessionForDay(plan, iso)
+        const session  = sessionForDay(plan, iso)
+        const hasSess  = !!session
         const logged   = loggedDates?.has(iso)
         const active   = iso === selectedDay
         const isRest   = !hasSess && !logged
+        const sessColor = hasSess ? getSessionTypeColor(session?.type || session?.session_type).c : null
 
         const dayNumClass =
           active ? 'text-ink' :
@@ -48,30 +59,32 @@ export default function TrainWeekStrip({ weekDates, plan, loggedDates, selectedD
           isRest ? 'text-ink-muted' :
                    'text-ink-soft'
 
-        // Tile border + bg by state. Today gets a terracotta outline so the
-        // "now" tile reads even when the user has selected a different day.
+        // Tile border + bg by state. Active wins the clay gradient; today
+        // keeps a clay glow; an unselected scheduled day gets a subtle wash
+        // in its own session color so the week reads chromatically at a glance.
         const tileClass = [
           'flex flex-col items-center gap-1.5 py-2.5 rounded-2xl',
-          'border-[0.5px] transition-colors min-h-[56px] relative',
-          active ? 'border-ct-terracotta/45'
+          'border transition-colors min-h-[56px] relative',
+          active ? 'border-clay/45'
                  : today
-                   ? 'border-ct-terracotta/50'
-                   : 'border-transparent hover:bg-ink/[0.04]',
+                   ? 'border-clay/50'
+                   : 'border-transparent',
         ].join(' ')
 
         const tileBg = active
           ? { background: 'linear-gradient(180deg, rgba(197,138,119,0.22), rgba(197,138,119,0.06))' }
           : today
             ? { boxShadow: '0 0 12px rgba(197,138,119,0.20)' }
-            : {}
+            : (hasSess && sessColor && !isRest)
+              ? { background: tint(sessColor, 0.10) }
+              : {}
 
         const dayLetterClass = (today || active)
-          ? 'font-extrabold' : 'font-bold'
+          ? 'font-bold' : 'font-semibold'
         const dayLetterStyle = (today || active)
           ? { color: '#b06a4f' }
           : { color: 'rgba(141,132,114,0.85)' }
 
-        const session = sessionForDay(plan, iso)
         const typeLabel = getSessionTypeLabel(session?.type || session?.session_type)
         const ariaLabel = [
           formatLongDate(iso),
@@ -86,22 +99,24 @@ export default function TrainWeekStrip({ weekDates, plan, loggedDates, selectedD
         const indicator = (() => {
           if (logged) {
             return (
-              <Check size={12} strokeWidth={3} className="text-ct-moss" />
+              <Check size={12} strokeWidth={3} className="text-sage-deep" />
             )
           }
           if (active) {
             return (
-              <span className="w-2 h-2 rounded-full bg-ct-terra-soft" />
+              <span className="w-2 h-2 rounded-full" style={{ background: '#b06a4f' }} />
             )
           }
           if (!isRest) {
-            // Future-or-today scheduled session that hasn't been logged yet
+            // Future-or-today scheduled session that hasn't been logged yet —
+            // ring carries the session-type color.
             return (
-              <span className="w-2 h-2 rounded-full border-[1.5px] border-ct-terracotta/55" />
+              <span className="w-2 h-2 rounded-full border-[1.5px]"
+                    style={{ borderColor: sessColor || '#b06a4f' }} />
             )
           }
           if (past && isRest) {
-            return <span className="w-1 h-1 rounded-full bg-ink/25" />
+            return <span className="w-1 h-1 rounded-full" style={{ background: 'rgba(42,39,34,0.25)' }} />
           }
           // Future rest: no indicator
           return <span className="w-2 h-2" />

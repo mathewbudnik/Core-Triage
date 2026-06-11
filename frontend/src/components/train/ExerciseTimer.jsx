@@ -254,7 +254,7 @@ export default function ExerciseTimer({ block, onClose }) {
 
   // Subtitle line: "Set 2 / 4" plus optional "Rep 3 / 6" if mid-set
   const repMeta = step.repsPerSet && step.repsPerSet > 1 && (isWork || step.kind === 'innerRest')
-    ? <> · Rep <span className="text-ct-cream font-extrabold">{step.rep}</span><span className="opacity-60">/{step.repsPerSet}</span></>
+    ? <> · Rep <span className="text-ink font-extrabold">{step.rep}</span><span className="opacity-60">/{step.repsPerSet}</span></>
     : null
 
   const playIcon = isDone
@@ -294,7 +294,7 @@ export default function ExerciseTimer({ block, onClose }) {
           {phaseLabel}
         </p>
         <p className="text-[11px] font-bold text-ink-soft tabular-nums">
-          Set <span className="text-ct-cream font-extrabold">{step.set}</span>
+          Set <span className="text-ink font-extrabold">{step.set}</span>
           <span className="opacity-60">/{totalSets}</span>
           {repMeta}
         </p>
@@ -315,7 +315,7 @@ export default function ExerciseTimer({ block, onClose }) {
           </p>
         ) : (
           <p className="text-[56px] sm:text-[60px] font-extrabold leading-none
-                        -tracking-[0.04em] tabular-nums text-ct-cream"
+                        -tracking-[0.04em] tabular-nums text-ink"
              style={{ color: digitsColor }}>
             {fmt(displaySeconds)}
           </p>
@@ -330,7 +330,7 @@ export default function ExerciseTimer({ block, onClose }) {
           whileTap={canPrev ? { scale: 0.92 } : undefined}
           aria-label="Previous set"
           className="w-12 h-12 rounded-full flex items-center justify-center
-                     bg-ct-hairline border-[0.5px] border-ct-rim
+                     bg-card border border-ct-rim
                      text-ink-soft disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <SkipBack size={18} strokeWidth={2.4} fill={canPrev ? 'currentColor' : 'none'} />
@@ -356,7 +356,7 @@ export default function ExerciseTimer({ block, onClose }) {
           whileTap={canNext ? { scale: 0.92 } : undefined}
           aria-label="Next set"
           className="w-12 h-12 rounded-full flex items-center justify-center
-                     bg-ct-hairline border-[0.5px] border-ct-rim
+                     bg-card border border-ct-rim
                      text-ink-soft disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <SkipForward size={18} strokeWidth={2.4} fill={canNext ? 'currentColor' : 'none'} />
@@ -369,7 +369,7 @@ export default function ExerciseTimer({ block, onClose }) {
           onClick={reset}
           className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full
                      text-[10.5px] font-bold uppercase tracking-[0.06em]
-                     text-ink-soft hover:text-ct-cream transition-colors"
+                     text-ink-soft hover:text-ink transition-colors"
         >
           <RotateCcw size={11} strokeWidth={2.4} />
           Reset

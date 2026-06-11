@@ -25,13 +25,13 @@ export default function ProgressTrendGraph() {
     <Surface tier="default" padding="md" rounded="rounded-2xl">
       <Eyebrow className="mb-2">Last 8 weeks · climbing volume</Eyebrow>
       {loading ? (
-        <div className="py-6 flex justify-center"><Loader2 size={16} className="animate-spin text-accent"/></div>
+        <div className="py-6 flex justify-center"><Loader2 size={16} className="animate-spin text-clay"/></div>
       ) : (
         <>
           <div className="flex items-end gap-1 h-[72px]">
             {weeks.map((w) => <WeekColumn key={w.label} week={w} />)}
           </div>
-          <p className="text-[10px] text-muted/70 mt-2">
+          <p className="text-[11px] text-ink-soft mt-2 leading-snug">
             Each segment is one V-tier — watch the stack shift up as you climb harder grades.
           </p>
         </>
@@ -55,7 +55,7 @@ function WeekColumn({ week }) {
           )
         })}
       </div>
-      <span className="text-[9px] text-muted/60">{week.label}</span>
+      <span className="text-[10px] text-ink-muted font-bold tabular-nums">{week.label}</span>
     </div>
   )
 }

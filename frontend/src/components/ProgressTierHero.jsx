@@ -36,10 +36,10 @@ export default function ProgressTierHero({ tierId, metaLine, promotionProgress }
       className="w-full text-left transition-transform hover:scale-[1.005] active:scale-[0.995]">
       {tierId === 'v10' && <DiamondShimmer size="lg" intensity="soft" />}
       <div className="flex items-center justify-between mb-0 relative z-10">
-        <p className="ct-eyebrow text-ct-terra-soft">Current tier</p>
+        <p className="ct-eyebrow text-clay-deep">Current tier</p>
         <ChevronRight size={14} className="text-ink-muted" />
       </div>
-      <div className="text-2xl font-bold text-ct-cream -tracking-[0.025em] mt-1 mb-0.5">
+      <div className="text-2xl font-bold text-ink -tracking-[0.025em] mt-1 mb-0.5">
         {tierId === 'v10' ? 'V10+' : tierId.toUpperCase()} · {tierName}
       </div>
       <div className="text-xs text-ink-soft mb-3">{metaLine}</div>
@@ -52,13 +52,13 @@ export default function ProgressTierHero({ tierId, metaLine, promotionProgress }
             <span className="text-ink-soft uppercase tracking-[0.05em] font-semibold">
               Promotion to {nextId.toUpperCase()} · {nextName}
             </span>
-            <span className="text-ct-cream font-bold tabular-nums -tracking-[0.01em]">
+            <span className="text-ink font-bold tabular-nums -tracking-[0.01em]">
               {promotionProgress.current}
               <span className="text-ink-muted font-medium">/{promotionProgress.goal}</span>
             </span>
           </div>
           <div className="h-[5px] rounded-full overflow-hidden bg-ct-hairline">
-            <div className="h-full rounded-full bg-gradient-to-r from-ct-terracotta to-ct-terra-soft"
+            <div className="h-full rounded-full bg-gradient-to-r from-clay to-clay-deep"
                  style={{ width: `${Math.round(frac * 100)}%` }} />
           </div>
           <div className="text-[11px] text-ink-muted mt-2">

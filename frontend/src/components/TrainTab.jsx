@@ -9,10 +9,10 @@ const PROFILE_CACHE_KEY = 'train.profile'
 const PLAN_CACHE_KEY    = 'train.activePlan'
 import { workingTierFromHardest } from '../lib/tier'
 import { currentWeekDates, dayStatusFor, sessionForDay } from '../lib/trainSessions'
+import { useIsDesktop } from '../hooks/useIsDesktop'
 import TierThemeRoot from './TierThemeRoot'
 import ProfileSetup from './ProfileSetup'
 import TrainHeader from './train/TrainHeader'
-import TrainPlanArcChip from './train/TrainPlanArcChip'
 import TrainCalendar from './train/TrainCalendar'
 import TrainHeroCard from './train/TrainHeroCard'
 import TrainNextUpRow from './train/TrainNextUpRow'
@@ -48,11 +48,11 @@ function friendlyPlanError(msg) {
 function EmptyState({ icon: Icon, title, body, action }) {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-8 py-16 space-y-5">
-      <div className="w-14 h-14 rounded-2xl bg-accent/10 border border-accent/25 flex items-center justify-center">
-        <Icon size={24} className="text-accent" />
+      <div className="w-14 h-14 rounded-2xl bg-clay/10 border border-clay/25 flex items-center justify-center">
+        <Icon size={24} className="text-clay-deep" />
       </div>
       <div>
-        <p className="font-semibold text-ct-cream">{title}</p>
+        <p className="font-semibold text-ink">{title}</p>
         <p className="text-sm text-ink-soft mt-1 max-w-xs">{body}</p>
       </div>
       {action}
@@ -83,6 +83,7 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
 
   const hub = useHubData(user)
   const tierId = workingTierFromHardest(hub.hardestSends)
+  const isDesktop = useIsDesktop()
 
   const load = useCallback(async () => {
     if (!user) { setState('no-auth'); return }
@@ -207,7 +208,7 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
         <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 text-center px-8">
           <Loader2 size={28} className="text-[var(--tier-light)] animate-spin" />
           <div>
-            <p className="text-[15px] font-extrabold text-ct-cream -tracking-[0.01em]">Building your plan…</p>
+            <p className="text-[15px] font-extrabold text-ink -tracking-[0.01em]">Building your plan…</p>
             <p className="text-[12.5px] font-semibold text-ink-soft mt-1">
               Personalising sessions based on your profile and injury history.
             </p>
@@ -228,9 +229,9 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
             action={
               <button onClick={load}
                       className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl
-                                 text-[12px] font-bold text-text
-                                 bg-white/[0.04] border-[0.5px] border-white/[0.10]
-                                 hover:bg-white/[0.06]">
+                                 text-[12px] font-bold text-ink
+                                 bg-card border border-ct-rim
+                                 hover:border-clay/50 hover:text-clay-deep transition-colors">
                 <RefreshCw size={13} />
                 Retry
               </button>
@@ -242,62 +243,79 @@ export default function TrainTab({ user, dbReady, onLoginClick }) {
   }
 
   // state === 'ready'
+  const calendarBlock = (
+    <TrainCalendar
+      weekDates={weekDates}
+      plan={plan}
+      loggedDates={hub.weekLoggedDates}
+      selectedDay={selectedDay}
+      onSelectDay={setSelectedDay}
+    />
+  )
+
+  const heroBlock = plan ? (
+    <TrainHeroCard
+      session={session}
+      dayStatus={dayStatus}
+      isoDate={selectedDay}
+      onStart={() => setSheetOpen(true)}
+    />
+  ) : (
+    <TrainHeroCard
+      noPlan
+      onGenerate={handleGeneratePlan}
+      generating={generating}
+      planError={error}
+    />
+  )
+
+  const nextUpBlock = plan ? (
+    <TrainNextUpRow
+      weekDates={weekDates}
+      plan={plan}
+      fromDay={selectedDay}
+      onSelectDay={setSelectedDay}
+    />
+  ) : null
+
+  const editProfileBlock = (
+    <button
+      onClick={() => setState('setup')}
+      className="px-1 text-[11px] font-bold text-ink-soft hover:text-ink transition-colors"
+    >
+      Edit profile ›
+    </button>
+  )
+
   return (
     <TierThemeRoot hardest={hub.hardestSends} global>
-      <div className="relative max-w-2xl mx-auto px-4 py-6 md:py-8">
+      <div className="relative p-4 md:p-6 max-w-md md:max-w-4xl mx-auto text-ink">
 
-        {plan && (
-          <div className="px-1 mb-1">
-            <TrainPlanArcChip
-              currentWeek={curWeek}
-              totalWeeks={plan.duration_weeks}
-              phase={plan.phase}
-              onOpen={() => setPlanSheetOpen(true)}
-            />
-          </div>
-        )}
-
-        <TrainHeader tierId={tierId} plan={plan} streakDays={hub.streakDays} />
-
-        <TrainCalendar
-          weekDates={weekDates}
+        <TrainHeader
+          tierId={tierId}
           plan={plan}
-          loggedDates={hub.weekLoggedDates}
-          selectedDay={selectedDay}
-          onSelectDay={setSelectedDay}
+          streakDays={hub.streakDays}
+          currentWeek={curWeek}
+          onOpenPlan={() => setPlanSheetOpen(true)}
         />
 
-        {plan ? (
-          <TrainHeroCard
-            session={session}
-            dayStatus={dayStatus}
-            isoDate={selectedDay}
-            onStart={() => setSheetOpen(true)}
-          />
+        {isDesktop ? (
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4">{calendarBlock}</div>
+            <div className="space-y-4">
+              {heroBlock}
+              {nextUpBlock}
+            </div>
+            <div className="col-span-2">{editProfileBlock}</div>
+          </div>
         ) : (
-          <TrainHeroCard
-            noPlan
-            onGenerate={handleGeneratePlan}
-            generating={generating}
-            planError={error}
-          />
+          <div className="space-y-4">
+            {calendarBlock}
+            {heroBlock}
+            {nextUpBlock}
+            <div className="pt-2">{editProfileBlock}</div>
+          </div>
         )}
-
-        {plan && (
-          <TrainNextUpRow
-            weekDates={weekDates}
-            plan={plan}
-            fromDay={selectedDay}
-            onSelectDay={setSelectedDay}
-          />
-        )}
-
-        <button
-          onClick={() => setState('setup')}
-          className="mt-6 px-1 text-[11px] font-bold text-ink-soft hover:text-ct-cream transition-colors"
-        >
-          Edit profile ›
-        </button>
 
         <PlanArcSheet
           open={planSheetOpen}

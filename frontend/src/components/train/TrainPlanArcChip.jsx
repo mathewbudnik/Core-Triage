@@ -21,8 +21,8 @@ export default function TrainPlanArcChip({ currentWeek, totalWeeks, phase, onOpe
       aria-label={ariaLabel}
       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
                  text-[10.5px] font-bold uppercase tracking-[0.10em] tabular-nums
-                 bg-ct-terra-tint border border-ct-terracotta/30
-                 text-ct-terra-soft hover:text-ct-cream transition-colors"
+                 bg-card border border-ct-rim
+                 text-clay-deep hover:text-ink transition-colors"
     >
       <span>Week {currentWeek} of {totalWeeks}</span>
       {phaseLabel && <span className="text-ink-muted">·</span>}

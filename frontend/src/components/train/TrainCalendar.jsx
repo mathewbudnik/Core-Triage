@@ -68,7 +68,8 @@ export default function TrainCalendar({ weekDates, plan, loggedDates, selectedDa
   const monthLabel = `${MONTH_NAMES[view.month]} ${view.year}`
 
   return (
-    <div className="mt-1 mb-4">
+    <div className="ct-surface rounded-2xl p-3 md:p-4">
+      <p className="ct-eyebrow mb-2 px-1">Calendar</p>
       <div className="flex items-center justify-between px-1 mb-2">
         {expanded ? (
           <div className="inline-flex items-center gap-1">
@@ -77,23 +78,23 @@ export default function TrainCalendar({ weekDates, plan, loggedDates, selectedDa
               onClick={prevMonth}
               aria-label="Previous month"
               className="w-7 h-7 rounded-full inline-flex items-center justify-center
-                         text-ink-soft hover:text-ct-cream hover:bg-white/[0.06] transition-colors"
+                         text-ink-soft hover:text-ink hover:bg-card transition-colors"
             >
               <ChevronLeft size={14} strokeWidth={2.4} />
             </button>
-            <p className="text-[12.5px] font-extrabold tabular-nums px-1 text-ct-cream">{monthLabel}</p>
+            <p className="text-[12.5px] font-bold tabular-nums px-1 text-ink">{monthLabel}</p>
             <button
               type="button"
               onClick={nextMonth}
               aria-label="Next month"
               className="w-7 h-7 rounded-full inline-flex items-center justify-center
-                         text-ink-soft hover:text-ct-cream hover:bg-white/[0.06] transition-colors"
+                         text-ink-soft hover:text-ink hover:bg-card transition-colors"
             >
               <ChevronRight size={14} strokeWidth={2.4} />
             </button>
           </div>
         ) : (
-          <p className="text-[12.5px] font-extrabold tabular-nums px-1 text-ct-cream">{monthLabel}</p>
+          <p className="text-[12.5px] font-bold tabular-nums px-1 text-ink">{monthLabel}</p>
         )}
         <button
           type="button"
@@ -101,8 +102,8 @@ export default function TrainCalendar({ weekDates, plan, loggedDates, selectedDa
           aria-label={expanded ? 'Collapse calendar' : 'Expand calendar'}
           aria-expanded={expanded}
           className="inline-flex items-center gap-1 px-2 py-1 rounded-full
-                     text-[10px] font-extrabold uppercase tracking-[0.08em]
-                     text-ink-soft hover:text-ct-cream hover:bg-white/[0.04] transition-colors"
+                     text-[10px] font-bold uppercase tracking-[0.08em]
+                     text-ink-soft hover:text-ink hover:bg-card transition-colors"
         >
           {expanded ? 'Week' : 'Month'}
           <ChevronDown
