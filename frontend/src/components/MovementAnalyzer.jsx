@@ -8,6 +8,7 @@ import {
 import { createPoseClient } from '../lib/poseWorkerClient'
 import { isAdvancedGrade } from '../lib/gradeTier'
 import { drawPose } from '../lib/poseDrawing'
+import { jointsForFinding, activeFindingAt } from '../lib/bodyRegionJoints'
 import { smoothPoseCache } from '../lib/poseSmoothing'
 import { runRules } from '../lib/poseRuleEngine'
 import { cameraAngleProfile } from '../lib/posePrimitives'
@@ -174,6 +175,12 @@ export default function MovementAnalyzer() {
   const [landmarksByMs, setLandmarksByMs] = useState(null)
   const [findings, setFindings] = useState([])
   const [thumbnails, setThumbnails] = useState({})  // { [ruleId]: dataURL }
+  // Focus mode: when a finding's "Show me" is tapped, we seek+pause and
+  // highlight that finding's body part. Refs mirror the state so the
+  // requestVideoFrameCallback loop can read the latest without re-binding.
+  const [focusedFinding, setFocusedFinding] = useState(null)
+  const focusedFindingRef = useRef(null)
+  const findingsRef = useRef([])
   const [noBodyWarning, setNoBodyWarning] = useState(false)
   const [angleWarning, setAngleWarning] = useState(null)   // { category, ratio } | null
   const [clipQuality, setClipQuality] = useState(null)     // { detectionRatio, droppedSanity, totalFrames, angleCategory }
@@ -279,7 +286,9 @@ export default function MovementAnalyzer() {
       const keys = sortedKeysRef.current
       const key = nearestKey(keys, ts)
       const landmarks = key != null ? landmarksByMs.get(key) : null
-      drawPose(ctx, landmarks)
+      const focused = focusedFindingRef.current
+      const active = focused ?? activeFindingAt(findingsRef.current, ts)
+      drawPose(ctx, landmarks, active ? jointsForFinding(active) : null)
       rvfcHandleRef.current = video.requestVideoFrameCallback(onFrame)
     }
 
@@ -297,11 +306,30 @@ export default function MovementAnalyzer() {
     const onTimeUpdate = () => {
       const ts = Math.round(video.currentTime * 1000)
       const key = nearestKey(sortedKeysRef.current, ts)
-      drawPose(ctx, key != null ? landmarksByMs.get(key) : null)
+      const landmarks = key != null ? landmarksByMs.get(key) : null
+      const focused = focusedFindingRef.current
+      const active = focused ?? activeFindingAt(findingsRef.current, ts)
+      drawPose(ctx, landmarks, active ? jointsForFinding(active) : null)
     }
     video.addEventListener('timeupdate', onTimeUpdate)
     return () => video.removeEventListener('timeupdate', onTimeUpdate)
   }, [status, landmarksByMs, resizeCanvas])
+
+  // Keep the overlay loop's refs in sync with the latest findings/focus
+  // so requestVideoFrameCallback reads current data without re-binding.
+  useEffect(() => { findingsRef.current = findings }, [findings])
+  useEffect(() => { focusedFindingRef.current = focusedFinding }, [focusedFinding])
+
+  // Clear focus mode the moment the climber presses play — the ambient
+  // highlight takes back over for normal playback.
+  useEffect(() => {
+    if (status !== STATUS.READY) return
+    const v = videoRef.current
+    if (!v) return
+    const onPlay = () => setFocusedFinding(null)
+    v.addEventListener('play', onPlay)
+    return () => v.removeEventListener('play', onPlay)
+  }, [status])
 
   // ── File selection / drag-drop ─────────────────────────────────────
   // Validate the file, set up the Blob URL, load metadata, then route
@@ -803,6 +831,17 @@ export default function MovementAnalyzer() {
   }, [])
 
   // ── Reset to idle (cancel or replace) ──────────────────────────────
+  // Focus mode entry: seek to the finding's first instance, pause, and
+  // light up that finding's body part via the overlay (focusedFindingRef).
+  function handleFocusFinding(finding) {
+    const v = videoRef.current
+    if (!v || !finding) return
+    const ts0 = finding.timestamps?.[0]
+    if (ts0 != null) v.currentTime = ts0 / 1000
+    v.pause()
+    setFocusedFinding(finding)
+  }
+
   function resetToIdle() {
     cancelRef.current = true
     if (objectUrlRef.current) {
@@ -821,6 +860,7 @@ export default function MovementAnalyzer() {
     setClipDurationS(0)
     setFindings([])
     setThumbnails({})
+    setFocusedFinding(null)
     setClipQuality(null)
     setAngleWarning(null)
     setStatus(STATUS.IDLE)
@@ -1032,6 +1072,26 @@ export default function MovementAnalyzer() {
               className="absolute inset-0 w-full h-full pointer-events-none"
             />
           )}
+          {status === STATUS.READY && focusedFinding && (
+            <div className="absolute left-2 right-2 bottom-2 rounded-xl bg-ink/75 border border-[rgba(194,54,43,0.5)] backdrop-blur-sm px-3 py-2.5 pointer-events-auto">
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: '#e08c7f' }}>
+                  What we saw
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setFocusedFinding(null)}
+                  className="text-cream/70 hover:text-cream"
+                  aria-label="Close annotation"
+                >
+                  <X size={13} />
+                </button>
+              </div>
+              <p className="text-[12.5px] text-cream mt-1 leading-snug">
+                <span className="font-semibold">{focusedFinding.name}</span> — {focusedFinding.cue}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Timeline ribbon — colored markers per finding instance, fall icon
@@ -1080,6 +1140,7 @@ export default function MovementAnalyzer() {
               // If paused, give the user a frame to look at; if playing,
               // they're going to seek and continue. Don't force play.
             }}
+            onFocusFinding={handleFocusFinding}
           />
         )}
       </div>
