@@ -845,7 +845,7 @@ export default function MovementAnalyzer() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               transition={TRANSITIONS.dialog_in}
-              className="rounded-xl bg-ct-forest-deep border border-ct-hairline p-3"
+              className="ct-surface rounded-xl p-3"
             >
               <ModelLoadProgress progress={modelProgress} />
             </motion.div>
@@ -854,7 +854,7 @@ export default function MovementAnalyzer() {
 
         {/* Error banner */}
         {error && (
-          <div className="flex items-start gap-2 text-xs text-ct-terracotta px-3 py-2 rounded-lg bg-ct-terra-tint border border-ct-terracotta/30">
+          <div className="flex items-start gap-2 text-xs text-clay-deep px-3 py-2 rounded-lg bg-clay/10 border border-clay/30">
             <AlertTriangle size={13} className="flex-shrink-0 mt-0.5" />
             <div className="flex-1 flex flex-col gap-2">
               <span>{error.message}</span>
@@ -894,17 +894,17 @@ export default function MovementAnalyzer() {
 
         {/* Calibration in-progress UI — minimal, just progress + cancel. */}
         {status === STATUS.CALIBRATING && (
-          <div className="rounded-2xl bg-ct-forest-deep border border-ct-hairline p-4 flex flex-col gap-4">
+          <div className="ct-surface rounded-2xl p-4 flex flex-col gap-4">
             <div className="flex items-center gap-2">
-              <Ruler size={14} className="text-ct-terra-soft" />
-              <span className="text-xs font-bold uppercase tracking-[0.12em] text-ct-cream">
+              <Ruler size={14} className="text-clay-deep" />
+              <span className="text-xs font-bold uppercase tracking-[0.12em] text-ink">
                 Calibrating body proportions
               </span>
             </div>
             <div className="flex flex-col gap-1.5">
-              <div className="h-1.5 rounded-full bg-ct-hairline overflow-hidden">
+              <div className="h-1.5 rounded-full bg-side overflow-hidden">
                 <div
-                  className="h-full bg-ct-terracotta transition-[width] duration-150"
+                  className="h-full bg-clay transition-[width] duration-150"
                   style={{ width: `${progress.total > 0 ? Math.round((progress.frame / progress.total) * 100) : 0}%` }}
                 />
               </div>
@@ -916,7 +916,7 @@ export default function MovementAnalyzer() {
             <button
               type="button"
               onClick={() => { cancelRef.current = true; resetToIdle() }}
-              className="self-end flex items-center gap-1.5 text-xs text-ink-soft hover:text-ct-cream px-3 py-1.5 rounded-lg bg-ct-hairline border border-ct-rim hover:border-ct-terracotta/50 transition-colors"
+              className="self-end flex items-center gap-1.5 text-xs text-ink-soft hover:text-clay-deep px-3 py-1.5 rounded-lg bg-card border border-ct-rim hover:border-clay/50 transition-colors"
             >
               <X size={12} />
               Cancel
@@ -938,11 +938,11 @@ export default function MovementAnalyzer() {
 
         {/* Processing UI */}
         {status === STATUS.PROCESSING && (
-          <div className="rounded-2xl bg-ct-forest-deep border border-ct-hairline p-4 flex flex-col gap-4">
+          <div className="ct-surface rounded-2xl p-4 flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <div className="h-1.5 rounded-full bg-ct-hairline overflow-hidden">
+              <div className="h-1.5 rounded-full bg-side overflow-hidden">
                 <div
-                  className="h-full bg-ct-terracotta transition-[width] duration-150"
+                  className="h-full bg-clay transition-[width] duration-150"
                   style={{ width: `${pct}%` }}
                 />
               </div>
@@ -964,7 +964,7 @@ export default function MovementAnalyzer() {
                 cancelRef.current = true
                 resetToIdle()
               }}
-              className="self-end flex items-center gap-1.5 text-xs text-ink-soft hover:text-ct-cream px-3 py-1.5 rounded-lg bg-ct-hairline border border-ct-rim hover:border-ct-terracotta/50 transition-colors"
+              className="self-end flex items-center gap-1.5 text-xs text-ink-soft hover:text-clay-deep px-3 py-1.5 rounded-lg bg-card border border-ct-rim hover:border-clay/50 transition-colors"
             >
               <X size={12} />
               Cancel
@@ -974,7 +974,7 @@ export default function MovementAnalyzer() {
 
         {/* "No body detected" banner (only after processing) */}
         {status === STATUS.READY && noBodyWarning && (
-          <div className="flex items-start gap-2 text-xs text-ct-terra-soft px-3 py-2 rounded-lg bg-ct-terra-tint border border-ct-terracotta/30">
+          <div className="flex items-start gap-2 text-xs text-clay-deep px-3 py-2 rounded-lg bg-clay/10 border border-clay/30">
             <AlertTriangle size={13} className="flex-shrink-0 mt-0.5" />
             <span>No climber detected in this clip — try one where the full body is visible.</span>
           </div>
@@ -1060,7 +1060,7 @@ export default function MovementAnalyzer() {
             <button
               type="button"
               onClick={resetToIdle}
-              className="flex items-center gap-1.5 text-xs text-ink-soft hover:text-ct-cream px-3 py-1.5 rounded-lg bg-ct-hairline border border-ct-rim hover:border-ct-terracotta/50 transition-colors"
+              className="flex items-center gap-1.5 text-xs text-ink-soft hover:text-clay-deep px-3 py-1.5 rounded-lg bg-card border border-ct-rim hover:border-clay/50 transition-colors"
             >
               <RefreshCw size={12} />
               Replace video
@@ -1105,14 +1105,14 @@ function DropZone({ onPick, modelReady }) {
       }}
       className={`flex flex-col items-center justify-center gap-3 px-6 py-12 rounded-2xl border-2 border-dashed transition-colors ${
         dragOver
-          ? 'border-ct-terracotta bg-ct-terra-tint'
-          : 'border-ct-hairline hover:border-ct-terracotta/50'
+          ? 'border-clay bg-clay/10'
+          : 'border-ct-rim hover:border-clay/50'
       }`}
     >
-      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-ct-terra-tint text-ct-terra-soft">
+      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-clay/15 text-clay-deep">
         <Upload size={20} />
       </div>
-      <p className="text-sm font-bold text-ct-cream text-center">Drop a climbing clip here</p>
+      <p className="text-sm font-bold text-ink text-center">Drop a climbing clip here</p>
       <p className="text-xs text-ink-soft text-center max-w-[280px]">
         MP4, WebM, or MOV. Up to 400 MB. Trim a window up to {MAX_DURATION_S} seconds inside the app — shorter clips give the cleanest reads. Processed entirely on-device — your video never leaves your phone.
       </p>
@@ -1209,9 +1209,9 @@ function ClipQualityChip({ quality }) {
 }
 
 const SIGNAL_DOT = {
-  good:       'bg-emerald-400',
-  borderline: 'bg-ct-terra-soft',
-  bad:        'bg-red-400',
+  good:       'bg-sage',
+  borderline: 'bg-clay',
+  bad:        'bg-red-500',
 }
 
 function QualitySignal({ tone, children }) {
@@ -1238,10 +1238,10 @@ function AngleWarningBanner({ profile }) {
     ? "This clip looks like it was shot near 90° to the wall. Lateral-balance rules (barn-door, knee position, hip rotation) will be less accurate from this angle."
     : "This clip looks like it was shot head-on with the climber facing the camera. Vertical-body-line rules will be less accurate from this angle."
   return (
-    <div className="flex items-start gap-2 text-xs text-ink-soft px-3 py-2 rounded-lg bg-ct-hairline border border-ct-rim">
-      <Compass size={13} className="flex-shrink-0 mt-0.5 text-ct-terra-soft" />
+    <div className="flex items-start gap-2 text-xs text-ink-soft px-3 py-2 rounded-lg bg-side border border-ct-rim">
+      <Compass size={13} className="flex-shrink-0 mt-0.5 text-clay-deep" />
       <div className="flex-1 leading-snug">
-        <span className="font-bold text-ct-cream">Camera angle: </span>{msg}{' '}
+        <span className="font-bold text-ink">Camera angle: </span>{msg}{' '}
         <span className="text-ink-soft">For most accurate results, film at about 45° to the wall.</span>
       </div>
     </div>
@@ -1290,15 +1290,15 @@ function CalibrationPanel({
   const supportsRecording = canRecordVideo()
 
   return (
-    <div className="rounded-xl border border-ct-rim bg-ct-forest-deep overflow-hidden">
+    <div className="ct-surface rounded-xl overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-ct-hairline/40 transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-side transition-colors"
       >
-        <SourceIcon size={14} className={source === 'explicit' ? 'text-emerald-300 flex-shrink-0' : 'text-ink-soft flex-shrink-0'} />
-        <span className="text-xs font-bold text-ct-cream flex-1">
+        <SourceIcon size={14} className={source === 'explicit' ? 'text-sage-deep flex-shrink-0' : 'text-ink-soft flex-shrink-0'} />
+        <span className="text-xs font-bold text-ink flex-1">
           Your body proportions
         </span>
         <span className="text-[10px] text-ink-soft mr-1">{sourceLabel}</span>
@@ -1308,8 +1308,8 @@ function CalibrationPanel({
         />
       </button>
       {flash && (
-        <div className="px-3 py-2 border-t border-ct-rim bg-emerald-500/[0.06] flex items-center gap-2">
-          <CheckCircle2 size={12} className="text-emerald-300 flex-shrink-0" />
+        <div className="px-3 py-2 border-t border-ct-rim bg-sage/10 flex items-center gap-2">
+          <CheckCircle2 size={12} className="text-sage-deep flex-shrink-0" />
           <span className="text-[11px] text-ink-soft flex-1">
             {flash === 'locked'
               ? 'Calibration saved — analysis is locked to your body proportions.'
@@ -1318,7 +1318,7 @@ function CalibrationPanel({
           <button
             type="button"
             onClick={onDismissFlash}
-            className="text-ink-soft hover:text-ct-cream"
+            className="text-ink-soft hover:text-ink"
             aria-label="Dismiss"
           >
             <X size={12} />
@@ -1379,7 +1379,7 @@ function CalibrationPanel({
               disabled={!modelReady}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold disabled:opacity-40 transition ${
                 supportsRecording
-                  ? 'bg-ct-hairline border border-ct-rim text-ct-cream hover:border-ct-terracotta/60'
+                  ? 'bg-card border border-ct-rim text-ink hover:border-clay/60'
                   : 'bg-clay-deep text-cream hover:brightness-110'
               }`}
             >
@@ -1390,7 +1390,7 @@ function CalibrationPanel({
               <button
                 type="button"
                 onClick={onReset}
-                className="text-[11px] text-ink-soft hover:text-ct-cream px-2 py-1 transition-colors ml-auto"
+                className="text-[11px] text-ink-soft hover:text-ink px-2 py-1 transition-colors ml-auto"
               >
                 Reset
               </button>
@@ -1593,23 +1593,23 @@ function CalibrationCameraCapture({ onDone, onCancel }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-bg/90 backdrop-blur-sm p-4"
       role="dialog"
       aria-label="Body calibration camera"
     >
-      <div className="relative w-full max-w-md max-h-full flex flex-col bg-ct-forest-deep border border-ct-hairline rounded-2xl overflow-hidden">
+      <div className="relative w-full max-w-md max-h-full flex flex-col ct-surface rounded-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2.5 border-b border-ct-hairline">
           <div className="flex items-center gap-2">
-            <Camera size={14} className="text-ct-terra-soft" />
-            <span className="text-xs font-bold uppercase tracking-[0.12em] text-ct-cream">
+            <Camera size={14} className="text-clay-deep" />
+            <span className="text-xs font-bold uppercase tracking-[0.12em] text-ink">
               Calibrate body proportions
             </span>
           </div>
           <button
             type="button"
             onClick={handleCancel}
-            className="text-ink-soft hover:text-ct-cream"
+            className="text-ink-soft hover:text-ink"
             aria-label="Cancel"
           >
             <X size={14} />
@@ -1641,12 +1641,12 @@ function CalibrationCameraCapture({ onDone, onCancel }) {
           {/* Stage overlays */}
           {stage === 'requesting' && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <Loader2 size={20} className="text-ct-terra-soft animate-spin" />
+              <Loader2 size={20} className="text-cream animate-spin" />
             </div>
           )}
           {stage === 'countdown' && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-8xl font-bold text-ct-cream ct-tnum drop-shadow-lg">
+              <div className="text-8xl font-bold text-cream ct-tnum drop-shadow-lg">
                 {countdown}
               </div>
             </div>
@@ -1690,7 +1690,7 @@ function CalibrationCameraCapture({ onDone, onCancel }) {
                 <button
                   type="button"
                   onClick={handleRetry}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-ct-hairline border border-ct-rim text-ink-soft hover:text-ct-cream hover:border-ct-terracotta/60 transition"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-card border border-ct-rim text-ink-soft hover:text-clay-deep hover:border-clay/60 transition"
                 >
                   <RefreshCw size={11} />
                   Retake
@@ -1707,7 +1707,7 @@ function CalibrationCameraCapture({ onDone, onCancel }) {
             </>
           )}
           {stage === 'error' && (
-            <div className="flex items-start gap-2 text-xs text-ct-terra-soft px-2 py-2 rounded-lg bg-ct-terra-tint border border-ct-terracotta/30">
+            <div className="flex items-start gap-2 text-xs text-clay-deep px-2 py-2 rounded-lg bg-clay/10 border border-clay/30">
               <AlertTriangle size={13} className="flex-shrink-0 mt-0.5" />
               <span className="flex-1">{errorMsg}</span>
             </div>
@@ -1736,24 +1736,24 @@ function CalibrationCameraCapture({ onDone, onCancel }) {
 function RecordingTips() {
   const [open, setOpen] = useState(false)
   return (
-    <div className="rounded-xl border border-ct-terracotta/40 bg-ct-terra-tint/60 overflow-hidden">
+    <div className="ct-surface rounded-xl border-clay/40 bg-clay/10 overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-ct-terra-tint transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-clay/15 transition-colors"
       >
-        <Video size={14} className="text-ct-terra-soft flex-shrink-0" />
-        <span className="text-xs font-bold text-ct-cream flex-1">
+        <Video size={14} className="text-clay-deep flex-shrink-0" />
+        <span className="text-xs font-bold text-ink flex-1">
           How to film for best results
         </span>
         <ChevronDown
           size={14}
-          className={`text-ct-terra-soft transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`text-clay-deep transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
         />
       </button>
       {open && (
-        <div className="border-t border-ct-terracotta/25 px-3 py-3 flex flex-col gap-2.5">
+        <div className="border-t border-clay/25 px-3 py-3 flex flex-col gap-2.5">
           <TipRow Icon={Scissors} title="Short clips read cleanest">
             Aim for 5–15 seconds of the move or sequence you want feedback on. You can upload longer and trim a window inside the app.
           </TipRow>
@@ -1778,11 +1778,11 @@ function RecordingTips() {
 function TipRow({ Icon, title, children }) {
   return (
     <div className="flex items-start gap-2.5">
-      <div className="w-6 h-6 rounded-md bg-ct-terracotta/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-        <Icon size={12} className="text-ct-terra-soft" />
+      <div className="w-6 h-6 rounded-md bg-clay/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+        <Icon size={12} className="text-clay-deep" />
       </div>
       <div className="flex-1">
-        <p className="text-xs font-bold text-ct-cream leading-snug">{title}</p>
+        <p className="text-xs font-bold text-ink leading-snug">{title}</p>
         <p className="text-[11px] text-ink-soft leading-snug mt-0.5">{children}</p>
       </div>
     </div>
@@ -1837,7 +1837,7 @@ function ContextSummary({ context }) {
       </div>
       {calibrationParts.length > 0 && (
         <div className="flex items-center gap-1.5 text-[10px] text-ink-muted leading-snug">
-          <SlidersHorizontal size={10} className="text-ct-terra-soft/80 flex-shrink-0" />
+          <SlidersHorizontal size={10} className="text-clay-deep/80 flex-shrink-0" />
           <span>
             Calibrated for {calibrationParts.join(' + ')} — only sustained, high-confidence flags surface.
           </span>
@@ -1856,8 +1856,8 @@ function venueLabel(v) {
 
 function Chip({ children, tone }) {
   const toneClass =
-    tone === 'accent' ? 'border-ct-terracotta/40 text-ct-terra-soft bg-ct-terra-tint' :
-                        'border-ct-rim text-ink-soft bg-ct-hairline'
+    tone === 'accent' ? 'border-clay/40 text-clay-deep bg-clay/10' :
+                        'border-ct-rim text-ink-soft bg-side'
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-semibold ${toneClass}`}>
       {children}
@@ -1886,15 +1886,15 @@ function ModelLoadProgress({ progress }) {
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center gap-2 text-xs text-ink-soft">
-        <Loader2 size={12} className="animate-spin text-ct-terra-soft flex-shrink-0" />
+        <Loader2 size={12} className="animate-spin text-clay-deep flex-shrink-0" />
         <span className="flex-1">Loading pose model…</span>
         <span className="ct-tnum text-ink-muted">
           {loadedMB} / {totalMB} MB
         </span>
       </div>
-      <div className="h-1 rounded-full bg-ct-hairline overflow-hidden">
+      <div className="h-1 rounded-full bg-side overflow-hidden">
         <div
-          className="h-full bg-ct-terra-soft transition-[width] duration-150"
+          className="h-full bg-clay transition-[width] duration-150"
           style={{ width: total > 0 ? `${pct}%` : '20%' }}
         />
       </div>

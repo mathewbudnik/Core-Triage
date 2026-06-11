@@ -63,11 +63,11 @@ export default function TopTakeaway({ finding, thumbnail, onJumpTo }) {
     !!finding.whyItMatters || !!finding.howToFix || !!finding.whenYouSeeIt
 
   return (
-    <div className="rounded-2xl border border-ct-terracotta/45 bg-[linear-gradient(180deg,rgba(197,138,119,0.16),rgba(197,138,119,0.05))] p-4 md:p-5 flex flex-col gap-3">
+    <div className="ct-surface rounded-2xl border-clay/40 p-4 md:p-5 flex flex-col gap-3">
       {/* Label */}
       <div className="flex items-center gap-2">
-        <Target size={14} className="text-ct-terra-soft" />
-        <span className="text-[11px] font-bold uppercase tracking-[0.13em] text-ct-terra-soft">
+        <Target size={14} className="text-clay-deep" />
+        <span className="text-[11px] font-bold uppercase tracking-[0.13em] text-clay-deep">
           Biggest takeaway
         </span>
       </div>
@@ -78,14 +78,14 @@ export default function TopTakeaway({ finding, thumbnail, onJumpTo }) {
           <button
             type="button"
             onClick={() => onJumpTo(firstTs)}
-            className="flex-shrink-0 w-24 h-20 rounded-lg overflow-hidden bg-side border border-ct-terracotta/30 hover:border-ct-terracotta transition-colors"
+            className="flex-shrink-0 w-24 h-20 rounded-lg overflow-hidden bg-side border border-clay/30 hover:border-clay transition-colors"
             aria-label={`Jump to ${formatTime(firstTs)}`}
           >
             <img src={thumbnail} alt="" className="w-full h-full object-cover" />
           </button>
         )}
         <div className="flex-1 min-w-0">
-          <h3 className="text-base font-bold text-ct-cream">{finding.name}</h3>
+          <h3 className="text-base font-bold font-serif text-ink">{finding.name}</h3>
           <p className="text-sm text-ink-soft mt-1 leading-snug">{finding.cue}</p>
           <p className="text-[11px] text-ink-soft ct-tnum mt-2">
             {instancesStr} · first at {formatTime(firstTs)}
@@ -98,7 +98,7 @@ export default function TopTakeaway({ finding, thumbnail, onJumpTo }) {
           rendered inline since the top takeaway has nowhere else to
           link to. */}
       {expanded && hasDetails && (
-        <div className="border-t border-ct-terracotta/30 pt-3 flex flex-col gap-3">
+        <div className="border-t border-ct-hairline pt-3 flex flex-col gap-3">
           {finding.whyItMatters && (
             <DetailSection label="Why it matters">{finding.whyItMatters}</DetailSection>
           )}
@@ -126,7 +126,7 @@ export default function TopTakeaway({ finding, thumbnail, onJumpTo }) {
             type="button"
             onClick={() => setExpanded((e) => !e)}
             aria-expanded={expanded}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-ct-hairline border border-ct-terracotta/30 text-ink-soft hover:text-ct-cream hover:border-ct-terracotta/60 transition-colors"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-card border border-ct-rim text-ink-soft hover:text-ink hover:border-clay/60 transition-colors"
           >
             {expanded ? 'Hide details' : 'What this means'}
             <ChevronDown

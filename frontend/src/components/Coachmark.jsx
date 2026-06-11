@@ -148,13 +148,13 @@ export default function Coachmark({ tour }) {
         exit={{ opacity: 0, y: isMobileBottom ? 16 : (pos.placement === 'below' ? -8 : 8) }}
         transition={{ duration: 0.24, ease: [0.2, 0.7, 0.2, 1] }}
         style={wrapperStyle}
-        className="bg-ct-forest-deep border border-ct-terracotta/40 rounded-lg shadow-lg text-ct-cream backdrop-blur-md"
+        className="ct-surface rounded-lg shadow-lg text-ink border-clay/40"
       >
         {/* Arrow — desktop anchored only */}
         {!isMobileBottom && (
           <span
             aria-hidden
-            className="absolute w-2.5 h-2.5 bg-ct-forest-deep rotate-45"
+            className="absolute w-2.5 h-2.5 bg-card rotate-45"
             style={{
               left: Math.max(10, Math.min(pos.arrowX - 5, pos.width - 14)),
               top: pos.placement === 'below' ? -6 : 'auto',
@@ -172,7 +172,7 @@ export default function Coachmark({ tour }) {
         <div className="px-3 py-2.5">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <span className="text-[9px] uppercase tracking-wider font-semibold text-ct-terra-soft">
+              <span className="text-[9px] uppercase tracking-wider font-semibold text-clay-deep">
                 {tip.label}
               </span>
               <p className="text-xs text-ink-soft leading-snug mt-0.5">{tip.body}</p>
@@ -180,7 +180,7 @@ export default function Coachmark({ tour }) {
             <button
               onClick={skip}
               aria-label="Skip tour"
-              className="text-ink-muted hover:text-ct-cream transition-colors -mt-0.5 -mr-0.5 p-0.5 shrink-0"
+              className="text-ink-muted hover:text-ink transition-colors -mt-0.5 -mr-0.5 p-0.5 shrink-0"
             >
               <X size={12} />
             </button>
@@ -192,16 +192,16 @@ export default function Coachmark({ tour }) {
                 <span
                   key={i}
                   className={`rounded-full transition-all ${
-                    i === tip.index ? 'w-3 h-1 bg-ct-terracotta' :
-                    i <  tip.index ? 'w-1 h-1 bg-ct-terracotta/50' :
-                                     'w-1 h-1 bg-ct-hairline'
+                    i === tip.index ? 'w-3 h-1 bg-clay' :
+                    i <  tip.index ? 'w-1 h-1 bg-clay/50' :
+                                     'w-1 h-1 bg-ct-rim'
                   }`}
                 />
               ))}
             </div>
             <button
               onClick={dismiss}
-              className="text-[11px] font-semibold text-ct-terra-soft hover:text-ct-terra-soft/80 transition-colors px-2 py-0.5"
+              className="text-[11px] font-semibold text-clay-deep hover:text-clay transition-colors px-2 py-0.5"
             >
               Got it
             </button>

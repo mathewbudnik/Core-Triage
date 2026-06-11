@@ -1,45 +1,53 @@
 /**
- * Horizontal-scroll pill row. Used inside RecoverActiveView's sticky header.
+ * Stat-strip pill row for the Recover hero. Horizontal-scroll on mobile,
+ * flex-wrap on desktop so it uses the wider column.
  *
  * Props:
- *   pills: Array<{ key, label, tone: 'teal'|'coral'|'gold'|'muted'|'active', live?: boolean }>
+ *   pills: Array<{ key, label, tone: 'sage'|'clay'|'ochre'|'muted'|'active', live?: boolean }>
  *
- * Tone mapping (RPG palette):
- *   coral (live/active) → moss green — "you're in recovery, not danger"
- *   muted (pending/locked) → hairline bg + dimmed cream text
- *   teal / gold retain accent colors for phase/progress data
+ * Tone mapping (Almanac palette):
+ *   active/sage → sage — "you're in recovery, not danger"
+ *   muted (pending) → hairline fill + dimmed ink
+ *   clay / ochre carry phase / progress data
  */
 const TONE_CLASSES = {
-  teal:   'text-accent  border-accent/40  bg-accent/10',
-  coral:  'text-ct-moss border-ct-moss/40 bg-ct-moss/15',
-  gold:   'text-accent3 border-accent3/40 bg-accent3/10',
+  sage:   'text-sage-deep border-sage/45 bg-sage/15',
+  clay:   'text-clay-deep border-clay/45 bg-clay/12',
+  ochre:  'text-clay-deep border-ochre/50 bg-ochre/15',
   muted:  'text-ink-muted border-ct-hairline bg-ct-hairline',
 }
 
 const LIVE_DOT_TONE = {
-  teal:  'bg-accent  shadow-[0_0_6px_rgba(20,184,166,0.7)]',
-  coral: 'bg-ct-moss shadow-[0_0_6px_rgba(149,166,152,0.6)]',
-  gold:  'bg-accent3 shadow-[0_0_6px_rgba(251,191,36,0.7)]',
-  muted: 'bg-ct-cream/40',
+  sage:  'bg-sage-deep',
+  clay:  'bg-clay-deep',
+  ochre: 'bg-ochre',
+  muted: 'bg-ink-muted',
 }
+
+// Legacy tone aliases kept so existing callers (coral/teal/gold) still map
+// cleanly onto the Almanac palette without touching their logic.
+const TONE_ALIAS = { coral: 'sage', active: 'sage', teal: 'clay', gold: 'ochre' }
 
 export default function RecoverStatusPills({ pills }) {
   return (
     <div
-      className="flex gap-1.5 overflow-x-auto -mx-4 px-4 pb-1
+      className="flex gap-1.5 overflow-x-auto md:flex-wrap md:overflow-visible -mx-1 px-1 pb-0.5
                  [&::-webkit-scrollbar]:hidden [scrollbar-width:none]"
     >
-      {pills.map((p) => (
-        <span
-          key={p.key}
-          className={`inline-flex items-center gap-1.5 whitespace-nowrap shrink-0
-                      text-[10px] font-extrabold uppercase tracking-[0.06em]
-                      px-2.5 py-1 rounded-full border ${TONE_CLASSES[p.tone]}`}
-        >
-          {p.live && <span className={`w-1.5 h-1.5 rounded-full ${LIVE_DOT_TONE[p.tone]}`} />}
-          {p.label}
-        </span>
-      ))}
+      {pills.map((p) => {
+        const tone = TONE_ALIAS[p.tone] ?? p.tone
+        return (
+          <span
+            key={p.key}
+            className={`inline-flex items-center gap-1.5 whitespace-nowrap shrink-0
+                        text-[10px] font-bold uppercase tracking-[0.06em]
+                        px-2.5 py-1 rounded-full border ${TONE_CLASSES[tone] ?? TONE_CLASSES.muted}`}
+          >
+            {p.live && <span className={`w-1.5 h-1.5 rounded-full ${LIVE_DOT_TONE[tone] ?? LIVE_DOT_TONE.muted}`} />}
+            {p.label}
+          </span>
+        )
+      })}
     </div>
   )
 }

@@ -37,23 +37,23 @@ const MISFIRE_HINT_THRESHOLD = 3
 const SEVERITY_VISUALS = {
   critical: {
     label: 'Critical',
-    dotClass:    'text-red-400',
-    border:      'border-red-400/40',
-    bg:          'bg-red-500/5',
-    badgeText:   'text-red-300',
+    dotClass:    'text-red-500',
+    border:      'border-red-500/40',
+    bg:          'bg-red-500/10',
+    badgeText:   'text-red-500',
   },
   important: {
     label: 'Important',
-    dotClass:    'text-ct-terra-soft',
-    border:      'border-ct-terracotta/40',
-    bg:          'bg-ct-terra-tint',
-    badgeText:   'text-ct-terra-soft',
+    dotClass:    'text-clay-deep',
+    border:      'border-clay/40',
+    bg:          'bg-clay/10',
+    badgeText:   'text-clay-deep',
   },
   polish: {
     label: 'Polish',
     dotClass:    'text-ink-soft',
     border:      'border-ct-rim',
-    bg:          'bg-ct-hairline',
+    bg:          'bg-side',
     badgeText:   'text-ink-soft',
   },
 }
@@ -81,10 +81,10 @@ export default function AnalysisReport({ findings, thumbnails, onJumpTo }) {
   // Empty: no flags AND no wins. Surface the existing neutral state.
   if (flags.length === 0 && wins.length === 0) {
     return (
-      <div className="rounded-2xl bg-ct-forest-deep border border-ct-hairline p-5 flex items-start gap-3">
-        <Activity size={16} className="text-ct-terra-soft flex-shrink-0 mt-0.5" />
+      <div className="ct-surface rounded-2xl p-5 flex items-start gap-3">
+        <Activity size={16} className="text-clay-deep flex-shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-bold text-ct-cream">Nothing to call out on this clip.</p>
+          <p className="text-sm font-bold text-ink">Nothing to call out on this clip.</p>
           <p className="text-xs text-ink-soft mt-1 leading-snug">
             The analyzer didn't find any sustained technique flags or notable wins.
             Try a clip with a longer attempt or a different angle — early detectors
@@ -124,7 +124,7 @@ export default function AnalysisReport({ findings, thumbnails, onJumpTo }) {
       {rankedFlags.length > 0 && (
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-ct-cream">
+            <h3 className="text-sm font-serif font-semibold text-ink">
               {showTakeaway ? 'Other findings' : 'Findings'}{' '}
               <span className="text-ink-muted font-normal">
                 ({showTakeaway ? restFlags.length : rankedFlags.length})
@@ -169,10 +169,10 @@ export default function AnalysisReport({ findings, thumbnails, onJumpTo }) {
  * fired once. Sorted by descending count.
  */
 const REGION_TINTS = {
-  'shoulders-arms': 'border-ct-rim text-ink-soft bg-ct-hairline',
-  'hips-core':       'border-ct-terracotta/40 text-ct-terra-soft bg-ct-terra-tint/60',
-  'knees-feet':      'border-ct-rim text-ink-soft bg-ct-hairline',
-  'head-gaze':       'border-ct-rim text-ink-soft bg-ct-hairline',
+  'shoulders-arms': 'border-ct-rim text-ink-soft bg-side',
+  'hips-core':       'border-clay/40 text-clay-deep bg-clay/10',
+  'knees-feet':      'border-ct-rim text-ink-soft bg-side',
+  'head-gaze':       'border-ct-rim text-ink-soft bg-side',
 }
 
 function RegionSummary({ flags }) {
@@ -218,23 +218,23 @@ function RegionSummary({ flags }) {
  * full coaching content.
  */
 const SEVERITY_BORDER = {
-  critical:  'border-red-400/40 bg-red-500/[0.05]',
-  important: 'border-ct-terracotta/40 bg-ct-terra-tint/60',
-  polish:    'border-ct-rim bg-ct-hairline/40',
+  critical:  'border-red-500/40 bg-red-500/10',
+  important: 'border-clay/40 bg-clay/10',
+  polish:    'border-ct-rim bg-side',
 }
 
 const SEVERITY_DOT = {
-  critical:  'text-red-400',
-  important: 'text-ct-terra-soft',
+  critical:  'text-red-500',
+  important: 'text-clay-deep',
   polish:    'text-ink-soft',
 }
 
 function CompoundMoments({ moments, onJumpTo }) {
   return (
-    <div className="rounded-2xl border border-ct-terracotta/30 bg-[linear-gradient(180deg,rgba(197,138,119,0.09),rgba(197,138,119,0.03))] p-4 flex flex-col gap-3">
+    <div className="ct-surface rounded-2xl border-clay/40 bg-clay/10 p-4 flex flex-col gap-3">
       <div className="flex items-center gap-2">
-        <Layers size={14} className="text-ct-terra-soft" />
-        <span className="text-[11px] font-bold uppercase tracking-[0.13em] text-ct-terra-soft">
+        <Layers size={14} className="text-clay-deep" />
+        <span className="text-[11px] font-bold uppercase tracking-[0.13em] text-clay-deep">
           Moments to study
         </span>
         <span className="text-[10px] text-ink-muted ml-1">
@@ -308,10 +308,10 @@ function CompoundMomentRow({ moment, onJumpTo }) {
  */
 function WhatWorked({ wins, onJumpTo }) {
   return (
-    <div className="rounded-2xl border border-emerald-400/30 bg-emerald-400/[0.05] p-4 flex flex-col gap-3">
+    <div className="ct-surface rounded-2xl border-sage/40 bg-sage/10 p-4 flex flex-col gap-3">
       <div className="flex items-center gap-2">
-        <Sparkles size={14} className="text-emerald-300" />
-        <span className="text-[11px] font-bold uppercase tracking-[0.13em] text-emerald-300">
+        <Sparkles size={14} className="text-sage-deep" />
+        <span className="text-[11px] font-bold uppercase tracking-[0.13em] text-sage-deep">
           What worked
         </span>
         <span className="text-[10px] text-ink-muted ml-1">
@@ -332,9 +332,9 @@ function WinRow({ win, onJumpTo }) {
   const count = win.instanceCount ?? 0
   return (
     <li className="flex items-start gap-2.5 py-1.5">
-      <CheckCircle2 size={14} className="text-emerald-300 flex-shrink-0 mt-0.5" strokeWidth={2.2} />
+      <CheckCircle2 size={14} className="text-sage-deep flex-shrink-0 mt-0.5" strokeWidth={2.2} />
       <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-        <p className="text-sm text-ct-cream leading-snug">
+        <p className="text-sm text-ink leading-snug">
           <span className="font-semibold">{win.name}</span>
           <span className="text-ink-soft"> — {win.cue}</span>
         </p>
@@ -342,7 +342,7 @@ function WinRow({ win, onJumpTo }) {
           <button
             type="button"
             onClick={() => onJumpTo(firstTs)}
-            className="self-start flex items-center gap-1 text-[10px] font-semibold text-emerald-300/85 hover:text-emerald-200 transition-colors ct-tnum"
+            className="self-start flex items-center gap-1 text-[10px] font-semibold text-sage-deep hover:text-clay-deep transition-colors ct-tnum"
           >
             {count > 1 ? `${count}× · first at ` : ''}{formatTime(firstTs)}
             <ChevronRight size={10} />
@@ -377,10 +377,10 @@ function FindingCard({ finding, thumbnail, onJumpTo, feedback, onMarkWrong, onUn
         type="button"
         onClick={toggle}
         aria-expanded={expanded}
-        className="w-full text-left p-3 flex items-start gap-3 hover:bg-black/10 transition-colors"
+        className="w-full text-left p-3 flex items-start gap-3 hover:bg-ink/[0.04] transition-colors"
       >
         {thumbnail && (
-          <div className="flex-shrink-0 w-16 h-12 rounded-md overflow-hidden bg-black border border-ct-hairline">
+          <div className="flex-shrink-0 w-16 h-12 rounded-md overflow-hidden bg-side border border-ct-hairline">
             <img src={thumbnail} alt="" className="w-full h-full object-cover" />
           </div>
         )}
@@ -392,7 +392,7 @@ function FindingCard({ finding, thumbnail, onJumpTo, feedback, onMarkWrong, onUn
               {visuals.label}
             </span>
             {finding.isFallProximal && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-red-500/10 border border-red-400/40 text-red-300">
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-red-500/10 border border-red-500/40 text-red-500">
                 <AlertTriangle size={9} />
                 Near fall
               </span>
@@ -400,7 +400,7 @@ function FindingCard({ finding, thumbnail, onJumpTo, feedback, onMarkWrong, onUn
           </div>
           {/* Name + cue */}
           <div>
-            <h4 className="text-sm font-bold text-ct-cream leading-tight">{finding.name}</h4>
+            <h4 className="text-sm font-bold text-ink leading-tight">{finding.name}</h4>
             <p className="text-sm text-ink-soft mt-0.5 leading-snug">{finding.cue}</p>
             {showMisfireHint && (
               <p className="text-[10px] text-ink-muted mt-1.5 leading-snug italic">
@@ -420,7 +420,7 @@ function FindingCard({ finding, thumbnail, onJumpTo, feedback, onMarkWrong, onUn
 
       {/* Expanded content */}
       {expanded && (
-        <div className="border-t border-ct-hairline px-3 py-3 flex flex-col gap-3 bg-black/10">
+        <div className="border-t border-ct-hairline px-3 py-3 flex flex-col gap-3 bg-ink/[0.04]">
           {finding.whyItMatters && <Section label="Why it matters">{finding.whyItMatters}</Section>}
           {finding.howToFix && <Section label="How to fix">{finding.howToFix}</Section>}
           {finding.whenYouSeeIt && <Section label="When you see it">{finding.whenYouSeeIt}</Section>}
@@ -437,7 +437,7 @@ function FindingCard({ finding, thumbnail, onJumpTo, feedback, onMarkWrong, onUn
             key={i}
             type="button"
             onClick={(e) => { e.stopPropagation(); onJumpTo(ms) }}
-            className="flex items-center gap-1 text-[11px] font-semibold text-ink-soft hover:text-ct-cream bg-ct-forest/80 hover:bg-ct-forest border border-ct-rim hover:border-ct-terracotta/50 px-2 py-1 rounded-md transition-colors ct-tnum"
+            className="flex items-center gap-1 text-[11px] font-semibold text-ink-soft hover:text-clay-deep bg-card hover:bg-side border border-ct-rim hover:border-clay/50 px-2 py-1 rounded-md transition-colors ct-tnum"
           >
             {formatTime(ms)}
             <ChevronRight size={10} />
@@ -456,7 +456,7 @@ function FindingCard({ finding, thumbnail, onJumpTo, feedback, onMarkWrong, onUn
             }}
             className={`ml-auto flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md border transition-colors ${
               markedWrong
-                ? 'bg-ct-hairline border-ct-rim text-ink-soft'
+                ? 'bg-side border-ct-rim text-ink-soft'
                 : 'border-transparent text-ink-muted hover:text-ink-soft hover:border-ct-rim'
             }`}
             aria-pressed={markedWrong}

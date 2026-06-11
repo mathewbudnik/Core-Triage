@@ -4,11 +4,13 @@ import { Check, AlertTriangle, Zap, ChevronRight, PlayCircle } from 'lucide-reac
 import { buildExerciseVideoUrl } from '../data/exercises'
 
 /**
- * Mobile-tuned exercise card.
+ * Almanac field-card for a single rehab exercise.
  * - Tap card → expand inline detail
  * - Tap checkbox → toggle checked
- * - 28px checkbox in a 60px-tall card (well above 44pt min target)
+ * - 28px checkbox in a roomy card (well above 44pt min target)
  * - :active scale-down for tactile press feedback
+ * - Field-guide labels (Should feel / Stop if / Progress when) keep their
+ *   sage / clay / ochre coding.
  *
  * Props:
  *   exercise: { name, area, sets, reps, frequency, feel, red_flags, progression_trigger }
@@ -27,14 +29,17 @@ export default function RecoverExerciseCard({ exercise, checked, onToggle }) {
     <motion.div
       onClick={() => setOpen((o) => !o)}
       whileTap={{ scale: 0.985 }}
-      className={`flex items-start gap-3 px-3.5 py-4 rounded-2xl border min-h-[60px]
-                  cursor-pointer transition-opacity select-none
-                  ${checked
-                    ? 'opacity-55 bg-accent/[0.04] border-accent/20'
-                    : open
-                      ? 'bg-[linear-gradient(180deg,rgba(20,184,166,0.06),rgba(20,184,166,0.02))] border-accent/35'
-                      : 'ct-surface-flat border-ct-hairline'}`}
+      transition={{ duration: 0.14, ease: [0.2, 0.7, 0.2, 1] }}
+      className={`relative flex items-start gap-3 px-3.5 py-3.5 rounded-2xl ct-surface min-h-[60px]
+                  cursor-pointer select-none transition-colors
+                  ${checked ? 'opacity-60' : ''}
+                  ${open && !checked ? 'border-clay/50' : ''}`}
     >
+      {/* Subtle left accent when expanded */}
+      {open && !checked && (
+        <span className="absolute left-0 top-2.5 bottom-2.5 w-[3px] rounded-full bg-clay" />
+      )}
+
       {/* Checkbox */}
       <button
         type="button"
@@ -44,16 +49,19 @@ export default function RecoverExerciseCard({ exercise, checked, onToggle }) {
         className={`w-7 h-7 rounded-[10px] shrink-0 inline-flex items-center justify-center
                     border-[1.5px] transition-all
                     ${checked
-                      ? 'bg-accent border-accent shadow-[0_0_10px_rgba(20,184,166,0.5)]'
-                      : 'bg-ct-forest border-ct-rim/50'}`}
+                      ? 'bg-sage border-sage-deep'
+                      : 'bg-card border-ct-rim'}`}
       >
-        {checked && <Check size={14} strokeWidth={3} className="text-bg" />}
+        {checked && <Check size={14} strokeWidth={3} className="text-cream" />}
       </button>
 
       {/* Body */}
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-bold leading-tight ${
-          checked ? 'text-ink-soft line-through decoration-ct-cream/30' : 'text-ct-cream'
+        {exercise.area && (
+          <p className="ct-eyebrow mb-1 truncate">{exercise.area}</p>
+        )}
+        <p className={`text-sm font-semibold font-serif leading-tight ${
+          checked ? 'text-ink-soft line-through decoration-ink-muted/50' : 'text-ink'
         }`}>
           {exercise.name}
         </p>
@@ -68,16 +76,16 @@ export default function RecoverExerciseCard({ exercise, checked, onToggle }) {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.16, ease: [0, 0, 0.2, 1] }}
+              transition={{ duration: 0.16, ease: [0.2, 0.7, 0.2, 1] }}
               className="overflow-hidden"
             >
-              <div className="mt-2.5 pt-2.5 border-t border-outline/60 space-y-2">
+              <div className="mt-2.5 pt-2.5 border-t border-ct-hairline space-y-2">
                 <a
                   href={buildExerciseVideoUrl(exercise)}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent/10 border border-accent/30 text-accent text-[11px] font-semibold hover:bg-accent/20 hover:border-accent/50 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-clay text-cream text-[11px] font-semibold hover:brightness-105 active:brightness-95 transition"
                 >
                   <PlayCircle size={12} strokeWidth={2.4} />
                   Watch demo
@@ -85,27 +93,27 @@ export default function RecoverExerciseCard({ exercise, checked, onToggle }) {
 
                 {exercise.feel && (
                   <p className="flex items-start gap-2 text-[12px] text-ink-soft leading-snug">
-                    <Check size={12} strokeWidth={2.4} className="text-accent shrink-0 mt-0.5" />
+                    <Check size={12} strokeWidth={2.4} className="text-sage-deep shrink-0 mt-0.5" />
                     <span>
-                      <span className="text-accent font-bold uppercase text-[10px] tracking-[0.08em] mr-1">Should feel:</span>
+                      <span className="text-sage-deep font-bold uppercase text-[10px] tracking-[0.08em] mr-1 font-mono">Should feel:</span>
                       {exercise.feel}
                     </span>
                   </p>
                 )}
                 {exercise.red_flags && (
                   <p className="flex items-start gap-2 text-[12px] text-ink-soft leading-snug">
-                    <AlertTriangle size={12} strokeWidth={2.4} className="text-accent2 shrink-0 mt-0.5" />
+                    <AlertTriangle size={12} strokeWidth={2.4} className="text-clay-deep shrink-0 mt-0.5" />
                     <span>
-                      <span className="text-accent2 font-bold uppercase text-[10px] tracking-[0.08em] mr-1">Stop if:</span>
+                      <span className="text-clay-deep font-bold uppercase text-[10px] tracking-[0.08em] mr-1 font-mono">Stop if:</span>
                       {exercise.red_flags}
                     </span>
                   </p>
                 )}
                 {exercise.progression_trigger && (
                   <p className="flex items-start gap-2 text-[12px] text-ink-soft leading-snug">
-                    <Zap size={12} strokeWidth={2.4} className="text-accent3 shrink-0 mt-0.5" />
+                    <Zap size={12} strokeWidth={2.4} className="text-ochre shrink-0 mt-0.5" />
                     <span>
-                      <span className="text-accent3 font-bold uppercase text-[10px] tracking-[0.08em] mr-1">Progress when:</span>
+                      <span className="text-clay-deep font-bold uppercase text-[10px] tracking-[0.08em] mr-1 font-mono">Progress when:</span>
                       {exercise.progression_trigger}
                     </span>
                   </p>
@@ -117,7 +125,7 @@ export default function RecoverExerciseCard({ exercise, checked, onToggle }) {
       </div>
 
       {!open && !checked && (
-        <ChevronRight size={14} strokeWidth={2.4} className="text-text/25 shrink-0 self-center" />
+        <ChevronRight size={14} strokeWidth={2.4} className="text-ink-muted shrink-0 self-center" />
       )}
     </motion.div>
   )

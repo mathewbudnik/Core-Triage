@@ -19,28 +19,30 @@ const PLAN_SECTION_THEMES = {
   default:                    { icon: CheckCircle2,  color: 'text-text',    badge: 'bg-panel/60 border-outline' },
 }
 
-// Severity-driven hero card theming. Null-safe via the .mild fallback.
+// Severity-driven hero card theming, Almanac palette. Null-safe via the
+// .mild fallback. severe → clay, moderate → ochre, mild → sage, all rendered
+// as soft parchment field-cards rather than saturated gradients.
 const SEVERITY_HERO_THEME = {
   severe: {
-    bg:     'bg-[linear-gradient(135deg,rgba(244,114,114,0.22),rgba(244,114,114,0.06))]',
-    border: 'border-[rgba(244,114,114,0.4)]',
-    pillBg: 'bg-[rgba(244,114,114,0.25)]',
-    pillBd: 'border-[rgba(244,114,114,0.4)]',
-    pillTx: 'text-accent2',
+    bg:     'bg-card bg-clay/[0.07] shadow-[0_2px_10px_rgba(42,39,34,0.05)]',
+    border: 'border-clay/45',
+    pillBg: 'bg-clay/20',
+    pillBd: 'border-clay/45',
+    pillTx: 'text-clay-deep',
   },
   moderate: {
-    bg:     'bg-[linear-gradient(135deg,rgba(247,187,81,0.18),rgba(244,114,114,0.08))]',
-    border: 'border-[rgba(247,187,81,0.3)]',
-    pillBg: 'bg-[rgba(247,187,81,0.25)]',
-    pillBd: 'border-[rgba(247,187,81,0.4)]',
-    pillTx: 'text-accent3',
+    bg:     'bg-card bg-ochre/[0.07] shadow-[0_2px_10px_rgba(42,39,34,0.05)]',
+    border: 'border-ochre/45',
+    pillBg: 'bg-ochre/20',
+    pillBd: 'border-ochre/45',
+    pillTx: 'text-clay-deep',
   },
   mild: {
-    bg:     'bg-[linear-gradient(135deg,rgba(125,211,192,0.18),rgba(125,211,192,0.04))]',
-    border: 'border-[rgba(125,211,192,0.3)]',
-    pillBg: 'bg-[rgba(125,211,192,0.18)]',
-    pillBd: 'border-[rgba(125,211,192,0.3)]',
-    pillTx: 'text-accent',
+    bg:     'bg-card bg-sage/[0.07] shadow-[0_2px_10px_rgba(42,39,34,0.05)]',
+    border: 'border-sage/40',
+    pillBg: 'bg-sage/18',
+    pillBd: 'border-sage/40',
+    pillTx: 'text-sage-deep',
   },
 }
 
@@ -175,12 +177,12 @@ export function ResultsHero({ result, form }) {
           {severityLabel}
         </span>
         {form?.region && (
-          <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[rgba(125,211,192,0.12)] text-accent border border-[rgba(125,211,192,0.25)]">
+          <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-sage/15 text-sage-deep border border-sage/40">
             {form.region}
           </span>
         )}
         {form?.onset && (
-          <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/5 text-muted border border-white/10">
+          <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-paper text-ink-muted border border-ct-hairline">
             {form.onset} onset
           </span>
         )}
@@ -193,7 +195,7 @@ export function ResultsHero({ result, form }) {
       {(() => {
         const { baseTitle, qualifier } = splitBucketTitle(title)
         return (
-          <h3 className="text-base sm:text-lg font-bold text-ct-cream leading-snug flex items-baseline flex-wrap gap-x-2 gap-y-1">
+          <h3 className="text-base sm:text-lg font-bold text-ink leading-snug flex items-baseline flex-wrap gap-x-2 gap-y-1">
             <span>{baseTitle}</span>
             {qualifier && <QualifierChip qualifier={qualifier} />}
           </h3>
@@ -206,16 +208,16 @@ export function ResultsHero({ result, form }) {
           {chips.map((c, i) => (
             <div
               key={i}
-              className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5"
+              className="flex items-center gap-1.5 bg-paper border border-ct-hairline rounded-lg px-2.5 py-1.5"
             >
               <span className={`w-4 h-4 rounded flex items-center justify-center text-[9px] font-bold shrink-0 ${
                 c.kind === 'do'
-                  ? 'bg-[rgba(247,187,81,0.2)] text-accent3'
-                  : 'bg-[rgba(244,114,114,0.18)] text-accent2'
+                  ? 'bg-sage/18 text-sage-deep'
+                  : 'bg-clay/15 text-clay-deep'
               }`}>
                 {c.kind === 'do' ? '✓' : '✗'}
               </span>
-              <span className="text-[11px] text-ct-cream leading-tight">{c.text}</span>
+              <span className="text-[11px] text-ink leading-tight">{c.text}</span>
             </div>
           ))}
         </div>
@@ -226,7 +228,7 @@ export function ResultsHero({ result, form }) {
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="mt-4 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-ink-soft hover:text-ct-cream transition-colors"
+            className="mt-4 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-ink-soft hover:text-ink transition-colors"
             aria-expanded={expanded}
           >
             <span>{expanded ? 'Hide self-check' : 'Why this might be you'}</span>
@@ -298,7 +300,7 @@ export function OtherPossibilities({ buckets }) {
                   {(() => {
                     const { baseTitle, qualifier } = splitBucketTitle(b.title)
                     return (
-                      <p className="text-sm font-semibold text-ct-cream leading-snug flex items-baseline flex-wrap gap-x-1.5 gap-y-1">
+                      <p className="text-sm font-semibold text-ink leading-snug flex items-baseline flex-wrap gap-x-1.5 gap-y-1">
                         <span>{baseTitle}</span>
                         {qualifier && <QualifierChip qualifier={qualifier} size="sm" />}
                       </p>
@@ -362,7 +364,7 @@ export function ActionPlan({ plan }) {
               </div>
               <ul className="space-y-1.5">
                 {items.map((item, i) => (
-                  <li key={i} className="flex items-start gap-2 text-[13px] text-ct-cream leading-relaxed">
+                  <li key={i} className="flex items-start gap-2 text-[13px] text-ink leading-relaxed">
                     <span className={`mt-1.5 w-1 h-1 rounded-full shrink-0 ${theme.color.replace('text-', 'bg-')}`} />
                     <span>{item}</span>
                   </li>

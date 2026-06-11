@@ -21,10 +21,10 @@ function Message({ msg }) {
           className="w-7 h-7 rounded-lg shrink-0 mt-1"
         />
       )}
-      <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+      <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-[0_2px_8px_rgba(42,39,34,0.08)] ${
         isCoach
-          ? 'ct-surface-flat text-ink-soft rounded-tl-sm'
-          : 'bg-ct-terra-tint border border-ct-terracotta/20 text-ct-cream rounded-tr-sm'
+          ? 'ct-surface text-ink-soft rounded-tl-sm'
+          : 'bg-clay/15 border border-clay/25 text-ink rounded-tr-sm'
       }`}>
         <p className="whitespace-pre-wrap">{msg.content}</p>
         <p className="text-[10px] text-ink-muted mt-1.5">
@@ -93,7 +93,7 @@ export default function CoachChat({ user, onLoginClick }) {
       <div className="flex flex-col items-center justify-center h-full text-center px-8 py-16 space-y-5">
         <img src="/logo.png" alt="Coach" className="w-16 h-16 rounded-2xl" />
         <div>
-          <p className="font-semibold text-ct-cream">Chat with your coach</p>
+          <p className="font-serif font-semibold text-lg text-ink">Chat with your coach</p>
           <p className="text-sm text-ink-soft mt-1 max-w-xs">
             Sign in to send a message directly to Budnik for a personalised training plan or coaching advice.
           </p>
@@ -109,10 +109,10 @@ export default function CoachChat({ user, onLoginClick }) {
   return (
     <div className="h-full flex flex-col">
       {/* Thread header */}
-      <div className="border-b border-ct-hairline px-6 py-3 flex items-center gap-3 bg-ct-forest-deep/40">
+      <div className="border-b border-ct-hairline px-6 py-3 flex items-center gap-3 bg-[linear-gradient(180deg,rgba(253,246,234,0.85),rgba(244,236,219,0.4))]">
         <img src="/logo.png" alt="Coach" className="w-8 h-8 rounded-xl" />
         <div>
-          <p className="text-sm font-semibold text-ct-cream">Budnik · Coach</p>
+          <p className="text-sm font-semibold text-ink">Budnik · Coach</p>
           <p className="text-xs text-ink-soft">Replies within 24–48 hours</p>
         </div>
       </div>
@@ -121,7 +121,7 @@ export default function CoachChat({ user, onLoginClick }) {
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
         {loading && (
           <div className="flex justify-center py-12">
-            <Loader2 size={20} className="text-ct-terracotta animate-spin" />
+            <Loader2 size={20} className="text-clay animate-spin" />
           </div>
         )}
 
@@ -129,7 +129,7 @@ export default function CoachChat({ user, onLoginClick }) {
           <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-16">
             <img src="/logo.png" alt="Coach" className="w-14 h-14 rounded-2xl opacity-80" />
             <div>
-              <p className="font-semibold text-ct-cream">Start a conversation</p>
+              <p className="font-serif font-semibold text-lg text-ink">Start a conversation</p>
               <p className="text-sm text-ink-soft mt-1 max-w-sm">
                 Tell Budnik about your climbing background, goals, and what you're working on.
                 He'll write you a hyper-specific plan tailored to you.
@@ -144,7 +144,7 @@ export default function CoachChat({ user, onLoginClick }) {
                 <button
                   key={q}
                   onClick={() => setInput(q)}
-                  className="text-xs ct-surface-flat border border-ct-hairline rounded-xl px-4 py-2.5 text-ink-soft hover:text-ct-terra-soft hover:border-ct-terracotta/40 transition-colors text-left"
+                  className="text-xs ct-surface rounded-xl px-4 py-2.5 text-ink-soft hover:text-clay-deep hover:border-clay/40 transition-colors text-left"
                 >
                   {q}
                 </button>
@@ -163,24 +163,24 @@ export default function CoachChat({ user, onLoginClick }) {
       </div>
 
       {error && (
-        <p className="text-xs text-ct-terracotta text-center pb-2">{error}</p>
+        <p className="text-xs text-clay-deep text-center pb-2">{error}</p>
       )}
 
       {/* Input */}
-      <div className="border-t border-ct-hairline p-4 bg-ct-forest-deep/40">
+      <div className="border-t border-ct-hairline p-4 bg-[linear-gradient(0deg,rgba(253,246,234,0.85),rgba(244,236,219,0.4))]">
         <form onSubmit={handleSend} className="flex gap-3">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Message your coach…"
-            className="flex-1 bg-ct-forest-deep border border-ct-hairline rounded-lg px-3 py-2 text-ct-cream text-base sm:text-sm placeholder:text-ink-muted focus:outline-none focus:ring-1 focus:ring-ct-terracotta focus:border-ct-terracotta transition-colors duration-200"
+            className="flex-1 bg-card border border-ct-rim rounded-lg px-3 py-2 text-ink text-base sm:text-sm placeholder:text-ink-muted focus:outline-none focus:ring-1 focus:ring-clay focus:border-clay transition-colors duration-200"
             disabled={sending}
           />
           <button
             type="submit"
             disabled={sending || !input.trim()}
-            className="flex items-center gap-2 shrink-0 px-5 py-2.5 rounded-lg font-semibold text-sm bg-ct-terracotta text-ct-cream hover:opacity-90 active:opacity-80 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 shrink-0 px-5 py-2.5 rounded-lg font-semibold text-sm bg-clay text-cream hover:brightness-105 active:brightness-95 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
             Send

@@ -143,9 +143,9 @@ export default function UploadContextForm({ videoRef, durationS, maxTrimS = 60, 
   }
 
   return (
-    <div className="rounded-2xl bg-ct-forest-deep border border-ct-hairline p-5 md:p-6 flex flex-col gap-5">
+    <div className="ct-surface rounded-2xl p-5 md:p-6 flex flex-col gap-5">
       <div>
-        <h3 className="text-base font-bold text-ct-cream">About this climb</h3>
+        <h3 className="text-base font-serif font-semibold text-ink">About this climb</h3>
         <p className="text-xs text-ink-soft mt-1 leading-snug">
           A few quick questions before we analyze — they make the feedback much more accurate.
         </p>
@@ -212,8 +212,8 @@ export default function UploadContextForm({ videoRef, durationS, maxTrimS = 60, 
                 }}
                 className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold border transition-colors ${
                   selected
-                    ? 'bg-ct-terracotta border-ct-terracotta text-ct-cream'
-                    : 'bg-ct-hairline border-ct-rim text-ink-soft hover:border-ct-terracotta/50'
+                    ? 'bg-clay border-clay text-cream'
+                    : 'bg-card border-ct-rim text-ink-soft hover:border-clay/50 hover:text-clay-deep'
                 }`}
               >
                 <Icon size={14} strokeWidth={2.2} />
@@ -254,8 +254,8 @@ export default function UploadContextForm({ videoRef, durationS, maxTrimS = 60, 
                 onClick={() => toggleFocus(tag.value)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
                   selected
-                    ? 'bg-ct-terra-tint border-ct-terracotta/60 text-ct-terra-soft'
-                    : 'bg-ct-hairline border-ct-rim text-ink-soft hover:border-ct-terracotta/40'
+                    ? 'bg-clay/15 border-clay/40 text-clay-deep'
+                    : 'bg-card border-ct-rim text-ink-soft hover:border-clay/40 hover:text-clay-deep'
                 }`}
               >
                 {selected && <CheckCircle2 size={11} />}
@@ -288,7 +288,7 @@ export default function UploadContextForm({ videoRef, durationS, maxTrimS = 60, 
         <button
           type="button"
           onClick={onCancel}
-          className="text-xs text-ink-soft hover:text-ct-cream px-3 py-2 rounded-lg transition-colors"
+          className="text-xs text-ink-soft hover:text-ink px-3 py-2 rounded-lg transition-colors"
         >
           Cancel upload
         </button>
@@ -315,7 +315,7 @@ function Field({ label, hint, required, children }) {
         <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">
           {label}
         </span>
-        {required && <span className="text-[10px] text-ct-terracotta">required</span>}
+        {required && <span className="text-[10px] text-clay-deep">required</span>}
       </div>
       {children}
       {hint && <p className="text-[11px] text-ink-muted leading-snug">{hint}</p>}
@@ -337,8 +337,8 @@ function PillGroup({ options, value, onChange }) {
             onClick={() => onChange(opt.value)}
             className={`px-3.5 py-2 rounded-xl text-sm font-bold border transition-colors ${
               selected
-                ? 'bg-ct-terracotta border-ct-terracotta text-ct-cream'
-                : 'bg-ct-hairline border-ct-rim text-ink-soft hover:border-ct-terracotta/50'
+                ? 'bg-clay border-clay text-cream'
+                : 'bg-card border-ct-rim text-ink-soft hover:border-clay/50 hover:text-clay-deep'
             }`}
           >
             {opt.label}
@@ -364,8 +364,8 @@ function ScrollPillGroup({ options, value, onChange }) {
               onClick={() => onChange(opt.value)}
               className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-bold border transition-colors ct-tnum ${
                 selected
-                  ? 'bg-ct-terracotta border-ct-terracotta text-ct-cream'
-                  : 'bg-ct-hairline border-ct-rim text-ink-soft hover:border-ct-terracotta/50'
+                  ? 'bg-clay border-clay text-cream'
+                  : 'bg-card border-ct-rim text-ink-soft hover:border-clay/50 hover:text-clay-deep'
               }`}
             >
               {opt.label}
