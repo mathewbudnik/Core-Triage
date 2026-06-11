@@ -15,6 +15,13 @@ from fastapi.testclient import TestClient
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from database import _connect, init_db, log_training  # noqa: E402
+from database import (  # noqa: E402
+    get_active_prescription,
+    create_prescription,
+    complete_prescription,
+    check_prescription_drill,
+    get_prescription_checkoffs,
+)
 from main import app  # noqa: E402
 
 _TEST_PASSWORD = "Rx!Test1password"
@@ -98,6 +105,60 @@ class GapAxisOnStateTests(unittest.TestCase):
         # canonical key, not the legacy 'technical'
         self.assertIn(gap, ("power", "crimp", "dynamic", "technique", "mobility"))
         self.assertEqual(gap, "technique")
+
+
+class PrescriptionDbHelperTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        init_db()
+
+    def setUp(self):
+        self.email = "rx_db_test@coretriage.local"
+        _cleanup_user(self.email)
+        self.token = _register_and_login(self.email)
+        self.uid = _user_id(self.email)
+
+    def tearDown(self):
+        _cleanup_user(self.email)
+
+    def test_create_and_get_active(self):
+        drills = [{"key": "silent_feet", "name": "Silent feet", "target": 3}]
+        pid = create_prescription(self.uid, "technique", drills, source="auto")
+        self.assertIsInstance(pid, int)
+        active = get_active_prescription(self.uid)
+        self.assertIsNotNone(active)
+        self.assertEqual(active["id"], pid)
+        self.assertEqual(active["axis"], "technique")
+        self.assertEqual(active["status"], "active")
+        self.assertEqual(active["drills_json"][0]["key"], "silent_feet")
+
+    def test_creating_a_second_block_completes_the_first(self):
+        first = create_prescription(self.uid, "technique", [{"key": "silent_feet", "target": 3}])
+        second = create_prescription(self.uid, "mobility", [{"key": "shoulder_cars", "target": 3}])
+        active = get_active_prescription(self.uid)
+        self.assertEqual(active["id"], second)
+        self.assertNotEqual(active["id"], first)
+
+    def test_checkoff_is_idempotent_per_day(self):
+        pid = create_prescription(self.uid, "technique", [{"key": "silent_feet", "target": 3}])
+        r1 = check_prescription_drill(self.uid, pid, "silent_feet", "2026-06-11")
+        r2 = check_prescription_drill(self.uid, pid, "silent_feet", "2026-06-11")
+        self.assertFalse(r1["already_existed"])
+        self.assertTrue(r2["already_existed"])
+        rows = get_prescription_checkoffs(self.uid, pid)
+        self.assertEqual(len(rows), 1)
+
+    def test_checkoffs_accumulate_across_days(self):
+        pid = create_prescription(self.uid, "technique", [{"key": "silent_feet", "target": 3}])
+        check_prescription_drill(self.uid, pid, "silent_feet", "2026-06-11")
+        check_prescription_drill(self.uid, pid, "silent_feet", "2026-06-12")
+        rows = get_prescription_checkoffs(self.uid, pid)
+        self.assertEqual(len(rows), 2)
+
+    def test_complete_prescription_clears_active(self):
+        pid = create_prescription(self.uid, "technique", [{"key": "silent_feet", "target": 3}])
+        complete_prescription(pid)
+        self.assertIsNone(get_active_prescription(self.uid))
 
 
 if __name__ == "__main__":

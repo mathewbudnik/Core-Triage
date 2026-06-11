@@ -470,6 +470,46 @@ def init_db() -> None:
                 """
             )
 
+            # ── Skill prescriptions (weekly gap-targeted block) ───────────
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS skill_prescriptions (
+                    id           SERIAL PRIMARY KEY,
+                    user_id      INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    axis         TEXT NOT NULL,
+                    drills_json  JSONB NOT NULL,
+                    status       TEXT NOT NULL DEFAULT 'active',
+                    source       TEXT NOT NULL DEFAULT 'auto',
+                    assigned_by  INT REFERENCES users(id) ON DELETE SET NULL,
+                    week_start   DATE NOT NULL DEFAULT CURRENT_DATE,
+                    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    completed_at TIMESTAMPTZ
+                );
+                """
+            )
+            cur.execute(
+                "CREATE INDEX IF NOT EXISTS skill_prescriptions_user_status_idx "
+                "ON skill_prescriptions (user_id, status);"
+            )
+            # ── Prescription progress (idempotent daily drill checkoff) ────
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS prescription_progress (
+                    id              SERIAL PRIMARY KEY,
+                    user_id         INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    prescription_id INT NOT NULL REFERENCES skill_prescriptions(id) ON DELETE CASCADE,
+                    drill_key       TEXT NOT NULL,
+                    completed_date  DATE NOT NULL,
+                    completed_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    UNIQUE (user_id, prescription_id, drill_key, completed_date)
+                );
+                """
+            )
+            cur.execute(
+                "CREATE INDEX IF NOT EXISTS prescription_progress_presc_idx "
+                "ON prescription_progress (prescription_id);"
+            )
+
             # ── Stripe webhook idempotency ─────────────────────────────────
             # Stripe retries failed deliveries. We dedupe by event_id so we
             # never apply the same subscription state change twice.
@@ -1302,6 +1342,131 @@ def get_active_plan(user_id: int) -> dict[str, Any] | None:
         "plan_data":      plan_data,
         "created_at":     str(row[7]),
     }
+
+
+# ---------------------------------------------------------------------------
+# Skill prescription helpers
+# ---------------------------------------------------------------------------
+
+
+def create_prescription(
+    user_id: int,
+    axis: str,
+    drills: list[dict[str, Any]],
+    source: str = "auto",
+    assigned_by: int | None = None,
+    week_start: str | None = None,
+) -> int:
+    """Deactivate any active block, then insert a new active one. Returns new id."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE skill_prescriptions SET status = 'completed', "
+                "completed_at = COALESCE(completed_at, NOW()) "
+                "WHERE user_id = %s AND status = 'active';",
+                (int(user_id),),
+            )
+            cur.execute(
+                """
+                INSERT INTO skill_prescriptions
+                    (user_id, axis, drills_json, status, source, assigned_by, week_start)
+                VALUES (%s, %s, %s::jsonb, 'active', %s, %s, COALESCE(%s, CURRENT_DATE))
+                RETURNING id;
+                """,
+                (int(user_id), axis, json.dumps(drills), source,
+                 int(assigned_by) if assigned_by is not None else None, week_start),
+            )
+            new_id = cur.fetchone()[0]
+        conn.commit()
+    return int(new_id)
+
+
+def get_active_prescription(user_id: int) -> dict[str, Any] | None:
+    """Return the user's active skill prescription as a dict, or None."""
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT id, user_id, axis, drills_json, status, source, assigned_by,
+                   week_start, created_at, completed_at
+            FROM skill_prescriptions
+            WHERE user_id = %s AND status = 'active'
+            ORDER BY created_at DESC LIMIT 1;
+            """,
+            (int(user_id),),
+        )
+        row = cur.fetchone()
+    if not row:
+        return None
+    drills = row[3]
+    if isinstance(drills, str):
+        drills = json.loads(drills)
+    return {
+        "id":          row[0],
+        "user_id":     row[1],
+        "axis":        row[2],
+        "drills_json": drills,
+        "status":      row[4],
+        "source":      row[5],
+        "assigned_by": row[6],
+        "week_start":  str(row[7]),
+        "created_at":  str(row[8]),
+        "completed_at": str(row[9]) if row[9] else None,
+    }
+
+
+def complete_prescription(prescription_id: int) -> None:
+    """Mark a prescription completed (idempotent on completed_at)."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE skill_prescriptions SET status = 'completed', "
+                "completed_at = COALESCE(completed_at, NOW()) WHERE id = %s;",
+                (int(prescription_id),),
+            )
+        conn.commit()
+
+
+def check_prescription_drill(
+    user_id: int, prescription_id: int, drill_key: str, date: str,
+) -> dict[str, Any]:
+    """Insert a drill checkoff. Idempotent via the UNIQUE constraint.
+    Returns {id, already_existed}."""
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO prescription_progress
+                    (user_id, prescription_id, drill_key, completed_date)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (user_id, prescription_id, drill_key, completed_date)
+                DO NOTHING
+                RETURNING id;
+                """,
+                (int(user_id), int(prescription_id), drill_key, date),
+            )
+            row = cur.fetchone()
+            already_existed = row is None
+            if already_existed:
+                cur.execute(
+                    "SELECT id FROM prescription_progress WHERE user_id = %s "
+                    "AND prescription_id = %s AND drill_key = %s AND completed_date = %s;",
+                    (int(user_id), int(prescription_id), drill_key, date),
+                )
+                row = cur.fetchone()
+        conn.commit()
+    return {"id": int(row[0]) if row else None, "already_existed": already_existed}
+
+
+def get_prescription_checkoffs(user_id: int, prescription_id: int) -> list[dict[str, Any]]:
+    """All checkoff rows for a block (across all days)."""
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT drill_key, completed_date FROM prescription_progress "
+            "WHERE user_id = %s AND prescription_id = %s ORDER BY completed_at ASC;",
+            (int(user_id), int(prescription_id)),
+        )
+        rows = cur.fetchall()
+    return [{"drill_key": r[0], "completed_date": str(r[1])} for r in rows]
 
 
 # ---------------------------------------------------------------------------
