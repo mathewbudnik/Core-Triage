@@ -51,7 +51,7 @@ export function rankFindings(findings) {
   return scored.map((s) => s.finding)
 }
 
-export default function TopTakeaway({ finding, thumbnail, onJumpTo }) {
+export default function TopTakeaway({ finding, thumbnail, onJumpTo, onFocusFinding }) {
   const [expanded, setExpanded] = useState(false)
   if (!finding) return null
   const firstTs = finding.timestamps?.[0] ?? 0
@@ -121,6 +121,15 @@ export default function TopTakeaway({ finding, thumbnail, onJumpTo }) {
           Jump to first
           <ChevronRight size={12} />
         </button>
+        {onFocusFinding && (
+          <button
+            type="button"
+            onClick={() => onFocusFinding(finding)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-clay text-cream hover:brightness-110 transition"
+          >
+            Show me
+          </button>
+        )}
         {hasDetails && (
           <button
             type="button"
