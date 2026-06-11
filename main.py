@@ -58,12 +58,14 @@ from database import (
     complete_prescription,
     consume_openai_tokens,
     consume_password_reset_token,
+    create_or_reuse_rehab_plan,
     create_prescription,
     create_user,
     delete_session,
     delete_user,
     get_active_plan,
     get_active_prescription,
+    get_active_rehab_plan,
     get_avatar,
     get_chat_used,
     get_display_name,
@@ -73,6 +75,7 @@ from database import (
     get_pentagon_snapshots,
     get_prescription_checkoffs,
     get_profile,
+    get_rehab_checkoff_dates,
     get_rehab_progress,
     get_session,
     get_stripe_customer_id,
@@ -119,6 +122,7 @@ from src import billing
 from src.auth_email import send_password_reset_email
 from src.email import send_verification_email
 from src.prescriptions import AXIS_TO_DRILLS, compute_gap_axis, drills_for_keys, select_block
+from src.rehab import rehab_last7, rehab_phase, rehab_streak
 from src.render import build_query, format_citations
 from src.retriever import TfidfRetriever, load_kb
 from src.triage import (
@@ -508,6 +512,11 @@ class RehabCheckRequest(BaseModel):
 class RehabUncheckRequest(BaseModel):
     exercise_key: str
     date: str
+
+
+class CreateRehabPlanRequest(BaseModel):
+    region: str
+    session_id: int | None = None
 
 
 class PrescriptionCheckRequest(BaseModel):
@@ -1866,6 +1875,41 @@ def delete_rehab_check(
         raise HTTPException(status_code=400, detail="date must be YYYY-MM-DD")
     deleted = uncheck_rehab_exercise(user["id"], req.exercise_key, req.date)
     return {"deleted": deleted}
+
+
+@app.get("/api/rehab/plan")
+@limiter.limit("60/minute")
+def get_rehab_plan(request: Request, date: str, user: dict = Depends(get_current_user)):
+    """The user's active rehab plan + date-derived phase + check-off streak +
+    7-day adherence. `date` is the user's local ISO date (YYYY-MM-DD)."""
+    if not _DATE_RE.match(date or ""):
+        raise HTTPException(status_code=400, detail="date must be YYYY-MM-DD")
+    plan = get_active_rehab_plan(user["id"])
+    if plan is None:
+        return {"plan": None, "phase": None, "streak": 0,
+                "last7": {"count": 0, "days": [False] * 7}}
+    checkoff_dates = get_rehab_checkoff_dates(user["id"])
+    return {
+        "plan":   plan,
+        "phase":  rehab_phase(plan["plan_started_at"], date),
+        "streak": rehab_streak(checkoff_dates, date),
+        "last7":  rehab_last7(checkoff_dates, date),
+    }
+
+
+@app.post("/api/rehab/plan")
+@limiter.limit("30/minute")
+def post_rehab_plan(
+    request: Request,
+    req: CreateRehabPlanRequest,
+    user: dict = Depends(get_current_user),
+):
+    """Create/reuse the active rehab plan for a region. The frontend calls this
+    only for NON-severe diagnoses (severe stays a clinical referral)."""
+    if not req.region or len(req.region) > 50:
+        raise HTTPException(status_code=400, detail="region invalid")
+    plan = create_or_reuse_rehab_plan(user["id"], req.session_id, req.region)
+    return {"plan": plan}
 
 
 # ---------------------------------------------------------------------------

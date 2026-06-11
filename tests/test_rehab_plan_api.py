@@ -86,3 +86,52 @@ class RehabPlanHelperTests(unittest.TestCase):
         check_rehab_exercise(self.uid, "Finger:1:A", "Finger", 1, "2026-06-11")
         dates = get_rehab_checkoff_dates(self.uid)
         self.assertEqual(dates, ["2026-06-11", "2026-06-10"])
+
+
+class RehabPlanEndpointTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        init_db()
+
+    def setUp(self):
+        self.email = "rehab_plan_api@coretriage.local"
+        _cleanup_user(self.email)
+        self.token = _register_and_login(self.email)
+        self.uid = _uid(self.email)
+        self.client = TestClient(app)
+
+    def tearDown(self):
+        _cleanup_user(self.email)
+
+    def _auth(self):
+        return {"Authorization": f"Bearer {self.token}"}
+
+    def test_no_plan_returns_nulls(self):
+        r = self.client.get("/api/rehab/plan?date=2026-06-11", headers=self._auth())
+        self.assertEqual(r.status_code, 200, r.text)
+        body = r.json()
+        self.assertIsNone(body["plan"])
+        self.assertEqual(body["streak"], 0)
+        self.assertEqual(body["last7"]["count"], 0)
+
+    def test_create_then_get_plan_with_phase_and_streak(self):
+        r = self.client.post("/api/rehab/plan", json={"region": "Finger"}, headers=self._auth())
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertEqual(r.json()["plan"]["region"], "Finger")
+        # one check-off today -> streak 1, last7 count 1
+        check_rehab_exercise(self.uid, "Finger:1:A", "Finger", 1, "2026-06-11")
+        r = self.client.get("/api/rehab/plan?date=2026-06-11", headers=self._auth())
+        body = r.json()
+        self.assertEqual(body["plan"]["region"], "Finger")
+        self.assertEqual(body["phase"]["phase"], 1)   # brand-new plan -> phase 1
+        self.assertEqual(body["streak"], 1)
+        self.assertEqual(body["last7"]["count"], 1)
+        self.assertTrue(body["last7"]["days"][6])      # today
+
+    def test_requires_auth(self):
+        r = TestClient(app).get("/api/rehab/plan?date=2026-06-11")
+        self.assertIn(r.status_code, (401, 403))
+
+
+if __name__ == "__main__":
+    unittest.main()
