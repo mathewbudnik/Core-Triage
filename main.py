@@ -741,18 +741,46 @@ def _grade_to_tier(grade: str | None) -> str:
     return _IDENTITY_TIERS[min(n, len(_IDENTITY_TIERS) - 1)]
 
 
+def _grade_to_vnum(discipline: str, grade: str | None) -> int | None:
+    """Map a logged grade to a V-equivalent number for pentagon scaling.
+
+    Boulder V0..V17 → 0..17; route YDS maps via the v-tier chart (→ 0..10).
+    Returns None for unparseable grades.
+    """
+    if not grade:
+        return None
+    if discipline == "boulder":
+        m = re.match(r"^V(\d{1,2})$", grade)
+        return int(m.group(1)) if m else None
+    from src.climb_grades import yds_to_tier  # local import avoids a cycle
+    try:
+        return int(yds_to_tier(grade)[1:])
+    except Exception:
+        return None
+
+
+def _vnum_to_value(vnum: int) -> float:
+    """Grade-anchored axis value: ≈ 2 + 0.7·V, capped at 10.
+
+    V0≈2, V4≈4.8, V7≈6.9, V10≈9, V11≈9.7, V12+→10. The pentagon therefore
+    starts small and grows with grade rather than maxing out on whatever
+    style the climber happens to have logged most.
+    """
+    return min(10.0, 2.0 + 0.7 * max(0, vnum))
+
+
 def _compute_current_pentagon(user_id: int, as_of=None) -> dict[str, float] | None:
-    """Aggregate per-send `styles` counters across the user's training logs
-    and return a 0-10 axis dict.
+    """Grade-anchored 5-axis pentagon (0-10) from the user's sends.
 
-    Returns None for users with no styles-tagged sends — the Hub will then
-    render the empty/starter pentagon and the archetype falls back to
-    'Apprentice'. The axis scaling matches the JS Pentagon: 20% per axis
-    (perfectly balanced) → 5.0, which keeps the archetype rules well-tuned.
+    Each axis = the hardest grade the climber has SENT tagged with that
+    style, mapped through `_vnum_to_value` (an absolute level, NOT a relative
+    share of styles). Styles with no tagged send sit at a floor of 30% of the
+    climber's apex value, so the shape always reads as a pentagon skewed
+    toward strengths — small for beginners, near-maxed only at the top grades.
 
-    If `as_of` is a date/datetime, only training_logs with `date <= as_of`
-    are included — used by the snapshot backfill to reconstruct historical
-    monthly pentagons from existing sends.
+    Returns None for users with no sends at all (the Hub renders the empty
+    pentagon). If `as_of` is set, only logs with `date <= as_of` are included
+    (used by the monthly snapshot backfill, so historical shapes grow over time).
     """
     with _connect() as conn, conn.cursor() as cur:
         if as_of is None:
@@ -771,24 +799,42 @@ def _compute_current_pentagon(user_id: int, as_of=None) -> dict[str, float] | No
             )
         rows = cur.fetchall()
 
-    counts = {axis: 0 for axis in _PENTAGON_AXES}
+    # Hardest V-equivalent sent overall (apex) and per style axis.
+    apex_vnum: int | None = None
+    axis_best: dict[str, int | None] = {axis: None for axis in _PENTAGON_AXES}
     for (climbs,) in rows:
         for discipline in ("boulder", "route"):
             grades = (climbs or {}).get(discipline, {})
-            for entry in grades.values():
-                styles = entry.get("styles") if isinstance(entry, dict) else None
+            for grade, entry in grades.items():
+                if not isinstance(entry, dict):
+                    continue
+                if int(entry.get("s", 0) or 0) <= 0:
+                    continue  # sends only — projects don't count
+                vnum = _grade_to_vnum(discipline, grade)
+                if vnum is None:
+                    continue
+                if apex_vnum is None or vnum > apex_vnum:
+                    apex_vnum = vnum
+                styles = entry.get("styles")
                 if not isinstance(styles, dict):
                     continue
                 for style_key, axis_key in _STYLE_TO_AXIS.items():
-                    counts[axis_key] += int(styles.get(style_key, 0) or 0)
+                    if int(styles.get(style_key, 0) or 0) > 0:
+                        if axis_best[axis_key] is None or vnum > axis_best[axis_key]:
+                            axis_best[axis_key] = vnum
 
-    total = sum(counts.values())
-    if total <= 0:
+    if apex_vnum is None:
         return None
-    # Scale: pct/5. Even distribution (20%) → 5.0. Full dominance → 20.0,
-    # clamped to 10. Keeps the archetype rules' >7 / >8 thresholds meaningful.
+
+    floor = _vnum_to_value(apex_vnum) * 0.30
     return {
-        axis: min(10.0, round((counts[axis] / total) * 50.0, 2))
+        axis: round(
+            max(
+                _vnum_to_value(axis_best[axis]) if axis_best[axis] is not None else 0.0,
+                floor,
+            ),
+            2,
+        )
         for axis in _PENTAGON_AXES
     }
 
