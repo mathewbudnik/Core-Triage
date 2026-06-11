@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
-import { getSessions } from '../api'
+import { getSessions, getRehabPlan } from '../api'
 import { useRehabProgress } from '../hooks/useRehabProgress'
 import { REHAB_REGIONS } from '../lib/pickFeatured'
 import { rehabProgress } from '../lib/rehabHeuristic'
@@ -36,6 +36,8 @@ export default function RecoverTab({ user, onLoginClick }) {
   const [loading, setLoading] = useState(true)
   const [recent, setRecent] = useState([])   // most recent triages, used for both active + empty
   const { checked, toggle } = useRehabProgress(user)
+  const [recovering, setRecovering] = useState(null) // { phase, streak, last7 } | null
+  const [planTriage, setPlanTriage] = useState(null) // { id, injury_area, created_at } | null
 
   // Diagnosis comes from one of two sources, in priority order:
   //   1. location.state — set by TriageTab on submit, instant, history-scoped
@@ -56,9 +58,23 @@ export default function RecoverTab({ user, onLoginClick }) {
   useEffect(() => {
     if (!user) { setLoading(false); return }
     let cancelled = false
-    getSessions(5)
-      .then((data) => { if (!cancelled) setRecent(data || []) })
-      .catch(() => { if (!cancelled) setRecent([]) })
+    const today = new Date().toLocaleDateString('en-CA')
+    Promise.all([
+      getSessions(5).catch(() => []),
+      getRehabPlan(today).catch(() => null),
+    ])
+      .then(([sessions, plan]) => {
+        if (cancelled) return
+        setRecent(sessions || [])
+        if (plan?.plan) {
+          setRecovering({ phase: plan.phase, streak: plan.streak, last7: plan.last7 })
+          setPlanTriage({
+            id: plan.plan.id,
+            injury_area: plan.plan.region,
+            created_at: plan.plan.plan_started_at,
+          })
+        }
+      })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [user])
@@ -84,7 +100,7 @@ export default function RecoverTab({ user, onLoginClick }) {
       }
     : null
 
-  const activeTriage = inMemoryTriage ?? recent.find(isActiveTriage)
+  const activeTriage = inMemoryTriage ?? planTriage ?? recent.find(isActiveTriage)
 
   if (activeTriage) {
     return (
@@ -97,6 +113,7 @@ export default function RecoverTab({ user, onLoginClick }) {
         onLoginClick={onLoginClick}
         checked={checked}
         onToggle={toggle}
+        recovering={recovering}
       />
     )
   }

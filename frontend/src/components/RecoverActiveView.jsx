@@ -11,6 +11,7 @@ import RecoverStatusPills from './RecoverStatusPills'
 import RecoverExerciseCard from './RecoverExerciseCard'
 import TriageDiagnosis from './TriageDiagnosis'
 import SavedToHistoryBanner from './SavedToHistoryBanner'
+import RecoverRecoveringStrip from './RecoverRecoveringStrip'
 
 const SEG_TRANSITION = { duration: 0.16, ease: [0.2, 0.7, 0.2, 1] }
 
@@ -48,13 +49,15 @@ export default function RecoverActiveView({
   onLoginClick,
   checked,
   onToggle,
+  recovering,
 }) {
   const navigate = useNavigate()
   const isDesktop = useIsDesktop()
   const [seg, setSeg] = useState('plan')
   const region = triage.injury_area
   const rp = rehabProgress(triage.created_at)
-  const phase = rp?.phase ?? 1
+  const serverPhase = recovering?.phase ?? null            // { phase, day_in_phase, ... } | null
+  const phase = serverPhase?.phase ?? rp?.phase ?? 1
 
   // The exercise list for the user's current phase. Composite key per exercise:
   // "<region>:<phase>:<name>" — same shape stored in rehab_progress.
@@ -95,6 +98,13 @@ export default function RecoverActiveView({
       </p>
 
       <RecoverStatusPills pills={pills} />
+      {recovering && (
+        <RecoverRecoveringStrip
+          serverPhase={serverPhase}
+          streak={recovering.streak}
+          last7={recovering.last7}
+        />
+      )}
 
       {hasExercises && (
         <div className="mt-3 px-3 py-2.5 rounded-xl bg-paper border border-ct-hairline">
