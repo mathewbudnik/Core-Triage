@@ -24,6 +24,9 @@ frontend/public/mp-wasm/
 # Brainstorming companion (visual mockups) — local-only working files
 .superpowers/
 
+# ruflo / claude-flow runtime telemetry & memory — auto-generated, local-only
+.claude-flow/
+
 # Claude Code harness — local config, locally-installed skills, and
 # live worktrees (each worktree is a full clone of the repo)
 .claude/settings.local.json
