@@ -11,7 +11,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from database import (  # noqa: E402
     _connect, init_db,
-    save_session,
     create_or_reuse_rehab_plan,
     get_active_rehab_plan,
     get_rehab_checkoff_dates,
