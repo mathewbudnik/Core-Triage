@@ -16,6 +16,7 @@ from src.prescriptions import (  # noqa: E402
     canon_axis,
     compute_gap_axis,
     select_block,
+    drills_for_keys,
 )
 
 
@@ -94,3 +95,14 @@ class SelectBlockTests(unittest.TestCase):
 
     def test_accepts_legacy_axis_key(self):
         self.assertEqual(len(select_block("technical")), 3)
+
+
+class DrillsForKeysTests(unittest.TestCase):
+    def test_resolves_explicit_keys_in_order(self):
+        self.assertEqual(
+            [d["key"] for d in drills_for_keys("mobility", ["shoulder_cars"])],
+            ["shoulder_cars"],
+        )
+
+    def test_skips_unknown_keys_and_falls_back_when_none_resolve(self):
+        self.assertEqual(drills_for_keys("mobility", ["nope"]), select_block("mobility"))

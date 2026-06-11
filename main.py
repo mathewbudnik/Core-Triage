@@ -53,24 +53,25 @@ from database import (
     _connect,
     _current_streak_days,
     accept_disclaimer,
+    check_prescription_drill,
     check_rehab_exercise,
+    complete_prescription,
     consume_openai_tokens,
     consume_password_reset_token,
+    create_prescription,
     create_user,
     delete_session,
     delete_user,
     get_active_plan,
     get_active_prescription,
-    create_prescription,
-    complete_prescription,
-    check_prescription_drill,
-    get_prescription_checkoffs,
     get_avatar,
     get_chat_used,
     get_display_name,
     get_leaderboard,
     get_leaderboard_private,
     get_or_create_thread,
+    get_pentagon_snapshots,
+    get_prescription_checkoffs,
     get_profile,
     get_rehab_progress,
     get_session,
@@ -78,7 +79,6 @@ from database import (
     get_subscription_state,
     get_thread_by_user,
     get_thread_messages,
-    get_pentagon_snapshots,
     get_training_logs,
     get_training_stats,
     get_user_by_email,
@@ -118,6 +118,7 @@ from database import (
 from src import billing
 from src.auth_email import send_password_reset_email
 from src.email import send_verification_email
+from src.prescriptions import AXIS_TO_DRILLS, compute_gap_axis, drills_for_keys, select_block
 from src.render import build_query, format_citations
 from src.retriever import TfidfRetriever, load_kb
 from src.triage import (
@@ -130,7 +131,6 @@ from src.triage import (
     red_flags,
 )
 from src.user_context import build_user_context, format_for_prompt
-from src.prescriptions import compute_gap_axis, select_block, AXIS_TO_DRILLS
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -522,6 +522,11 @@ class CoachMessageRequest(BaseModel):
 class CoachReplyRequest(BaseModel):
     thread_id: int
     content: str
+
+
+class CoachAssignPrescriptionRequest(BaseModel):
+    axis: str
+    drill_keys: list[str] = []
 
 
 class DisplayNameRequest(BaseModel):
@@ -2099,6 +2104,32 @@ def user_get_thread(request: Request, user: dict = Depends(get_current_user)):
 @limiter.limit("60/minute")
 def admin_list_threads(request: Request, _coach: dict = Depends(require_coach)):
     return list_coach_threads()
+
+
+@app.get("/api/admin/coach/clients/{client_id}/prescription")
+@limiter.limit("60/minute")
+def coach_get_client_prescription(
+    request: Request, client_id: int, _coach: dict = Depends(require_coach),
+):
+    """Coach view of a client's gap + active block (auto-generates like the user route)."""
+    return _active_block_payload(client_id)
+
+
+@app.post("/api/admin/coach/clients/{client_id}/prescription")
+@limiter.limit("20/minute")
+def coach_assign_client_prescription(
+    request: Request,
+    client_id: int,
+    req: CoachAssignPrescriptionRequest,
+    coach: dict = Depends(require_coach),
+):
+    """Assign a coach-authored block to a client, replacing any active one."""
+    axis = req.axis
+    if axis not in AXIS_TO_DRILLS:
+        raise HTTPException(status_code=400, detail="axis invalid")
+    drills = drills_for_keys(axis, req.drill_keys)
+    create_prescription(client_id, axis, drills, source="coach", assigned_by=coach["id"])
+    return _active_block_payload(client_id)
 
 
 @app.get("/api/admin/coach/threads/{thread_id}/messages")

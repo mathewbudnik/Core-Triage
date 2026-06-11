@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Send, Loader2, Inbox, ChevronLeft } from 'lucide-react'
-import { adminGetThreads, adminGetMessages, adminReply } from '../api'
+import { adminGetThreads, adminGetMessages, adminReply, getClientPrescription, assignClientPrescription } from '../api'
+import { skillLabel, SKILL_KEYS } from '../lib/skills'
 
 function ThreadRow({ thread, selected, onClick }) {
   const hasUnread = thread.unread_count > 0
@@ -65,6 +66,7 @@ export default function CoachInbox() {
   const [sending, setSending] = useState(false)
   const [mobileShowThread, setMobileShowThread] = useState(false)
   const [error, setError] = useState(null)
+  const [clientRx, setClientRx] = useState(null)   // { gap_axis, prescription }
   const bottomRef = useRef(null)
   const inputRef = useRef('')
   useEffect(() => { inputRef.current = input }, [input])
@@ -100,8 +102,22 @@ export default function CoachInbox() {
       setMessages([])
       setError(err.message || 'Could not load this conversation.')
     }
+    setClientRx(null)
+    if (thread.user_id) {
+      getClientPrescription(thread.user_id).then(setClientRx).catch(() => setClientRx(null))
+    }
     // Refresh threads to clear unread badge
     loadThreads()
+  }
+
+  async function assignBlock(axis) {
+    if (!selectedThread?.user_id) return
+    try {
+      const updated = await assignClientPrescription(selectedThread.user_id, { axis, drill_keys: [] })
+      setClientRx(updated)
+    } catch (err) {
+      setError(err.message || 'Could not assign a block.')
+    }
   }
 
   useEffect(() => {
@@ -191,6 +207,34 @@ export default function CoachInbox() {
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+              {clientRx && (
+                <div className="ct-surface p-3 mb-3">
+                  <p className="ct-eyebrow text-ink-muted">Skill prescription</p>
+                  {clientRx.prescription ? (
+                    <p className="text-[13px] text-ink mt-1">
+                      <span className="font-semibold">{skillLabel(clientRx.prescription.axis)}</span> block ·{' '}
+                      {clientRx.prescription.progress.current}/{clientRx.prescription.progress.total} done
+                      {clientRx.prescription.source === 'coach' ? ' · assigned' : ''}
+                    </p>
+                  ) : (
+                    <p className="text-[13px] text-ink-soft mt-1">
+                      {clientRx.gap_axis ? `Gap: ${skillLabel(clientRx.gap_axis)}` : 'Well-rounded — no gap'}
+                    </p>
+                  )}
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {SKILL_KEYS.map((axis) => (
+                      <button
+                        key={axis}
+                        type="button"
+                        onClick={() => assignBlock(axis)}
+                        className="text-[11px] font-semibold px-2 py-1 rounded-full border border-ct-rim text-ink-soft hover:bg-clay/12 hover:text-ink transition-colors"
+                      >
+                        Assign {skillLabel(axis)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <AnimatePresence initial={false}>
                 {messages.map(msg => (
                   <Message key={msg.id} msg={msg} />

@@ -279,5 +279,72 @@ class CheckPrescriptionEndpointTests(unittest.TestCase):
         self.assertEqual(r.status_code, 400, r.text)
 
 
+def _make_coach(email: str) -> str:
+    """Register a user and promote them to the coach role; return bearer token."""
+    token = _register_and_login(email)
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute("UPDATE users SET role = 'coach' WHERE email = %s;", (email,))
+        conn.commit()
+    return token
+
+
+class CoachPrescriptionEndpointTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        init_db()
+
+    def setUp(self):
+        self.client_email = "rx_client_test@coretriage.local"
+        self.coach_email = "rx_coach_test@coretriage.local"
+        _cleanup_user(self.client_email)
+        _cleanup_user(self.coach_email)
+        self.client_token = _register_and_login(self.client_email)
+        self.client_uid = _user_id(self.client_email)
+        self.coach_token = _make_coach(self.coach_email)
+
+    def tearDown(self):
+        _cleanup_user(self.client_email)
+        _cleanup_user(self.coach_email)
+
+    def _coach_auth(self):
+        return {"Authorization": f"Bearer {self.coach_token}"}
+
+    def _client_auth(self):
+        return {"Authorization": f"Bearer {self.client_token}"}
+
+    def test_non_coach_is_forbidden(self):
+        r = TestClient(app).get(
+            f"/api/admin/coach/clients/{self.client_uid}/prescription",
+            headers=self._client_auth(),
+        )
+        self.assertEqual(r.status_code, 403)
+
+    def test_coach_sees_client_block(self):
+        _seed_technique_gap(self.client_uid)
+        r = TestClient(app).get(
+            f"/api/admin/coach/clients/{self.client_uid}/prescription",
+            headers=self._coach_auth(),
+        )
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertEqual(r.json()["gap_axis"], "technique")
+
+    def test_coach_assigns_a_block(self):
+        r = TestClient(app).post(
+            f"/api/admin/coach/clients/{self.client_uid}/prescription",
+            json={"axis": "mobility", "drill_keys": ["shoulder_cars", "deep_squat_hip_opener", "wrist_loading_prep"]},
+            headers=self._coach_auth(),
+        )
+        self.assertEqual(r.status_code, 200, r.text)
+        presc = r.json()["prescription"]
+        self.assertEqual(presc["axis"], "mobility")
+        self.assertEqual(presc["source"], "coach")
+        # The client now sees the coach-assigned block.
+        seen = TestClient(app).get(
+            "/api/me/prescription?date=2026-06-11", headers=self._client_auth()
+        ).json()["prescription"]
+        self.assertEqual(seen["axis"], "mobility")
+        self.assertEqual(seen["source"], "coach")
+
+
 if __name__ == "__main__":
     unittest.main()

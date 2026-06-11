@@ -110,6 +110,10 @@ export const getPrescription = (date) =>
   request('GET', `/api/me/prescription?date=${encodeURIComponent(date)}`)
 export const checkPrescriptionDrill = ({ drill_key, date }) =>
   request('POST', '/api/prescriptions/check', { drill_key, date })
+export const getClientPrescription = (userId) =>
+  request('GET', `/api/admin/coach/clients/${encodeURIComponent(userId)}/prescription`)
+export const assignClientPrescription = (userId, { axis, drill_keys }) =>
+  request('POST', `/api/admin/coach/clients/${encodeURIComponent(userId)}/prescription`, { axis, drill_keys })
 
 // Train stats
 export const getTrainingStats = () => request('GET', '/api/training/stats')

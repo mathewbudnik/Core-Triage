@@ -67,6 +67,16 @@ def select_block(axis: str, exclude_keys: list[str] | None = None) -> list[dict]
     return chosen[:3]
 
 
+def drills_for_keys(axis: str, drill_keys: list[str]) -> list[dict]:
+    """Resolve explicit catalog keys (within an axis) to drill dicts, in the
+    given order. Unknown keys are skipped; falls back to ``select_block`` if
+    none resolve. Used by the coach-assign path."""
+    axis = canon_axis(axis)
+    by_key = {d["key"]: d for d in AXIS_TO_DRILLS.get(axis, [])}
+    chosen = [by_key[k] for k in (drill_keys or []) if k in by_key]
+    return chosen or select_block(axis)
+
+
 AXIS_TO_DRILLS: dict[str, list[dict]] = {
     "power": [
         {"key": "campus_1_3_5", "name": "Campus board 1-3-5",
