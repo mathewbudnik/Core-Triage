@@ -97,12 +97,12 @@ export default function TrimScrubber({
           preload="auto"
         />
         <div className="absolute top-2 left-2 right-2 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1 bg-ct-terra-tint border border-ct-terracotta/40 text-ct-terra-soft text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">
+          <div className="flex items-center gap-1 bg-clay/10 border border-clay/40 text-clay-deep text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">
             <Scissors size={10} />
             {windowS.toFixed(1)}s selected
           </div>
           {overCap && (
-            <div className="bg-ct-terracotta text-ct-cream text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">
+            <div className="bg-clay text-cream text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">
               Max {maxWindowS}s
             </div>
           )}
@@ -112,10 +112,10 @@ export default function TrimScrubber({
       {/* Dual-handle: two stacked range inputs over a highlighted band. */}
       <div className="relative h-8">
         {/* Track background */}
-        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1.5 rounded-full bg-ct-hairline pointer-events-none" />
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1.5 rounded-full bg-ink/[0.10] pointer-events-none" />
         {/* Selected band */}
         <div
-          className="absolute top-1/2 -translate-y-1/2 h-1.5 rounded-full bg-ct-terracotta pointer-events-none"
+          className="absolute top-1/2 -translate-y-1/2 h-1.5 rounded-full bg-clay pointer-events-none"
           style={{ left: `${leftPct}%`, right: `${100 - rightPct}%` }}
         />
         <input
@@ -127,7 +127,7 @@ export default function TrimScrubber({
           onChange={(e) => updateStart(parseFloat(e.target.value))}
           aria-label="Trim start"
           style={trimRangeStyle}
-          className="ct-trim-range accent-ct-terracotta"
+          className="ct-trim-range accent-clay"
         />
         <input
           type="range"
@@ -138,7 +138,7 @@ export default function TrimScrubber({
           onChange={(e) => updateEnd(parseFloat(e.target.value))}
           aria-label="Trim end"
           style={trimRangeStyle}
-          className="ct-trim-range accent-ct-terracotta"
+          className="ct-trim-range accent-clay"
         />
       </div>
 
